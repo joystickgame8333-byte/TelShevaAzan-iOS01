@@ -31,11 +31,31 @@ targets:
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         CODE_SIGN_STYLE: Manual
+    dependencies:
+      - target: TelShevaAzanWidgetExtension
+        embed: true
+  TelShevaAzanWidgetExtension:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: TelShevaAzanWidget
+      - path: TelShevaAzan/PrayerSchedule.swift
+    info:
+      path: TelShevaAzanWidget/Info.plist
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.TelShevaAzan.widget
+        PRODUCT_NAME: TelShevaAzanWidgetExtension
+        MARKETING_VERSION: 0.1.0
+        CURRENT_PROJECT_VERSION: 1
+        APPLICATION_EXTENSION_API_ONLY: YES
+        CODE_SIGN_STYLE: Manual
 schemes:
   TelShevaAzan:
     build:
       targets:
         TelShevaAzan: all
+        TelShevaAzanWidgetExtension: all
     run:
       config: Debug
     archive:
