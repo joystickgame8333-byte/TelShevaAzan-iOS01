@@ -1,4 +1,5 @@
 import SwiftUI
+import WidgetKit
 
 struct ContentView: View {
     @AppStorage("nightModeEnabled") private var nightModeEnabled = false
@@ -37,6 +38,8 @@ struct ContentView: View {
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding(.top, 8)
+
+                widgetDiagnosticsPanel
             }
             .padding(18)
         }
@@ -76,6 +79,70 @@ struct ContentView: View {
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, alignment: .trailing)
         }
+    }
+
+    private var widgetDiagnosticsPanel: some View {
+        VStack(alignment: .trailing, spacing: 6) {
+            HStack {
+                Button {
+                    WidgetCenter.shared.reloadAllTimelines()
+                } label: {
+                    Label("تحديث", systemImage: "arrow.clockwise")
+                }
+                .buttonStyle(CompactButtonStyle(isNight: nightModeEnabled))
+
+                Spacer()
+
+                Text("تشخيص الودجت")
+                    .font(.caption.weight(.black))
+                    .foregroundStyle(accentColor)
+            }
+
+            ForEach(widgetDiagnosticLines, id: \.self) { line in
+                Text(line)
+                    .font(.caption2.monospacedDigit())
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+            }
+        }
+        .padding(12)
+        .background(rowBackground(isActive: false))
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(rowBorder(isActive: false))
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+    }
+
+    private var widgetDiagnosticLines: [String] {
+        guard let pluginsURL = Bundle.main.builtInPlugInsURL else {
+            return ["PlugIns: غير موجود"]
+        }
+
+        let pluginURLs = (try? FileManager.default.contentsOfDirectory(
+            at: pluginsURL,
+            includingPropertiesForKeys: nil
+        ))?.filter { $0.pathExtension == "appex" } ?? []
+
+        guard let widgetURL = pluginURLs.first(where: { $0.lastPathComponent.contains("Widget") }) ?? pluginURLs.first else {
+            return ["PlugIns: 0", "Widget appex: غير موجود"]
+        }
+
+        let infoURL = widgetURL.appendingPathComponent("Info.plist")
+        let info = NSDictionary(contentsOf: infoURL) as? [String: Any]
+        let bundleID = info?["CFBundleIdentifier"] as? String ?? "--"
+        let executable = info?["CFBundleExecutable"] as? String ?? "--"
+        let extensionInfo = info?["NSExtension"] as? [String: Any]
+        let point = extensionInfo?["NSExtensionPointIdentifier"] as? String ?? "--"
+        let executableExists = FileManager.default.fileExists(atPath: widgetURL.appendingPathComponent(executable).path)
+
+        return [
+            "PlugIns: \(pluginURLs.count)",
+            "Widget: \(widgetURL.lastPathComponent)",
+            "ID: \(bundleID)",
+            "Point: \(point)",
+            "Exec: \(executableExists ? "OK" : "missing")"
+        ]
     }
 
     private func nextPrayerPanel(next: PrayerTime?) -> some View {

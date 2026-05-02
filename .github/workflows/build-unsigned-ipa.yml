@@ -25,7 +25,7 @@ jobs:
       - name: Generate Xcode project
         run: |
           set -euxo pipefail
-          brew install xcodegen
+          brew install xcodegen ldid
           rm -rf TelShevaAzan.xcodeproj
           xcodegen generate
 
@@ -107,31 +107,16 @@ jobs:
           echo "Packaged app contents:"
           find "$APP_PATH" -maxdepth 4 -print | sort
 
-          sign_bundle() {
-            local bundle="$1"
-            local entitlements="$2"
-            if codesign --force --sign - --entitlements "$entitlements" "$bundle"; then
-              return 0
-            fi
-
-            echo "Entitlement signing failed for $bundle; retrying normal ad-hoc signing."
-            codesign --force --sign - "$bundle"
-          }
-
-          sign_bundle "$PLUGIN_PATH" TelShevaAzanWidget/TelShevaAzanWidget.entitlements
-          if ! codesign --force --sign - --entitlements TelShevaAzan/TelShevaAzan.entitlements "$APP_PATH"; then
-            echo "App entitlement signing failed; retrying normal ad-hoc signing."
-            if ! codesign --force --sign - "$APP_PATH"; then
-              echo "Normal app signing failed; retrying deep ad-hoc signing as a final package fallback."
-              codesign --force --deep --sign - "$APP_PATH"
-            fi
-          fi
-          echo "Widget entitlements after signing:"
-          codesign -d --entitlements :- "$PLUGIN_PATH" || true
-          echo "App entitlements after signing:"
-          codesign -d --entitlements :- "$APP_PATH" || true
-          codesign --verify --verbose=2 "$PLUGIN_PATH" || true
-          codesign --verify --verbose=2 "$APP_PATH" || true
+          APP_EXECUTABLE="$(/usr/libexec/PlistBuddy -c "Print :CFBundleExecutable" "$APP_PATH/Info.plist")"
+          PLUGIN_EXECUTABLE="$(/usr/libexec/PlistBuddy -c "Print :CFBundleExecutable" "$PLUGIN_PATH/Info.plist")"
+          rm -rf "$APP_PATH/_CodeSignature" "$PLUGIN_PATH/_CodeSignature"
+          echo "TrollStore ldid signing:"
+          ldid -S"TelShevaAzanWidget/TelShevaAzanWidget.entitlements" "$PLUGIN_PATH/$PLUGIN_EXECUTABLE"
+          ldid -S"TelShevaAzan/TelShevaAzan.entitlements" "$APP_PATH/$APP_EXECUTABLE"
+          echo "Widget entitlements after ldid:"
+          ldid -e "$PLUGIN_PATH/$PLUGIN_EXECUTABLE"
+          echo "App entitlements after ldid:"
+          ldid -e "$APP_PATH/$APP_EXECUTABLE"
           mkdir -p Payload
           cp -R "$APP_PATH" Payload/TelShevaAzan.app
           /usr/bin/zip -qry TelShevaAzan-unsigned.ipa Payload
@@ -141,6 +126,7 @@ jobs:
           awk '/Payload\/TelShevaAzan.app\/Icon-|Payload\/TelShevaAzan.app\/PlugIns\/.*\.appex\// { print; shown++; if (shown >= 80) exit }' ipa-contents.txt
           grep -q 'Payload/TelShevaAzan.app/Icon-60@3x.png' ipa-contents.txt
           grep -q 'Payload/TelShevaAzan.app/PlugIns/.*\.appex/' ipa-contents.txt
+          grep -q 'Payload/TelShevaAzan.app/PlugIns/.*/TelShevaAzanWidgetExtension' ipa-contents.txt
 
       - name: Upload IPA
         uses: actions/upload-artifact@v4
