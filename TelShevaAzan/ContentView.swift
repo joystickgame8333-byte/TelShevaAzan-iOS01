@@ -12,15 +12,17 @@ struct ContentView: View {
         let schedule = PrayerEngine.schedule(for: selectedDateKey)
         let next = PrayerEngine.nextPrayer(for: selectedDateKey, now: now)
 
-        ScrollView {
-            VStack(alignment: .trailing, spacing: 16) {
+        ZStack {
+            background
+
+            VStack(alignment: .trailing, spacing: 9) {
                 header
 
                 nextPrayerPanel(next: next)
 
                 dateControls
 
-                VStack(spacing: 10) {
+                VStack(spacing: 7) {
                     ForEach(schedule.displayTimes) { item in
                         prayerRow(item, activeKey: next?.key)
                     }
@@ -32,11 +34,14 @@ struct ContentView: View {
                     .font(.caption2.monospacedDigit().weight(.semibold))
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(.top, 8)
             }
-            .padding(18)
+            .padding(.horizontal, 18)
+            .padding(.top, 10)
+            .padding(.bottom, 8)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+            .environment(\.layoutDirection, .leftToRight)
+            .multilineTextAlignment(.trailing)
         }
-        .background(background)
         .onReceive(timer) { value in
             now = value
             if followsToday {
@@ -46,14 +51,14 @@ struct ContentView: View {
     }
 
     private var header: some View {
-        VStack(alignment: .trailing, spacing: 8) {
+        VStack(alignment: .trailing, spacing: 5) {
             HStack {
                 Label(isNight ? "ليل" : "نهار", systemImage: isNight ? "moon.stars.fill" : "sun.max.fill")
-                    .font(.caption.weight(.black))
+                    .font(.caption2.weight(.black))
                     .labelStyle(.titleAndIcon)
                     .foregroundStyle(accentColor)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 9)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 7)
                     .background(isNight ? Color.white.opacity(0.16) : Color.white.opacity(0.95))
                     .overlay(
                         RoundedRectangle(cornerRadius: 8)
@@ -69,46 +74,56 @@ struct ContentView: View {
             }
 
             Text("أذان تل السبع")
-                .font(.system(size: 42, weight: .black, design: .rounded))
+                .font(.system(size: 34, weight: .black, design: .rounded))
+                .lineLimit(1)
+                .minimumScaleFactor(0.72)
                 .frame(maxWidth: .infinity, alignment: .trailing)
 
             Text(PrayerEngine.longDateLabel(for: selectedDateKey))
-                .font(.subheadline.weight(.semibold))
+                .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
                 .frame(maxWidth: .infinity, alignment: .trailing)
         }
     }
 
     private func nextPrayerPanel(next: PrayerTime?) -> some View {
-        VStack(alignment: .trailing, spacing: 10) {
+        VStack(alignment: .trailing, spacing: 6) {
             Text("الصلاة القادمة")
-                .font(.caption.weight(.bold))
+                .font(.caption2.weight(.bold))
                 .foregroundStyle(accentColor)
 
             Text(next?.title ?? "--")
-                .font(.system(size: 46, weight: .black, design: .rounded))
+                .font(.system(size: 35, weight: .black, design: .rounded))
+                .lineLimit(1)
+                .minimumScaleFactor(0.72)
 
             Text(next?.time ?? "--:--")
-                .font(.system(size: 58, weight: .black, design: .rounded))
+                .font(.system(size: 47, weight: .black, design: .rounded))
                 .foregroundStyle(accentColor)
+                .lineLimit(1)
+                .minimumScaleFactor(0.72)
 
             Text(countdownText(for: next))
-                .font(.title2.monospacedDigit().weight(.bold))
+                .font(.headline.monospacedDigit().weight(.bold))
                 .foregroundStyle(.white)
-                .padding(.horizontal, 18)
-                .padding(.vertical, 10)
+                .lineLimit(1)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 7)
                 .background(countdownBackground)
                 .clipShape(RoundedRectangle(cornerRadius: 8))
 
             Text("مواقيت تل السبع المحلية")
-                .font(.footnote)
+                .font(.caption2)
                 .foregroundStyle(.secondary)
+                .lineLimit(1)
         }
         .frame(maxWidth: .infinity, alignment: .trailing)
-        .padding(18)
+        .padding(14)
         .background(panelBackground)
         .clipShape(RoundedRectangle(cornerRadius: 8))
-        .shadow(color: .black.opacity(isNight ? 0.28 : 0.08), radius: 18, y: 8)
+        .shadow(color: .black.opacity(isNight ? 0.22 : 0.06), radius: 12, y: 6)
     }
 
     private var dateControls: some View {
@@ -135,23 +150,18 @@ struct ContentView: View {
     }
 
     private var footerNote: some View {
-        VStack(alignment: .trailing, spacing: 4) {
-            Text("مواقيت تل السبع المحلية")
-                .font(.footnote.weight(.bold))
-                .foregroundStyle(accentColor)
-
-            Text("الصلاة القادمة تتحدث تلقائيًا كل يوم")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-        }
+        Text("مواقيت تل السبع المحلية · تتحدث تلقائيًا")
+            .font(.caption2.weight(.bold))
+            .foregroundStyle(accentColor)
+            .lineLimit(1)
+            .minimumScaleFactor(0.75)
         .frame(maxWidth: .infinity, alignment: .trailing)
-        .padding(.top, 6)
     }
 
     private func prayerRow(_ item: PrayerTime, activeKey: PrayerKey?) -> some View {
         HStack {
             Text(item.time)
-                .font(.title3.monospacedDigit().weight(.bold))
+                .font(.headline.monospacedDigit().weight(.bold))
                 .foregroundStyle(item.key == activeKey ? accentColor : Color.primary)
 
             Spacer()
@@ -160,7 +170,9 @@ struct ContentView: View {
                 .font(.headline.weight(.bold))
                 .foregroundStyle(item.key == activeKey ? accentColor : Color.secondary)
         }
-        .padding(14)
+        .lineLimit(1)
+        .padding(.horizontal, 12)
+        .frame(height: 45)
         .background(rowBackground(isActive: item.key == activeKey))
         .overlay(
             RoundedRectangle(cornerRadius: 8)
