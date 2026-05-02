@@ -12,35 +12,35 @@ struct ContentView: View {
         let schedule = PrayerEngine.schedule(for: selectedDateKey)
         let next = PrayerEngine.nextPrayer(for: selectedDateKey, now: now)
 
-        ZStack {
-            background
+        GeometryReader { proxy in
+            ZStack {
+                background
 
-            VStack(alignment: .trailing, spacing: 9) {
-                header
+                VStack(alignment: .trailing, spacing: 7) {
+                    header
 
-                nextPrayerPanel(next: next)
+                    nextPrayerPanel(next: next)
 
-                dateControls
+                    dateControls
 
-                VStack(spacing: 7) {
-                    ForEach(schedule.displayTimes) { item in
-                        prayerRow(item, activeKey: next?.key)
+                    VStack(spacing: 6) {
+                        ForEach(schedule.displayTimes) { item in
+                            prayerRow(item, activeKey: next?.key)
+                        }
                     }
+
+                    footerNote
+
+                    Spacer(minLength: 0)
                 }
-
-                footerNote
-
-                Text(AppInfo.displayVersion)
-                    .font(.caption2.monospacedDigit().weight(.semibold))
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .center)
+                .padding(.horizontal, 16)
+                .padding(.top, 8)
+                .padding(.bottom, 6)
+                .frame(width: proxy.size.width, height: proxy.size.height, alignment: .topTrailing)
+                .environment(\.layoutDirection, .leftToRight)
+                .multilineTextAlignment(.trailing)
+                .clipped()
             }
-            .padding(.horizontal, 18)
-            .padding(.top, 10)
-            .padding(.bottom, 8)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
-            .environment(\.layoutDirection, .leftToRight)
-            .multilineTextAlignment(.trailing)
         }
         .onReceive(timer) { value in
             now = value
@@ -51,7 +51,7 @@ struct ContentView: View {
     }
 
     private var header: some View {
-        VStack(alignment: .trailing, spacing: 5) {
+        VStack(alignment: .trailing, spacing: 4) {
             HStack {
                 Label(isNight ? "ليل" : "نهار", systemImage: isNight ? "moon.stars.fill" : "sun.max.fill")
                     .font(.caption2.weight(.black))
@@ -68,19 +68,20 @@ struct ContentView: View {
 
                 Spacer()
 
-                Text("مواقيت محلية")
-                    .font(.caption.weight(.bold))
+                Text("مواقيت محلية \(AppInfo.displayVersion)")
+                    .font(.caption2.monospacedDigit().weight(.bold))
                     .foregroundStyle(accentColor)
+                    .lineLimit(1)
             }
 
             Text("أذان تل السبع")
-                .font(.system(size: 34, weight: .black, design: .rounded))
+                .font(.system(size: 28, weight: .black, design: .rounded))
                 .lineLimit(1)
                 .minimumScaleFactor(0.72)
                 .frame(maxWidth: .infinity, alignment: .trailing)
 
             Text(PrayerEngine.longDateLabel(for: selectedDateKey))
-                .font(.caption.weight(.semibold))
+                .font(.caption2.weight(.semibold))
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.75)
@@ -89,38 +90,45 @@ struct ContentView: View {
     }
 
     private func nextPrayerPanel(next: PrayerTime?) -> some View {
-        VStack(alignment: .trailing, spacing: 6) {
-            Text("الصلاة القادمة")
-                .font(.caption2.weight(.bold))
-                .foregroundStyle(accentColor)
+        HStack(alignment: .center, spacing: 12) {
+            VStack(alignment: .leading, spacing: 5) {
+                Text(countdownText(for: next))
+                    .font(.subheadline.monospacedDigit().weight(.bold))
+                    .foregroundStyle(.white)
+                    .lineLimit(1)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 7)
+                    .background(countdownBackground)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
 
-            Text(next?.title ?? "--")
-                .font(.system(size: 35, weight: .black, design: .rounded))
-                .lineLimit(1)
-                .minimumScaleFactor(0.72)
+                Text("تتحدث تلقائيًا")
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
 
-            Text(next?.time ?? "--:--")
-                .font(.system(size: 47, weight: .black, design: .rounded))
-                .foregroundStyle(accentColor)
-                .lineLimit(1)
-                .minimumScaleFactor(0.72)
+            Spacer(minLength: 0)
 
-            Text(countdownText(for: next))
-                .font(.headline.monospacedDigit().weight(.bold))
-                .foregroundStyle(.white)
-                .lineLimit(1)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 7)
-                .background(countdownBackground)
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+            VStack(alignment: .trailing, spacing: 2) {
+                Text("الصلاة القادمة")
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(accentColor)
+                    .lineLimit(1)
 
-            Text("مواقيت تل السبع المحلية")
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-                .lineLimit(1)
+                Text(next?.title ?? "--")
+                    .font(.system(size: 30, weight: .black, design: .rounded))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.72)
+
+                Text(next?.time ?? "--:--")
+                    .font(.system(size: 36, weight: .black, design: .rounded))
+                    .foregroundStyle(accentColor)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.72)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .trailing)
-        .padding(14)
+        .padding(12)
         .background(panelBackground)
         .clipShape(RoundedRectangle(cornerRadius: 8))
         .shadow(color: .black.opacity(isNight ? 0.22 : 0.06), radius: 12, y: 6)
@@ -172,7 +180,7 @@ struct ContentView: View {
         }
         .lineLimit(1)
         .padding(.horizontal, 12)
-        .frame(height: 45)
+        .frame(height: 39)
         .background(rowBackground(isActive: item.key == activeKey))
         .overlay(
             RoundedRectangle(cornerRadius: 8)
