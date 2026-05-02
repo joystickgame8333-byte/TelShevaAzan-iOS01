@@ -30,6 +30,12 @@ struct ContentView: View {
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .trailing)
                     .padding(.top, 6)
+
+                Text(AppInfo.displayVersion)
+                    .font(.caption2.monospacedDigit().weight(.semibold))
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.top, 8)
             }
             .padding(18)
         }
@@ -44,7 +50,7 @@ struct ContentView: View {
 
     private var header: some View {
         VStack(alignment: .trailing, spacing: 8) {
-            Text("نموذج أولي")
+            Text("نموذج أولي \(AppInfo.displayVersion)")
                 .font(.caption.weight(.bold))
                 .foregroundStyle(Color.teal)
 
