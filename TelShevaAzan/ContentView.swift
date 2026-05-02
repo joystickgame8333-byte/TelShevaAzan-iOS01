@@ -16,7 +16,7 @@ struct ContentView: View {
             let compactHeight = proxy.size.height < 720
             let sectionSpacing: CGFloat = compactHeight ? 6 : 8
             let rowSpacing: CGFloat = compactHeight ? 6 : 8
-            let rowHeight = min(CGFloat(76), max(CGFloat(44), (proxy.size.height - 360) / 6))
+            let rowHeight = min(CGFloat(68), max(CGFloat(42), (proxy.size.height - 420) / 6))
 
             ZStack {
                 background
@@ -161,11 +161,18 @@ struct ContentView: View {
     }
 
     private var footerNote: some View {
-        Text("مواقيت تل السبع المحلية · تتحدث تلقائيًا")
-            .font(.caption2.weight(.bold))
-            .foregroundStyle(accentColor)
-            .lineLimit(1)
-            .minimumScaleFactor(0.75)
+        VStack(alignment: .trailing, spacing: 1) {
+            Text("إِنَّ ٱلصَّلَوٰةَ كَانَتْ عَلَى ٱلْمُؤْمِنِينَ كِتَـٰبًا مَّوْقُوتًا")
+                .font(.custom("AmiriQuran-Regular", size: 17))
+                .foregroundStyle(accentColor)
+                .lineLimit(1)
+                .minimumScaleFactor(0.58)
+
+            Text("النساء ١٠٣")
+                .font(.caption2.weight(.bold))
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+        }
         .frame(maxWidth: .infinity, alignment: .trailing)
     }
 
