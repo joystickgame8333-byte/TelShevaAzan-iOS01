@@ -12,15 +12,26 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Show Xcode version
-        run: xcodebuild -version
+        run: |
+          xcodebuild -version
+          echo "Repository files:"
+          find . -maxdepth 3 -print | sort
 
       - name: Build app without App Store signing
         run: |
+          PROJECT_PATH="$(find . -maxdepth 3 -name 'TelShevaAzan.xcodeproj' -print -quit)"
+          if [ -z "$PROJECT_PATH" ]; then
+            echo "TelShevaAzan.xcodeproj was not found"
+            exit 1
+          fi
+          echo "Using project: $PROJECT_PATH"
+          xcodebuild -list -project "$PROJECT_PATH"
           xcodebuild \
-            -project TelShevaAzan.xcodeproj \
+            -project "$PROJECT_PATH" \
             -target TelShevaAzan \
             -configuration Release \
             -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
             -derivedDataPath build \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
@@ -29,8 +40,13 @@ jobs:
 
       - name: Package IPA
         run: |
+          APP_PATH="$(find build/Build/Products -path '*Release-iphoneos/*.app' -print -quit)"
+          if [ -z "$APP_PATH" ]; then
+            echo "Built .app was not found"
+            exit 1
+          fi
           mkdir -p Payload
-          cp -R build/Build/Products/Release-iphoneos/TelShevaAzan.app Payload/
+          cp -R "$APP_PATH" Payload/TelShevaAzan.app
           /usr/bin/zip -qry TelShevaAzan-unsigned.ipa Payload
 
       - name: Upload IPA

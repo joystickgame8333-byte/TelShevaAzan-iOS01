@@ -133,7 +133,7 @@ enum PrayerEngine {
             return PrayerTime(key: key, title: key.title, time: time, date: date)
         }
 
-        if schedule.dateKey == dateKey(for: now), let upcoming = events.first(where: { $0.date > now }) {
+        if schedule.dateKey == Self.dateKey(for: now), let upcoming = events.first(where: { $0.date > now }) {
             return upcoming
         }
 
