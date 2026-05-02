@@ -16,12 +16,14 @@ struct ContentView: View {
             let compactHeight = proxy.size.height < 720
             let sectionSpacing: CGFloat = compactHeight ? 6 : 8
             let rowSpacing: CGFloat = compactHeight ? 6 : 8
-            let rowHeight = min(CGFloat(68), max(CGFloat(42), (proxy.size.height - 420) / 6))
+            let rowHeight = min(CGFloat(62), max(CGFloat(40), (proxy.size.height - 455) / 6))
 
             ZStack {
                 background
 
                 VStack(alignment: .trailing, spacing: sectionSpacing) {
+                    quranVerse
+
                     header
 
                     nextPrayerPanel(next: next, compact: compactHeight)
@@ -51,6 +53,22 @@ struct ContentView: View {
                 selectedDateKey = PrayerEngine.defaultDateKey(for: value)
             }
         }
+    }
+
+    private var quranVerse: some View {
+        VStack(alignment: .trailing, spacing: 0) {
+            Text("إِنَّ ٱلصَّلَوٰةَ كَانَتْ عَلَى ٱلْمُؤْمِنِينَ كِتَـٰبًا مَّوْقُوتًا")
+                .font(.custom("AmiriQuran-Regular", size: 16))
+                .foregroundStyle(accentColor)
+                .lineLimit(1)
+                .minimumScaleFactor(0.54)
+
+            Text("النساء ١٠٣")
+                .font(.caption2.weight(.bold))
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+        }
+        .frame(maxWidth: .infinity, alignment: .trailing)
     }
 
     private var header: some View {
@@ -161,18 +179,11 @@ struct ContentView: View {
     }
 
     private var footerNote: some View {
-        VStack(alignment: .trailing, spacing: 1) {
-            Text("إِنَّ ٱلصَّلَوٰةَ كَانَتْ عَلَى ٱلْمُؤْمِنِينَ كِتَـٰبًا مَّوْقُوتًا")
-                .font(.custom("AmiriQuran-Regular", size: 17))
-                .foregroundStyle(accentColor)
-                .lineLimit(1)
-                .minimumScaleFactor(0.58)
-
-            Text("النساء ١٠٣")
-                .font(.caption2.weight(.bold))
-                .foregroundStyle(.secondary)
-                .lineLimit(1)
-        }
+        Text("مواقيت تل السبع المحلية · تتحدث تلقائيًا")
+            .font(.caption2.weight(.bold))
+            .foregroundStyle(accentColor)
+            .lineLimit(1)
+            .minimumScaleFactor(0.75)
         .frame(maxWidth: .infinity, alignment: .trailing)
     }
 
