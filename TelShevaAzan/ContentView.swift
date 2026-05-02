@@ -1,5 +1,4 @@
 import SwiftUI
-import WidgetKit
 
 struct ContentView: View {
     @Environment(\.colorScheme) private var colorScheme
@@ -27,19 +26,13 @@ struct ContentView: View {
                     }
                 }
 
-                Text("النموذج الحالي يغطي مايو 2026. في التطبيق النهائي نضيف جدول السنة كاملًا.")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-                    .padding(.top, 6)
+                footerNote
 
                 Text(AppInfo.displayVersion)
                     .font(.caption2.monospacedDigit().weight(.semibold))
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding(.top, 8)
-
-                widgetDiagnosticsPanel
             }
             .padding(18)
         }
@@ -70,7 +63,7 @@ struct ContentView: View {
 
                 Spacer()
 
-                Text("نموذج أولي \(AppInfo.displayVersion)")
+                Text("مواقيت محلية")
                     .font(.caption.weight(.bold))
                     .foregroundStyle(accentColor)
             }
@@ -84,70 +77,6 @@ struct ContentView: View {
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, alignment: .trailing)
         }
-    }
-
-    private var widgetDiagnosticsPanel: some View {
-        VStack(alignment: .trailing, spacing: 6) {
-            HStack {
-                Button {
-                    WidgetCenter.shared.reloadAllTimelines()
-                } label: {
-                    Label("تحديث", systemImage: "arrow.clockwise")
-                }
-                .buttonStyle(CompactButtonStyle(isNight: isNight))
-
-                Spacer()
-
-                Text("تشخيص الودجت")
-                    .font(.caption.weight(.black))
-                    .foregroundStyle(accentColor)
-            }
-
-            ForEach(widgetDiagnosticLines, id: \.self) { line in
-                Text(line)
-                    .font(.caption2.monospacedDigit())
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-            }
-        }
-        .padding(12)
-        .background(rowBackground(isActive: false))
-        .overlay(
-            RoundedRectangle(cornerRadius: 8)
-                .stroke(rowBorder(isActive: false))
-        )
-        .clipShape(RoundedRectangle(cornerRadius: 8))
-    }
-
-    private var widgetDiagnosticLines: [String] {
-        guard let pluginsURL = Bundle.main.builtInPlugInsURL else {
-            return ["PlugIns: غير موجود"]
-        }
-
-        let pluginURLs = (try? FileManager.default.contentsOfDirectory(
-            at: pluginsURL,
-            includingPropertiesForKeys: nil
-        ))?.filter { $0.pathExtension == "appex" } ?? []
-
-        guard let widgetURL = pluginURLs.first(where: { $0.lastPathComponent.contains("Widget") }) ?? pluginURLs.first else {
-            return ["PlugIns: 0", "Widget appex: غير موجود"]
-        }
-
-        let infoURL = widgetURL.appendingPathComponent("Info.plist")
-        let info = NSDictionary(contentsOf: infoURL) as? [String: Any]
-        let bundleID = info?["CFBundleIdentifier"] as? String ?? "--"
-        let executable = info?["CFBundleExecutable"] as? String ?? "--"
-        let extensionInfo = info?["NSExtension"] as? [String: Any]
-        let point = extensionInfo?["NSExtensionPointIdentifier"] as? String ?? "--"
-        let executableExists = FileManager.default.fileExists(atPath: widgetURL.appendingPathComponent(executable).path)
-
-        return [
-            "PlugIns: \(pluginURLs.count)",
-            "Widget: \(widgetURL.lastPathComponent)",
-            "ID: \(bundleID)",
-            "Point: \(point)",
-            "Exec: \(executableExists ? "OK" : "missing")"
-        ]
     }
 
     private func nextPrayerPanel(next: PrayerTime?) -> some View {
@@ -171,7 +100,7 @@ struct ContentView: View {
                 .background(countdownBackground)
                 .clipShape(RoundedRectangle(cornerRadius: 8))
 
-            Text("القدس الدهري + دقيقتين لتل السبع + التوقيت الصيفي")
+            Text("مواقيت تل السبع المحلية")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
         }
@@ -203,6 +132,20 @@ struct ContentView: View {
             .disabled(!PrayerEngine.canMove(from: selectedDateKey, by: -1))
         }
         .frame(maxWidth: .infinity, alignment: .trailing)
+    }
+
+    private var footerNote: some View {
+        VStack(alignment: .trailing, spacing: 4) {
+            Text("مواقيت تل السبع المحلية")
+                .font(.footnote.weight(.bold))
+                .foregroundStyle(accentColor)
+
+            Text("الصلاة القادمة تتحدث تلقائيًا كل يوم")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .trailing)
+        .padding(.top, 6)
     }
 
     private func prayerRow(_ item: PrayerTime, activeKey: PrayerKey?) -> some View {
