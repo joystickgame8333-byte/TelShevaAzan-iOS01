@@ -254,6 +254,7 @@ struct TelShevaAzanWidgetView: View {
     }
 }
 
+@main
 struct TelShevaAzanWidget: Widget {
     let kind = "com.omaralasam.telshevaazan.nextPrayer"
 
@@ -275,13 +276,6 @@ struct TelShevaAzanWidget: Widget {
             .description("يعرض الصلاة القادمة ووقت الأذان والباقي عليها في تل السبع.")
             .supportedFamilies([.systemSmall, .systemMedium])
         }
-    }
-}
-
-@main
-struct TelShevaAzanWidgetBundle: WidgetBundle {
-    var body: some Widget {
-        TelShevaAzanWidget()
     }
 }
 

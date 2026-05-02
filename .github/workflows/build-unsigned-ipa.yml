@@ -93,7 +93,11 @@ jobs:
           /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$PLUGIN_PATH/Info.plist" || true
           /usr/libexec/PlistBuddy -c "Print :CFBundlePackageType" "$PLUGIN_PATH/Info.plist" || true
           /usr/libexec/PlistBuddy -c "Print :NSExtension:NSExtensionPointIdentifier" "$PLUGIN_PATH/Info.plist" || true
-          /usr/libexec/PlistBuddy -c "Print :NSExtension:NSExtensionAttributes:WKAppBundleIdentifier" "$PLUGIN_PATH/Info.plist" || true
+          if /usr/libexec/PlistBuddy -c "Print :NSExtension:NSExtensionAttributes:WKAppBundleIdentifier" "$PLUGIN_PATH/Info.plist"; then
+            echo "Widget extension still contains WatchKit-only WKAppBundleIdentifier"
+            exit 1
+          fi
+          /usr/libexec/PlistBuddy -c "Print :CFBundleDisplayName" "$PLUGIN_PATH/Info.plist" || true
           echo "App icon registration:"
           /usr/libexec/PlistBuddy -c "Print :CFBundleIcons:CFBundlePrimaryIcon:CFBundleIconName" "$APP_PATH/Info.plist" || true
           /usr/libexec/PlistBuddy -c "Print :CFBundleIcons:CFBundlePrimaryIcon:CFBundleIconFiles" "$APP_PATH/Info.plist"
