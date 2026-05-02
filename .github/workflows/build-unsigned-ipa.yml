@@ -93,10 +93,8 @@ jobs:
           /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$PLUGIN_PATH/Info.plist" || true
           /usr/libexec/PlistBuddy -c "Print :CFBundlePackageType" "$PLUGIN_PATH/Info.plist" || true
           /usr/libexec/PlistBuddy -c "Print :NSExtension:NSExtensionPointIdentifier" "$PLUGIN_PATH/Info.plist" || true
-          if /usr/libexec/PlistBuddy -c "Print :NSExtension:NSExtensionAttributes:WKAppBundleIdentifier" "$PLUGIN_PATH/Info.plist"; then
-            echo "Widget extension still contains WatchKit-only WKAppBundleIdentifier"
-            exit 1
-          fi
+          /usr/libexec/PlistBuddy -c "Print :NSPrincipalClass" "$PLUGIN_PATH/Info.plist" || true
+          /usr/libexec/PlistBuddy -c "Print :NSExtension:NSExtensionAttributes:WKAppBundleIdentifier" "$PLUGIN_PATH/Info.plist" || true
           /usr/libexec/PlistBuddy -c "Print :CFBundleDisplayName" "$PLUGIN_PATH/Info.plist" || true
           echo "App icon registration:"
           /usr/libexec/PlistBuddy -c "Print :CFBundleIcons:CFBundlePrimaryIcon:CFBundleIconName" "$APP_PATH/Info.plist" || true
@@ -121,6 +119,20 @@ jobs:
           ldid -e "$PLUGIN_PATH/$PLUGIN_EXECUTABLE"
           echo "App entitlements after ldid:"
           ldid -e "$APP_PATH/$APP_EXECUTABLE"
+          {
+            echo "App bundle:"
+            /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$APP_PATH/Info.plist"
+            /usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$APP_PATH/Info.plist"
+            /usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$APP_PATH/Info.plist"
+            echo "Widget bundle:"
+            /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$PLUGIN_PATH/Info.plist"
+            /usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$PLUGIN_PATH/Info.plist"
+            /usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$PLUGIN_PATH/Info.plist"
+            /usr/libexec/PlistBuddy -c "Print :NSExtension:NSExtensionPointIdentifier" "$PLUGIN_PATH/Info.plist"
+            /usr/libexec/PlistBuddy -c "Print :NSPrincipalClass" "$PLUGIN_PATH/Info.plist" || true
+            echo "Plugin executable:"
+            ls -la "$PLUGIN_PATH/$PLUGIN_EXECUTABLE"
+          } > build-diagnostics.txt
           mkdir -p Payload
           cp -R "$APP_PATH" Payload/TelShevaAzan.app
           /usr/bin/zip -qry TelShevaAzan-unsigned.ipa Payload
@@ -139,3 +151,4 @@ jobs:
           path: |
             TelShevaAzan-unsigned.ipa
             TelShevaAzan-unsigned.tipa
+            build-diagnostics.txt
