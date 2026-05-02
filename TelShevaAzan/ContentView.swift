@@ -13,29 +13,34 @@ struct ContentView: View {
         let next = PrayerEngine.nextPrayer(for: selectedDateKey, now: now)
 
         GeometryReader { proxy in
+            let compactHeight = proxy.size.height < 720
+            let sectionSpacing: CGFloat = compactHeight ? 6 : 8
+            let rowSpacing: CGFloat = compactHeight ? 6 : 8
+            let rowHeight = min(CGFloat(52), max(CGFloat(40), (proxy.size.height - 390) / 6))
+
             ZStack {
                 background
 
-                VStack(alignment: .trailing, spacing: 7) {
+                VStack(alignment: .trailing, spacing: sectionSpacing) {
                     header
 
-                    nextPrayerPanel(next: next)
+                    nextPrayerPanel(next: next, compact: compactHeight)
 
                     dateControls
 
-                    VStack(spacing: 6) {
+                    VStack(spacing: rowSpacing) {
                         ForEach(schedule.displayTimes) { item in
-                            prayerRow(item, activeKey: next?.key)
+                            prayerRow(item, activeKey: next?.key, rowHeight: rowHeight)
                         }
                     }
 
-                    footerNote
+                    Spacer(minLength: 8)
 
-                    Spacer(minLength: 0)
+                    footerNote
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 8)
-                .padding(.bottom, 6)
+                .padding(.bottom, 18)
                 .frame(width: proxy.size.width, height: proxy.size.height, alignment: .topTrailing)
                 .environment(\.layoutDirection, .leftToRight)
                 .multilineTextAlignment(.trailing)
@@ -89,7 +94,7 @@ struct ContentView: View {
         }
     }
 
-    private func nextPrayerPanel(next: PrayerTime?) -> some View {
+    private func nextPrayerPanel(next: PrayerTime?, compact: Bool) -> some View {
         HStack(alignment: .center, spacing: 12) {
             VStack(alignment: .leading, spacing: 5) {
                 Text(countdownText(for: next))
@@ -116,19 +121,19 @@ struct ContentView: View {
                     .lineLimit(1)
 
                 Text(next?.title ?? "--")
-                    .font(.system(size: 30, weight: .black, design: .rounded))
+                    .font(.system(size: compact ? 29 : 32, weight: .black, design: .rounded))
                     .lineLimit(1)
                     .minimumScaleFactor(0.72)
 
                 Text(next?.time ?? "--:--")
-                    .font(.system(size: 36, weight: .black, design: .rounded))
+                    .font(.system(size: compact ? 35 : 40, weight: .black, design: .rounded))
                     .foregroundStyle(accentColor)
                     .lineLimit(1)
                     .minimumScaleFactor(0.72)
             }
         }
         .frame(maxWidth: .infinity, alignment: .trailing)
-        .padding(12)
+        .padding(compact ? 12 : 14)
         .background(panelBackground)
         .clipShape(RoundedRectangle(cornerRadius: 8))
         .shadow(color: .black.opacity(isNight ? 0.22 : 0.06), radius: 12, y: 6)
@@ -166,7 +171,7 @@ struct ContentView: View {
         .frame(maxWidth: .infinity, alignment: .trailing)
     }
 
-    private func prayerRow(_ item: PrayerTime, activeKey: PrayerKey?) -> some View {
+    private func prayerRow(_ item: PrayerTime, activeKey: PrayerKey?, rowHeight: CGFloat) -> some View {
         HStack {
             Text(item.time)
                 .font(.headline.monospacedDigit().weight(.bold))
@@ -180,7 +185,7 @@ struct ContentView: View {
         }
         .lineLimit(1)
         .padding(.horizontal, 12)
-        .frame(height: 39)
+        .frame(height: rowHeight)
         .background(rowBackground(isActive: item.key == activeKey))
         .overlay(
             RoundedRectangle(cornerRadius: 8)
