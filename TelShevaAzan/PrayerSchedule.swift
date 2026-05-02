@@ -1,6 +1,6 @@
 import Foundation
 
-enum PrayerKey: String, CaseIterable, Identifiable {
+enum PrayerKey: String, CaseIterable, Hashable, Identifiable {
     case fajr
     case sunrise
     case dhuhr
@@ -57,7 +57,7 @@ enum PrayerEngine {
     static let timeZone = TimeZone(identifier: "Asia/Jerusalem")!
     static let calendar: Calendar = {
         var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = timeZone
+        calendar.timeZone = Self.timeZone
         return calendar
     }()
 
@@ -102,38 +102,38 @@ enum PrayerEngine {
     ]
 
     static let telShevaSchedule: [String: [PrayerKey: String]] = {
-        let totalOffset = telShevaOffsetMinutes + daylightSavingOffsetMinutes
-        return jerusalemMayWinter.mapValues { times in
-            times.mapValues { addMinutes(totalOffset, to: $0) }
+        let totalOffset = Self.telShevaOffsetMinutes + Self.daylightSavingOffsetMinutes
+        return Self.jerusalemMayWinter.mapValues { times in
+            times.mapValues { Self.addMinutes(totalOffset, to: $0) }
         }
     }()
 
     static var availableDateKeys: [String] {
-        telShevaSchedule.keys.sorted()
+        Self.telShevaSchedule.keys.sorted()
     }
 
     static func defaultDateKey(for date: Date = Date()) -> String {
-        let key = dateKey(for: date)
-        return telShevaSchedule[key] == nil ? (availableDateKeys.first ?? key) : key
+        let key = Self.dateKey(for: date)
+        return Self.telShevaSchedule[key] == nil ? (Self.availableDateKeys.first ?? key) : key
     }
 
     static func schedule(for dateKey: String) -> DaySchedule {
-        let resolvedKey = telShevaSchedule[dateKey] == nil ? defaultDateKey() : dateKey
-        return DaySchedule(dateKey: resolvedKey, times: telShevaSchedule[resolvedKey] ?? [:])
+        let resolvedKey = Self.telShevaSchedule[dateKey] == nil ? Self.defaultDateKey() : dateKey
+        return DaySchedule(dateKey: resolvedKey, times: Self.telShevaSchedule[resolvedKey] ?? [:])
     }
 
     static func nextPrayer(for dateKey: String, now: Date = Date()) -> PrayerTime? {
-        let schedule = schedule(for: dateKey)
-        let events = prayerOrder.compactMap { key -> PrayerTime? in
-            guard let time = schedule.times[key],
-                  let date = date(from: schedule.dateKey, time: time) else {
+        let daySchedule = Self.schedule(for: dateKey)
+        let events = Self.prayerOrder.compactMap { key -> PrayerTime? in
+            guard let time = daySchedule.times[key],
+                  let date = Self.date(from: daySchedule.dateKey, time: time) else {
                 return nil
             }
 
             return PrayerTime(key: key, title: key.title, time: time, date: date)
         }
 
-        if schedule.dateKey == Self.dateKey(for: now), let upcoming = events.first(where: { $0.date > now }) {
+        if daySchedule.dateKey == Self.dateKey(for: now), let upcoming = events.first(where: { $0.date > now }) {
             return upcoming
         }
 
@@ -141,22 +141,22 @@ enum PrayerEngine {
     }
 
     static func canMove(from dateKey: String, by offset: Int) -> Bool {
-        dateKey(from: dateKey, offset: offset) != nil
+        Self.dateKey(from: dateKey, offset: offset) != nil
     }
 
     static func dateKey(from dateKey: String, offset: Int) -> String? {
-        guard let index = availableDateKeys.firstIndex(of: dateKey) else { return nil }
+        guard let index = Self.availableDateKeys.firstIndex(of: dateKey) else { return nil }
         let nextIndex = index + offset
-        guard availableDateKeys.indices.contains(nextIndex) else { return nil }
-        return availableDateKeys[nextIndex]
+        guard Self.availableDateKeys.indices.contains(nextIndex) else { return nil }
+        return Self.availableDateKeys[nextIndex]
     }
 
     static func longDateLabel(for dateKey: String) -> String {
-        guard let date = date(from: dateKey, time: "12:00") else { return dateKey }
+        guard let date = Self.date(from: dateKey, time: "12:00") else { return dateKey }
 
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "ar")
-        formatter.timeZone = timeZone
+        formatter.timeZone = Self.timeZone
         formatter.dateStyle = .full
         return formatter.string(from: date)
     }
@@ -164,7 +164,7 @@ enum PrayerEngine {
     static func date(from dateKey: String, time: String) -> Date? {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.timeZone = timeZone
+        formatter.timeZone = Self.timeZone
         formatter.dateFormat = "yyyy-MM-dd HH:mm"
         return formatter.date(from: "\(dateKey) \(time)")
     }
@@ -172,7 +172,7 @@ enum PrayerEngine {
     private static func dateKey(for date: Date) -> String {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.timeZone = timeZone
+        formatter.timeZone = Self.timeZone
         formatter.dateFormat = "yyyy-MM-dd"
         return formatter.string(from: date)
     }
