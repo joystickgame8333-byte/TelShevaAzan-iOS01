@@ -44,11 +44,14 @@ struct TelShevaAzanWidgetView: View {
     private let mint = Color(red: 0.76, green: 0.93, blue: 0.87)
 
     var body: some View {
-        if isLockScreenFamily {
-            lockScreenLayout
-        } else {
-            homeScreenLayout
+        Group {
+            if isLockScreenFamily {
+                lockScreenLayout
+            } else {
+                homeScreenLayout
+            }
         }
+        .dynamicTypeSize(.xSmall ... .large)
     }
 
     private var isLockScreenFamily: Bool {
@@ -109,101 +112,134 @@ struct TelShevaAzanWidgetView: View {
     }
 
     private var smallHomeLayout: some View {
-        VStack(alignment: .trailing, spacing: 7) {
+        VStack(alignment: .trailing, spacing: 3) {
             HStack(spacing: 5) {
                 Image(systemName: "moon.stars.fill")
-                    .font(.caption.weight(.black))
+                    .font(.system(size: 11, weight: .black, design: .rounded))
                 Text("الصلاة القادمة")
-                    .font(.caption.weight(.black))
+                    .font(.system(size: 12, weight: .black, design: .rounded))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.78)
             }
             .foregroundColor(mint)
+            .frame(maxWidth: .infinity, alignment: .trailing)
 
-            Spacer(minLength: 0)
+            Spacer(minLength: 1)
 
             Text(nextTitle)
-                .font(.system(size: 25, weight: .black, design: .rounded))
+                .font(.system(size: 24, weight: .black, design: .rounded))
                 .foregroundColor(.white)
                 .lineLimit(1)
-                .minimumScaleFactor(0.72)
+                .minimumScaleFactor(0.64)
 
             Text(nextTime)
-                .font(.system(size: 38, weight: .black, design: .rounded))
+                .font(.system(size: 32, weight: .black, design: .rounded))
                 .monospacedDigit()
                 .foregroundColor(accent)
                 .lineLimit(1)
-                .minimumScaleFactor(0.74)
+                .minimumScaleFactor(0.68)
 
             liveRemainingText
-                .font(.caption.monospacedDigit().weight(.black))
+                .font(.system(size: 10, weight: .black, design: .rounded).monospacedDigit())
                 .foregroundColor(.white)
                 .lineLimit(1)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 5)
+                .minimumScaleFactor(0.68)
+                .padding(.horizontal, 7)
+                .padding(.vertical, 3)
                 .background(Color.white.opacity(0.13))
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .clipShape(RoundedRectangle(cornerRadius: 7))
 
-            Text("تل السبع \(AppInfo.displayVersion)")
-                .font(.caption2.monospacedDigit().weight(.bold))
-                .foregroundColor(mint.opacity(0.9))
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
+            HStack(spacing: 4) {
+                Text(AppInfo.displayVersion)
+                    .font(.system(size: 8, weight: .bold, design: .rounded).monospacedDigit())
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.65)
+
+                Spacer(minLength: 4)
+
+                Text("تل السبع")
+                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
+            }
+            .foregroundColor(mint.opacity(0.9))
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
-        .padding(13)
+        .padding(9)
     }
 
     private var mediumHomeLayout: some View {
-        HStack(alignment: .center, spacing: 13) {
-            VStack(spacing: 5) {
+        HStack(alignment: .top, spacing: 10) {
+            VStack(spacing: 2) {
                 ForEach(Array(entry.times.prefix(6))) { item in
-                    HStack(spacing: 8) {
-                        Text(item.time)
-                            .font(.caption.monospacedDigit().weight(.black))
-                            .foregroundColor(item.key == entry.nextPrayer?.key ? accent : .white.opacity(0.78))
-
-                        Spacer(minLength: 2)
-
-                        Text(item.title)
-                            .font(.caption.weight(.bold))
-                            .foregroundColor(.white.opacity(0.9))
-                    }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(item.key == entry.nextPrayer?.key ? Color.white.opacity(0.12) : Color.clear)
-                    .clipShape(RoundedRectangle(cornerRadius: 7))
+                    mediumPrayerRow(item)
                 }
             }
+            .frame(maxWidth: .infinity, alignment: .trailing)
 
-            VStack(alignment: .trailing, spacing: 7) {
+            VStack(alignment: .trailing, spacing: 4) {
                 Text("الصلاة القادمة")
-                    .font(.caption.weight(.black))
+                    .font(.system(size: 12, weight: .black, design: .rounded))
                     .foregroundColor(mint)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.78)
 
                 Text(nextTitle)
-                    .font(.system(size: 27, weight: .black, design: .rounded))
+                    .font(.system(size: 24, weight: .black, design: .rounded))
                     .foregroundColor(.white)
                     .lineLimit(1)
+                    .minimumScaleFactor(0.68)
 
                 Text(nextTime)
-                    .font(.system(size: 43, weight: .black, design: .rounded))
+                    .font(.system(size: 35, weight: .black, design: .rounded))
                     .monospacedDigit()
                     .foregroundColor(accent)
                     .lineLimit(1)
+                    .minimumScaleFactor(0.66)
 
                 liveRemainingText
-                    .font(.caption.monospacedDigit().weight(.black))
+                    .font(.system(size: 11, weight: .black, design: .rounded).monospacedDigit())
                     .foregroundColor(.white)
                     .lineLimit(1)
+                    .minimumScaleFactor(0.68)
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 3)
+                    .background(Color.white.opacity(0.13))
+                    .clipShape(RoundedRectangle(cornerRadius: 7))
 
                 Text("تل السبع \(AppInfo.displayVersion)")
-                    .font(.caption2.monospacedDigit().weight(.bold))
+                    .font(.system(size: 9, weight: .bold, design: .rounded).monospacedDigit())
                     .foregroundColor(mint.opacity(0.88))
                     .lineLimit(1)
+                    .minimumScaleFactor(0.7)
             }
-            .frame(maxWidth: .infinity, alignment: .trailing)
+            .frame(width: 124, alignment: .trailing)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(13)
+        .padding(10)
+    }
+
+    private func mediumPrayerRow(_ item: PrayerTime) -> some View {
+        let isActive = item.key == entry.nextPrayer?.key
+
+        return HStack(spacing: 6) {
+            Text(item.title)
+                .font(.system(size: 13, weight: .bold, design: .rounded))
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+
+            Spacer(minLength: 2)
+
+            Text(item.time)
+                .font(.system(size: 13, weight: .black, design: .rounded).monospacedDigit())
+                .lineLimit(1)
+                .minimumScaleFactor(0.72)
+        }
+        .foregroundColor(isActive ? accent : .white.opacity(0.86))
+        .padding(.horizontal, 7)
+        .frame(height: 18)
+        .background(isActive ? Color.white.opacity(0.12) : Color.clear)
+        .clipShape(RoundedRectangle(cornerRadius: 7))
     }
 
     @ViewBuilder
