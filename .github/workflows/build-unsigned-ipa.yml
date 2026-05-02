@@ -78,6 +78,9 @@ jobs:
             cp -f "TelShevaAzan/$icon" "$APP_PATH/$icon"
           done
 
+          echo "Force-copy bundled Quran font into the app bundle:"
+          cp -f "TelShevaAzan/Fonts/AmiriQuran-Regular.ttf" "$APP_PATH/AmiriQuran-Regular.ttf"
+
           echo "Force app icon keys into the built Info.plist:"
           /usr/libexec/PlistBuddy -c "Delete :CFBundleIcons" "$APP_PATH/Info.plist" || true
           /usr/libexec/PlistBuddy -c "Add :CFBundleIcons dict" "$APP_PATH/Info.plist"
@@ -88,6 +91,11 @@ jobs:
           /usr/libexec/PlistBuddy -c "Add :CFBundleIcons:CFBundlePrimaryIcon:CFBundleIconFiles:2 string Icon-40" "$APP_PATH/Info.plist"
           /usr/libexec/PlistBuddy -c "Add :CFBundleIcons:CFBundlePrimaryIcon:CFBundleIconFiles:3 string Icon-60" "$APP_PATH/Info.plist"
           /usr/libexec/PlistBuddy -c "Add :CFBundleIcons:CFBundlePrimaryIcon:CFBundleIconName string AppIcon" "$APP_PATH/Info.plist"
+
+          echo "Force app font registration into the built Info.plist:"
+          /usr/libexec/PlistBuddy -c "Delete :UIAppFonts" "$APP_PATH/Info.plist" || true
+          /usr/libexec/PlistBuddy -c "Add :UIAppFonts array" "$APP_PATH/Info.plist"
+          /usr/libexec/PlistBuddy -c "Add :UIAppFonts:0 string AmiriQuran-Regular.ttf" "$APP_PATH/Info.plist"
 
           echo "Widget extension registration:"
           /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$PLUGIN_PATH/Info.plist" || true
@@ -106,6 +114,11 @@ jobs:
               exit 1
             fi
           done
+          if [ ! -f "$APP_PATH/AmiriQuran-Regular.ttf" ]; then
+            echo "Missing packaged Quran font: $APP_PATH/AmiriQuran-Regular.ttf"
+            find "$APP_PATH" -maxdepth 3 -type f -name '*.ttf' -print
+            exit 1
+          fi
           echo "Packaged app contents:"
           find "$APP_PATH" -maxdepth 4 -print | sort
 
@@ -141,6 +154,7 @@ jobs:
           /usr/bin/unzip -l TelShevaAzan-unsigned.ipa > ipa-contents.txt
           awk '/Payload\/TelShevaAzan.app\/Icon-|Payload\/TelShevaAzan.app\/PlugIns\/.*\.appex\// { print; shown++; if (shown >= 80) exit }' ipa-contents.txt
           grep -q 'Payload/TelShevaAzan.app/Icon-60@3x.png' ipa-contents.txt
+          grep -q 'Payload/TelShevaAzan.app/AmiriQuran-Regular.ttf' ipa-contents.txt
           grep -q 'Payload/TelShevaAzan.app/PlugIns/.*\.appex/' ipa-contents.txt
           grep -q 'Payload/TelShevaAzan.app/PlugIns/.*/TelShevaAzanWidgetExtension' ipa-contents.txt
 
