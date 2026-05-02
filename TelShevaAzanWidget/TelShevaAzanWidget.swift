@@ -106,14 +106,6 @@ struct TelShevaAzanWidgetView: View {
         entry.nextPrayer?.time ?? "--:--"
     }
 
-    private var liveRemainingText: Text {
-        guard let nextDate = entry.nextPrayer?.date else {
-            return Text("باقي --")
-        }
-
-        return Text("باقي ") + Text(nextDate, style: .timer)
-    }
-
     private var compactRemainingText: String {
         guard let nextDate = entry.nextPrayer?.date else { return "باقي --" }
         let seconds = max(Int(nextDate.timeIntervalSince(entry.date)), 0)
@@ -153,60 +145,61 @@ struct TelShevaAzanWidgetView: View {
     }
 
     private var smallHomeLayout: some View {
-        VStack(alignment: .trailing, spacing: 3) {
+        VStack(alignment: .trailing, spacing: 4) {
             HStack(spacing: 5) {
-                Image(systemName: isNight ? "moon.stars.fill" : "sun.max.fill")
+                Text("تل السبع")
                     .font(.system(size: 11, weight: .black, design: .rounded))
-                Text("الصلاة القادمة")
-                    .font(.system(size: 12, weight: .black, design: .rounded))
                     .lineLimit(1)
-                    .minimumScaleFactor(0.78)
+
+                Spacer(minLength: 4)
+
+                Image(systemName: isNight ? "moon.stars.fill" : "sun.max.fill")
+                    .font(.system(size: 12, weight: .black, design: .rounded))
             }
             .foregroundColor(secondaryText)
             .frame(maxWidth: .infinity, alignment: .trailing)
 
             Spacer(minLength: 1)
 
+            Text("الصلاة القادمة")
+                .font(.system(size: 12, weight: .black, design: .rounded))
+                .foregroundColor(secondaryText)
+                .lineLimit(1)
+                .minimumScaleFactor(0.78)
+                .frame(maxWidth: .infinity, alignment: .trailing)
+
             Text(nextTitle)
-                .font(.system(size: 24, weight: .black, design: .rounded))
+                .font(.system(size: 28, weight: .black, design: .rounded))
                 .foregroundColor(primaryText)
                 .lineLimit(1)
                 .minimumScaleFactor(0.64)
 
             Text(nextTime)
-                .font(.system(size: 32, weight: .black, design: .rounded))
+                .font(.system(size: 34, weight: .black, design: .rounded))
                 .monospacedDigit()
                 .foregroundColor(accent)
                 .lineLimit(1)
                 .minimumScaleFactor(0.68)
 
-            liveRemainingText
-                .font(.system(size: 10, weight: .black, design: .rounded).monospacedDigit())
-                .foregroundColor(primaryText)
-                .lineLimit(1)
-                .minimumScaleFactor(0.68)
-                .padding(.horizontal, 7)
-                .padding(.vertical, 3)
-                .background(chipBackground)
-                .clipShape(RoundedRectangle(cornerRadius: 7))
+            remainingChip(fontSize: 11)
 
             HStack(spacing: 4) {
-                Text(AppInfo.displayVersion)
-                    .font(.system(size: 8, weight: .bold, design: .rounded).monospacedDigit())
+                Text("v\(AppInfo.build)")
+                    .font(.system(size: 8, weight: .black, design: .rounded).monospacedDigit())
                     .lineLimit(1)
-                    .minimumScaleFactor(0.65)
+                    .foregroundColor(secondaryText.opacity(0.68))
 
                 Spacer(minLength: 4)
 
-                Text("تل السبع")
-                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                Text("مواقيت محلية")
+                    .font(.system(size: 9, weight: .bold, design: .rounded))
                     .lineLimit(1)
                     .minimumScaleFactor(0.75)
             }
             .foregroundColor(secondaryText.opacity(0.94))
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
-        .padding(9)
+        .padding(10)
     }
 
     private var mediumHomeLayout: some View {
@@ -238,15 +231,7 @@ struct TelShevaAzanWidgetView: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.66)
 
-                liveRemainingText
-                    .font(.system(size: 11, weight: .black, design: .rounded).monospacedDigit())
-                    .foregroundColor(primaryText)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.68)
-                    .padding(.horizontal, 7)
-                    .padding(.vertical, 3)
-                    .background(chipBackground)
-                    .clipShape(RoundedRectangle(cornerRadius: 7))
+                remainingChip(fontSize: 11)
 
                 Text("تل السبع \(AppInfo.displayVersion)")
                     .font(.system(size: 9, weight: .bold, design: .rounded).monospacedDigit())
@@ -258,6 +243,29 @@ struct TelShevaAzanWidgetView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(10)
+    }
+
+    private func remainingChip(fontSize: CGFloat) -> some View {
+        HStack(spacing: 4) {
+            Text("باقي")
+
+            if let nextDate = entry.nextPrayer?.date {
+                Text(nextDate, style: .timer)
+                    .monospacedDigit()
+            } else {
+                Text("--")
+                    .monospacedDigit()
+            }
+        }
+        .font(.system(size: fontSize, weight: .black, design: .rounded))
+        .foregroundColor(primaryText)
+        .lineLimit(1)
+        .minimumScaleFactor(0.66)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(chipBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 7))
+        .environment(\.layoutDirection, .rightToLeft)
     }
 
     private func mediumPrayerRow(_ item: PrayerTime) -> some View {
