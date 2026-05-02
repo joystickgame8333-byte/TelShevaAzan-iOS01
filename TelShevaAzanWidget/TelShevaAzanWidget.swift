@@ -316,6 +316,8 @@ struct TelShevaAzanWidgetView: View {
                     Text("تل السبع")
                         .font(.system(size: 10, weight: .semibold, design: .rounded))
                         .lineLimit(1)
+                        .frame(maxWidth: .infinity, alignment: .trailing)
+                        .multilineTextAlignment(.trailing)
 
                     HStack(alignment: .firstTextBaseline, spacing: 4) {
                         Text(nextTime)
@@ -327,13 +329,17 @@ struct TelShevaAzanWidgetView: View {
                             .lineLimit(1)
                             .minimumScaleFactor(0.72)
                     }
+                    .frame(maxWidth: .infinity, alignment: .trailing)
 
                     Text(compactRemainingText)
                         .font(.system(size: 12, weight: .bold, design: .rounded).monospacedDigit())
                         .lineLimit(1)
                         .minimumScaleFactor(0.75)
+                        .frame(maxWidth: .infinity, alignment: .trailing)
+                        .multilineTextAlignment(.trailing)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
+                .environment(\.layoutDirection, .leftToRight)
             default:
                 smallHomeLayout
             }
