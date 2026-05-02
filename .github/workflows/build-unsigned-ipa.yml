@@ -46,24 +46,33 @@ jobs:
         run: |
           set -euxo pipefail
           APP_PATH="$(find build/Build/Products -path '*Release-iphoneos/*.app' -print -quit)"
-          APPEX_PATH="$(find build/Build/Products -path '*Release-iphoneos/*.appex' -print -quit)"
+          APPEX_PATH="$(find build/Build/Products -path '*Release-iphoneos/*.appex' ! -path '*/PlugIns/*.appex' -print -quit)"
           if [ -z "$APP_PATH" ]; then
             echo "Built .app was not found"
             exit 1
           fi
-          if [ -z "$APPEX_PATH" ]; then
+          mkdir -p "$APP_PATH/PlugIns"
+          EMBEDDED_APPEX_PATH="$(find "$APP_PATH/PlugIns" -maxdepth 1 -name '*.appex' -print -quit 2>/dev/null || true)"
+          if [ -n "$APPEX_PATH" ]; then
+            rm -rf "$APP_PATH/PlugIns/"*.appex
+            cp -R "$APPEX_PATH" "$APP_PATH/PlugIns/"
+          elif [ -n "$EMBEDDED_APPEX_PATH" ]; then
+            echo "Widget extension is already embedded in the app bundle"
+          else
             echo "Built widget .appex was not found"
-            find build/Build/Products -maxdepth 5 -print
+            find build/Build/Products -maxdepth 6 -print
             exit 1
           fi
-          mkdir -p "$APP_PATH/PlugIns"
-          rm -rf "$APP_PATH/PlugIns/"*.appex
-          cp -R "$APPEX_PATH" "$APP_PATH/PlugIns/"
           PLUGIN_PATH="$(find "$APP_PATH/PlugIns" -maxdepth 1 -name '*.appex' -print -quit)"
+          if [ -z "$PLUGIN_PATH" ]; then
+            echo "Widget extension was not packaged into PlugIns"
+            find "$APP_PATH" -maxdepth 5 -print
+            exit 1
+          fi
           echo "Widget extension registration:"
-          /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$PLUGIN_PATH/Info.plist"
-          /usr/libexec/PlistBuddy -c "Print :CFBundlePackageType" "$PLUGIN_PATH/Info.plist"
-          /usr/libexec/PlistBuddy -c "Print :NSExtension:NSExtensionPointIdentifier" "$PLUGIN_PATH/Info.plist"
+          /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$PLUGIN_PATH/Info.plist" || true
+          /usr/libexec/PlistBuddy -c "Print :CFBundlePackageType" "$PLUGIN_PATH/Info.plist" || true
+          /usr/libexec/PlistBuddy -c "Print :NSExtension:NSExtensionPointIdentifier" "$PLUGIN_PATH/Info.plist" || true
           echo "Packaged app contents:"
           find "$APP_PATH" -maxdepth 4 -print | sort
           codesign --force --sign - "$APP_PATH/PlugIns/"*.appex

@@ -21,8 +21,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.example.TelShevaAzan
         PRODUCT_NAME: TelShevaAzan
-        MARKETING_VERSION: 0.2.2
-        CURRENT_PROJECT_VERSION: 8
+        MARKETING_VERSION: 0.2.3
+        CURRENT_PROJECT_VERSION: 9
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_CFBundleDisplayName: "أذان تل السبع"
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
@@ -47,8 +47,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.example.TelShevaAzan.widget
         PRODUCT_NAME: TelShevaAzanWidgetExtension
-        MARKETING_VERSION: 0.2.2
-        CURRENT_PROJECT_VERSION: 8
+        MARKETING_VERSION: 0.2.3
+        CURRENT_PROJECT_VERSION: 9
         APPLICATION_EXTENSION_API_ONLY: YES
         CODE_SIGN_STYLE: Manual
 schemes:
