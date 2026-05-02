@@ -34,12 +34,11 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.omaralasam.telshevaazan
         PRODUCT_NAME: TelShevaAzan
-        MARKETING_VERSION: 0.2.6
-        CURRENT_PROJECT_VERSION: 12
+        MARKETING_VERSION: 0.2.7
+        CURRENT_PROJECT_VERSION: 13
         TARGETED_DEVICE_FAMILY: 1
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
-        CODE_SIGN_ENTITLEMENTS: TelShevaAzan/TelShevaAzan.entitlements
         CODE_SIGN_STYLE: Manual
     dependencies:
       - target: TelShevaAzanWidgetExtension
@@ -60,10 +59,9 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.omaralasam.telshevaazan.widget
         PRODUCT_NAME: TelShevaAzanWidgetExtension
-        MARKETING_VERSION: 0.2.6
-        CURRENT_PROJECT_VERSION: 12
+        MARKETING_VERSION: 0.2.7
+        CURRENT_PROJECT_VERSION: 13
         APPLICATION_EXTENSION_API_ONLY: YES
-        CODE_SIGN_ENTITLEMENTS: TelShevaAzanWidget/TelShevaAzanWidget.entitlements
         CODE_SIGN_STYLE: Manual
 schemes:
   TelShevaAzan:
