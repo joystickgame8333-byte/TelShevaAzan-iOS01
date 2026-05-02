@@ -15,21 +15,31 @@ targets:
       - path: TelShevaAzan
         excludes:
           - Assets.xcassets
+          - Info.plist
+          - "*.entitlements"
+          - "Icon-*.png"
+    info:
+      path: TelShevaAzan/Info.plist
     resources:
       - path: TelShevaAzan/Assets.xcassets
+      - path: TelShevaAzan/Icon-20@2x.png
+      - path: TelShevaAzan/Icon-20@3x.png
+      - path: TelShevaAzan/Icon-29@2x.png
+      - path: TelShevaAzan/Icon-29@3x.png
+      - path: TelShevaAzan/Icon-40@2x.png
+      - path: TelShevaAzan/Icon-40@3x.png
+      - path: TelShevaAzan/Icon-60@2x.png
+      - path: TelShevaAzan/Icon-60@3x.png
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.omaralasam.telshevaazan
         PRODUCT_NAME: TelShevaAzan
-        MARKETING_VERSION: 0.2.5
-        CURRENT_PROJECT_VERSION: 11
-        GENERATE_INFOPLIST_FILE: YES
-        INFOPLIST_KEY_CFBundleDisplayName: "أذان تل السبع"
-        INFOPLIST_KEY_UILaunchScreen_Generation: YES
-        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone: UIInterfaceOrientationPortrait
+        MARKETING_VERSION: 0.2.6
+        CURRENT_PROJECT_VERSION: 12
         TARGETED_DEVICE_FAMILY: 1
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        CODE_SIGN_ENTITLEMENTS: TelShevaAzan/TelShevaAzan.entitlements
         CODE_SIGN_STYLE: Manual
     dependencies:
       - target: TelShevaAzanWidgetExtension
@@ -39,6 +49,9 @@ targets:
     platform: iOS
     sources:
       - path: TelShevaAzanWidget
+        excludes:
+          - Info.plist
+          - "*.entitlements"
       - path: TelShevaAzan/PrayerSchedule.swift
       - path: TelShevaAzan/AppInfo.swift
     info:
@@ -47,9 +60,10 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.omaralasam.telshevaazan.widget
         PRODUCT_NAME: TelShevaAzanWidgetExtension
-        MARKETING_VERSION: 0.2.5
-        CURRENT_PROJECT_VERSION: 11
+        MARKETING_VERSION: 0.2.6
+        CURRENT_PROJECT_VERSION: 12
         APPLICATION_EXTENSION_API_ONLY: YES
+        CODE_SIGN_ENTITLEMENTS: TelShevaAzanWidget/TelShevaAzanWidget.entitlements
         CODE_SIGN_STYLE: Manual
 schemes:
   TelShevaAzan:

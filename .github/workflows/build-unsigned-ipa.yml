@@ -76,17 +76,33 @@ jobs:
           /usr/libexec/PlistBuddy -c "Print :NSExtension:NSExtensionAttributes:WKAppBundleIdentifier" "$PLUGIN_PATH/Info.plist" || true
           echo "App icon registration:"
           /usr/libexec/PlistBuddy -c "Print :CFBundleIcons:CFBundlePrimaryIcon:CFBundleIconName" "$APP_PATH/Info.plist" || true
+          /usr/libexec/PlistBuddy -c "Print :CFBundleIcons:CFBundlePrimaryIcon:CFBundleIconFiles" "$APP_PATH/Info.plist"
+          for icon in Icon-20@2x.png Icon-20@3x.png Icon-29@2x.png Icon-29@3x.png Icon-40@2x.png Icon-40@3x.png Icon-60@2x.png Icon-60@3x.png; do
+            if [ ! -f "$APP_PATH/$icon" ]; then
+              echo "Missing packaged icon: $APP_PATH/$icon"
+              find "$APP_PATH" -maxdepth 2 -type f -name 'Icon-*.png' -print
+              exit 1
+            fi
+          done
           echo "Packaged app contents:"
           find "$APP_PATH" -maxdepth 4 -print | sort
-          codesign --force --sign - "$APP_PATH/PlugIns/"*.appex
-          codesign --force --deep --sign - "$APP_PATH"
+          codesign --force --sign - --entitlements TelShevaAzanWidget/TelShevaAzanWidget.entitlements "$PLUGIN_PATH"
+          codesign --force --sign - --entitlements TelShevaAzan/TelShevaAzan.entitlements "$APP_PATH"
+          echo "Widget entitlements after signing:"
+          codesign -d --entitlements :- "$PLUGIN_PATH" || true
+          echo "App entitlements after signing:"
+          codesign -d --entitlements :- "$APP_PATH" || true
+          codesign --verify --verbose=2 "$PLUGIN_PATH"
+          codesign --verify --verbose=2 "$APP_PATH"
           mkdir -p Payload
           cp -R "$APP_PATH" Payload/TelShevaAzan.app
           /usr/bin/zip -qry TelShevaAzan-unsigned.ipa Payload
           cp TelShevaAzan-unsigned.ipa TelShevaAzan-unsigned.tipa
-          echo "Final IPA widget check:"
+          echo "Final IPA widget and icon check:"
           /usr/bin/unzip -l TelShevaAzan-unsigned.ipa > ipa-contents.txt
-          awk '/Payload\/TelShevaAzan.app\/PlugIns\/.*\.appex\// { print; shown++; if (shown >= 40) exit }' ipa-contents.txt
+          awk '/Payload\/TelShevaAzan.app\/Icon-|Payload\/TelShevaAzan.app\/PlugIns\/.*\.appex\// { print; shown++; if (shown >= 80) exit }' ipa-contents.txt
+          grep -q 'Payload/TelShevaAzan.app/Icon-60@3x.png' ipa-contents.txt
+          grep -q 'Payload/TelShevaAzan.app/PlugIns/.*\.appex/' ipa-contents.txt
 
       - name: Upload IPA
         uses: actions/upload-artifact@v4
