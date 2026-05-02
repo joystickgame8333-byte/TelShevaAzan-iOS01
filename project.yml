@@ -24,8 +24,8 @@ targets:
       properties:
         CFBundleDisplayName: أذان تل السبع
         CFBundlePackageType: APPL
-        CFBundleShortVersionString: "0.4.7"
-        CFBundleVersion: "33"
+        CFBundleShortVersionString: "0.4.8"
+        CFBundleVersion: "34"
         CFBundleIcons:
           CFBundlePrimaryIcon:
             CFBundleIconFiles:
@@ -54,8 +54,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.omaralasam.telshevaazan
         PRODUCT_NAME: TelShevaAzan
-        MARKETING_VERSION: 0.4.7
-        CURRENT_PROJECT_VERSION: 33
+        MARKETING_VERSION: 0.4.8
+        CURRENT_PROJECT_VERSION: 34
         TARGETED_DEVICE_FAMILY: 1
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
@@ -78,8 +78,8 @@ targets:
       properties:
         CFBundleDisplayName: TelSheva Azan Widget
         CFBundlePackageType: XPC!
-        CFBundleShortVersionString: "0.4.7"
-        CFBundleVersion: "33"
+        CFBundleShortVersionString: "0.4.8"
+        CFBundleVersion: "34"
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
         NSPrincipalClass: ""
@@ -87,8 +87,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.omaralasam.telshevaazan.nextprayerwidget
         PRODUCT_NAME: TelShevaAzanWidgetExtension
-        MARKETING_VERSION: 0.4.7
-        CURRENT_PROJECT_VERSION: 33
+        MARKETING_VERSION: 0.4.8
+        CURRENT_PROJECT_VERSION: 34
         IPHONEOS_DEPLOYMENT_TARGET: 16.0
         TARGETED_DEVICE_FAMILY: "1,2"
         APPLICATION_EXTENSION_API_ONLY: YES

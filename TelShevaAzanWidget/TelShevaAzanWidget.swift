@@ -90,12 +90,20 @@ struct TelShevaAzanWidgetView: View {
 
     private var widgetGradientColors: [Color] {
         isNight ? [
-            Color(red: 0.04, green: 0.35, blue: 0.33),
-            Color(red: 0.08, green: 0.24, blue: 0.22)
+            Color(red: 0.04, green: 0.49, blue: 0.45),
+            Color(red: 0.03, green: 0.30, blue: 0.28)
         ] : [
             Color(red: 0.86, green: 0.97, blue: 0.93),
             Color(red: 0.94, green: 0.91, blue: 0.74)
         ]
+    }
+
+    private var widgetBackground: some View {
+        LinearGradient(
+            colors: widgetGradientColors,
+            startPoint: .topTrailing,
+            endPoint: .bottomLeading
+        )
     }
 
     private var nextTitle: String {
@@ -120,11 +128,7 @@ struct TelShevaAzanWidgetView: View {
 
     private var homeScreenLayout: some View {
         ZStack {
-            LinearGradient(
-                colors: widgetGradientColors,
-                startPoint: .topTrailing,
-                endPoint: .bottomLeading
-            )
+            widgetBackground
             .ignoresSafeArea()
 
             switch family {
@@ -135,12 +139,9 @@ struct TelShevaAzanWidgetView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(widgetBackground)
         .widgetContainerBackground {
-            LinearGradient(
-                colors: widgetGradientColors,
-                startPoint: .topTrailing,
-                endPoint: .bottomLeading
-            )
+            widgetBackground
         }
     }
 
