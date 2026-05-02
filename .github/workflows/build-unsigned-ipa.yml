@@ -92,7 +92,7 @@ jobs:
           echo "Widget extension registration:"
           /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$PLUGIN_PATH/Info.plist" || true
           /usr/libexec/PlistBuddy -c "Print :CFBundlePackageType" "$PLUGIN_PATH/Info.plist" || true
-          /usr/libexec/PlistBuddy -c "Print :NSExtension:NSExtensionPointIdentifier" "$PLUGIN_PATH/Info.plist" || true
+          /usr/libexec/PlistBuddy -c "Print :NSExtension:NSExtensionPointIdentifier" "$PLUGIN_PATH/Info.plist"
           /usr/libexec/PlistBuddy -c "Print :NSPrincipalClass" "$PLUGIN_PATH/Info.plist" || true
           /usr/libexec/PlistBuddy -c "Print :NSExtension:NSExtensionAttributes:WKAppBundleIdentifier" "$PLUGIN_PATH/Info.plist" || true
           /usr/libexec/PlistBuddy -c "Print :CFBundleDisplayName" "$PLUGIN_PATH/Info.plist" || true
