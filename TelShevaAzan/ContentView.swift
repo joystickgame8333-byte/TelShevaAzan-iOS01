@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct ContentView: View {
+    @AppStorage("nightModeEnabled") private var nightModeEnabled = false
     @State private var now = Date()
     @State private var selectedDateKey = PrayerEngine.defaultDateKey()
     @State private var followsToday = true
@@ -40,6 +41,7 @@ struct ContentView: View {
             .padding(18)
         }
         .background(background)
+        .preferredColorScheme(nightModeEnabled ? .dark : .light)
         .onReceive(timer) { value in
             now = value
             if followsToday {
@@ -50,9 +52,20 @@ struct ContentView: View {
 
     private var header: some View {
         VStack(alignment: .trailing, spacing: 8) {
-            Text("نموذج أولي \(AppInfo.displayVersion)")
-                .font(.caption.weight(.bold))
-                .foregroundStyle(Color.teal)
+            HStack {
+                Button {
+                    nightModeEnabled.toggle()
+                } label: {
+                    Label(nightModeEnabled ? "نهار" : "ليل", systemImage: nightModeEnabled ? "sun.max.fill" : "moon.stars.fill")
+                }
+                .buttonStyle(NightModeButtonStyle(isNight: nightModeEnabled))
+
+                Spacer()
+
+                Text("نموذج أولي \(AppInfo.displayVersion)")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(accentColor)
+            }
 
             Text("أذان تل السبع")
                 .font(.system(size: 42, weight: .black, design: .rounded))
@@ -69,21 +82,21 @@ struct ContentView: View {
         VStack(alignment: .trailing, spacing: 10) {
             Text("الصلاة القادمة")
                 .font(.caption.weight(.bold))
-                .foregroundStyle(Color.teal)
+                .foregroundStyle(accentColor)
 
             Text(next?.title ?? "--")
                 .font(.system(size: 46, weight: .black, design: .rounded))
 
             Text(next?.time ?? "--:--")
                 .font(.system(size: 58, weight: .black, design: .rounded))
-                .foregroundStyle(Color.teal)
+                .foregroundStyle(accentColor)
 
             Text(countdownText(for: next))
                 .font(.title2.monospacedDigit().weight(.bold))
                 .foregroundStyle(.white)
                 .padding(.horizontal, 18)
                 .padding(.vertical, 10)
-                .background(Color(red: 0.04, green: 0.31, blue: 0.29))
+                .background(countdownBackground)
                 .clipShape(RoundedRectangle(cornerRadius: 8))
 
             Text("القدس الدهري + دقيقتين لتل السبع + التوقيت الصيفي")
@@ -92,9 +105,9 @@ struct ContentView: View {
         }
         .frame(maxWidth: .infinity, alignment: .trailing)
         .padding(18)
-        .background(.white.opacity(0.9))
+        .background(panelBackground)
         .clipShape(RoundedRectangle(cornerRadius: 8))
-        .shadow(color: .black.opacity(0.08), radius: 18, y: 8)
+        .shadow(color: .black.opacity(nightModeEnabled ? 0.28 : 0.08), radius: 18, y: 8)
     }
 
     private var dateControls: some View {
@@ -102,19 +115,19 @@ struct ContentView: View {
             Button("اليوم التالي") {
                 moveDay(1)
             }
-            .buttonStyle(CompactButtonStyle())
+            .buttonStyle(CompactButtonStyle(isNight: nightModeEnabled))
             .disabled(!PrayerEngine.canMove(from: selectedDateKey, by: 1))
 
             Button("اليوم") {
                 selectedDateKey = PrayerEngine.defaultDateKey(for: now)
                 followsToday = true
             }
-            .buttonStyle(CompactButtonStyle())
+            .buttonStyle(CompactButtonStyle(isNight: nightModeEnabled))
 
             Button("اليوم السابق") {
                 moveDay(-1)
             }
-            .buttonStyle(CompactButtonStyle())
+            .buttonStyle(CompactButtonStyle(isNight: nightModeEnabled))
             .disabled(!PrayerEngine.canMove(from: selectedDateKey, by: -1))
         }
         .frame(maxWidth: .infinity, alignment: .trailing)
@@ -124,26 +137,57 @@ struct ContentView: View {
         HStack {
             Text(item.time)
                 .font(.title3.monospacedDigit().weight(.bold))
-                .foregroundStyle(item.key == activeKey ? Color.teal : Color.primary)
+                .foregroundStyle(item.key == activeKey ? accentColor : Color.primary)
 
             Spacer()
 
             Text(item.title)
                 .font(.headline.weight(.bold))
-                .foregroundStyle(item.key == activeKey ? Color.teal : Color.secondary)
+                .foregroundStyle(item.key == activeKey ? accentColor : Color.secondary)
         }
         .padding(14)
-        .background(item.key == activeKey ? Color.teal.opacity(0.12) : Color.white.opacity(0.82))
+        .background(rowBackground(isActive: item.key == activeKey))
         .overlay(
             RoundedRectangle(cornerRadius: 8)
-                .stroke(item.key == activeKey ? Color.teal.opacity(0.55) : Color.black.opacity(0.08))
+                .stroke(rowBorder(isActive: item.key == activeKey))
         )
         .clipShape(RoundedRectangle(cornerRadius: 8))
     }
 
+    private var accentColor: Color {
+        nightModeEnabled ? Color(red: 0.96, green: 0.78, blue: 0.38) : Color.teal
+    }
+
+    private var panelBackground: Color {
+        nightModeEnabled ? Color(red: 0.07, green: 0.11, blue: 0.12).opacity(0.96) : Color.white.opacity(0.9)
+    }
+
+    private var countdownBackground: Color {
+        nightModeEnabled ? Color(red: 0.45, green: 0.30, blue: 0.09) : Color(red: 0.04, green: 0.31, blue: 0.29)
+    }
+
+    private func rowBackground(isActive: Bool) -> Color {
+        if nightModeEnabled {
+            return isActive ? Color(red: 0.18, green: 0.15, blue: 0.08).opacity(0.92) : Color(red: 0.08, green: 0.13, blue: 0.14).opacity(0.92)
+        }
+
+        return isActive ? Color.teal.opacity(0.12) : Color.white.opacity(0.82)
+    }
+
+    private func rowBorder(isActive: Bool) -> Color {
+        if nightModeEnabled {
+            return isActive ? Color(red: 0.96, green: 0.78, blue: 0.38).opacity(0.55) : Color.white.opacity(0.09)
+        }
+
+        return isActive ? Color.teal.opacity(0.55) : Color.black.opacity(0.08)
+    }
+
     private var background: some View {
         LinearGradient(
-            colors: [
+            colors: nightModeEnabled ? [
+                Color(red: 0.02, green: 0.08, blue: 0.10),
+                Color(red: 0.08, green: 0.16, blue: 0.14)
+            ] : [
                 Color(red: 0.95, green: 0.93, blue: 0.88),
                 Color(red: 0.90, green: 0.96, blue: 0.94)
             ],
@@ -172,16 +216,37 @@ struct ContentView: View {
 }
 
 private struct CompactButtonStyle: ButtonStyle {
+    let isNight: Bool
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.caption.weight(.bold))
             .foregroundStyle(.primary)
             .padding(.horizontal, 12)
             .padding(.vertical, 9)
-            .background(Color.white.opacity(configuration.isPressed ? 0.65 : 0.95))
+            .background(isNight ? Color.white.opacity(configuration.isPressed ? 0.10 : 0.16) : Color.white.opacity(configuration.isPressed ? 0.65 : 0.95))
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
-                    .stroke(Color.black.opacity(0.1))
+                    .stroke(isNight ? Color.white.opacity(0.12) : Color.black.opacity(0.1))
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+    }
+}
+
+private struct NightModeButtonStyle: ButtonStyle {
+    let isNight: Bool
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.caption.weight(.black))
+            .labelStyle(.titleAndIcon)
+            .foregroundStyle(isNight ? Color(red: 0.96, green: 0.78, blue: 0.38) : Color(red: 0.04, green: 0.31, blue: 0.29))
+            .padding(.horizontal, 12)
+            .padding(.vertical, 9)
+            .background(isNight ? Color.white.opacity(configuration.isPressed ? 0.10 : 0.16) : Color.white.opacity(configuration.isPressed ? 0.65 : 0.95))
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(isNight ? Color.white.opacity(0.14) : Color.black.opacity(0.1))
             )
             .clipShape(RoundedRectangle(cornerRadius: 8))
     }

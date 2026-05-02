@@ -19,10 +19,10 @@ targets:
       - path: TelShevaAzan/Assets.xcassets
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.example.TelShevaAzan
+        PRODUCT_BUNDLE_IDENTIFIER: com.omaralasam.telshevaazan
         PRODUCT_NAME: TelShevaAzan
-        MARKETING_VERSION: 0.2.3
-        CURRENT_PROJECT_VERSION: 9
+        MARKETING_VERSION: 0.2.4
+        CURRENT_PROJECT_VERSION: 10
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_CFBundleDisplayName: "أذان تل السبع"
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
@@ -45,10 +45,10 @@ targets:
       path: TelShevaAzanWidget/Info.plist
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.example.TelShevaAzan.widget
+        PRODUCT_BUNDLE_IDENTIFIER: com.omaralasam.telshevaazan.widget
         PRODUCT_NAME: TelShevaAzanWidgetExtension
-        MARKETING_VERSION: 0.2.3
-        CURRENT_PROJECT_VERSION: 9
+        MARKETING_VERSION: 0.2.4
+        CURRENT_PROJECT_VERSION: 10
         APPLICATION_EXTENSION_API_ONLY: YES
         CODE_SIGN_STYLE: Manual
 schemes:

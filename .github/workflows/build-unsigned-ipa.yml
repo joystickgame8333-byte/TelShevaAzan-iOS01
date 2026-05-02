@@ -80,9 +80,15 @@ jobs:
           mkdir -p Payload
           cp -R "$APP_PATH" Payload/TelShevaAzan.app
           /usr/bin/zip -qry TelShevaAzan-unsigned.ipa Payload
+          cp TelShevaAzan-unsigned.ipa TelShevaAzan-unsigned.tipa
+          echo "Final IPA widget check:"
+          /usr/bin/unzip -l TelShevaAzan-unsigned.ipa > ipa-contents.txt
+          awk '/Payload\/TelShevaAzan.app\/PlugIns\/.*\.appex\// { print; shown++; if (shown >= 40) exit }' ipa-contents.txt
 
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
           name: TelShevaAzan-unsigned-ipa
-          path: TelShevaAzan-unsigned.ipa
+          path: |
+            TelShevaAzan-unsigned.ipa
+            TelShevaAzan-unsigned.tipa
