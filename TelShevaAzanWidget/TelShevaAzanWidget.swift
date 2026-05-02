@@ -88,8 +88,22 @@ struct TelShevaAzanWidgetView: View {
         isNight ? Color.white.opacity(0.12) : Color(red: 0.02, green: 0.43, blue: 0.39).opacity(0.13)
     }
 
-    private var widgetBackgroundColor: Color {
-        isNight ? Color(red: 0.04, green: 0.35, blue: 0.33) : Color(red: 0.86, green: 0.97, blue: 0.93)
+    private var widgetGradientColors: [Color] {
+        isNight ? [
+            Color(red: 0.04, green: 0.49, blue: 0.45),
+            Color(red: 0.03, green: 0.30, blue: 0.28)
+        ] : [
+            Color(red: 0.86, green: 0.97, blue: 0.93),
+            Color(red: 0.94, green: 0.91, blue: 0.74)
+        ]
+    }
+
+    private var widgetBackground: some View {
+        LinearGradient(
+            colors: widgetGradientColors,
+            startPoint: .topTrailing,
+            endPoint: .bottomLeading
+        )
     }
 
     private var nextTitle: String {
@@ -113,7 +127,10 @@ struct TelShevaAzanWidgetView: View {
     }
 
     private var homeScreenLayout: some View {
-        Group {
+        ZStack {
+            widgetBackground
+            .ignoresSafeArea()
+
             switch family {
             case .systemMedium:
                 mediumHomeLayout
@@ -122,19 +139,28 @@ struct TelShevaAzanWidgetView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(widgetBackgroundColor)
+        .background(widgetBackground)
         .widgetContainerBackground {
-            widgetBackgroundColor
+            widgetBackground
         }
     }
 
     private var smallHomeLayout: some View {
-        VStack(alignment: .trailing, spacing: 5) {
-            Text("تل السبع")
-                .font(.system(size: 12, weight: .black, design: .rounded))
-                .foregroundColor(secondaryText)
-                .lineLimit(1)
-                .frame(maxWidth: .infinity, alignment: .trailing)
+        VStack(alignment: .trailing, spacing: 4) {
+            HStack(spacing: 5) {
+                Spacer(minLength: 0)
+
+                Image(systemName: isNight ? "moon.stars.fill" : "sun.max.fill")
+                    .font(.system(size: 12, weight: .black, design: .rounded))
+
+                Text("تل السبع")
+                    .font(.system(size: 11, weight: .black, design: .rounded))
+                    .lineLimit(1)
+            }
+            .foregroundColor(secondaryText)
+            .frame(maxWidth: .infinity, alignment: .trailing)
+
+            Spacer(minLength: 1)
 
             Text("الصلاة القادمة")
                 .font(.system(size: 12, weight: .black, design: .rounded))
@@ -142,8 +168,6 @@ struct TelShevaAzanWidgetView: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.78)
                 .frame(maxWidth: .infinity, alignment: .trailing)
-
-            Spacer(minLength: 2)
 
             Text(nextTitle)
                 .font(.system(size: 28, weight: .black, design: .rounded))
@@ -163,18 +187,24 @@ struct TelShevaAzanWidgetView: View {
             remainingChip(fontSize: 11)
                 .frame(maxWidth: .infinity, alignment: .trailing)
 
-            Spacer(minLength: 2)
+            HStack(spacing: 4) {
+                Text("v\(AppInfo.build)")
+                    .font(.system(size: 8, weight: .black, design: .rounded).monospacedDigit())
+                    .lineLimit(1)
+                    .foregroundColor(secondaryText.opacity(0.68))
 
-            Text("مواقيت محلية  v\(AppInfo.build)")
-                .font(.system(size: 9, weight: .bold, design: .rounded).monospacedDigit())
-                .foregroundColor(secondaryText.opacity(0.9))
-                .lineLimit(1)
-                .minimumScaleFactor(0.75)
-                .frame(maxWidth: .infinity, alignment: .trailing)
+                Spacer(minLength: 4)
+
+                Text("مواقيت محلية")
+                    .font(.system(size: 9, weight: .bold, design: .rounded))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
+            }
+            .foregroundColor(secondaryText.opacity(0.94))
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
         .multilineTextAlignment(.trailing)
-        .environment(\.layoutDirection, .rightToLeft)
+        .environment(\.layoutDirection, .leftToRight)
         .padding(10)
     }
 
@@ -222,12 +252,22 @@ struct TelShevaAzanWidgetView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .multilineTextAlignment(.trailing)
-        .environment(\.layoutDirection, .rightToLeft)
+        .environment(\.layoutDirection, .leftToRight)
         .padding(10)
     }
 
     private func remainingChip(fontSize: CGFloat) -> some View {
-        Text(compactRemainingText)
+        HStack(spacing: 4) {
+            Text("باقي")
+
+            if let nextDate = entry.nextPrayer?.date {
+                Text(nextDate, style: .timer)
+                    .monospacedDigit()
+            } else {
+                Text("--")
+                    .monospacedDigit()
+            }
+        }
         .font(.system(size: fontSize, weight: .black, design: .rounded))
         .foregroundColor(primaryText)
         .lineLimit(1)
