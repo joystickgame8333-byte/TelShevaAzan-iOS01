@@ -288,40 +288,52 @@ struct TelShevaAzanWidgetView: View {
         if #available(iOSApplicationExtension 16.0, *) {
             switch family {
             case .accessoryInline:
-                Label("\(nextTitle) \(nextTime) - \(compactRemainingText)", systemImage: isNight ? "moon.stars.fill" : "sun.max.fill")
+                Label("\(nextTitle) \(nextTime) · \(compactRemainingText)", systemImage: "clock.fill")
             case .accessoryCircular:
                 ZStack {
                     AccessoryWidgetBackground()
-                    VStack(spacing: 2) {
+                    VStack(spacing: 0) {
+                        Image(systemName: "clock.fill")
+                            .font(.system(size: 10, weight: .bold))
+                            .imageScale(.small)
+                            .padding(.bottom, 1)
+
                         Text(nextTitle)
-                            .font(.system(size: 9, weight: .black, design: .rounded))
+                            .font(.system(size: 10, weight: .black, design: .rounded))
                             .lineLimit(1)
-                            .minimumScaleFactor(0.55)
+                            .minimumScaleFactor(0.65)
 
                         Text(nextTime)
-                            .font(.caption.monospacedDigit().weight(.black))
+                            .font(.system(size: 14, weight: .black, design: .rounded).monospacedDigit())
                             .lineLimit(1)
-
-                        Text(compactRemainingText)
-                            .font(.system(size: 8, weight: .bold, design: .rounded))
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.5)
+                            .minimumScaleFactor(0.72)
                     }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .padding(7)
                 }
             case .accessoryRectangular:
-                VStack(alignment: .trailing, spacing: 2) {
+                VStack(alignment: .trailing, spacing: 1) {
                     Text("تل السبع")
-                        .font(.caption2.weight(.bold))
-                    HStack(spacing: 5) {
+                        .font(.system(size: 10, weight: .semibold, design: .rounded))
+                        .lineLimit(1)
+
+                    HStack(alignment: .firstTextBaseline, spacing: 4) {
                         Text(nextTime)
-                            .font(.headline.monospacedDigit().weight(.black))
+                            .font(.system(size: 17, weight: .black, design: .rounded).monospacedDigit())
+                            .lineLimit(1)
+
                         Text(nextTitle)
-                            .font(.headline.weight(.black))
+                            .font(.system(size: 18, weight: .black, design: .rounded))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.72)
                     }
+
                     Text(compactRemainingText)
-                        .font(.caption2.monospacedDigit().weight(.bold))
+                        .font(.system(size: 12, weight: .bold, design: .rounded).monospacedDigit())
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.75)
                 }
-                .frame(maxWidth: .infinity, alignment: .trailing)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
             default:
                 smallHomeLayout
             }
