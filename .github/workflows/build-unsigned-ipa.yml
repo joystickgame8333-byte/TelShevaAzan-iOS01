@@ -73,6 +73,9 @@ jobs:
           /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$PLUGIN_PATH/Info.plist" || true
           /usr/libexec/PlistBuddy -c "Print :CFBundlePackageType" "$PLUGIN_PATH/Info.plist" || true
           /usr/libexec/PlistBuddy -c "Print :NSExtension:NSExtensionPointIdentifier" "$PLUGIN_PATH/Info.plist" || true
+          /usr/libexec/PlistBuddy -c "Print :NSExtension:NSExtensionAttributes:WKAppBundleIdentifier" "$PLUGIN_PATH/Info.plist" || true
+          echo "App icon registration:"
+          /usr/libexec/PlistBuddy -c "Print :CFBundleIcons:CFBundlePrimaryIcon:CFBundleIconName" "$APP_PATH/Info.plist" || true
           echo "Packaged app contents:"
           find "$APP_PATH" -maxdepth 4 -print | sort
           codesign --force --sign - "$APP_PATH/PlugIns/"*.appex
