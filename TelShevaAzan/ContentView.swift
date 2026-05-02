@@ -2,7 +2,7 @@ import SwiftUI
 import WidgetKit
 
 struct ContentView: View {
-    @AppStorage("nightModeEnabled") private var nightModeEnabled = false
+    @Environment(\.colorScheme) private var colorScheme
     @State private var now = Date()
     @State private var selectedDateKey = PrayerEngine.defaultDateKey()
     @State private var followsToday = true
@@ -44,7 +44,6 @@ struct ContentView: View {
             .padding(18)
         }
         .background(background)
-        .preferredColorScheme(nightModeEnabled ? .dark : .light)
         .onReceive(timer) { value in
             now = value
             if followsToday {
@@ -56,12 +55,18 @@ struct ContentView: View {
     private var header: some View {
         VStack(alignment: .trailing, spacing: 8) {
             HStack {
-                Button {
-                    nightModeEnabled.toggle()
-                } label: {
-                    Label(nightModeEnabled ? "نهار" : "ليل", systemImage: nightModeEnabled ? "sun.max.fill" : "moon.stars.fill")
-                }
-                .buttonStyle(NightModeButtonStyle(isNight: nightModeEnabled))
+                Label(isNight ? "ليل" : "نهار", systemImage: isNight ? "moon.stars.fill" : "sun.max.fill")
+                    .font(.caption.weight(.black))
+                    .labelStyle(.titleAndIcon)
+                    .foregroundStyle(accentColor)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 9)
+                    .background(isNight ? Color.white.opacity(0.16) : Color.white.opacity(0.95))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(isNight ? Color.white.opacity(0.14) : Color.black.opacity(0.1))
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
 
                 Spacer()
 
@@ -89,7 +94,7 @@ struct ContentView: View {
                 } label: {
                     Label("تحديث", systemImage: "arrow.clockwise")
                 }
-                .buttonStyle(CompactButtonStyle(isNight: nightModeEnabled))
+                .buttonStyle(CompactButtonStyle(isNight: isNight))
 
                 Spacer()
 
@@ -174,7 +179,7 @@ struct ContentView: View {
         .padding(18)
         .background(panelBackground)
         .clipShape(RoundedRectangle(cornerRadius: 8))
-        .shadow(color: .black.opacity(nightModeEnabled ? 0.28 : 0.08), radius: 18, y: 8)
+        .shadow(color: .black.opacity(isNight ? 0.28 : 0.08), radius: 18, y: 8)
     }
 
     private var dateControls: some View {
@@ -182,19 +187,19 @@ struct ContentView: View {
             Button("اليوم التالي") {
                 moveDay(1)
             }
-            .buttonStyle(CompactButtonStyle(isNight: nightModeEnabled))
+            .buttonStyle(CompactButtonStyle(isNight: isNight))
             .disabled(!PrayerEngine.canMove(from: selectedDateKey, by: 1))
 
             Button("اليوم") {
                 selectedDateKey = PrayerEngine.defaultDateKey(for: now)
                 followsToday = true
             }
-            .buttonStyle(CompactButtonStyle(isNight: nightModeEnabled))
+            .buttonStyle(CompactButtonStyle(isNight: isNight))
 
             Button("اليوم السابق") {
                 moveDay(-1)
             }
-            .buttonStyle(CompactButtonStyle(isNight: nightModeEnabled))
+            .buttonStyle(CompactButtonStyle(isNight: isNight))
             .disabled(!PrayerEngine.canMove(from: selectedDateKey, by: -1))
         }
         .frame(maxWidth: .infinity, alignment: .trailing)
@@ -221,20 +226,24 @@ struct ContentView: View {
         .clipShape(RoundedRectangle(cornerRadius: 8))
     }
 
+    private var isNight: Bool {
+        colorScheme == .dark
+    }
+
     private var accentColor: Color {
-        nightModeEnabled ? Color(red: 0.96, green: 0.78, blue: 0.38) : Color.teal
+        isNight ? Color(red: 0.96, green: 0.78, blue: 0.38) : Color.teal
     }
 
     private var panelBackground: Color {
-        nightModeEnabled ? Color(red: 0.07, green: 0.11, blue: 0.12).opacity(0.96) : Color.white.opacity(0.9)
+        isNight ? Color(red: 0.07, green: 0.11, blue: 0.12).opacity(0.96) : Color.white.opacity(0.9)
     }
 
     private var countdownBackground: Color {
-        nightModeEnabled ? Color(red: 0.45, green: 0.30, blue: 0.09) : Color(red: 0.04, green: 0.31, blue: 0.29)
+        isNight ? Color(red: 0.45, green: 0.30, blue: 0.09) : Color(red: 0.04, green: 0.31, blue: 0.29)
     }
 
     private func rowBackground(isActive: Bool) -> Color {
-        if nightModeEnabled {
+        if isNight {
             return isActive ? Color(red: 0.18, green: 0.15, blue: 0.08).opacity(0.92) : Color(red: 0.08, green: 0.13, blue: 0.14).opacity(0.92)
         }
 
@@ -242,7 +251,7 @@ struct ContentView: View {
     }
 
     private func rowBorder(isActive: Bool) -> Color {
-        if nightModeEnabled {
+        if isNight {
             return isActive ? Color(red: 0.96, green: 0.78, blue: 0.38).opacity(0.55) : Color.white.opacity(0.09)
         }
 
@@ -251,7 +260,7 @@ struct ContentView: View {
 
     private var background: some View {
         LinearGradient(
-            colors: nightModeEnabled ? [
+            colors: isNight ? [
                 Color(red: 0.02, green: 0.08, blue: 0.10),
                 Color(red: 0.08, green: 0.16, blue: 0.14)
             ] : [
@@ -295,25 +304,6 @@ private struct CompactButtonStyle: ButtonStyle {
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
                     .stroke(isNight ? Color.white.opacity(0.12) : Color.black.opacity(0.1))
-            )
-            .clipShape(RoundedRectangle(cornerRadius: 8))
-    }
-}
-
-private struct NightModeButtonStyle: ButtonStyle {
-    let isNight: Bool
-
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.caption.weight(.black))
-            .labelStyle(.titleAndIcon)
-            .foregroundStyle(isNight ? Color(red: 0.96, green: 0.78, blue: 0.38) : Color(red: 0.04, green: 0.31, blue: 0.29))
-            .padding(.horizontal, 12)
-            .padding(.vertical, 9)
-            .background(isNight ? Color.white.opacity(configuration.isPressed ? 0.10 : 0.16) : Color.white.opacity(configuration.isPressed ? 0.65 : 0.95))
-            .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(isNight ? Color.white.opacity(0.14) : Color.black.opacity(0.1))
             )
             .clipShape(RoundedRectangle(cornerRadius: 8))
     }

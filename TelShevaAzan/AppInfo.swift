@@ -1,5 +1,5 @@
 enum AppInfo {
-    static let version = "0.3.3"
-    static let build = "19"
+    static let version = "0.3.4"
+    static let build = "20"
     static let displayVersion = "v\(version) (\(build))"
 }
