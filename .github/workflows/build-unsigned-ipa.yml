@@ -19,21 +19,23 @@ jobs:
           echo "Repository files:"
           find . -maxdepth 3 -print | sort
 
+      - name: Generate Xcode project
+        run: |
+          set -euxo pipefail
+          brew install xcodegen
+          rm -rf TelShevaAzan.xcodeproj
+          xcodegen generate
+
       - name: Build app without App Store signing
         run: |
           set -euxo pipefail
-          PROJECT_PATH="$(find . -maxdepth 3 -name 'TelShevaAzan.xcodeproj' -print -quit)"
-          if [ -z "$PROJECT_PATH" ]; then
-            echo "TelShevaAzan.xcodeproj was not found"
-            exit 1
-          fi
-          echo "Using project: $PROJECT_PATH"
-          xcodebuild -list -project "$PROJECT_PATH"
+          xcodebuild -list -project TelShevaAzan.xcodeproj
           xcodebuild \
-            -project "$PROJECT_PATH" \
-            -target TelShevaAzan \
+            -project TelShevaAzan.xcodeproj \
+            -scheme TelShevaAzan \
             -configuration Release \
             -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
             -derivedDataPath build \
             build \
             CODE_SIGNING_ALLOWED=NO \
