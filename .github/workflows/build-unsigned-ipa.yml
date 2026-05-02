@@ -59,6 +59,11 @@ jobs:
           mkdir -p "$APP_PATH/PlugIns"
           rm -rf "$APP_PATH/PlugIns/"*.appex
           cp -R "$APPEX_PATH" "$APP_PATH/PlugIns/"
+          PLUGIN_PATH="$(find "$APP_PATH/PlugIns" -maxdepth 1 -name '*.appex' -print -quit)"
+          echo "Widget extension registration:"
+          /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$PLUGIN_PATH/Info.plist"
+          /usr/libexec/PlistBuddy -c "Print :CFBundlePackageType" "$PLUGIN_PATH/Info.plist"
+          /usr/libexec/PlistBuddy -c "Print :NSExtension:NSExtensionPointIdentifier" "$PLUGIN_PATH/Info.plist"
           echo "Packaged app contents:"
           find "$APP_PATH" -maxdepth 4 -print | sort
           codesign --force --sign - "$APP_PATH/PlugIns/"*.appex

@@ -62,7 +62,7 @@ struct TelShevaAzanWidgetView: View {
 
     private var smallLayout: some View {
         VStack(alignment: .trailing, spacing: 8) {
-            Text("تل السبع \(AppInfo.version)")
+            Text("تل السبع \(AppInfo.displayVersion)")
                 .font(.caption.weight(.bold))
                 .foregroundColor(Color(red: 0.75, green: 0.91, blue: 0.86))
 
@@ -90,7 +90,7 @@ struct TelShevaAzanWidgetView: View {
     private var mediumLayout: some View {
         HStack(alignment: .center, spacing: 14) {
             VStack(alignment: .trailing, spacing: 8) {
-                Text("تل السبع \(AppInfo.version)")
+                Text("تل السبع \(AppInfo.displayVersion)")
                     .font(.caption.weight(.bold))
                     .foregroundColor(Color(red: 0.75, green: 0.91, blue: 0.86))
 
