@@ -13,12 +13,15 @@ jobs:
 
       - name: Show Xcode version
         run: |
+          set -euxo pipefail
           xcodebuild -version
+          pwd
           echo "Repository files:"
           find . -maxdepth 3 -print | sort
 
       - name: Build app without App Store signing
         run: |
+          set -euxo pipefail
           PROJECT_PATH="$(find . -maxdepth 3 -name 'TelShevaAzan.xcodeproj' -print -quit)"
           if [ -z "$PROJECT_PATH" ]; then
             echo "TelShevaAzan.xcodeproj was not found"
@@ -31,15 +34,15 @@ jobs:
             -target TelShevaAzan \
             -configuration Release \
             -sdk iphoneos \
-            -destination 'generic/platform=iOS' \
             -derivedDataPath build \
+            build \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGN_IDENTITY="" \
-            build
+            CODE_SIGN_IDENTITY=""
 
       - name: Package IPA
         run: |
+          set -euxo pipefail
           APP_PATH="$(find build/Build/Products -path '*Release-iphoneos/*.app' -print -quit)"
           if [ -z "$APP_PATH" ]; then
             echo "Built .app was not found"
