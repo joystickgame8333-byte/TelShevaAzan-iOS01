@@ -19,19 +19,18 @@ struct TelShevaWidgetProvider: TimelineProvider {
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<TelShevaWidgetEntry>) -> Void) {
         let entry = makeEntry(for: Date())
-        let refreshDate = entry.nextPrayer?.date.addingTimeInterval(5) ?? Date().addingTimeInterval(900)
+        let refreshDate = entry.nextPrayer?.date.addingTimeInterval(10) ?? Date().addingTimeInterval(900)
         completion(Timeline(entries: [entry], policy: .after(refreshDate)))
     }
 
     private func makeEntry(for date: Date) -> TelShevaWidgetEntry {
         let dateKey = PrayerEngine.defaultDateKey(for: date)
         let schedule = PrayerEngine.schedule(for: dateKey)
-        let nextPrayer = PrayerEngine.nextPrayer(for: dateKey, now: date)
 
         return TelShevaWidgetEntry(
             date: date,
             dateKey: dateKey,
-            nextPrayer: nextPrayer,
+            nextPrayer: PrayerEngine.nextPrayer(for: dateKey, now: date),
             times: schedule.displayTimes
         )
     }
@@ -42,7 +41,7 @@ struct TelShevaAzanWidgetView: View {
     let entry: TelShevaWidgetEntry
 
     private let accent = Color(red: 0.96, green: 0.78, blue: 0.38)
-    private let mint = Color(red: 0.75, green: 0.91, blue: 0.86)
+    private let mint = Color(red: 0.76, green: 0.93, blue: 0.87)
 
     var body: some View {
         if isLockScreenFamily {
@@ -54,25 +53,54 @@ struct TelShevaAzanWidgetView: View {
 
     private var isLockScreenFamily: Bool {
         if #available(iOSApplicationExtension 16.0, *) {
-            return family == .accessoryCircular || family == .accessoryRectangular || family == .accessoryInline
+            return family == .accessoryInline || family == .accessoryCircular || family == .accessoryRectangular
         }
 
         return false
     }
 
+    private var nextTitle: String {
+        entry.nextPrayer?.title ?? "الصلاة"
+    }
+
+    private var nextTime: String {
+        entry.nextPrayer?.time ?? "--:--"
+    }
+
+    private var liveRemainingText: Text {
+        guard let nextDate = entry.nextPrayer?.date else {
+            return Text("باقي --")
+        }
+
+        return Text("باقي ") + Text(nextDate, style: .timer)
+    }
+
+    private var compactRemainingText: String {
+        guard let nextDate = entry.nextPrayer?.date else { return "باقي --" }
+        let seconds = max(Int(nextDate.timeIntervalSince(entry.date)), 0)
+        let minutes = (seconds + 59) / 60
+
+        if minutes >= 60 {
+            return "باقي \(minutes / 60)س \(minutes % 60)د"
+        }
+
+        return "باقي \(minutes)د"
+    }
+
     private var homeScreenLayout: some View {
         ZStack {
-            if family == .systemMedium {
+            switch family {
+            case .systemMedium:
                 mediumHomeLayout
-            } else {
+            default:
                 smallHomeLayout
             }
         }
         .widgetContainerBackground {
             LinearGradient(
                 colors: [
-                    Color(red: 0.06, green: 0.46, blue: 0.43),
-                    Color(red: 0.09, green: 0.13, blue: 0.11)
+                    Color(red: 0.02, green: 0.36, blue: 0.34),
+                    Color(red: 0.05, green: 0.09, blue: 0.10)
                 ],
                 startPoint: .topTrailing,
                 endPoint: .bottomLeading
@@ -81,70 +109,101 @@ struct TelShevaAzanWidgetView: View {
     }
 
     private var smallHomeLayout: some View {
-        VStack(alignment: .trailing, spacing: 8) {
-            Text("تل السبع \(AppInfo.displayVersion)")
-                .font(.caption.weight(.bold))
-                .foregroundColor(mint)
+        VStack(alignment: .trailing, spacing: 7) {
+            HStack(spacing: 5) {
+                Image(systemName: "moon.stars.fill")
+                    .font(.caption.weight(.black))
+                Text("الصلاة القادمة")
+                    .font(.caption.weight(.black))
+            }
+            .foregroundColor(mint)
 
             Spacer(minLength: 0)
 
-            Text(entry.nextPrayer?.title ?? "--")
-                .font(.title2.weight(.black))
+            Text(nextTitle)
+                .font(.system(size: 25, weight: .black, design: .rounded))
                 .foregroundColor(.white)
-                .minimumScaleFactor(0.75)
+                .lineLimit(1)
+                .minimumScaleFactor(0.72)
 
-            Text(entry.nextPrayer?.time ?? "--:--")
-                .font(.system(size: 34, weight: .black, design: .rounded))
+            Text(nextTime)
+                .font(.system(size: 38, weight: .black, design: .rounded))
+                .monospacedDigit()
                 .foregroundColor(accent)
-                .minimumScaleFactor(0.7)
+                .lineLimit(1)
+                .minimumScaleFactor(0.74)
 
-            if let nextDate = entry.nextPrayer?.date {
-                Text(nextDate, style: .timer)
-                    .font(.caption.monospacedDigit().weight(.bold))
-                    .foregroundColor(mint)
-            }
+            liveRemainingText
+                .font(.caption.monospacedDigit().weight(.black))
+                .foregroundColor(.white)
+                .lineLimit(1)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 5)
+                .background(Color.white.opacity(0.13))
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+
+            Text("تل السبع \(AppInfo.displayVersion)")
+                .font(.caption2.monospacedDigit().weight(.bold))
+                .foregroundColor(mint.opacity(0.9))
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
         }
-        .padding(14)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
+        .padding(13)
     }
 
     private var mediumHomeLayout: some View {
-        HStack(alignment: .center, spacing: 14) {
-            VStack(alignment: .trailing, spacing: 8) {
-                Text("تل السبع \(AppInfo.displayVersion)")
-                    .font(.caption.weight(.bold))
+        HStack(alignment: .center, spacing: 13) {
+            VStack(spacing: 5) {
+                ForEach(Array(entry.times.prefix(6))) { item in
+                    HStack(spacing: 8) {
+                        Text(item.time)
+                            .font(.caption.monospacedDigit().weight(.black))
+                            .foregroundColor(item.key == entry.nextPrayer?.key ? accent : .white.opacity(0.78))
+
+                        Spacer(minLength: 2)
+
+                        Text(item.title)
+                            .font(.caption.weight(.bold))
+                            .foregroundColor(.white.opacity(0.9))
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(item.key == entry.nextPrayer?.key ? Color.white.opacity(0.12) : Color.clear)
+                    .clipShape(RoundedRectangle(cornerRadius: 7))
+                }
+            }
+
+            VStack(alignment: .trailing, spacing: 7) {
+                Text("الصلاة القادمة")
+                    .font(.caption.weight(.black))
                     .foregroundColor(mint)
 
-                Text(entry.nextPrayer?.title ?? "--")
-                    .font(.title.weight(.black))
+                Text(nextTitle)
+                    .font(.system(size: 27, weight: .black, design: .rounded))
                     .foregroundColor(.white)
                     .lineLimit(1)
 
-                Text(entry.nextPrayer?.time ?? "--:--")
-                    .font(.system(size: 40, weight: .black, design: .rounded))
+                Text(nextTime)
+                    .font(.system(size: 43, weight: .black, design: .rounded))
+                    .monospacedDigit()
                     .foregroundColor(accent)
+                    .lineLimit(1)
 
-                if let nextDate = entry.nextPrayer?.date {
-                    Text(nextDate, style: .timer)
-                        .font(.caption.monospacedDigit().weight(.bold))
-                        .foregroundColor(mint)
-                }
-            }
+                liveRemainingText
+                    .font(.caption.monospacedDigit().weight(.black))
+                    .foregroundColor(.white)
+                    .lineLimit(1)
 
-            VStack(spacing: 5) {
-                ForEach(entry.times.prefix(5)) { item in
-                    HStack {
-                        Text(item.time)
-                            .font(.caption2.monospacedDigit().weight(.bold))
-                            .foregroundColor(item.key == entry.nextPrayer?.key ? accent : .white.opacity(0.78))
-                        Spacer(minLength: 4)
-                        Text(item.title)
-                            .font(.caption2.weight(.bold))
-                            .foregroundColor(.white.opacity(0.86))
-                    }
-                }
+                Text("تل السبع \(AppInfo.displayVersion)")
+                    .font(.caption2.monospacedDigit().weight(.bold))
+                    .foregroundColor(mint.opacity(0.88))
+                    .lineLimit(1)
             }
+            .frame(maxWidth: .infinity, alignment: .trailing)
         }
-        .padding(14)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(13)
     }
 
     @ViewBuilder
@@ -152,30 +211,38 @@ struct TelShevaAzanWidgetView: View {
         if #available(iOSApplicationExtension 16.0, *) {
             switch family {
             case .accessoryInline:
-                Label("\(entry.nextPrayer?.title ?? "الصلاة") \(entry.nextPrayer?.time ?? "--:--")", systemImage: "moon.stars.fill")
+                Label("\(nextTitle) \(nextTime) - \(compactRemainingText)", systemImage: "moon.stars.fill")
             case .accessoryCircular:
                 ZStack {
                     AccessoryWidgetBackground()
                     VStack(spacing: 2) {
-                        Image(systemName: "moon.stars.fill")
-                            .font(.caption2.weight(.bold))
-                        Text(entry.nextPrayer?.time ?? "--:--")
+                        Text(nextTitle)
+                            .font(.system(size: 9, weight: .black, design: .rounded))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.55)
+
+                        Text(nextTime)
                             .font(.caption.monospacedDigit().weight(.black))
-                            .minimumScaleFactor(0.7)
+                            .lineLimit(1)
+
+                        Text(compactRemainingText)
+                            .font(.system(size: 8, weight: .bold, design: .rounded))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.5)
                     }
                 }
             case .accessoryRectangular:
                 VStack(alignment: .trailing, spacing: 2) {
-                    Text("أذان تل السبع")
+                    Text("تل السبع")
                         .font(.caption2.weight(.bold))
                     HStack(spacing: 5) {
-                        Text(entry.nextPrayer?.time ?? "--:--")
+                        Text(nextTime)
                             .font(.headline.monospacedDigit().weight(.black))
-                        Text(entry.nextPrayer?.title ?? "--")
-                            .font(.headline.weight(.bold))
+                        Text(nextTitle)
+                            .font(.headline.weight(.black))
                     }
-                    Text(lockScreenRemainingText)
-                        .font(.caption2.monospacedDigit())
+                    Text(compactRemainingText)
+                        .font(.caption2.monospacedDigit().weight(.bold))
                 }
                 .frame(maxWidth: .infinity, alignment: .trailing)
             default:
@@ -184,17 +251,6 @@ struct TelShevaAzanWidgetView: View {
         } else {
             smallHomeLayout
         }
-    }
-
-    private var lockScreenRemainingText: String {
-        guard let nextDate = entry.nextPrayer?.date else { return "موعد الصلاة" }
-        let minutes = max(Int(nextDate.timeIntervalSince(entry.date) / 60), 0)
-
-        if minutes >= 60 {
-            return "بعد \(minutes / 60)س \(minutes % 60)د"
-        }
-
-        return "بعد \(minutes)د"
     }
 }
 
@@ -207,16 +263,16 @@ struct TelShevaAzanWidget: Widget {
                 TelShevaAzanWidgetView(entry: entry)
                     .environment(\.layoutDirection, .rightToLeft)
             }
-            .configurationDisplayName("أذان تل السبع")
-            .description("الصلاة القادمة ومواقيت اليوم لتل السبع.")
+            .configurationDisplayName("الصلاة القادمة")
+            .description("يعرض الصلاة القادمة ووقت الأذان والباقي عليها في تل السبع.")
             .supportedFamilies([.systemSmall, .systemMedium, .accessoryInline, .accessoryCircular, .accessoryRectangular])
         } else {
             StaticConfiguration(kind: kind, provider: TelShevaWidgetProvider()) { entry in
                 TelShevaAzanWidgetView(entry: entry)
                     .environment(\.layoutDirection, .rightToLeft)
             }
-            .configurationDisplayName("أذان تل السبع")
-            .description("الصلاة القادمة ومواقيت اليوم لتل السبع.")
+            .configurationDisplayName("الصلاة القادمة")
+            .description("يعرض الصلاة القادمة ووقت الأذان والباقي عليها في تل السبع.")
             .supportedFamilies([.systemSmall, .systemMedium])
         }
     }

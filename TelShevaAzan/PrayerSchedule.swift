@@ -124,7 +124,24 @@ enum PrayerEngine {
 
     static func nextPrayer(for dateKey: String, now: Date = Date()) -> PrayerTime? {
         let daySchedule = Self.schedule(for: dateKey)
-        let events = Self.prayerOrder.compactMap { key -> PrayerTime? in
+        let events = Self.prayerEvents(for: dateKey)
+
+        if daySchedule.dateKey == Self.dateKey(for: now), let upcoming = events.first(where: { $0.date > now }) {
+            return upcoming
+        }
+
+        if daySchedule.dateKey == Self.dateKey(for: now),
+           let nextDateKey = Self.dateKey(from: daySchedule.dateKey, offset: 1),
+           let nextDayFirstPrayer = Self.prayerEvents(for: nextDateKey).first {
+            return nextDayFirstPrayer
+        }
+
+        return events.first
+    }
+
+    private static func prayerEvents(for dateKey: String) -> [PrayerTime] {
+        let daySchedule = Self.schedule(for: dateKey)
+        return Self.prayerOrder.compactMap { key -> PrayerTime? in
             guard let time = daySchedule.times[key],
                   let date = Self.date(from: daySchedule.dateKey, time: time) else {
                 return nil
@@ -132,12 +149,6 @@ enum PrayerEngine {
 
             return PrayerTime(key: key, title: key.title, time: time, date: date)
         }
-
-        if daySchedule.dateKey == Self.dateKey(for: now), let upcoming = events.first(where: { $0.date > now }) {
-            return upcoming
-        }
-
-        return events.first
     }
 
     static func canMove(from dateKey: String, by offset: Int) -> Bool {

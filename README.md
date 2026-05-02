@@ -1,6 +1,6 @@
 # TelShevaAzan iOS Prototype
 
-Current app version: `0.2.8 (14)`
+Current app version: `0.2.9 (15)`
 
 مشروع iPhone أولي لتطبيق أذان تل السبع.
 
@@ -12,7 +12,7 @@ Current app version: `0.2.8 (14)`
 - الصلاة القادمة والعد التنازلي
 - أزرار اليوم السابق / اليوم / اليوم التالي
 - يدعم iOS 15 وما فوق كبداية مناسبة لـ TrollStore
-- WidgetKit extension للشاشة الرئيسية بحجم صغير ومتوسط
+- WidgetKit extension يعرض الصلاة القادمة والوقت والباقي عليها للشاشة الرئيسية وشاشة القفل في iOS 16
 
 ## إخراج IPA
 
