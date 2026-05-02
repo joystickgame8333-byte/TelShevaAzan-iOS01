@@ -147,14 +147,14 @@ struct TelShevaAzanWidgetView: View {
     private var smallHomeLayout: some View {
         VStack(alignment: .trailing, spacing: 4) {
             HStack(spacing: 5) {
-                Text("تل السبع")
-                    .font(.system(size: 11, weight: .black, design: .rounded))
-                    .lineLimit(1)
-
-                Spacer(minLength: 4)
+                Spacer(minLength: 0)
 
                 Image(systemName: isNight ? "moon.stars.fill" : "sun.max.fill")
                     .font(.system(size: 12, weight: .black, design: .rounded))
+
+                Text("تل السبع")
+                    .font(.system(size: 11, weight: .black, design: .rounded))
+                    .lineLimit(1)
             }
             .foregroundColor(secondaryText)
             .frame(maxWidth: .infinity, alignment: .trailing)
@@ -173,6 +173,7 @@ struct TelShevaAzanWidgetView: View {
                 .foregroundColor(primaryText)
                 .lineLimit(1)
                 .minimumScaleFactor(0.64)
+                .frame(maxWidth: .infinity, alignment: .trailing)
 
             Text(nextTime)
                 .font(.system(size: 34, weight: .black, design: .rounded))
@@ -180,8 +181,10 @@ struct TelShevaAzanWidgetView: View {
                 .foregroundColor(accent)
                 .lineLimit(1)
                 .minimumScaleFactor(0.68)
+                .frame(maxWidth: .infinity, alignment: .trailing)
 
             remainingChip(fontSize: 11)
+                .frame(maxWidth: .infinity, alignment: .trailing)
 
             HStack(spacing: 4) {
                 Text("v\(AppInfo.build)")
@@ -199,6 +202,8 @@ struct TelShevaAzanWidgetView: View {
             .foregroundColor(secondaryText.opacity(0.94))
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
+        .multilineTextAlignment(.trailing)
+        .environment(\.layoutDirection, .leftToRight)
         .padding(10)
     }
 
@@ -223,6 +228,7 @@ struct TelShevaAzanWidgetView: View {
                     .foregroundColor(primaryText)
                     .lineLimit(1)
                     .minimumScaleFactor(0.68)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
 
                 Text(nextTime)
                     .font(.system(size: 35, weight: .black, design: .rounded))
@@ -230,8 +236,10 @@ struct TelShevaAzanWidgetView: View {
                     .foregroundColor(accent)
                     .lineLimit(1)
                     .minimumScaleFactor(0.66)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
 
                 remainingChip(fontSize: 11)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
 
                 Text("تل السبع \(AppInfo.displayVersion)")
                     .font(.system(size: 9, weight: .bold, design: .rounded).monospacedDigit())
@@ -242,6 +250,8 @@ struct TelShevaAzanWidgetView: View {
             .frame(width: 124, alignment: .trailing)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .multilineTextAlignment(.trailing)
+        .environment(\.layoutDirection, .leftToRight)
         .padding(10)
     }
 
