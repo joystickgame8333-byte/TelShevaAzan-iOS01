@@ -16,7 +16,7 @@ struct ContentView: View {
             let compactHeight = proxy.size.height < 720
             let sectionSpacing: CGFloat = compactHeight ? 6 : 8
             let rowSpacing: CGFloat = compactHeight ? 6 : 8
-            let rowHeight = min(CGFloat(52), max(CGFloat(40), (proxy.size.height - 390) / 6))
+            let rowHeight = min(CGFloat(76), max(CGFloat(44), (proxy.size.height - 360) / 6))
 
             ZStack {
                 background
@@ -33,8 +33,6 @@ struct ContentView: View {
                             prayerRow(item, activeKey: next?.key, rowHeight: rowHeight)
                         }
                     }
-
-                    Spacer(minLength: 8)
 
                     footerNote
                 }
