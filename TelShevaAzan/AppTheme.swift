@@ -8,6 +8,12 @@ enum AppThemeStorage {
     static let defaults = UserDefaults(suiteName: groupIdentifier) ?? .standard
 }
 
+enum ArabicDisplay {
+    static func rtl(_ text: String) -> String {
+        "\u{202B}\(text)\u{202C}"
+    }
+}
+
 struct ThemePalette {
     let appBackground: [Color]
     let widgetBackground: [Color]
@@ -28,6 +34,7 @@ struct ThemePalette {
 }
 
 enum PrayerVisualTheme: String, CaseIterable, Identifiable {
+    case nightOld
     case nightEmerald
     case nightMidnight
     case nightAmber
@@ -41,7 +48,7 @@ enum PrayerVisualTheme: String, CaseIterable, Identifiable {
 
     static let defaultNight: PrayerVisualTheme = .nightEmerald
     static let defaultDay: PrayerVisualTheme = .dayMint
-    static let nightChoices: [PrayerVisualTheme] = [.nightEmerald, .nightMidnight, .nightAmber, .nightViolet]
+    static let nightChoices: [PrayerVisualTheme] = [.nightOld, .nightEmerald, .nightMidnight, .nightAmber, .nightViolet]
     static let dayChoices: [PrayerVisualTheme] = [.dayMint, .dayPearl, .daySky, .dayRose]
 
     static func selected(isNight: Bool, nightID: String, dayID: String) -> PrayerVisualTheme {
@@ -52,6 +59,8 @@ enum PrayerVisualTheme: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
+        case .nightOld:
+            return "حالك Old"
         case .nightEmerald:
             return "زمرد هادئ"
         case .nightMidnight:
@@ -77,6 +86,8 @@ enum PrayerVisualTheme: String, CaseIterable, Identifiable {
 
     var symbol: String {
         switch self {
+        case .nightOld:
+            return "moon.fill"
         case .nightEmerald:
             return "moon.stars.fill"
         case .nightMidnight:
@@ -98,7 +109,7 @@ enum PrayerVisualTheme: String, CaseIterable, Identifiable {
 
     var isNightTheme: Bool {
         switch self {
-        case .nightEmerald, .nightMidnight, .nightAmber, .nightViolet:
+        case .nightOld, .nightEmerald, .nightMidnight, .nightAmber, .nightViolet:
             return true
         case .dayMint, .dayPearl, .daySky, .dayRose:
             return false
@@ -107,6 +118,25 @@ enum PrayerVisualTheme: String, CaseIterable, Identifiable {
 
     var palette: ThemePalette {
         switch self {
+        case .nightOld:
+            return ThemePalette(
+                appBackground: [Color(red: 0.00, green: 0.05, blue: 0.06), Color(red: 0.03, green: 0.10, blue: 0.09)],
+                widgetBackground: [Color(red: 0.02, green: 0.34, blue: 0.31), Color(red: 0.01, green: 0.13, blue: 0.12)],
+                accent: Color(red: 0.96, green: 0.78, blue: 0.38),
+                primaryText: .white,
+                secondaryText: Color(red: 0.76, green: 0.93, blue: 0.87),
+                mutedText: .white.opacity(0.86),
+                panelBackground: Color(red: 0.05, green: 0.09, blue: 0.09).opacity(0.98),
+                countdownBackground: Color(red: 0.45, green: 0.30, blue: 0.09),
+                rowBackground: Color(red: 0.06, green: 0.10, blue: 0.10).opacity(0.95),
+                activeRowBackground: Color(red: 0.18, green: 0.15, blue: 0.08).opacity(0.94),
+                rowBorder: .white.opacity(0.08),
+                activeRowBorder: Color(red: 0.96, green: 0.78, blue: 0.38).opacity(0.56),
+                chipBackground: .white.opacity(0.12),
+                controlBackground: .white.opacity(0.13),
+                controlPressedBackground: .white.opacity(0.09),
+                controlBorder: .white.opacity(0.11)
+            )
         case .nightEmerald:
             return ThemePalette(
                 appBackground: [Color(red: 0.02, green: 0.08, blue: 0.10), Color(red: 0.08, green: 0.16, blue: 0.14)],

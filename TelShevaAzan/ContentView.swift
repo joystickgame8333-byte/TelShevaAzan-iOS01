@@ -112,29 +112,45 @@ struct ContentView: View {
 
     private var themeMenu: some View {
         Menu {
-            Section("أنماط الليل") {
+            Section {
                 ForEach(PrayerVisualTheme.nightChoices) { theme in
                     Button {
                         selectedNightThemeID = theme.rawValue
                         WidgetCenter.shared.reloadAllTimelines()
                     } label: {
-                        Label(theme.title, systemImage: selectedNightThemeID == theme.rawValue ? "checkmark.circle.fill" : theme.symbol)
+                        Label {
+                            Text(ArabicDisplay.rtl(theme.title))
+                        } icon: {
+                            Image(systemName: selectedNightThemeID == theme.rawValue ? "checkmark.circle.fill" : theme.symbol)
+                        }
                     }
                 }
+            } header: {
+                Text(ArabicDisplay.rtl("أنماط الليل"))
             }
 
-            Section("أنماط النهار") {
+            Section {
                 ForEach(PrayerVisualTheme.dayChoices) { theme in
                     Button {
                         selectedDayThemeID = theme.rawValue
                         WidgetCenter.shared.reloadAllTimelines()
                     } label: {
-                        Label(theme.title, systemImage: selectedDayThemeID == theme.rawValue ? "checkmark.circle.fill" : theme.symbol)
+                        Label {
+                            Text(ArabicDisplay.rtl(theme.title))
+                        } icon: {
+                            Image(systemName: selectedDayThemeID == theme.rawValue ? "checkmark.circle.fill" : theme.symbol)
+                        }
                     }
                 }
+            } header: {
+                Text(ArabicDisplay.rtl("أنماط النهار"))
             }
         } label: {
-            Label("\(activeTheme.modeTitle) · \(activeTheme.title)", systemImage: activeTheme.symbol)
+            Label {
+                Text(ArabicDisplay.rtl("\(activeTheme.modeTitle) · \(activeTheme.title)"))
+            } icon: {
+                Image(systemName: activeTheme.symbol)
+            }
                 .font(.caption2.weight(.black))
                 .labelStyle(.titleAndIcon)
                 .foregroundStyle(activeTheme.accent)
@@ -149,6 +165,7 @@ struct ContentView: View {
                 )
                 .clipShape(RoundedRectangle(cornerRadius: 8))
         }
+        .environment(\.layoutDirection, .rightToLeft)
     }
 
     private func nextPrayerPanel(next: PrayerTime?, previous: PrayerTime?, compact: Bool) -> some View {
