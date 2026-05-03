@@ -1,7 +1,10 @@
 import SwiftUI
+import WidgetKit
 
 struct ContentView: View {
     @Environment(\.colorScheme) private var colorScheme
+    @AppStorage(AppThemeStorage.nightThemeKey, store: AppThemeStorage.defaults) private var selectedNightThemeID = PrayerVisualTheme.defaultNight.rawValue
+    @AppStorage(AppThemeStorage.dayThemeKey, store: AppThemeStorage.defaults) private var selectedDayThemeID = PrayerVisualTheme.defaultDay.rawValue
     @State private var now = Date()
     @State private var selectedDateKey = PrayerEngine.defaultDateKey()
     @State private var followsToday = true
@@ -43,6 +46,7 @@ struct ContentView: View {
                 .padding(.top, 8)
                 .padding(.bottom, 18)
                 .frame(width: proxy.size.width, height: proxy.size.height, alignment: .topTrailing)
+                .foregroundStyle(activeTheme.primaryText)
                 .environment(\.layoutDirection, .leftToRight)
                 .multilineTextAlignment(.trailing)
                 .clipped()
@@ -54,19 +58,25 @@ struct ContentView: View {
                 selectedDateKey = PrayerEngine.defaultDateKey(for: value)
             }
         }
+        .onChange(of: selectedNightThemeID) { _ in
+            WidgetCenter.shared.reloadAllTimelines()
+        }
+        .onChange(of: selectedDayThemeID) { _ in
+            WidgetCenter.shared.reloadAllTimelines()
+        }
     }
 
     private var quranVerse: some View {
         VStack(alignment: .trailing, spacing: 0) {
             Text("إِنَّ ٱلصَّلَوٰةَ كَانَتْ عَلَى ٱلْمُؤْمِنِينَ كِتَـٰبًا مَّوْقُوتًا")
                 .font(.custom("AmiriQuran-Regular", size: 16))
-                .foregroundStyle(accentColor)
+                .foregroundStyle(activeTheme.accent)
                 .lineLimit(1)
                 .minimumScaleFactor(0.54)
 
             Text("النساء ١٠٣")
                 .font(.caption2.weight(.bold))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(activeTheme.secondaryText.opacity(0.74))
                 .lineLimit(1)
         }
         .frame(maxWidth: .infinity, alignment: .trailing)
@@ -75,24 +85,13 @@ struct ContentView: View {
     private var header: some View {
         VStack(alignment: .trailing, spacing: 4) {
             HStack {
-                Label(isNight ? "ليل" : "نهار", systemImage: isNight ? "moon.stars.fill" : "sun.max.fill")
-                    .font(.caption2.weight(.black))
-                    .labelStyle(.titleAndIcon)
-                    .foregroundStyle(accentColor)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 7)
-                    .background(isNight ? Color.white.opacity(0.16) : Color.white.opacity(0.95))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(isNight ? Color.white.opacity(0.14) : Color.black.opacity(0.1))
-                    )
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                themeMenu
 
                 Spacer()
 
                 Text("مواقيت محلية \(AppInfo.displayVersion)")
                     .font(.caption2.monospacedDigit().weight(.bold))
-                    .foregroundStyle(accentColor)
+                    .foregroundStyle(activeTheme.accent)
                     .lineLimit(1)
             }
 
@@ -104,10 +103,51 @@ struct ContentView: View {
 
             Text(PrayerEngine.longDateLabel(for: selectedDateKey))
                 .font(.caption2.weight(.semibold))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(activeTheme.secondaryText.opacity(0.82))
                 .lineLimit(1)
                 .minimumScaleFactor(0.75)
                 .frame(maxWidth: .infinity, alignment: .trailing)
+        }
+    }
+
+    private var themeMenu: some View {
+        Menu {
+            Section("أنماط الليل") {
+                ForEach(PrayerVisualTheme.nightChoices) { theme in
+                    Button {
+                        selectedNightThemeID = theme.rawValue
+                        WidgetCenter.shared.reloadAllTimelines()
+                    } label: {
+                        Label(theme.title, systemImage: selectedNightThemeID == theme.rawValue ? "checkmark.circle.fill" : theme.symbol)
+                    }
+                }
+            }
+
+            Section("أنماط النهار") {
+                ForEach(PrayerVisualTheme.dayChoices) { theme in
+                    Button {
+                        selectedDayThemeID = theme.rawValue
+                        WidgetCenter.shared.reloadAllTimelines()
+                    } label: {
+                        Label(theme.title, systemImage: selectedDayThemeID == theme.rawValue ? "checkmark.circle.fill" : theme.symbol)
+                    }
+                }
+            }
+        } label: {
+            Label("\(activeTheme.modeTitle) · \(activeTheme.title)", systemImage: activeTheme.symbol)
+                .font(.caption2.weight(.black))
+                .labelStyle(.titleAndIcon)
+                .foregroundStyle(activeTheme.accent)
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 7)
+                .background(activeTheme.controlBackground)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(activeTheme.controlBorder)
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 8))
         }
     }
 
@@ -120,12 +160,12 @@ struct ContentView: View {
                     .lineLimit(1)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 7)
-                    .background(countdownBackground)
+                    .background(activeTheme.countdownBackground)
                     .clipShape(RoundedRectangle(cornerRadius: 8))
 
                 Text(elapsedText(for: previous))
                     .font(.caption2.weight(.semibold))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(activeTheme.secondaryText.opacity(0.82))
                     .lineLimit(1)
                     .minimumScaleFactor(0.72)
             }
@@ -135,7 +175,7 @@ struct ContentView: View {
             VStack(alignment: .trailing, spacing: 2) {
                 Text("الصلاة القادمة")
                     .font(.caption2.weight(.bold))
-                    .foregroundStyle(accentColor)
+                    .foregroundStyle(activeTheme.accent)
                     .lineLimit(1)
 
                 Text(next?.title ?? "--")
@@ -145,14 +185,14 @@ struct ContentView: View {
 
                 Text(next?.time ?? "--:--")
                     .font(.system(size: compact ? 35 : 40, weight: .black, design: .rounded))
-                    .foregroundStyle(accentColor)
+                    .foregroundStyle(activeTheme.accent)
                     .lineLimit(1)
                     .minimumScaleFactor(0.72)
             }
         }
         .frame(maxWidth: .infinity, alignment: .trailing)
         .padding(compact ? 12 : 14)
-        .background(panelBackground)
+        .background(activeTheme.panelBackground)
         .clipShape(RoundedRectangle(cornerRadius: 8))
         .shadow(color: .black.opacity(isNight ? 0.22 : 0.06), radius: 12, y: 6)
     }
@@ -162,19 +202,19 @@ struct ContentView: View {
             Button("اليوم التالي") {
                 moveDay(1)
             }
-            .buttonStyle(CompactButtonStyle(isNight: isNight))
+            .buttonStyle(CompactButtonStyle(theme: activeTheme))
             .disabled(!PrayerEngine.canMove(from: selectedDateKey, by: 1))
 
             Button("اليوم") {
                 selectedDateKey = PrayerEngine.defaultDateKey(for: now)
                 followsToday = true
             }
-            .buttonStyle(CompactButtonStyle(isNight: isNight))
+            .buttonStyle(CompactButtonStyle(theme: activeTheme))
 
             Button("اليوم السابق") {
                 moveDay(-1)
             }
-            .buttonStyle(CompactButtonStyle(isNight: isNight))
+            .buttonStyle(CompactButtonStyle(theme: activeTheme))
             .disabled(!PrayerEngine.canMove(from: selectedDateKey, by: -1))
         }
         .frame(maxWidth: .infinity, alignment: .trailing)
@@ -183,7 +223,7 @@ struct ContentView: View {
     private var footerNote: some View {
         Text("مواقيت تل السبع المحلية · تتحدث تلقائيًا")
             .font(.caption2.weight(.bold))
-            .foregroundStyle(accentColor)
+            .foregroundStyle(activeTheme.accent)
             .lineLimit(1)
             .minimumScaleFactor(0.75)
         .frame(maxWidth: .infinity, alignment: .trailing)
@@ -193,13 +233,13 @@ struct ContentView: View {
         HStack {
             Text(item.time)
                 .font(.headline.monospacedDigit().weight(.bold))
-                .foregroundStyle(item.key == activeKey ? accentColor : Color.primary)
+                .foregroundStyle(item.key == activeKey ? activeTheme.accent : activeTheme.primaryText)
 
             Spacer()
 
             Text(item.title)
                 .font(.headline.weight(.bold))
-                .foregroundStyle(item.key == activeKey ? accentColor : Color.secondary)
+                .foregroundStyle(item.key == activeKey ? activeTheme.accent : activeTheme.secondaryText.opacity(0.78))
         }
         .lineLimit(1)
         .padding(.horizontal, 12)
@@ -216,43 +256,21 @@ struct ContentView: View {
         colorScheme == .dark
     }
 
-    private var accentColor: Color {
-        isNight ? Color(red: 0.96, green: 0.78, blue: 0.38) : Color.teal
-    }
-
-    private var panelBackground: Color {
-        isNight ? Color(red: 0.07, green: 0.11, blue: 0.12).opacity(0.96) : Color.white.opacity(0.9)
-    }
-
-    private var countdownBackground: Color {
-        isNight ? Color(red: 0.45, green: 0.30, blue: 0.09) : Color(red: 0.04, green: 0.31, blue: 0.29)
+    private var activeTheme: PrayerVisualTheme {
+        PrayerVisualTheme.selected(isNight: isNight, nightID: selectedNightThemeID, dayID: selectedDayThemeID)
     }
 
     private func rowBackground(isActive: Bool) -> Color {
-        if isNight {
-            return isActive ? Color(red: 0.18, green: 0.15, blue: 0.08).opacity(0.92) : Color(red: 0.08, green: 0.13, blue: 0.14).opacity(0.92)
-        }
-
-        return isActive ? Color.teal.opacity(0.12) : Color.white.opacity(0.82)
+        isActive ? activeTheme.activeRowBackground : activeTheme.rowBackground
     }
 
     private func rowBorder(isActive: Bool) -> Color {
-        if isNight {
-            return isActive ? Color(red: 0.96, green: 0.78, blue: 0.38).opacity(0.55) : Color.white.opacity(0.09)
-        }
-
-        return isActive ? Color.teal.opacity(0.55) : Color.black.opacity(0.08)
+        isActive ? activeTheme.activeRowBorder : activeTheme.rowBorder
     }
 
     private var background: some View {
         LinearGradient(
-            colors: isNight ? [
-                Color(red: 0.02, green: 0.08, blue: 0.10),
-                Color(red: 0.08, green: 0.16, blue: 0.14)
-            ] : [
-                Color(red: 0.95, green: 0.93, blue: 0.88),
-                Color(red: 0.90, green: 0.96, blue: 0.94)
-            ],
+            colors: activeTheme.appBackground,
             startPoint: .topTrailing,
             endPoint: .bottomLeading
         )
@@ -291,18 +309,18 @@ struct ContentView: View {
 }
 
 private struct CompactButtonStyle: ButtonStyle {
-    let isNight: Bool
+    let theme: PrayerVisualTheme
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.caption.weight(.bold))
-            .foregroundStyle(.primary)
+            .foregroundStyle(theme.primaryText)
             .padding(.horizontal, 12)
             .padding(.vertical, 9)
-            .background(isNight ? Color.white.opacity(configuration.isPressed ? 0.10 : 0.16) : Color.white.opacity(configuration.isPressed ? 0.65 : 0.95))
+            .background(configuration.isPressed ? theme.controlPressedBackground : theme.controlBackground)
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
-                    .stroke(isNight ? Color.white.opacity(0.12) : Color.black.opacity(0.1))
+                    .stroke(theme.controlBorder)
             )
             .clipShape(RoundedRectangle(cornerRadius: 8))
     }
