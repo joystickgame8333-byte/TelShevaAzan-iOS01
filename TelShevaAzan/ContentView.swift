@@ -8,6 +8,7 @@ struct ContentView: View {
     @State private var now = Date()
     @State private var selectedDateKey = PrayerEngine.defaultDateKey()
     @State private var followsToday = true
+    @State private var isThemePickerPresented = false
 
     private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
@@ -50,6 +51,10 @@ struct ContentView: View {
                 .environment(\.layoutDirection, .leftToRight)
                 .multilineTextAlignment(.trailing)
                 .clipped()
+
+                if isThemePickerPresented {
+                    themePickerOverlay(width: min(proxy.size.width - 32, 330), topOffset: compactHeight ? 112 : 126)
+                }
             }
         }
         .onReceive(timer) { value in
@@ -111,61 +116,128 @@ struct ContentView: View {
     }
 
     private var themeMenu: some View {
-        Menu {
-            Section {
-                ForEach(PrayerVisualTheme.nightChoices) { theme in
-                    Button {
-                        selectedNightThemeID = theme.rawValue
-                        WidgetCenter.shared.reloadAllTimelines()
-                    } label: {
-                        Label {
-                            Text(ArabicDisplay.rtl(theme.title))
-                        } icon: {
-                            Image(systemName: selectedNightThemeID == theme.rawValue ? "checkmark.circle.fill" : theme.symbol)
-                        }
-                    }
-                }
-            } header: {
-                Text(ArabicDisplay.rtl("أنماط الليل"))
-            }
-
-            Section {
-                ForEach(PrayerVisualTheme.dayChoices) { theme in
-                    Button {
-                        selectedDayThemeID = theme.rawValue
-                        WidgetCenter.shared.reloadAllTimelines()
-                    } label: {
-                        Label {
-                            Text(ArabicDisplay.rtl(theme.title))
-                        } icon: {
-                            Image(systemName: selectedDayThemeID == theme.rawValue ? "checkmark.circle.fill" : theme.symbol)
-                        }
-                    }
-                }
-            } header: {
-                Text(ArabicDisplay.rtl("أنماط النهار"))
+        Button {
+            withAnimation(.easeInOut(duration: 0.18)) {
+                isThemePickerPresented.toggle()
             }
         } label: {
-            Label {
-                Text(ArabicDisplay.rtl("\(activeTheme.modeTitle) · \(activeTheme.title)"))
-            } icon: {
+            HStack(spacing: 6) {
                 Image(systemName: activeTheme.symbol)
+
+                Text("\(activeTheme.modeTitle) · \(activeTheme.title)")
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
             }
-                .font(.caption2.weight(.black))
-                .labelStyle(.titleAndIcon)
-                .foregroundStyle(activeTheme.accent)
-                .lineLimit(1)
-                .minimumScaleFactor(0.75)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 7)
-                .background(activeTheme.controlBackground)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 8)
-                        .stroke(activeTheme.controlBorder)
-                )
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+            .font(.caption2.weight(.black))
+            .foregroundStyle(activeTheme.accent)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 7)
+            .background(activeTheme.controlBackground)
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(activeTheme.controlBorder)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 8))
         }
+        .buttonStyle(.plain)
         .environment(\.layoutDirection, .rightToLeft)
+    }
+
+    private func themePickerOverlay(width: CGFloat, topOffset: CGFloat) -> some View {
+        ZStack(alignment: .topLeading) {
+            Color.black.opacity(0.001)
+                .ignoresSafeArea()
+                .onTapGesture {
+                    withAnimation(.easeInOut(duration: 0.18)) {
+                        isThemePickerPresented = false
+                    }
+                }
+
+            themePickerPanel(width: width)
+                .padding(.top, topOffset)
+                .padding(.leading, 16)
+                .transition(.opacity.combined(with: .scale(scale: 0.98, anchor: .topLeading)))
+        }
+        .zIndex(10)
+    }
+
+    private func themePickerPanel(width: CGFloat) -> some View {
+        VStack(alignment: .trailing, spacing: 0) {
+            themeSection(
+                title: "أنماط الليل",
+                themes: PrayerVisualTheme.nightChoices,
+                selectedID: selectedNightThemeID
+            ) { theme in
+                selectedNightThemeID = theme.rawValue
+            }
+
+            Divider()
+                .background(activeTheme.controlBorder)
+                .padding(.vertical, 4)
+
+            themeSection(
+                title: "أنماط النهار",
+                themes: PrayerVisualTheme.dayChoices,
+                selectedID: selectedDayThemeID
+            ) { theme in
+                selectedDayThemeID = theme.rawValue
+            }
+        }
+        .padding(.vertical, 8)
+        .frame(width: width, alignment: .trailing)
+        .background(activeTheme.panelBackground.opacity(0.98))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(activeTheme.controlBorder)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .shadow(color: .black.opacity(0.26), radius: 18, y: 8)
+        .environment(\.layoutDirection, .rightToLeft)
+    }
+
+    private func themeSection(
+        title: String,
+        themes: [PrayerVisualTheme],
+        selectedID: String,
+        select: @escaping (PrayerVisualTheme) -> Void
+    ) -> some View {
+        VStack(alignment: .trailing, spacing: 0) {
+            Text(title)
+                .font(.caption.weight(.bold))
+                .foregroundStyle(activeTheme.secondaryText.opacity(0.74))
+                .frame(maxWidth: .infinity, alignment: .trailing)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 7)
+
+            ForEach(themes) { theme in
+                Button {
+                    select(theme)
+                    WidgetCenter.shared.reloadAllTimelines()
+                    withAnimation(.easeInOut(duration: 0.18)) {
+                        isThemePickerPresented = false
+                    }
+                } label: {
+                    HStack(spacing: 12) {
+                        Image(systemName: selectedID == theme.rawValue ? "checkmark.circle.fill" : theme.symbol)
+                            .font(.system(size: 18, weight: .bold))
+                            .frame(width: 26)
+
+                        Text(theme.title)
+                            .font(.headline.weight(.bold))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
+                            .frame(maxWidth: .infinity, alignment: .trailing)
+                    }
+                    .foregroundStyle(selectedID == theme.rawValue ? activeTheme.accent : activeTheme.primaryText)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 11)
+                    .background(selectedID == theme.rawValue ? activeTheme.activeRowBackground : Color.clear)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .multilineTextAlignment(.trailing)
     }
 
     private func nextPrayerPanel(next: PrayerTime?, previous: PrayerTime?, compact: Bool) -> some View {
