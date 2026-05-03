@@ -11,6 +11,7 @@ struct ContentView: View {
     var body: some View {
         let schedule = PrayerEngine.schedule(for: selectedDateKey)
         let next = PrayerEngine.nextPrayer(for: selectedDateKey, now: now)
+        let previous = PrayerEngine.previousPrayer(for: selectedDateKey, now: now)
 
         GeometryReader { proxy in
             let compactHeight = proxy.size.height < 720
@@ -26,7 +27,7 @@ struct ContentView: View {
 
                     header
 
-                    nextPrayerPanel(next: next, compact: compactHeight)
+                    nextPrayerPanel(next: next, previous: previous, compact: compactHeight)
 
                     dateControls
 
@@ -110,7 +111,7 @@ struct ContentView: View {
         }
     }
 
-    private func nextPrayerPanel(next: PrayerTime?, compact: Bool) -> some View {
+    private func nextPrayerPanel(next: PrayerTime?, previous: PrayerTime?, compact: Bool) -> some View {
         HStack(alignment: .center, spacing: 12) {
             VStack(alignment: .leading, spacing: 5) {
                 Text(countdownText(for: next))
@@ -122,10 +123,11 @@ struct ContentView: View {
                     .background(countdownBackground)
                     .clipShape(RoundedRectangle(cornerRadius: 8))
 
-                Text("تتحدث تلقائيًا")
+                Text(elapsedText(for: previous))
                     .font(.caption2.weight(.semibold))
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
+                    .minimumScaleFactor(0.72)
             }
 
             Spacer(minLength: 0)
@@ -266,6 +268,19 @@ struct ContentView: View {
         let minutes = (seconds % 3600) / 60
         let remainingSeconds = seconds % 60
         return String(format: "%02d:%02d:%02d", hours, minutes, remainingSeconds)
+    }
+
+    private func elapsedText(for previous: PrayerTime?) -> String {
+        guard let previous else { return "مضى --" }
+        let seconds = max(Int(now.timeIntervalSince(previous.date)), 0)
+        let hours = seconds / 3600
+        let minutes = (seconds % 3600) / 60
+
+        if hours > 0 {
+            return "مضى على \(previous.title) \(hours)س \(minutes)د"
+        }
+
+        return "مضى على \(previous.title) \(minutes)د"
     }
 
     private func moveDay(_ offset: Int) {

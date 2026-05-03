@@ -139,6 +139,24 @@ enum PrayerEngine {
         return events.first
     }
 
+    static func previousPrayer(for dateKey: String, now: Date = Date()) -> PrayerTime? {
+        let daySchedule = Self.schedule(for: dateKey)
+        let events = Self.prayerEvents(for: daySchedule.dateKey)
+
+        if daySchedule.dateKey == Self.dateKey(for: now) {
+            if let previous = events.last(where: { $0.date <= now }) {
+                return previous
+            }
+
+            if let previousDateKey = Self.dateKey(from: daySchedule.dateKey, offset: -1),
+               let previousDayLastPrayer = Self.prayerEvents(for: previousDateKey).last {
+                return previousDayLastPrayer
+            }
+        }
+
+        return events.last
+    }
+
     private static func prayerEvents(for dateKey: String) -> [PrayerTime] {
         let daySchedule = Self.schedule(for: dateKey)
         return Self.prayerOrder.compactMap { key -> PrayerTime? in

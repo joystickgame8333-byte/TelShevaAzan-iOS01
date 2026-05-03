@@ -5,6 +5,7 @@ struct TelShevaWidgetEntry: TimelineEntry {
     let date: Date
     let dateKey: String
     let nextPrayer: PrayerTime?
+    let previousPrayer: PrayerTime?
     let times: [PrayerTime]
 }
 
@@ -31,6 +32,7 @@ struct TelShevaWidgetProvider: TimelineProvider {
             date: date,
             dateKey: dateKey,
             nextPrayer: PrayerEngine.nextPrayer(for: dateKey, now: date),
+            previousPrayer: PrayerEngine.previousPrayer(for: dateKey, now: date),
             times: schedule.displayTimes
         )
     }
@@ -126,6 +128,36 @@ struct TelShevaAzanWidgetView: View {
         return "باقي \(minutes)د"
     }
 
+    private var compactElapsedText: String {
+        guard let previous = entry.previousPrayer else { return "مضى --" }
+        let seconds = max(Int(entry.date.timeIntervalSince(previous.date)), 0)
+        let minutes = seconds / 60
+
+        if minutes >= 60 {
+            return "مضى على \(previous.title) \(minutes / 60)س \(minutes % 60)د"
+        }
+
+        return "مضى على \(previous.title) \(minutes)د"
+    }
+
+    private var inlineLiveText: Text {
+        guard let nextDate = entry.nextPrayer?.date else {
+            return Text("\(nextTitle) \(nextTime) · باقي --")
+        }
+
+        return Text("\(nextTitle) \(nextTime) · باقي ") + Text(nextDate, style: .timer)
+    }
+
+    private var liveRemainingText: Text {
+        guard let nextDate = entry.nextPrayer?.date else { return Text("باقي --") }
+        return Text("باقي ") + Text(nextDate, style: .timer)
+    }
+
+    private var liveElapsedText: Text {
+        guard let previous = entry.previousPrayer else { return Text("مضى --") }
+        return Text("مضى على \(previous.title) ") + Text(previous.date, style: .timer)
+    }
+
     private var homeScreenLayout: some View {
         ZStack {
             widgetBackground
@@ -187,6 +219,13 @@ struct TelShevaAzanWidgetView: View {
             remainingChip(fontSize: 11)
                 .frame(maxWidth: .infinity, alignment: .trailing)
 
+            Text(compactElapsedText)
+                .font(.system(size: 8, weight: .bold, design: .rounded))
+                .foregroundColor(secondaryText.opacity(0.78))
+                .lineLimit(1)
+                .minimumScaleFactor(0.72)
+                .frame(maxWidth: .infinity, alignment: .trailing)
+
             HStack(spacing: 4) {
                 Text("v\(AppInfo.build)")
                     .font(.system(size: 8, weight: .black, design: .rounded).monospacedDigit())
@@ -240,6 +279,13 @@ struct TelShevaAzanWidgetView: View {
                     .frame(maxWidth: .infinity, alignment: .trailing)
 
                 remainingChip(fontSize: 11)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+
+                Text(compactElapsedText)
+                    .font(.system(size: 8, weight: .bold, design: .rounded))
+                    .foregroundColor(secondaryText.opacity(0.78))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.72)
                     .frame(maxWidth: .infinity, alignment: .trailing)
 
                 Text("تل السبع \(AppInfo.displayVersion)")
@@ -307,7 +353,11 @@ struct TelShevaAzanWidgetView: View {
         if #available(iOSApplicationExtension 16.0, *) {
             switch family {
             case .accessoryInline:
-                Label("\(nextTitle) \(nextTime) · \(compactRemainingText)", systemImage: "clock.fill")
+                Label {
+                    inlineLiveText
+                } icon: {
+                    Image(systemName: "clock.fill")
+                }
             case .accessoryCircular:
                 ZStack {
                     AccessoryWidgetBackground()
@@ -350,10 +400,17 @@ struct TelShevaAzanWidgetView: View {
                     }
                     .frame(maxWidth: .infinity, alignment: .trailing)
 
-                    Text(compactRemainingText)
+                    liveRemainingText
                         .font(.system(size: 12, weight: .bold, design: .rounded).monospacedDigit())
                         .lineLimit(1)
                         .minimumScaleFactor(0.75)
+                        .frame(maxWidth: .infinity, alignment: .trailing)
+                        .multilineTextAlignment(.trailing)
+
+                    liveElapsedText
+                        .font(.system(size: 9, weight: .semibold, design: .rounded).monospacedDigit())
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.62)
                         .frame(maxWidth: .infinity, alignment: .trailing)
                         .multilineTextAlignment(.trailing)
                 }
