@@ -1,9 +1,12 @@
 import Foundation
 import SwiftUI
+import UIKit
 
 struct QiblaView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var compass = QiblaCompassManager()
+    @State private var wasAlignedWithQibla = false
+    @State private var lastAlignmentHaptic = Date.distantPast
 
     let theme: PrayerVisualTheme
 
@@ -53,8 +56,12 @@ struct QiblaView: View {
         .onAppear {
             compass.start()
         }
+        .onChange(of: compass.heading) { _ in
+            updateAlignmentHaptic()
+        }
         .onDisappear {
             compass.stop()
+            wasAlignedWithQibla = false
         }
     }
 
@@ -210,6 +217,28 @@ struct QiblaView: View {
 
         let direction = delta > 0 ? "يمين" : "يسار"
         return "لف \(direction) \(Int(absDelta.rounded()))°"
+    }
+
+    private func updateAlignmentHaptic() {
+        guard let delta else {
+            wasAlignedWithQibla = false
+            return
+        }
+
+        let accuracyIsUsable = compass.accuracy < 0 || compass.accuracy <= 25
+        let isAligned = abs(delta) <= 3 && accuracyIsUsable
+
+        if isAligned && !wasAlignedWithQibla {
+            let now = Date()
+            if now.timeIntervalSince(lastAlignmentHaptic) > 1.5 {
+                let generator = UINotificationFeedbackGenerator()
+                generator.prepare()
+                generator.notificationOccurred(.success)
+                lastAlignmentHaptic = now
+            }
+        }
+
+        wasAlignedWithQibla = isAligned
     }
 
     private var accuracyText: String {
