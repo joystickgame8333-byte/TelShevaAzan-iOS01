@@ -141,21 +141,15 @@ struct TelShevaAzanWidgetView: View {
     }
 
     private var inlineLiveText: Text {
-        guard let nextDate = entry.nextPrayer?.date else {
-            return Text("\(nextTitle) \(nextTime) · باقي --")
-        }
-
-        return Text("\(nextTitle) \(nextTime) · باقي ") + Text(nextDate, style: .timer)
+        Text("\(nextTitle) \(nextTime) · \(compactRemainingText)")
     }
 
     private var liveRemainingText: Text {
-        guard let nextDate = entry.nextPrayer?.date else { return Text("باقي --") }
-        return Text("باقي ") + Text(nextDate, style: .timer)
+        Text(compactRemainingText)
     }
 
     private var liveElapsedText: Text {
-        guard let previous = entry.previousPrayer else { return Text("مضى --") }
-        return Text("مضى على \(previous.title) ") + Text(previous.date, style: .timer)
+        Text(compactElapsedText)
     }
 
     private var homeScreenLayout: some View {
@@ -306,13 +300,8 @@ struct TelShevaAzanWidgetView: View {
         HStack(spacing: 4) {
             Text("باقي")
 
-            if let nextDate = entry.nextPrayer?.date {
-                Text(nextDate, style: .timer)
-                    .monospacedDigit()
-            } else {
-                Text("--")
-                    .monospacedDigit()
-            }
+            Text(compactRemainingValue)
+                .monospacedDigit()
         }
         .font(.system(size: fontSize, weight: .black, design: .rounded))
         .foregroundColor(primaryText)
@@ -323,6 +312,19 @@ struct TelShevaAzanWidgetView: View {
         .background(chipBackground)
         .clipShape(RoundedRectangle(cornerRadius: 7))
         .environment(\.layoutDirection, .rightToLeft)
+    }
+
+    private var compactRemainingValue: String {
+        guard let nextDate = entry.nextPrayer?.date else { return "--" }
+        let seconds = max(Int(nextDate.timeIntervalSince(entry.date)), 0)
+        let hours = seconds / 3600
+        let minutes = (seconds % 3600) / 60
+
+        if hours > 0 {
+            return "\(hours):" + String(format: "%02d", minutes)
+        }
+
+        return "\(max(minutes, 1))د"
     }
 
     private func mediumPrayerRow(_ item: PrayerTime) -> some View {
