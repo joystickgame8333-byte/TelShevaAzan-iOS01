@@ -33,6 +33,8 @@ struct ContentView: View {
 
                     header
 
+                    headerControls
+
                     nextPrayerPanel(next: next, previous: previous, compact: compactHeight)
 
                     dateControls
@@ -55,7 +57,7 @@ struct ContentView: View {
                 .clipped()
 
                 if isThemePickerPresented {
-                    themePickerOverlay(width: min(proxy.size.width - 32, 330), topOffset: compactHeight ? 112 : 126)
+                    themePickerOverlay(width: min(proxy.size.width - 32, 330), topOffset: compactHeight ? 148 : 162)
                 }
             }
         }
@@ -83,10 +85,10 @@ struct ContentView: View {
     private var quranVerse: some View {
         VStack(alignment: .trailing, spacing: 0) {
             Text("إِنَّ ٱلصَّلَوٰةَ كَانَتْ عَلَى ٱلْمُؤْمِنِينَ كِتَـٰبًا مَّوْقُوتًا")
-                .font(.custom("AmiriQuran-Regular", size: 21))
+                .font(.custom("AmiriQuran-Regular", size: 23))
                 .foregroundStyle(activeTheme.accent)
                 .lineLimit(2)
-                .minimumScaleFactor(0.72)
+                .minimumScaleFactor(0.68)
 
             Text("النساء ١٠٣")
                 .font(.caption.weight(.bold))
@@ -97,19 +99,7 @@ struct ContentView: View {
     }
 
     private var header: some View {
-        VStack(alignment: .trailing, spacing: 4) {
-            HStack {
-                themeMenu
-
-                qiblaButton
-
-                notificationButton
-
-                testNotificationButton
-
-                Spacer()
-            }
-
+        VStack(alignment: .trailing, spacing: 3) {
             Text("أذان تل السبع")
                 .font(.system(size: 28, weight: .black, design: .rounded))
                 .lineLimit(1)
@@ -123,6 +113,21 @@ struct ContentView: View {
                 .minimumScaleFactor(0.75)
                 .frame(maxWidth: .infinity, alignment: .trailing)
         }
+    }
+
+    private var headerControls: some View {
+        HStack(spacing: 8) {
+            themeMenu
+
+            qiblaButton
+
+            notificationButton
+
+            testNotificationButton
+
+            Spacer(minLength: 0)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var themeMenu: some View {
