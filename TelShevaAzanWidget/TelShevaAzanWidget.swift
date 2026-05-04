@@ -1,3 +1,4 @@
+import Foundation
 import SwiftUI
 import WidgetKit
 
@@ -66,38 +67,44 @@ struct TelShevaAzanWidgetView: View {
         colorScheme == .dark
     }
 
+    private var selectedNightThemeID: String {
+        AppThemeStorage.defaults.string(forKey: AppThemeStorage.nightThemeKey) ?? PrayerVisualTheme.defaultNight.rawValue
+    }
+
+    private var selectedDayThemeID: String {
+        AppThemeStorage.defaults.string(forKey: AppThemeStorage.dayThemeKey) ?? PrayerVisualTheme.defaultDay.rawValue
+    }
+
+    private var theme: PrayerVisualTheme {
+        PrayerVisualTheme.selected(isNight: isNight, nightID: selectedNightThemeID, dayID: selectedDayThemeID)
+    }
+
     private var accent: Color {
-        isNight ? Color(red: 0.96, green: 0.78, blue: 0.38) : Color(red: 0.02, green: 0.43, blue: 0.39)
+        theme.accent
     }
 
     private var primaryText: Color {
-        isNight ? .white : Color(red: 0.03, green: 0.17, blue: 0.16)
+        theme.primaryText
     }
 
     private var secondaryText: Color {
-        isNight ? Color(red: 0.76, green: 0.93, blue: 0.87) : Color(red: 0.16, green: 0.46, blue: 0.42)
+        theme.secondaryText
     }
 
     private var mutedText: Color {
-        isNight ? .white.opacity(0.86) : Color(red: 0.12, green: 0.32, blue: 0.30).opacity(0.88)
+        theme.mutedText
     }
 
     private var chipBackground: Color {
-        isNight ? Color.white.opacity(0.13) : Color.white.opacity(0.64)
+        theme.chipBackground
     }
 
     private var activeRowBackground: Color {
-        isNight ? Color.white.opacity(0.12) : Color(red: 0.02, green: 0.43, blue: 0.39).opacity(0.13)
+        theme.activeRowBackground
     }
 
     private var widgetGradientColors: [Color] {
-        isNight ? [
-            Color(red: 0.04, green: 0.49, blue: 0.45),
-            Color(red: 0.03, green: 0.30, blue: 0.28)
-        ] : [
-            Color(red: 0.86, green: 0.97, blue: 0.93),
-            Color(red: 0.94, green: 0.91, blue: 0.74)
-        ]
+        theme.widgetBackground
     }
 
     private var widgetBackground: some View {
@@ -176,7 +183,7 @@ struct TelShevaAzanWidgetView: View {
             HStack(spacing: 5) {
                 Spacer(minLength: 0)
 
-                Image(systemName: isNight ? "moon.stars.fill" : "sun.max.fill")
+                Image(systemName: theme.symbol)
                     .font(.system(size: 12, weight: .black, design: .rounded))
 
                 Text("تل السبع")
