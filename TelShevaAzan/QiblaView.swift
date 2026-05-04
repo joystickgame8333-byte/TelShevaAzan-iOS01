@@ -109,19 +109,6 @@ struct QiblaView: View {
                     .rotationEffect(.degrees(Double(index) * 10))
             }
 
-            VStack(spacing: 2) {
-                Text("شمال")
-                    .font(.caption.weight(.black))
-                    .foregroundStyle(theme.secondaryText)
-
-                Spacer()
-
-                Text("جنوب")
-                    .font(.caption.weight(.black))
-                    .foregroundStyle(theme.secondaryText.opacity(0.78))
-            }
-            .padding(.vertical, 20)
-
             Image(systemName: "location.north.fill")
                 .font(.system(size: size * 0.28, weight: .black))
                 .foregroundStyle(theme.accent)
@@ -132,6 +119,13 @@ struct QiblaView: View {
             Circle()
                 .fill(theme.accent)
                 .frame(width: 12, height: 12)
+
+            Text("السهم يشير للقبلة")
+                .font(.caption.weight(.black))
+                .foregroundStyle(theme.secondaryText.opacity(0.82))
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+                .offset(y: (size / 2) - 36)
         }
         .frame(width: size, height: size)
     }
