@@ -429,7 +429,7 @@ struct TelShevaAzanWidgetView: View {
 
 @main
 struct TelShevaAzanWidget: Widget {
-    let kind = "com.omaralasam.telshevaazan.nextPrayer"
+    let kind = "com.omaralasam.telshevaazan.nextPrayer.v2"
 
     var body: some WidgetConfiguration {
         if #available(iOSApplicationExtension 16.0, *) {
