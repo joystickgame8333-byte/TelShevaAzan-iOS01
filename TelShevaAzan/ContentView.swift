@@ -79,13 +79,13 @@ struct ContentView: View {
     private var quranVerse: some View {
         VStack(alignment: .trailing, spacing: 0) {
             Text("إِنَّ ٱلصَّلَوٰةَ كَانَتْ عَلَى ٱلْمُؤْمِنِينَ كِتَـٰبًا مَّوْقُوتًا")
-                .font(.custom("AmiriQuran-Regular", size: 16))
+                .font(.custom("AmiriQuran-Regular", size: 21))
                 .foregroundStyle(activeTheme.accent)
-                .lineLimit(1)
-                .minimumScaleFactor(0.54)
+                .lineLimit(2)
+                .minimumScaleFactor(0.72)
 
             Text("النساء ١٠٣")
-                .font(.caption2.weight(.bold))
+                .font(.caption.weight(.bold))
                 .foregroundStyle(activeTheme.secondaryText.opacity(0.74))
                 .lineLimit(1)
         }
