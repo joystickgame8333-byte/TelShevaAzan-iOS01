@@ -60,7 +60,7 @@ enum PrayerVisualTheme: String, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .nightOld:
-            return "حالك Old"
+            return "ليل حالك"
         case .nightEmerald:
             return "زمرد هادئ"
         case .nightMidnight:
@@ -120,22 +120,22 @@ enum PrayerVisualTheme: String, CaseIterable, Identifiable {
         switch self {
         case .nightOld:
             return ThemePalette(
-                appBackground: [Color(red: 0.00, green: 0.05, blue: 0.06), Color(red: 0.03, green: 0.10, blue: 0.09)],
-                widgetBackground: [Color(red: 0.02, green: 0.34, blue: 0.31), Color(red: 0.01, green: 0.13, blue: 0.12)],
-                accent: Color(red: 0.96, green: 0.78, blue: 0.38),
+                appBackground: [Color(red: 0.00, green: 0.00, blue: 0.00), Color(red: 0.02, green: 0.02, blue: 0.02)],
+                widgetBackground: [Color(red: 0.00, green: 0.00, blue: 0.00), Color(red: 0.04, green: 0.04, blue: 0.04)],
+                accent: Color(red: 0.96, green: 0.75, blue: 0.32),
                 primaryText: .white,
-                secondaryText: Color(red: 0.76, green: 0.93, blue: 0.87),
-                mutedText: .white.opacity(0.86),
-                panelBackground: Color(red: 0.05, green: 0.09, blue: 0.09).opacity(0.98),
-                countdownBackground: Color(red: 0.45, green: 0.30, blue: 0.09),
-                rowBackground: Color(red: 0.06, green: 0.10, blue: 0.10).opacity(0.95),
-                activeRowBackground: Color(red: 0.18, green: 0.15, blue: 0.08).opacity(0.94),
-                rowBorder: .white.opacity(0.08),
-                activeRowBorder: Color(red: 0.96, green: 0.78, blue: 0.38).opacity(0.56),
-                chipBackground: .white.opacity(0.12),
-                controlBackground: .white.opacity(0.13),
-                controlPressedBackground: .white.opacity(0.09),
-                controlBorder: .white.opacity(0.11)
+                secondaryText: Color(red: 0.78, green: 0.78, blue: 0.78),
+                mutedText: .white.opacity(0.78),
+                panelBackground: Color(red: 0.04, green: 0.04, blue: 0.04).opacity(0.98),
+                countdownBackground: Color(red: 0.17, green: 0.12, blue: 0.04),
+                rowBackground: Color(red: 0.05, green: 0.05, blue: 0.05).opacity(0.96),
+                activeRowBackground: Color(red: 0.12, green: 0.10, blue: 0.05).opacity(0.96),
+                rowBorder: .white.opacity(0.10),
+                activeRowBorder: Color(red: 0.96, green: 0.75, blue: 0.32).opacity(0.58),
+                chipBackground: .white.opacity(0.10),
+                controlBackground: .white.opacity(0.12),
+                controlPressedBackground: .white.opacity(0.08),
+                controlBorder: .white.opacity(0.14)
             )
         case .nightEmerald:
             return ThemePalette(
