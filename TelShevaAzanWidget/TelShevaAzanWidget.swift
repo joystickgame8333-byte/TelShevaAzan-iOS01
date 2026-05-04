@@ -427,6 +427,7 @@ struct TelShevaAzanWidgetView: View {
     }
 }
 
+@main
 struct TelShevaAzanWidget: Widget {
     let kind = "com.omaralasam.telshevaazan.nextPrayer"
 
@@ -448,39 +449,6 @@ struct TelShevaAzanWidget: Widget {
             .description("يعرض الصلاة القادمة ووقت الأذان والباقي عليها في تل السبع.")
             .supportedFamilies([.systemSmall, .systemMedium])
         }
-    }
-}
-
-struct TelShevaAzanWidgetV2: Widget {
-    let kind = "com.omaralasam.telshevaazan.nextPrayer.v2"
-
-    var body: some WidgetConfiguration {
-        if #available(iOSApplicationExtension 16.0, *) {
-            StaticConfiguration(kind: kind, provider: TelShevaWidgetProvider()) { entry in
-                TelShevaAzanWidgetView(entry: entry)
-                    .environment(\.layoutDirection, .rightToLeft)
-            }
-            .configurationDisplayName("الصلاة القادمة")
-            .description("يعرض الصلاة القادمة ووقت الأذان والباقي عليها في تل السبع.")
-            .supportedFamilies([.systemSmall, .systemMedium, .accessoryInline, .accessoryCircular, .accessoryRectangular])
-        } else {
-            StaticConfiguration(kind: kind, provider: TelShevaWidgetProvider()) { entry in
-                TelShevaAzanWidgetView(entry: entry)
-                    .environment(\.layoutDirection, .rightToLeft)
-            }
-            .configurationDisplayName("الصلاة القادمة")
-            .description("يعرض الصلاة القادمة ووقت الأذان والباقي عليها في تل السبع.")
-            .supportedFamilies([.systemSmall, .systemMedium])
-        }
-    }
-}
-
-@main
-struct TelShevaAzanWidgetBundle: WidgetBundle {
-    var body: some Widget {
-        // Keep both kinds alive so old widgets already placed on the screen do not turn blank.
-        TelShevaAzanWidget()
-        TelShevaAzanWidgetV2()
     }
 }
 
