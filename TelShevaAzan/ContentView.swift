@@ -9,6 +9,7 @@ struct ContentView: View {
     @State private var selectedDateKey = PrayerEngine.defaultDateKey()
     @State private var followsToday = true
     @State private var isThemePickerPresented = false
+    @State private var isQiblaPresented = false
 
     private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
@@ -69,6 +70,10 @@ struct ContentView: View {
         .onChange(of: selectedDayThemeID) { _ in
             WidgetCenter.shared.reloadAllTimelines()
         }
+        .fullScreenCover(isPresented: $isQiblaPresented) {
+            QiblaView(theme: activeTheme)
+                .environment(\.layoutDirection, .rightToLeft)
+        }
     }
 
     private var quranVerse: some View {
@@ -91,6 +96,8 @@ struct ContentView: View {
         VStack(alignment: .trailing, spacing: 4) {
             HStack {
                 themeMenu
+
+                qiblaButton
 
                 Spacer()
 
@@ -127,6 +134,31 @@ struct ContentView: View {
                 Text("\(activeTheme.modeTitle) · \(activeTheme.title)")
                     .lineLimit(1)
                     .minimumScaleFactor(0.75)
+            }
+            .font(.caption2.weight(.black))
+            .foregroundStyle(activeTheme.accent)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 7)
+            .background(activeTheme.controlBackground)
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(activeTheme.controlBorder)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+        }
+        .buttonStyle(.plain)
+        .environment(\.layoutDirection, .rightToLeft)
+    }
+
+    private var qiblaButton: some View {
+        Button {
+            isQiblaPresented = true
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: "location.north.fill")
+
+                Text("القبلة")
+                    .lineLimit(1)
             }
             .font(.caption2.weight(.black))
             .foregroundStyle(activeTheme.accent)

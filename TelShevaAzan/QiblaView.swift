@@ -1,0 +1,244 @@
+import Foundation
+import SwiftUI
+
+struct QiblaView: View {
+    @Environment(\.dismiss) private var dismiss
+    @StateObject private var compass = QiblaCompassManager()
+
+    let theme: PrayerVisualTheme
+
+    private let qiblaBearing = QiblaCalculator.telShevaBearing
+
+    private var delta: Double? {
+        guard let heading = compass.heading else { return nil }
+        return QiblaCalculator.delta(from: heading, to: qiblaBearing)
+    }
+
+    var body: some View {
+        GeometryReader { proxy in
+            let compactHeight = proxy.size.height < 720
+            let circleSize = min(proxy.size.width - 54, compactHeight ? 250 : 300)
+
+            ZStack {
+                LinearGradient(
+                    colors: theme.appBackground,
+                    startPoint: .topTrailing,
+                    endPoint: .bottomLeading
+                )
+                .ignoresSafeArea()
+
+                VStack(alignment: .trailing, spacing: compactHeight ? 12 : 16) {
+                    header
+
+                    Spacer(minLength: 4)
+
+                    compassFace(size: circleSize)
+                        .frame(maxWidth: .infinity, alignment: .center)
+
+                    directionReadout
+
+                    accuracyPanel
+
+                    Spacer(minLength: 0)
+                }
+                .padding(.horizontal, 18)
+                .padding(.top, 14)
+                .padding(.bottom, 18)
+                .frame(width: proxy.size.width, height: proxy.size.height, alignment: .topTrailing)
+                .foregroundStyle(theme.primaryText)
+                .environment(\.layoutDirection, .rightToLeft)
+                .multilineTextAlignment(.trailing)
+            }
+        }
+        .onAppear {
+            compass.start()
+        }
+        .onDisappear {
+            compass.stop()
+        }
+    }
+
+    private var header: some View {
+        HStack(alignment: .top) {
+            Button {
+                dismiss()
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 16, weight: .black))
+                    .frame(width: 38, height: 38)
+                    .background(theme.controlBackground)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(theme.controlBorder)
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+            }
+            .buttonStyle(.plain)
+
+            Spacer()
+
+            VStack(alignment: .trailing, spacing: 4) {
+                Text("القبلة")
+                    .font(.system(size: 34, weight: .black, design: .rounded))
+                    .lineLimit(1)
+
+                Text("تل السبع إلى الكعبة · \(bearingText(qiblaBearing))")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(theme.accent)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.72)
+            }
+        }
+    }
+
+    private func compassFace(size: CGFloat) -> some View {
+        ZStack {
+            Circle()
+                .fill(theme.panelBackground)
+                .overlay(
+                    Circle()
+                        .stroke(theme.controlBorder, lineWidth: 1)
+                )
+                .shadow(color: .black.opacity(0.24), radius: 18, y: 8)
+
+            ForEach(0..<36, id: \.self) { index in
+                Rectangle()
+                    .fill(index % 3 == 0 ? theme.accent : theme.secondaryText.opacity(0.34))
+                    .frame(width: index % 3 == 0 ? 3 : 2, height: index % 3 == 0 ? 16 : 9)
+                    .offset(y: -(size / 2) + 20)
+                    .rotationEffect(.degrees(Double(index) * 10))
+            }
+
+            VStack(spacing: 2) {
+                Text("شمال")
+                    .font(.caption.weight(.black))
+                    .foregroundStyle(theme.secondaryText)
+
+                Spacer()
+
+                Text("جنوب")
+                    .font(.caption.weight(.black))
+                    .foregroundStyle(theme.secondaryText.opacity(0.78))
+            }
+            .padding(.vertical, 20)
+
+            Image(systemName: "location.north.fill")
+                .font(.system(size: size * 0.28, weight: .black))
+                .foregroundStyle(theme.accent)
+                .shadow(color: theme.accent.opacity(0.32), radius: 10)
+                .rotationEffect(.degrees(delta ?? 0))
+                .animation(.easeOut(duration: 0.18), value: delta ?? 0)
+
+            Circle()
+                .fill(theme.accent)
+                .frame(width: 12, height: 12)
+        }
+        .frame(width: size, height: size)
+    }
+
+    private var directionReadout: some View {
+        VStack(alignment: .trailing, spacing: 6) {
+            Text(instructionText)
+                .font(.system(size: 24, weight: .black, design: .rounded))
+                .foregroundStyle(theme.accent)
+                .lineLimit(1)
+                .minimumScaleFactor(0.68)
+
+            HStack(spacing: 10) {
+                metricTile(title: "قبلة تل السبع", value: bearingText(qiblaBearing))
+                metricTile(title: "اتجاه الهاتف", value: compass.heading.map { bearingText($0) } ?? "--")
+            }
+        }
+    }
+
+    private var accuracyPanel: some View {
+        VStack(alignment: .trailing, spacing: 7) {
+            HStack(spacing: 8) {
+                Image(systemName: accuracySymbol)
+                    .foregroundStyle(theme.accent)
+
+                Text(compass.statusMessage)
+                    .font(.headline.weight(.bold))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.72)
+            }
+
+            Text("الدقة: \(accuracyText) · \(compass.usesTrueNorth ? "الشمال الحقيقي" : "الشمال المغناطيسي")")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(theme.secondaryText.opacity(0.82))
+                .lineLimit(1)
+                .minimumScaleFactor(0.68)
+
+            Text("لأفضل نتيجة أبعد الهاتف عن السماعات والمغناطيس وامسكه بشكل أفقي.")
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(theme.secondaryText.opacity(0.72))
+                .lineLimit(2)
+        }
+        .frame(maxWidth: .infinity, alignment: .trailing)
+        .padding(14)
+        .background(theme.panelBackground)
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(theme.controlBorder)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+    }
+
+    private func metricTile(title: String, value: String) -> some View {
+        VStack(alignment: .trailing, spacing: 3) {
+            Text(title)
+                .font(.caption2.weight(.bold))
+                .foregroundStyle(theme.secondaryText.opacity(0.82))
+                .lineLimit(1)
+
+            Text(value)
+                .font(.title3.monospacedDigit().weight(.black))
+                .lineLimit(1)
+        }
+        .frame(maxWidth: .infinity, alignment: .trailing)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(theme.controlBackground)
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(theme.controlBorder)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+    }
+
+    private var instructionText: String {
+        guard let delta else { return "انتظر قراءة البوصلة" }
+        let absDelta = abs(delta)
+
+        if absDelta <= 3 {
+            return "أنت على اتجاه القبلة"
+        }
+
+        let direction = delta > 0 ? "يمين" : "يسار"
+        return "لف \(direction) \(Int(absDelta.rounded()))°"
+    }
+
+    private var accuracyText: String {
+        if compass.accuracy < 0 {
+            return "غير معروفة"
+        }
+
+        return "\(Int(compass.accuracy.rounded()))°"
+    }
+
+    private var accuracySymbol: String {
+        if compass.accuracy < 0 || compass.accuracy > 25 {
+            return "exclamationmark.triangle.fill"
+        }
+
+        if compass.accuracy > 10 {
+            return "checkmark.circle"
+        }
+
+        return "checkmark.seal.fill"
+    }
+
+    private func bearingText(_ value: Double) -> String {
+        "\(String(format: "%.1f", value))°"
+    }
+}

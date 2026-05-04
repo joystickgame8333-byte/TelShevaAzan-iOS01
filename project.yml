@@ -24,8 +24,8 @@ targets:
       properties:
         CFBundleDisplayName: أذان تل السبع
         CFBundlePackageType: APPL
-        CFBundleShortVersionString: "0.4.14"
-        CFBundleVersion: "40"
+        CFBundleShortVersionString: "0.4.16"
+        CFBundleVersion: "42"
         CFBundleIcons:
           CFBundlePrimaryIcon:
             CFBundleIconFiles:
@@ -37,6 +37,7 @@ targets:
         UILaunchScreen: {}
         UIAppFonts:
           - AmiriQuran-Regular.ttf
+        NSLocationWhenInUseUsageDescription: يستخدم التطبيق الموقع محليًا فقط لتحسين دقة القبلة والشمال الحقيقي.
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
     resources:
@@ -54,8 +55,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.omaralasam.telshevaazan
         PRODUCT_NAME: TelShevaAzan
-        MARKETING_VERSION: 0.4.14
-        CURRENT_PROJECT_VERSION: 40
+        MARKETING_VERSION: 0.4.16
+        CURRENT_PROJECT_VERSION: 42
         TARGETED_DEVICE_FAMILY: 1
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
@@ -79,8 +80,8 @@ targets:
       properties:
         CFBundleDisplayName: TelSheva Azan Widget
         CFBundlePackageType: XPC!
-        CFBundleShortVersionString: "0.4.14"
-        CFBundleVersion: "40"
+        CFBundleShortVersionString: "0.4.16"
+        CFBundleVersion: "42"
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
         NSPrincipalClass: ""
@@ -88,8 +89,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.omaralasam.telshevaazan.nextprayerwidget
         PRODUCT_NAME: TelShevaAzanWidgetExtension
-        MARKETING_VERSION: 0.4.14
-        CURRENT_PROJECT_VERSION: 40
+        MARKETING_VERSION: 0.4.16
+        CURRENT_PROJECT_VERSION: 42
         IPHONEOS_DEPLOYMENT_TARGET: 16.0
         TARGETED_DEVICE_FAMILY: "1,2"
         APPLICATION_EXTENSION_API_ONLY: YES
