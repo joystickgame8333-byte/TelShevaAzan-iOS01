@@ -427,9 +427,8 @@ struct TelShevaAzanWidgetView: View {
     }
 }
 
-@main
-struct TelShevaAzanWidget: Widget {
-    let kind = "com.omaralasam.telshevaazan.nextPrayer.v2"
+struct TelShevaAzanPrayerWidget: Widget {
+    let kind: String
 
     var body: some WidgetConfiguration {
         if #available(iOSApplicationExtension 16.0, *) {
@@ -449,6 +448,15 @@ struct TelShevaAzanWidget: Widget {
             .description("يعرض الصلاة القادمة ووقت الأذان والباقي عليها في تل السبع.")
             .supportedFamilies([.systemSmall, .systemMedium])
         }
+    }
+}
+
+@main
+struct TelShevaAzanWidgetBundle: WidgetBundle {
+    var body: some Widget {
+        // Keep both kinds alive so old widgets already placed on the screen do not turn blank.
+        TelShevaAzanPrayerWidget(kind: "com.omaralasam.telshevaazan.nextPrayer")
+        TelShevaAzanPrayerWidget(kind: "com.omaralasam.telshevaazan.nextPrayer.v2")
     }
 }
 
