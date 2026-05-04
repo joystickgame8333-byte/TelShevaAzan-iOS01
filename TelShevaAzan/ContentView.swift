@@ -100,11 +100,6 @@ struct ContentView: View {
                 qiblaButton
 
                 Spacer()
-
-                Text("مواقيت محلية \(AppInfo.displayVersion)")
-                    .font(.caption2.monospacedDigit().weight(.bold))
-                    .foregroundStyle(activeTheme.accent)
-                    .lineLimit(1)
             }
 
             Text("أذان تل السبع")
@@ -342,7 +337,7 @@ struct ContentView: View {
     }
 
     private var footerNote: some View {
-        Text("مواقيت تل السبع المحلية · تتحدث تلقائيًا")
+        Text("مواقيت محلية \(AppInfo.displayVersion) · تتحدث تلقائيًا")
             .font(.caption2.weight(.bold))
             .foregroundStyle(activeTheme.accent)
             .lineLimit(1)
