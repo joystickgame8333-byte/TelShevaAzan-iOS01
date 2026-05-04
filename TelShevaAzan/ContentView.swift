@@ -310,14 +310,16 @@ struct ContentView: View {
                     HStack(spacing: 12) {
                         Image(systemName: selectedID == theme.rawValue ? "checkmark.circle.fill" : theme.symbol)
                             .font(.system(size: 18, weight: .bold))
-                            .frame(width: 26)
+                            .frame(width: 26, alignment: .leading)
 
                         Text(theme.title)
                             .font(.headline.weight(.bold))
                             .lineLimit(1)
                             .minimumScaleFactor(0.8)
                             .frame(maxWidth: .infinity, alignment: .trailing)
+                            .environment(\.layoutDirection, .rightToLeft)
                     }
+                    .environment(\.layoutDirection, .leftToRight)
                     .foregroundStyle(selectedID == theme.rawValue ? activeTheme.accent : activeTheme.primaryText)
                     .padding(.horizontal, 14)
                     .padding(.vertical, 11)

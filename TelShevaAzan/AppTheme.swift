@@ -61,25 +61,25 @@ enum PrayerVisualTheme: String, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .nightOld:
-            return "ليل حالك"
+            return "سكون الليل"
         case .nightEmerald:
-            return "زمرد هادئ"
+            return "زمرد الليل"
         case .nightMidnight:
-            return "منتصف الليل"
+            return "ليل عميق"
         case .nightAmber:
-            return "عنبر"
+            return "وهج العنبر"
         case .nightViolet:
-            return "بنفسج"
+            return "بنفسج هادئ"
         case .nightCalendar:
-            return "تقويم داكن"
+            return "ذهب داكن"
         case .dayMint:
-            return "نعناع"
+            return "ندى الصباح"
         case .dayPearl:
-            return "لؤلؤ"
+            return "صفاء اللؤلؤ"
         case .daySky:
-            return "سماء"
+            return "سماء صافية"
         case .dayRose:
-            return "ورد"
+            return "ورد هادئ"
         }
     }
 
