@@ -34,14 +34,14 @@ struct QuranRadioView: View {
                 .padding(.bottom, 18)
                 .frame(width: proxy.size.width, height: proxy.size.height, alignment: .topTrailing)
                 .foregroundStyle(theme.primaryText)
-                .environment(\.layoutDirection, .rightToLeft)
+                .environment(\.layoutDirection, .leftToRight)
                 .multilineTextAlignment(.trailing)
             }
         }
     }
 
     private var header: some View {
-        HStack(alignment: .top) {
+        ZStack(alignment: .topLeading) {
             Button {
                 dismiss()
             } label: {
@@ -56,38 +56,44 @@ struct QuranRadioView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 8))
             }
             .buttonStyle(.plain)
-
-            Spacer()
+            .frame(maxWidth: .infinity, alignment: .leading)
 
             VStack(alignment: .trailing, spacing: 4) {
                 Text("راديو القرآن")
                     .font(.system(size: 34, weight: .black, design: .rounded))
                     .lineLimit(1)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
 
                 Text(player.sourceName)
                     .font(.caption.weight(.bold))
                     .foregroundStyle(theme.accent)
                     .lineLimit(1)
                     .minimumScaleFactor(0.72)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
             }
+            .padding(.leading, 54)
+            .frame(maxWidth: .infinity, alignment: .trailing)
+            .environment(\.layoutDirection, .rightToLeft)
         }
+        .frame(maxWidth: .infinity, alignment: .topLeading)
     }
 
     private func radioPanel(compact: Bool) -> some View {
         VStack(alignment: .trailing, spacing: compact ? 16 : 20) {
             HStack(spacing: 8) {
-                Circle()
-                    .fill(player.isPlaying ? theme.accent : theme.secondaryText.opacity(0.45))
-                    .frame(width: 8, height: 8)
-
                 Text(player.statusText)
                     .font(.caption.weight(.bold))
                     .foregroundStyle(theme.secondaryText.opacity(0.86))
                     .lineLimit(1)
+                    .environment(\.layoutDirection, .rightToLeft)
+
+                Circle()
+                    .fill(player.isPlaying ? theme.accent : theme.secondaryText.opacity(0.45))
+                    .frame(width: 8, height: 8)
             }
             .frame(maxWidth: .infinity, alignment: .trailing)
 
-            HStack(alignment: .center, spacing: 16) {
+            ZStack(alignment: .center) {
                 Button {
                     player.toggle()
                 } label: {
@@ -109,30 +115,32 @@ struct QuranRadioView: View {
                     }
                 }
                 .buttonStyle(.plain)
-
-                Spacer(minLength: 0)
+                .frame(maxWidth: .infinity, alignment: .leading)
 
                 VStack(alignment: .trailing, spacing: 8) {
                     Text("البث المباشر")
                         .font(.caption.weight(.bold))
                         .foregroundStyle(theme.accent)
+                        .frame(maxWidth: .infinity, alignment: .trailing)
 
                     Text("إذاعة القرآن الكريم")
                         .font(.system(size: compact ? 28 : 32, weight: .black, design: .rounded))
                         .lineLimit(1)
                         .minimumScaleFactor(0.72)
+                        .frame(maxWidth: .infinity, alignment: .trailing)
 
                     Text("الصوت القريب إلى القلوب")
                         .font(.caption.weight(.bold))
                         .foregroundStyle(theme.secondaryText.opacity(0.78))
                         .lineLimit(1)
                         .minimumScaleFactor(0.72)
+                        .frame(maxWidth: .infinity, alignment: .trailing)
                 }
+                .padding(.leading, compact ? 88 : 108)
                 .frame(maxWidth: .infinity, alignment: .trailing)
                 .multilineTextAlignment(.trailing)
                 .environment(\.layoutDirection, .rightToLeft)
             }
-            .environment(\.layoutDirection, .leftToRight)
         }
         .padding(compact ? 16 : 18)
         .frame(maxWidth: .infinity, alignment: .trailing)
@@ -151,6 +159,8 @@ struct QuranRadioView: View {
                 .font(.caption.weight(.bold))
                 .foregroundStyle(theme.accent)
                 .lineLimit(1)
+                .frame(maxWidth: .infinity, alignment: .trailing)
+                .environment(\.layoutDirection, .rightToLeft)
 
             Text("البث من موقع إذاعة القرآن الكريم من نابلس. يحتاج اتصال إنترنت، ويستمر بالصوت في الخلفية.")
                 .font(.caption.weight(.semibold))
@@ -158,6 +168,7 @@ struct QuranRadioView: View {
                 .lineLimit(3)
                 .frame(maxWidth: .infinity, alignment: .trailing)
                 .multilineTextAlignment(.trailing)
+                .environment(\.layoutDirection, .rightToLeft)
 
             Link(destination: URL(string: "https://quran-radio.com/")!) {
                 HStack(spacing: 6) {
@@ -174,6 +185,7 @@ struct QuranRadioView: View {
                         .stroke(theme.controlBorder)
                 )
                 .clipShape(RoundedRectangle(cornerRadius: 8))
+                .environment(\.layoutDirection, .rightToLeft)
             }
             .frame(maxWidth: .infinity, alignment: .trailing)
         }
@@ -185,5 +197,6 @@ struct QuranRadioView: View {
                 .stroke(theme.controlBorder)
         )
         .clipShape(RoundedRectangle(cornerRadius: 8))
+        .environment(\.layoutDirection, .leftToRight)
     }
 }
