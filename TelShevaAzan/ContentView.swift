@@ -105,6 +105,8 @@ struct ContentView: View {
 
                 notificationButton
 
+                testNotificationButton
+
                 Spacer()
             }
 
@@ -135,6 +137,31 @@ struct ContentView: View {
                 Text("\(activeTheme.modeTitle) · \(activeTheme.title)")
                     .lineLimit(1)
                     .minimumScaleFactor(0.75)
+            }
+            .font(.caption2.weight(.black))
+            .foregroundStyle(activeTheme.accent)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 7)
+            .background(activeTheme.controlBackground)
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(activeTheme.controlBorder)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+        }
+        .buttonStyle(.plain)
+        .environment(\.layoutDirection, .rightToLeft)
+    }
+
+    private var testNotificationButton: some View {
+        Button {
+            notifications.sendTestNotification()
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: "play.circle.fill")
+
+                Text("تجربة")
+                    .lineLimit(1)
             }
             .font(.caption2.weight(.black))
             .foregroundStyle(activeTheme.accent)

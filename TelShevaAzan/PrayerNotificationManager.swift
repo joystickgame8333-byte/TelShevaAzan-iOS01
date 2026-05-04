@@ -12,6 +12,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
 
     private let center = UNUserNotificationCenter.current()
     private let notificationPrefix = "tel-sheva-prayer-"
+    private let testNotificationIdentifier = "tel-sheva-prayer-test"
     private let maxPendingNotifications = 60
 
     private override init() {
@@ -68,6 +69,33 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
         isEnabled ? disable() : enable()
     }
 
+    func sendTestNotification() {
+        center.getNotificationSettings { [weak self] settings in
+            guard let self else { return }
+
+            switch settings.authorizationStatus {
+            case .authorized, .provisional:
+                self.scheduleTestNotification()
+            case .notDetermined:
+                self.center.requestAuthorization(options: [.alert, .sound]) { [weak self] granted, _ in
+                    guard let self else { return }
+                    DispatchQueue.main.async {
+                        guard granted else {
+                            self.statusText = "اسمح بالإشعارات من إعدادات الآيفون"
+                            return
+                        }
+
+                        self.scheduleTestNotification()
+                    }
+                }
+            default:
+                DispatchQueue.main.async {
+                    self.statusText = "اسمح بالإشعارات من إعدادات الآيفون"
+                }
+            }
+        }
+    }
+
     private func scheduleUpcomingPrayerNotifications() {
         let events = upcomingPrayerEvents()
         removeScheduledPrayerNotifications {
@@ -105,7 +133,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
         let content = UNMutableNotificationContent()
         content.title = "حان وقت صلاة \(prayer.title)"
         content.body = "أذان تل السبع • \(prayer.time)"
-        content.sound = .default
+        content.sound = notificationSound
 
         var components = PrayerEngine.calendar.dateComponents([.year, .month, .day, .hour, .minute], from: prayer.date)
         components.timeZone = PrayerEngine.timeZone
@@ -113,6 +141,37 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
         let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
         let identifier = notificationPrefix + PrayerEngine.calendarIdentifier(for: prayer.date) + "-" + prayer.key.rawValue
         return UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
+    }
+
+    private func scheduleTestNotification() {
+        let content = UNMutableNotificationContent()
+        content.title = "تجربة إشعار الأذان"
+        content.body = "هذا شكل إشعار أذان تل السبع"
+        content.sound = notificationSound
+
+        center.removePendingNotificationRequests(withIdentifiers: [testNotificationIdentifier])
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 5, repeats: false)
+        let request = UNNotificationRequest(identifier: testNotificationIdentifier, content: content, trigger: trigger)
+
+        center.add(request) { [weak self] error in
+            DispatchQueue.main.async {
+                guard let self else { return }
+                self.statusText = error == nil ? "سيظهر إشعار تجربة بعد 5 ثواني" : "تعذر إرسال إشعار التجربة"
+            }
+        }
+    }
+
+    private var notificationSound: UNNotificationSound {
+        for fileName in ["adhan.caf", "adhan.wav", "adhan.aiff"] {
+            let parts = fileName.split(separator: ".", maxSplits: 1).map(String.init)
+            guard parts.count == 2 else { continue }
+
+            if Bundle.main.url(forResource: parts[0], withExtension: parts[1]) != nil {
+                return UNNotificationSound(named: UNNotificationSoundName(fileName))
+            }
+        }
+
+        return .default
     }
 
     private func removeScheduledPrayerNotifications(completion: (() -> Void)? = nil) {
