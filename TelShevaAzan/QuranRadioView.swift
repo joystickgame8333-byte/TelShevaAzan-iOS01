@@ -128,7 +128,11 @@ struct QuranRadioView: View {
                         .lineLimit(1)
                         .minimumScaleFactor(0.72)
                 }
+                .frame(maxWidth: .infinity, alignment: .trailing)
+                .multilineTextAlignment(.trailing)
+                .environment(\.layoutDirection, .rightToLeft)
             }
+            .environment(\.layoutDirection, .leftToRight)
         }
         .padding(compact ? 16 : 18)
         .frame(maxWidth: .infinity, alignment: .trailing)
@@ -152,6 +156,8 @@ struct QuranRadioView: View {
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(theme.secondaryText.opacity(0.82))
                 .lineLimit(3)
+                .frame(maxWidth: .infinity, alignment: .trailing)
+                .multilineTextAlignment(.trailing)
 
             Link(destination: URL(string: "https://quran-radio.com/")!) {
                 HStack(spacing: 6) {
@@ -169,6 +175,7 @@ struct QuranRadioView: View {
                 )
                 .clipShape(RoundedRectangle(cornerRadius: 8))
             }
+            .frame(maxWidth: .infinity, alignment: .trailing)
         }
         .frame(maxWidth: .infinity, alignment: .trailing)
         .padding(14)
