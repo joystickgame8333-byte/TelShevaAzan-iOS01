@@ -10,6 +10,7 @@ struct ContentView: View {
     @State private var followsToday = true
     @State private var isThemePickerPresented = false
     @State private var isQiblaPresented = false
+    @StateObject private var notifications = PrayerNotificationManager.shared
 
     private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
@@ -22,7 +23,7 @@ struct ContentView: View {
             let compactHeight = proxy.size.height < 720
             let sectionSpacing: CGFloat = compactHeight ? 6 : 8
             let rowSpacing: CGFloat = compactHeight ? 6 : 8
-            let rowHeight = min(CGFloat(62), max(CGFloat(40), (proxy.size.height - 455) / 6))
+            let rowHeight = min(CGFloat(58), max(CGFloat(40), (proxy.size.height - 500) / 6))
 
             ZStack {
                 background
@@ -70,6 +71,9 @@ struct ContentView: View {
         .onChange(of: selectedDayThemeID) { _ in
             WidgetCenter.shared.reloadAllTimelines()
         }
+        .onAppear {
+            notifications.refreshIfEnabled()
+        }
         .fullScreenCover(isPresented: $isQiblaPresented) {
             QiblaView(theme: activeTheme)
                 .environment(\.layoutDirection, .rightToLeft)
@@ -98,6 +102,8 @@ struct ContentView: View {
                 themeMenu
 
                 qiblaButton
+
+                notificationButton
 
                 Spacer()
             }
@@ -153,6 +159,31 @@ struct ContentView: View {
                 Image(systemName: "location.north.fill")
 
                 Text("القبلة")
+                    .lineLimit(1)
+            }
+            .font(.caption2.weight(.black))
+            .foregroundStyle(activeTheme.accent)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 7)
+            .background(activeTheme.controlBackground)
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(activeTheme.controlBorder)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+        }
+        .buttonStyle(.plain)
+        .environment(\.layoutDirection, .rightToLeft)
+    }
+
+    private var notificationButton: some View {
+        Button {
+            notifications.toggle()
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: notifications.isEnabled ? "bell.badge.fill" : "bell")
+
+                Text("تنبيه")
                     .lineLimit(1)
             }
             .font(.caption2.weight(.black))
@@ -337,11 +368,19 @@ struct ContentView: View {
     }
 
     private var footerNote: some View {
-        Text("مواقيت محلية \(AppInfo.displayVersion) · تتحدث تلقائيًا")
-            .font(.caption2.weight(.bold))
-            .foregroundStyle(activeTheme.accent)
-            .lineLimit(1)
-            .minimumScaleFactor(0.75)
+        VStack(alignment: .trailing, spacing: 2) {
+            Text("مواقيت محلية \(AppInfo.displayVersion) · تتحدث تلقائيًا")
+                .font(.caption2.weight(.bold))
+                .foregroundStyle(activeTheme.accent)
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+
+            Text(notifications.statusText)
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(activeTheme.secondaryText.opacity(0.78))
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+        }
         .frame(maxWidth: .infinity, alignment: .trailing)
     }
 
