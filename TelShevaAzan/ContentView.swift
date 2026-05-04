@@ -10,6 +10,7 @@ struct ContentView: View {
     @State private var followsToday = true
     @State private var isThemePickerPresented = false
     @State private var isQiblaPresented = false
+    @State private var isRadioPresented = false
     @StateObject private var notifications = PrayerNotificationManager.shared
 
     private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
@@ -80,6 +81,10 @@ struct ContentView: View {
             QiblaView(theme: activeTheme)
                 .environment(\.layoutDirection, .rightToLeft)
         }
+        .fullScreenCover(isPresented: $isRadioPresented) {
+            QuranRadioView(theme: activeTheme)
+                .environment(\.layoutDirection, .rightToLeft)
+        }
     }
 
     private var quranVerse: some View {
@@ -116,16 +121,30 @@ struct ContentView: View {
     }
 
     private var headerControls: some View {
-        HStack(spacing: 8) {
-            themeMenu
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 8) {
+                themeMenu
+                radioButton
+                qiblaButton
+                notificationButton
+                testNotificationButton
+                Spacer(minLength: 0)
+            }
 
-            qiblaButton
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(spacing: 8) {
+                    themeMenu
+                    radioButton
+                    Spacer(minLength: 0)
+                }
 
-            notificationButton
-
-            testNotificationButton
-
-            Spacer(minLength: 0)
+                HStack(spacing: 8) {
+                    qiblaButton
+                    notificationButton
+                    testNotificationButton
+                    Spacer(minLength: 0)
+                }
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -142,6 +161,31 @@ struct ContentView: View {
                 Text("\(activeTheme.modeTitle) · \(activeTheme.title)")
                     .lineLimit(1)
                     .minimumScaleFactor(0.75)
+            }
+            .font(.caption2.weight(.black))
+            .foregroundStyle(activeTheme.accent)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 7)
+            .background(activeTheme.controlBackground)
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(activeTheme.controlBorder)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+        }
+        .buttonStyle(.plain)
+        .environment(\.layoutDirection, .rightToLeft)
+    }
+
+    private var radioButton: some View {
+        Button {
+            isRadioPresented = true
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: "radio.fill")
+
+                Text("الراديو")
+                    .lineLimit(1)
             }
             .font(.caption2.weight(.black))
             .foregroundStyle(activeTheme.accent)
