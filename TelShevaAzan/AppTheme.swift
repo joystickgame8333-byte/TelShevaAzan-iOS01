@@ -39,6 +39,7 @@ enum PrayerVisualTheme: String, CaseIterable, Identifiable {
     case nightMidnight
     case nightAmber
     case nightViolet
+    case nightCalendar
     case dayMint
     case dayPearl
     case daySky
@@ -48,7 +49,7 @@ enum PrayerVisualTheme: String, CaseIterable, Identifiable {
 
     static let defaultNight: PrayerVisualTheme = .nightEmerald
     static let defaultDay: PrayerVisualTheme = .dayMint
-    static let nightChoices: [PrayerVisualTheme] = [.nightOld, .nightEmerald, .nightMidnight, .nightAmber, .nightViolet]
+    static let nightChoices: [PrayerVisualTheme] = [.nightOld, .nightEmerald, .nightMidnight, .nightAmber, .nightViolet, .nightCalendar]
     static let dayChoices: [PrayerVisualTheme] = [.dayMint, .dayPearl, .daySky, .dayRose]
 
     static func selected(isNight: Bool, nightID: String, dayID: String) -> PrayerVisualTheme {
@@ -69,6 +70,8 @@ enum PrayerVisualTheme: String, CaseIterable, Identifiable {
             return "عنبر"
         case .nightViolet:
             return "بنفسج"
+        case .nightCalendar:
+            return "تقويم داكن"
         case .dayMint:
             return "نعناع"
         case .dayPearl:
@@ -96,6 +99,8 @@ enum PrayerVisualTheme: String, CaseIterable, Identifiable {
             return "flame.fill"
         case .nightViolet:
             return "circle.hexagongrid.fill"
+        case .nightCalendar:
+            return "calendar"
         case .dayMint:
             return "leaf.fill"
         case .dayPearl:
@@ -109,7 +114,7 @@ enum PrayerVisualTheme: String, CaseIterable, Identifiable {
 
     var isNightTheme: Bool {
         switch self {
-        case .nightOld, .nightEmerald, .nightMidnight, .nightAmber, .nightViolet:
+        case .nightOld, .nightEmerald, .nightMidnight, .nightAmber, .nightViolet, .nightCalendar:
             return true
         case .dayMint, .dayPearl, .daySky, .dayRose:
             return false
@@ -212,6 +217,25 @@ enum PrayerVisualTheme: String, CaseIterable, Identifiable {
                 controlBackground: .white.opacity(0.15),
                 controlPressedBackground: .white.opacity(0.09),
                 controlBorder: .white.opacity(0.11)
+            )
+        case .nightCalendar:
+            return ThemePalette(
+                appBackground: [Color(red: 0.04, green: 0.04, blue: 0.04), Color(red: 0.01, green: 0.01, blue: 0.012)],
+                widgetBackground: [Color(red: 0.12, green: 0.12, blue: 0.13), Color(red: 0.06, green: 0.06, blue: 0.07)],
+                accent: Color(red: 0.79, green: 0.31, blue: 0.96),
+                primaryText: .white,
+                secondaryText: Color(red: 0.66, green: 0.66, blue: 0.70),
+                mutedText: .white.opacity(0.76),
+                panelBackground: Color(red: 0.10, green: 0.10, blue: 0.11).opacity(0.98),
+                countdownBackground: Color(red: 0.22, green: 0.10, blue: 0.28),
+                rowBackground: Color(red: 0.10, green: 0.10, blue: 0.11).opacity(0.94),
+                activeRowBackground: Color(red: 0.18, green: 0.10, blue: 0.22).opacity(0.96),
+                rowBorder: .white.opacity(0.07),
+                activeRowBorder: Color(red: 0.95, green: 0.24, blue: 0.25).opacity(0.58),
+                chipBackground: Color(red: 0.22, green: 0.22, blue: 0.24).opacity(0.86),
+                controlBackground: Color(red: 0.14, green: 0.14, blue: 0.15).opacity(0.95),
+                controlPressedBackground: Color(red: 0.19, green: 0.13, blue: 0.21).opacity(0.96),
+                controlBorder: .white.opacity(0.10)
             )
         case .dayMint:
             return ThemePalette(
