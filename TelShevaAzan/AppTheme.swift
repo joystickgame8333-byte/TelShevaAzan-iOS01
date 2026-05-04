@@ -222,19 +222,19 @@ enum PrayerVisualTheme: String, CaseIterable, Identifiable {
             return ThemePalette(
                 appBackground: [Color(red: 0.04, green: 0.04, blue: 0.04), Color(red: 0.01, green: 0.01, blue: 0.012)],
                 widgetBackground: [Color(red: 0.12, green: 0.12, blue: 0.13), Color(red: 0.06, green: 0.06, blue: 0.07)],
-                accent: Color(red: 0.79, green: 0.31, blue: 0.96),
+                accent: Color(red: 0.96, green: 0.70, blue: 0.24),
                 primaryText: .white,
                 secondaryText: Color(red: 0.66, green: 0.66, blue: 0.70),
                 mutedText: .white.opacity(0.76),
                 panelBackground: Color(red: 0.10, green: 0.10, blue: 0.11).opacity(0.98),
-                countdownBackground: Color(red: 0.22, green: 0.10, blue: 0.28),
+                countdownBackground: Color(red: 0.30, green: 0.19, blue: 0.06),
                 rowBackground: Color(red: 0.10, green: 0.10, blue: 0.11).opacity(0.94),
-                activeRowBackground: Color(red: 0.18, green: 0.10, blue: 0.22).opacity(0.96),
+                activeRowBackground: Color(red: 0.22, green: 0.15, blue: 0.05).opacity(0.96),
                 rowBorder: .white.opacity(0.07),
-                activeRowBorder: Color(red: 0.95, green: 0.24, blue: 0.25).opacity(0.58),
+                activeRowBorder: Color(red: 0.96, green: 0.70, blue: 0.24).opacity(0.58),
                 chipBackground: Color(red: 0.22, green: 0.22, blue: 0.24).opacity(0.86),
                 controlBackground: Color(red: 0.14, green: 0.14, blue: 0.15).opacity(0.95),
-                controlPressedBackground: Color(red: 0.19, green: 0.13, blue: 0.21).opacity(0.96),
+                controlPressedBackground: Color(red: 0.20, green: 0.15, blue: 0.08).opacity(0.96),
                 controlBorder: .white.opacity(0.10)
             )
         case .dayMint:
