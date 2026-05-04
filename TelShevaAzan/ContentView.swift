@@ -312,13 +312,17 @@ struct ContentView: View {
                             .font(.system(size: 18, weight: .bold))
                             .frame(width: 26, alignment: .leading)
 
+                        Spacer(minLength: 16)
+
                         Text(theme.title)
                             .font(.headline.weight(.bold))
                             .lineLimit(1)
                             .minimumScaleFactor(0.8)
-                            .frame(maxWidth: .infinity, alignment: .trailing)
+                            .multilineTextAlignment(.trailing)
+                            .layoutPriority(1)
                             .environment(\.layoutDirection, .rightToLeft)
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .environment(\.layoutDirection, .leftToRight)
                     .foregroundStyle(selectedID == theme.rawValue ? activeTheme.accent : activeTheme.primaryText)
                     .padding(.horizontal, 14)
