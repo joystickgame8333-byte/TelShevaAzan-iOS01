@@ -1,6 +1,6 @@
 # TelShevaAzan iOS Prototype
 
-Current app version: `0.4.15 (41)`
+Current app version: `0.4.14 (40)`
 
 مشروع iPhone أولي لتطبيق أذان تل السبع.
 
