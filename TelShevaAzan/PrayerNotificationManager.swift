@@ -250,13 +250,13 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
         content.sound = notificationSound
 
         center.removePendingNotificationRequests(withIdentifiers: [previewNotificationIdentifier])
-        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 5, repeats: false)
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 2, repeats: false)
         let request = UNNotificationRequest(identifier: previewNotificationIdentifier, content: content, trigger: trigger)
 
         center.add(request) { [weak self] error in
             DispatchQueue.main.async {
                 guard let self else { return }
-                self.statusText = error == nil ? "ستسمع معاينة الصوت بعد 5 ثواني" : "تعذر إرسال معاينة الصوت"
+                self.statusText = error == nil ? "ستسمع معاينة الصوت بعد ثانيتين" : "تعذر إرسال معاينة الصوت"
             }
         }
     }
