@@ -1,4 +1,5 @@
 import SwiftUI
+import WidgetKit
 
 struct ContentView: View {
     @Environment(\.colorScheme) private var colorScheme
@@ -67,6 +68,12 @@ struct ContentView: View {
             if followsToday {
                 selectedDateKey = PrayerEngine.defaultDateKey(for: value)
             }
+        }
+        .onChange(of: selectedNightThemeID) { _ in
+            WidgetCenter.shared.reloadAllTimelines()
+        }
+        .onChange(of: selectedDayThemeID) { _ in
+            WidgetCenter.shared.reloadAllTimelines()
         }
         .onAppear {
             notifications.refreshIfEnabled()
@@ -343,6 +350,7 @@ struct ContentView: View {
             ForEach(themes) { theme in
                 Button {
                     select(theme)
+                    WidgetCenter.shared.reloadAllTimelines()
                     withAnimation(.easeInOut(duration: 0.18)) {
                         isThemePickerPresented = false
                     }
@@ -557,6 +565,11 @@ struct ContentView: View {
         }
 
         AppThemeStorage.defaults.synchronize()
+        WidgetCenter.shared.reloadAllTimelines()
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+            WidgetCenter.shared.reloadAllTimelines()
+        }
     }
 }
 

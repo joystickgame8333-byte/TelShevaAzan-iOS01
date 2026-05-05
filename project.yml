@@ -24,8 +24,8 @@ targets:
       properties:
         CFBundleDisplayName: أذان تل السبع
         CFBundlePackageType: APPL
-        CFBundleShortVersionString: "0.4.53"
-        CFBundleVersion: "79"
+        CFBundleShortVersionString: "0.4.52"
+        CFBundleVersion: "78"
         CFBundleIcons:
           CFBundlePrimaryIcon:
             CFBundleIconFiles:
@@ -58,17 +58,52 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.omaralasam.telshevaazan
         PRODUCT_NAME: TelShevaAzan
-        MARKETING_VERSION: 0.4.53
-        CURRENT_PROJECT_VERSION: 79
+        MARKETING_VERSION: 0.4.52
+        CURRENT_PROJECT_VERSION: 78
         TARGETED_DEVICE_FAMILY: 1
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        CODE_SIGN_STYLE: Manual
+    dependencies:
+      - target: TelShevaAzanWidgetExtension
+        embed: true
+  TelShevaAzanWidgetExtension:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: TelShevaAzanWidget
+        excludes:
+          - Info.plist
+          - "*.entitlements"
+      - path: TelShevaAzan/PrayerSchedule.swift
+      - path: TelShevaAzan/AppInfo.swift
+      - path: TelShevaAzan/AppTheme.swift
+    info:
+      path: TelShevaAzanWidget/Info.plist
+      properties:
+        CFBundleDisplayName: TelSheva Azan Widget
+        CFBundlePackageType: XPC!
+        CFBundleShortVersionString: "0.4.52"
+        CFBundleVersion: "78"
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+        NSPrincipalClass: ""
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.omaralasam.telshevaazan.nextprayerwidget3
+        PRODUCT_NAME: TelShevaAzanWidgetExtension
+        MARKETING_VERSION: 0.4.52
+        CURRENT_PROJECT_VERSION: 78
+        IPHONEOS_DEPLOYMENT_TARGET: 16.0
+        TARGETED_DEVICE_FAMILY: "1,2"
+        APPLICATION_EXTENSION_API_ONLY: YES
         CODE_SIGN_STYLE: Manual
 schemes:
   TelShevaAzan:
     build:
       targets:
         TelShevaAzan: all
+        TelShevaAzanWidgetExtension: all
     run:
       config: Debug
     archive:
