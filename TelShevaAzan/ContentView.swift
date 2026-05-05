@@ -306,7 +306,7 @@ struct ContentView: View {
                 themes: PrayerVisualTheme.nightChoices,
                 selectedID: selectedNightThemeID
             ) { theme in
-                selectedNightThemeID = theme.rawValue
+                selectTheme(theme)
             }
 
             Divider()
@@ -318,7 +318,7 @@ struct ContentView: View {
                 themes: PrayerVisualTheme.dayChoices,
                 selectedID: selectedDayThemeID
             ) { theme in
-                selectedDayThemeID = theme.rawValue
+                selectTheme(theme)
             }
         }
         .padding(.vertical, 8)
@@ -546,6 +546,23 @@ struct ContentView: View {
         guard let nextKey = PrayerEngine.dateKey(from: selectedDateKey, offset: offset) else { return }
         selectedDateKey = nextKey
         followsToday = false
+    }
+
+    private func selectTheme(_ theme: PrayerVisualTheme) {
+        if theme.isNightTheme {
+            selectedNightThemeID = theme.rawValue
+            AppThemeStorage.defaults.set(theme.rawValue, forKey: AppThemeStorage.nightThemeKey)
+        } else {
+            selectedDayThemeID = theme.rawValue
+            AppThemeStorage.defaults.set(theme.rawValue, forKey: AppThemeStorage.dayThemeKey)
+        }
+
+        AppThemeStorage.defaults.synchronize()
+        WidgetCenter.shared.reloadAllTimelines()
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+            WidgetCenter.shared.reloadAllTimelines()
+        }
     }
 }
 
