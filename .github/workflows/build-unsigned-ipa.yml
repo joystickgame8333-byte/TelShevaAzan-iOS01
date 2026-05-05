@@ -49,29 +49,11 @@ jobs:
         run: |
           set -euxo pipefail
           APP_PATH="$(find build/Build/Products -path '*Release-iphoneos/*.app' -print -quit)"
-          APPEX_PATH="$(find build/Build/Products -path '*Release-iphoneos/*.appex' ! -path '*/PlugIns/*.appex' -print -quit)"
           if [ -z "$APP_PATH" ]; then
             echo "Built .app was not found"
             exit 1
           fi
-          mkdir -p "$APP_PATH/PlugIns"
-          EMBEDDED_APPEX_PATH="$(find "$APP_PATH/PlugIns" -maxdepth 1 -name '*.appex' -print -quit 2>/dev/null || true)"
-          if [ -n "$APPEX_PATH" ]; then
-            rm -rf "$APP_PATH/PlugIns/"*.appex
-            cp -R "$APPEX_PATH" "$APP_PATH/PlugIns/"
-          elif [ -n "$EMBEDDED_APPEX_PATH" ]; then
-            echo "Widget extension is already embedded in the app bundle"
-          else
-            echo "Built widget .appex was not found"
-            find build/Build/Products -maxdepth 6 -print
-            exit 1
-          fi
-          PLUGIN_PATH="$(find "$APP_PATH/PlugIns" -maxdepth 1 -name '*.appex' -print -quit)"
-          if [ -z "$PLUGIN_PATH" ]; then
-            echo "Widget extension was not packaged into PlugIns"
-            find "$APP_PATH" -maxdepth 5 -print
-            exit 1
-          fi
+          rm -rf "$APP_PATH/PlugIns"
 
           echo "Force-copy icon PNGs into the app bundle for TrollStore icon cache:"
           for icon in Icon-20@2x.png Icon-20@3x.png Icon-29@2x.png Icon-29@3x.png Icon-40@2x.png Icon-40@3x.png Icon-60@2x.png Icon-60@3x.png; do
@@ -100,13 +82,6 @@ jobs:
           /usr/libexec/PlistBuddy -c "Add :UIAppFonts array" "$APP_PATH/Info.plist"
           /usr/libexec/PlistBuddy -c "Add :UIAppFonts:0 string AmiriQuran-Regular.ttf" "$APP_PATH/Info.plist"
 
-          echo "Widget extension registration:"
-          /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$PLUGIN_PATH/Info.plist" || true
-          /usr/libexec/PlistBuddy -c "Print :CFBundlePackageType" "$PLUGIN_PATH/Info.plist" || true
-          /usr/libexec/PlistBuddy -c "Print :NSExtension:NSExtensionPointIdentifier" "$PLUGIN_PATH/Info.plist"
-          /usr/libexec/PlistBuddy -c "Print :NSPrincipalClass" "$PLUGIN_PATH/Info.plist" || true
-          /usr/libexec/PlistBuddy -c "Print :NSExtension:NSExtensionAttributes:WKAppBundleIdentifier" "$PLUGIN_PATH/Info.plist" || true
-          /usr/libexec/PlistBuddy -c "Print :CFBundleDisplayName" "$PLUGIN_PATH/Info.plist" || true
           echo "App icon registration:"
           /usr/libexec/PlistBuddy -c "Print :CFBundleIcons:CFBundlePrimaryIcon:CFBundleIconName" "$APP_PATH/Info.plist" || true
           /usr/libexec/PlistBuddy -c "Print :CFBundleIcons:CFBundlePrimaryIcon:CFBundleIconFiles" "$APP_PATH/Info.plist"
@@ -131,13 +106,9 @@ jobs:
           find "$APP_PATH" -maxdepth 4 -print | sort
 
           APP_EXECUTABLE="$(/usr/libexec/PlistBuddy -c "Print :CFBundleExecutable" "$APP_PATH/Info.plist")"
-          PLUGIN_EXECUTABLE="$(/usr/libexec/PlistBuddy -c "Print :CFBundleExecutable" "$PLUGIN_PATH/Info.plist")"
-          rm -rf "$APP_PATH/_CodeSignature" "$PLUGIN_PATH/_CodeSignature"
+          rm -rf "$APP_PATH/_CodeSignature"
           echo "TrollStore ldid signing:"
-          ldid -S"TelShevaAzanWidget/TelShevaAzanWidget.entitlements" "$PLUGIN_PATH/$PLUGIN_EXECUTABLE"
           ldid -S"TelShevaAzan/TelShevaAzan.entitlements" "$APP_PATH/$APP_EXECUTABLE"
-          echo "Widget entitlements after ldid:"
-          ldid -e "$PLUGIN_PATH/$PLUGIN_EXECUTABLE"
           echo "App entitlements after ldid:"
           ldid -e "$APP_PATH/$APP_EXECUTABLE"
           {
@@ -146,26 +117,22 @@ jobs:
             /usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$APP_PATH/Info.plist"
             /usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$APP_PATH/Info.plist"
             echo "Widget bundle:"
-            /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$PLUGIN_PATH/Info.plist"
-            /usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$PLUGIN_PATH/Info.plist"
-            /usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$PLUGIN_PATH/Info.plist"
-            /usr/libexec/PlistBuddy -c "Print :NSExtension:NSExtensionPointIdentifier" "$PLUGIN_PATH/Info.plist"
-            /usr/libexec/PlistBuddy -c "Print :NSPrincipalClass" "$PLUGIN_PATH/Info.plist" || true
-            echo "Plugin executable:"
-            ls -la "$PLUGIN_PATH/$PLUGIN_EXECUTABLE"
+            echo "removed"
           } > build-diagnostics.txt
           mkdir -p Payload
           cp -R "$APP_PATH" Payload/TelShevaAzan.app
           /usr/bin/zip -qry TelShevaAzan-unsigned.ipa Payload
           cp TelShevaAzan-unsigned.ipa TelShevaAzan-unsigned.tipa
-          echo "Final IPA widget and icon check:"
+          echo "Final IPA app-only icon check:"
           /usr/bin/unzip -l TelShevaAzan-unsigned.ipa > ipa-contents.txt
-          awk '/Payload\/TelShevaAzan.app\/Icon-|Payload\/TelShevaAzan.app\/PlugIns\/.*\.appex\// { print; shown++; if (shown >= 80) exit }' ipa-contents.txt
+          awk '/Payload\/TelShevaAzan.app\/Icon-/ { print; shown++; if (shown >= 80) exit }' ipa-contents.txt
           grep -q 'Payload/TelShevaAzan.app/Icon-60@3x.png' ipa-contents.txt
           grep -q 'Payload/TelShevaAzan.app/AmiriQuran-Regular.ttf' ipa-contents.txt
           grep -q 'Payload/TelShevaAzan.app/adhan.caf' ipa-contents.txt
-          grep -q 'Payload/TelShevaAzan.app/PlugIns/.*\.appex/' ipa-contents.txt
-          grep -q 'Payload/TelShevaAzan.app/PlugIns/.*/TelShevaAzanWidgetExtension' ipa-contents.txt
+          if grep -q 'Payload/TelShevaAzan.app/PlugIns/' ipa-contents.txt; then
+            echo "Unexpected widget PlugIns folder found in app-only build"
+            exit 1
+          fi
 
       - name: Upload IPA
         uses: actions/upload-artifact@v4
