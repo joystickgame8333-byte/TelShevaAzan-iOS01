@@ -530,16 +530,16 @@ struct ContentView: View {
     }
 
     private func elapsedText(for previous: PrayerTime?) -> String {
-        guard let previous else { return "مضى --" }
+        guard let previous else { return "مضى --:--" }
         let seconds = max(Int(now.timeIntervalSince(previous.date)), 0)
+        return "مضى على \(previous.title) \(hourMinuteText(from: seconds))"
+    }
+
+    private func hourMinuteText(from seconds: Int) -> String {
         let hours = seconds / 3600
         let minutes = (seconds % 3600) / 60
 
-        if hours > 0 {
-            return "مضى على \(previous.title) \(hours)س \(minutes)د"
-        }
-
-        return "مضى على \(previous.title) \(minutes)د"
+        return String(format: "%02d:%02d", hours, minutes)
     }
 
     private func moveDay(_ offset: Int) {

@@ -124,27 +124,17 @@ struct TelShevaAzanWidgetView: View {
     }
 
     private var compactRemainingText: String {
-        guard let nextDate = entry.nextPrayer?.date else { return "باقي --" }
+        guard let nextDate = entry.nextPrayer?.date else { return "باقي --:--" }
         let seconds = max(Int(nextDate.timeIntervalSince(entry.date)), 0)
         let minutes = (seconds + 59) / 60
-
-        if minutes >= 60 {
-            return "باقي \(minutes / 60)س \(minutes % 60)د"
-        }
-
-        return "باقي \(minutes)د"
+        return "باقي \(hourMinuteText(fromMinutes: minutes))"
     }
 
     private var compactElapsedText: String {
-        guard let previous = entry.previousPrayer else { return "مضى --" }
+        guard let previous = entry.previousPrayer else { return "مضى --:--" }
         let seconds = max(Int(entry.date.timeIntervalSince(previous.date)), 0)
         let minutes = seconds / 60
-
-        if minutes >= 60 {
-            return "مضى على \(previous.title) \(minutes / 60)س \(minutes % 60)د"
-        }
-
-        return "مضى على \(previous.title) \(minutes)د"
+        return "مضى على \(previous.title) \(hourMinuteText(fromMinutes: minutes))"
     }
 
     private var inlineLiveText: Text {
@@ -324,14 +314,13 @@ struct TelShevaAzanWidgetView: View {
     private var compactRemainingValue: String {
         guard let nextDate = entry.nextPrayer?.date else { return "--" }
         let seconds = max(Int(nextDate.timeIntervalSince(entry.date)), 0)
-        let hours = seconds / 3600
-        let minutes = (seconds % 3600) / 60
+        let minutes = max((seconds + 59) / 60, 1)
 
-        if hours > 0 {
-            return "\(hours):" + String(format: "%02d", minutes)
-        }
+        return hourMinuteText(fromMinutes: minutes)
+    }
 
-        return "\(max(minutes, 1))د"
+    private func hourMinuteText(fromMinutes minutes: Int) -> String {
+        String(format: "%02d:%02d", minutes / 60, minutes % 60)
     }
 
     private func mediumPrayerRow(_ item: PrayerTime) -> some View {
