@@ -2,20 +2,75 @@ import Combine
 import Foundation
 import UserNotifications
 
+enum PrayerNotificationSound: String, CaseIterable, Identifiable {
+    case bundledAdhan
+    case system
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .bundledAdhan:
+            return "مقطع الأذان الحالي"
+        case .system:
+            return "صوت الآيفون"
+        }
+    }
+
+    var subtitle: String {
+        switch self {
+        case .bundledAdhan:
+            return "المقطع الذي أرسلته يعمل مع إشعارات الصلاة"
+        case .system:
+            return "تنبيه قصير من النظام بدون أذان"
+        }
+    }
+
+    var systemImage: String {
+        switch self {
+        case .bundledAdhan:
+            return "waveform.circle.fill"
+        case .system:
+            return "iphone.gen3.radiowaves.left.and.right"
+        }
+    }
+}
+
 final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotificationCenterDelegate {
+    static let openSettingsNotification = Notification.Name("PrayerNotificationManagerOpenSettings")
+
     private static let enabledKey = "prayer_notifications_enabled"
+    private static let enabledPrayerIDsKey = "prayer_notifications_enabled_prayers"
+    private static let selectedSoundIDKey = "prayer_notifications_selected_sound"
 
     static let shared = PrayerNotificationManager()
 
     @Published private(set) var isEnabled = UserDefaults.standard.bool(forKey: PrayerNotificationManager.enabledKey)
     @Published private(set) var statusText = "التنبيهات غير مفعلة"
+    @Published private(set) var enabledPrayerIDs: Set<String>
+    @Published private(set) var selectedSoundID: String
 
     private let center = UNUserNotificationCenter.current()
     private let notificationPrefix = "tel-sheva-prayer-"
-    private let testNotificationIdentifier = "tel-sheva-prayer-test"
+    private let previewNotificationIdentifier = "tel-sheva-prayer-preview"
     private let maxPendingNotifications = 60
+    private let defaults = UserDefaults.standard
+
+    private var selectedSound: PrayerNotificationSound {
+        PrayerNotificationSound(rawValue: selectedSoundID) ?? .bundledAdhan
+    }
 
     private override init() {
+        let savedPrayerIDs = UserDefaults.standard.stringArray(forKey: Self.enabledPrayerIDsKey)
+        if let savedPrayerIDs, !savedPrayerIDs.isEmpty {
+            enabledPrayerIDs = Set(savedPrayerIDs)
+        } else {
+            enabledPrayerIDs = Set(PrayerEngine.prayerOrder.map(\.rawValue))
+        }
+
+        let savedSoundID = UserDefaults.standard.string(forKey: Self.selectedSoundIDKey)
+        selectedSoundID = savedSoundID ?? PrayerNotificationSound.bundledAdhan.rawValue
+
         super.init()
         center.delegate = self
         refreshStatus()
@@ -27,7 +82,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
                 guard let self else { return }
 
                 self.isEnabled = granted
-                UserDefaults.standard.set(granted, forKey: Self.enabledKey)
+                self.defaults.set(granted, forKey: Self.enabledKey)
 
                 if granted {
                     self.scheduleUpcomingPrayerNotifications()
@@ -40,7 +95,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
 
     func disable() {
         isEnabled = false
-        UserDefaults.standard.set(false, forKey: Self.enabledKey)
+        defaults.set(false, forKey: Self.enabledKey)
         removeScheduledPrayerNotifications()
         statusText = "التنبيهات غير مفعلة"
     }
@@ -58,7 +113,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
                     self.scheduleUpcomingPrayerNotifications()
                 } else {
                     self.isEnabled = false
-                    UserDefaults.standard.set(false, forKey: Self.enabledKey)
+                    self.defaults.set(false, forKey: Self.enabledKey)
                     self.statusText = "اسمح بالإشعارات من إعدادات الآيفون"
                 }
             }
@@ -69,13 +124,34 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
         isEnabled ? disable() : enable()
     }
 
-    func sendTestNotification() {
+    func setPrayer(_ key: PrayerKey, enabled: Bool) {
+        if enabled {
+            enabledPrayerIDs.insert(key.rawValue)
+        } else {
+            enabledPrayerIDs.remove(key.rawValue)
+        }
+
+        persistPrayerSelection()
+        rescheduleIfEnabled()
+    }
+
+    func isPrayerEnabled(_ key: PrayerKey) -> Bool {
+        enabledPrayerIDs.contains(key.rawValue)
+    }
+
+    func selectSound(_ sound: PrayerNotificationSound) {
+        selectedSoundID = sound.rawValue
+        defaults.set(sound.rawValue, forKey: Self.selectedSoundIDKey)
+        rescheduleIfEnabled()
+    }
+
+    func sendPreviewNotification() {
         center.getNotificationSettings { [weak self] settings in
             guard let self else { return }
 
             switch settings.authorizationStatus {
             case .authorized, .provisional:
-                self.scheduleTestNotification()
+                self.schedulePreviewNotification()
             case .notDetermined:
                 self.center.requestAuthorization(options: [.alert, .sound]) { [weak self] granted, _ in
                     guard let self else { return }
@@ -85,7 +161,10 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
                             return
                         }
 
-                        self.scheduleTestNotification()
+                        self.isEnabled = true
+                        self.defaults.set(true, forKey: Self.enabledKey)
+                        self.schedulePreviewNotification()
+                        self.scheduleUpcomingPrayerNotifications()
                     }
                 }
             default:
@@ -96,6 +175,23 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
         }
     }
 
+    func sendTestNotification() {
+        sendPreviewNotification()
+    }
+
+    private func rescheduleIfEnabled() {
+        guard isEnabled else {
+            refreshStatus()
+            return
+        }
+
+        scheduleUpcomingPrayerNotifications()
+    }
+
+    private func persistPrayerSelection() {
+        defaults.set(Array(enabledPrayerIDs).sorted(), forKey: Self.enabledPrayerIDsKey)
+    }
+
     private func scheduleUpcomingPrayerNotifications() {
         let events = upcomingPrayerEvents()
         removeScheduledPrayerNotifications {
@@ -104,7 +200,11 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
             }
 
             DispatchQueue.main.async {
-                self.statusText = events.isEmpty ? "لا توجد صلوات قادمة في الجدول" : "التنبيهات مفعلة للصلوات القادمة"
+                if self.enabledPrayerIDs.isEmpty {
+                    self.statusText = "اختر صلاة واحدة على الأقل للتنبيه"
+                } else {
+                    self.statusText = events.isEmpty ? "لا توجد صلوات قادمة في الجدول" : "التنبيهات مفعلة للصلوات المختارة"
+                }
             }
         }
     }
@@ -114,9 +214,9 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
         return PrayerEngine.availableDateKeys
             .flatMap { dateKey in
                 PrayerEngine.prayerOrder.compactMap { key -> PrayerTime? in
-                    let schedule = PrayerEngine.schedule(for: dateKey)
-                    guard let time = schedule.times[key],
-                          let date = PrayerEngine.date(from: schedule.dateKey, time: time),
+                    guard enabledPrayerIDs.contains(key.rawValue),
+                          let time = PrayerEngine.schedule(for: dateKey).times[key],
+                          let date = PrayerEngine.date(from: dateKey, time: time),
                           date > now else {
                         return nil
                     }
@@ -143,35 +243,40 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
         return UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
     }
 
-    private func scheduleTestNotification() {
+    private func schedulePreviewNotification() {
         let content = UNMutableNotificationContent()
-        content.title = "تجربة إشعار الأذان"
-        content.body = "هذا شكل إشعار أذان تل السبع"
+        content.title = "معاينة صوت الأذان"
+        content.body = "هذا الصوت سيعمل مع الصلوات التي تختارها"
         content.sound = notificationSound
 
-        center.removePendingNotificationRequests(withIdentifiers: [testNotificationIdentifier])
+        center.removePendingNotificationRequests(withIdentifiers: [previewNotificationIdentifier])
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 5, repeats: false)
-        let request = UNNotificationRequest(identifier: testNotificationIdentifier, content: content, trigger: trigger)
+        let request = UNNotificationRequest(identifier: previewNotificationIdentifier, content: content, trigger: trigger)
 
         center.add(request) { [weak self] error in
             DispatchQueue.main.async {
                 guard let self else { return }
-                self.statusText = error == nil ? "سيظهر إشعار تجربة بعد 5 ثواني" : "تعذر إرسال إشعار التجربة"
+                self.statusText = error == nil ? "ستسمع معاينة الصوت بعد 5 ثواني" : "تعذر إرسال معاينة الصوت"
             }
         }
     }
 
     private var notificationSound: UNNotificationSound {
-        for fileName in ["adhan.caf", "adhan.wav", "adhan.aiff"] {
-            let parts = fileName.split(separator: ".", maxSplits: 1).map(String.init)
-            guard parts.count == 2 else { continue }
+        switch selectedSound {
+        case .system:
+            return .default
+        case .bundledAdhan:
+            for fileName in ["adhan.caf", "adhan.wav", "adhan.aiff"] {
+                let parts = fileName.split(separator: ".", maxSplits: 1).map(String.init)
+                guard parts.count == 2 else { continue }
 
-            if Bundle.main.url(forResource: parts[0], withExtension: parts[1]) != nil {
-                return UNNotificationSound(named: UNNotificationSoundName(fileName))
+                if Bundle.main.url(forResource: parts[0], withExtension: parts[1]) != nil {
+                    return UNNotificationSound(named: UNNotificationSoundName(fileName))
+                }
             }
-        }
 
-        return .default
+            return .default
+        }
     }
 
     private func removeScheduledPrayerNotifications(completion: (() -> Void)? = nil) {
@@ -194,7 +299,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
             DispatchQueue.main.async {
                 guard let self else { return }
                 if self.isEnabled && (settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional) {
-                    self.statusText = "التنبيهات مفعلة"
+                    self.statusText = self.enabledPrayerIDs.isEmpty ? "اختر صلاة واحدة على الأقل للتنبيه" : "التنبيهات مفعلة"
                 } else if settings.authorizationStatus == .denied {
                     self.statusText = "اسمح بالإشعارات من إعدادات الآيفون"
                 } else {
@@ -206,6 +311,12 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
 
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification) async -> UNNotificationPresentationOptions {
         [.banner, .sound]
+    }
+
+    func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse) async {
+        await MainActor.run {
+            NotificationCenter.default.post(name: Self.openSettingsNotification, object: nil)
+        }
     }
 }
 

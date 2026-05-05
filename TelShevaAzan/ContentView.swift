@@ -11,6 +11,7 @@ struct ContentView: View {
     @State private var isThemePickerPresented = false
     @State private var isQiblaPresented = false
     @State private var isRadioPresented = false
+    @State private var isNotificationSettingsPresented = false
     @StateObject private var notifications = PrayerNotificationManager.shared
 
     private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
@@ -77,12 +78,18 @@ struct ContentView: View {
         .onAppear {
             notifications.refreshIfEnabled()
         }
+        .onReceive(NotificationCenter.default.publisher(for: PrayerNotificationManager.openSettingsNotification)) { _ in
+            isNotificationSettingsPresented = true
+        }
         .fullScreenCover(isPresented: $isQiblaPresented) {
             QiblaView(theme: activeTheme)
                 .environment(\.layoutDirection, .rightToLeft)
         }
         .fullScreenCover(isPresented: $isRadioPresented) {
             QuranRadioView(theme: activeTheme)
+        }
+        .fullScreenCover(isPresented: $isNotificationSettingsPresented) {
+            NotificationSettingsView(theme: activeTheme)
         }
     }
 
@@ -126,7 +133,6 @@ struct ContentView: View {
                 radioButton
                 qiblaButton
                 notificationButton
-                testNotificationButton
                 Spacer(minLength: 0)
             }
 
@@ -140,7 +146,6 @@ struct ContentView: View {
                 HStack(spacing: 8) {
                     qiblaButton
                     notificationButton
-                    testNotificationButton
                     Spacer(minLength: 0)
                 }
             }
@@ -253,7 +258,7 @@ struct ContentView: View {
 
     private var notificationButton: some View {
         Button {
-            notifications.toggle()
+            isNotificationSettingsPresented = true
         } label: {
             HStack(spacing: 6) {
                 Image(systemName: notifications.isEnabled ? "bell.badge.fill" : "bell")
