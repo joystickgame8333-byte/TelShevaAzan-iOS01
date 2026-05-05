@@ -83,7 +83,6 @@ struct ContentView: View {
         }
         .fullScreenCover(isPresented: $isRadioPresented) {
             QuranRadioView(theme: activeTheme)
-                .environment(\.layoutDirection, .rightToLeft)
         }
     }
 

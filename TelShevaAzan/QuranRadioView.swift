@@ -38,6 +38,7 @@ struct QuranRadioView: View {
                 .multilineTextAlignment(.trailing)
             }
         }
+        .environment(\.layoutDirection, .leftToRight)
     }
 
     private var header: some View {
