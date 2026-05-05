@@ -35,8 +35,12 @@ struct QiblaView: View {
 
                     Spacer(minLength: 4)
 
-                    compassFace(size: circleSize)
-                        .frame(maxWidth: .infinity, alignment: .center)
+                    VStack(spacing: compactHeight ? 6 : 8) {
+                        compassFace(size: circleSize)
+                            .frame(maxWidth: .infinity, alignment: .center)
+
+                        compassHint
+                    }
 
                     directionReadout
 
@@ -127,26 +131,35 @@ struct QiblaView: View {
                 .fill(theme.accent)
                 .frame(width: 12, height: 12)
 
-            Text("السهم يشير للقبلة")
-                .font(.caption.weight(.black))
-                .foregroundStyle(theme.secondaryText.opacity(0.82))
-                .lineLimit(1)
-                .minimumScaleFactor(0.75)
-                .offset(y: (size / 2) - 36)
         }
         .frame(width: size, height: size)
+    }
+
+    private var compassHint: some View {
+        HStack(spacing: 6) {
+            Image(systemName: alignmentIsGood ? "checkmark.seal.fill" : "location.north.fill")
+                .font(.caption.weight(.black))
+
+            Text(alignmentIsGood ? "أنت على اتجاه القبلة" : "السهم الذهبي يشير للقبلة")
+                .font(.caption.weight(.black))
+                .lineLimit(1)
+                .minimumScaleFactor(0.72)
+        }
+        .foregroundStyle(directionColor)
+        .frame(maxWidth: .infinity, alignment: .center)
+        .environment(\.layoutDirection, .rightToLeft)
     }
 
     private var directionReadout: some View {
         VStack(alignment: .trailing, spacing: 6) {
             Text(instructionText)
                 .font(.system(size: 24, weight: .black, design: .rounded))
-                .foregroundStyle(theme.accent)
+                .foregroundStyle(directionColor)
                 .lineLimit(1)
                 .minimumScaleFactor(0.68)
 
             HStack(spacing: 10) {
-                metricTile(title: "قبلة تل السبع", value: bearingText(qiblaBearing))
+                metricTile(title: "الفرق المتبقي", value: differenceText, highlighted: true)
                 metricTile(title: "اتجاه الهاتف", value: compass.heading.map { bearingText($0) } ?? "--")
             }
         }
@@ -185,7 +198,7 @@ struct QiblaView: View {
         .clipShape(RoundedRectangle(cornerRadius: 8))
     }
 
-    private func metricTile(title: String, value: String) -> some View {
+    private func metricTile(title: String, value: String, highlighted: Bool = false) -> some View {
         VStack(alignment: .trailing, spacing: 3) {
             Text(title)
                 .font(.caption2.weight(.bold))
@@ -194,6 +207,7 @@ struct QiblaView: View {
 
             Text(value)
                 .font(.title3.monospacedDigit().weight(.black))
+                .foregroundStyle(highlighted ? directionColor : theme.primaryText)
                 .lineLimit(1)
         }
         .frame(maxWidth: .infinity, alignment: .trailing)
@@ -216,7 +230,22 @@ struct QiblaView: View {
         }
 
         let direction = delta > 0 ? "يمين" : "يسار"
-        return "لف \(direction) \(Int(absDelta.rounded()))°"
+        return "لف \(direction) \(Int(absDelta.rounded()))° للوصول للقبلة"
+    }
+
+    private var differenceText: String {
+        guard let delta else { return "--" }
+        return "\(Int(abs(delta).rounded()))°"
+    }
+
+    private var alignmentIsGood: Bool {
+        guard let delta else { return false }
+        let accuracyIsUsable = compass.accuracy < 0 || compass.accuracy <= 25
+        return abs(delta) <= 3 && accuracyIsUsable
+    }
+
+    private var directionColor: Color {
+        alignmentIsGood ? Color(red: 0.34, green: 0.92, blue: 0.48) : theme.accent
     }
 
     private func updateAlignmentHaptic() {
