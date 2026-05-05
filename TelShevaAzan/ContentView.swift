@@ -387,6 +387,12 @@ struct ContentView: View {
     private func nextPrayerPanel(next: PrayerTime?, previous: PrayerTime?, compact: Bool) -> some View {
         HStack(alignment: .center, spacing: 12) {
             VStack(alignment: .leading, spacing: 5) {
+                Text("باقي على الصلاة")
+                    .font(.caption2.weight(.black))
+                    .foregroundStyle(activeTheme.accent)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.72)
+
                 Text(countdownText(for: next))
                     .font(.subheadline.monospacedDigit().weight(.bold))
                     .foregroundStyle(.white)

@@ -124,10 +124,10 @@ struct TelShevaAzanWidgetView: View {
     }
 
     private var compactRemainingText: String {
-        guard let nextDate = entry.nextPrayer?.date else { return "باقي --:--" }
+        guard let nextDate = entry.nextPrayer?.date else { return "باقي على الصلاة --:--" }
         let seconds = max(Int(nextDate.timeIntervalSince(entry.date)), 0)
         let minutes = (seconds + 59) / 60
-        return "باقي \(hourMinuteText(fromMinutes: minutes))"
+        return "باقي على الصلاة \(hourMinuteText(fromMinutes: minutes))"
     }
 
     private var compactElapsedText: String {
@@ -294,13 +294,14 @@ struct TelShevaAzanWidgetView: View {
     }
 
     private func remainingChip(fontSize: CGFloat) -> some View {
-        HStack(spacing: 4) {
-            Text("باقي")
+        VStack(alignment: .trailing, spacing: 1) {
+            Text("باقي على الصلاة")
+                .font(.system(size: max(fontSize - 2, 8), weight: .black, design: .rounded))
 
             Text(compactRemainingValue)
+                .font(.system(size: fontSize + 2, weight: .black, design: .rounded))
                 .monospacedDigit()
         }
-        .font(.system(size: fontSize, weight: .black, design: .rounded))
         .foregroundColor(primaryText)
         .lineLimit(1)
         .minimumScaleFactor(0.66)
