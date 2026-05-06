@@ -162,7 +162,7 @@ struct ContentView: View {
             HStack(spacing: 6) {
                 Image(systemName: activeTheme.symbol)
 
-                Text("\(activeTheme.modeTitle) · \(activeTheme.title)")
+                Text(activeTheme.modeTitle)
                     .lineLimit(1)
                     .minimumScaleFactor(0.75)
             }
@@ -439,6 +439,8 @@ struct ContentView: View {
 
     private var dateControls: some View {
         HStack(spacing: 8) {
+            datePickerButton
+
             Button("اليوم التالي") {
                 moveDay(1)
             }
@@ -460,20 +462,39 @@ struct ContentView: View {
         .frame(maxWidth: .infinity, alignment: .trailing)
     }
 
-    private var footerNote: some View {
-        VStack(alignment: .trailing, spacing: 2) {
-            Text("مواقيت محلية \(AppInfo.displayVersion) · تتحدث تلقائيًا")
-                .font(.caption2.weight(.bold))
-                .foregroundStyle(activeTheme.accent)
-                .lineLimit(1)
-                .minimumScaleFactor(0.75)
+    private var datePickerButton: some View {
+        ZStack {
+            Text("اختار تاريخ")
+                .font(.caption.weight(.bold))
+                .foregroundStyle(activeTheme.primaryText)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 9)
+                .background(activeTheme.controlBackground)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(activeTheme.controlBorder)
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 8))
 
-            Text(notifications.statusText)
-                .font(.caption2.weight(.semibold))
-                .foregroundStyle(activeTheme.secondaryText.opacity(0.78))
-                .lineLimit(1)
-                .minimumScaleFactor(0.75)
+            DatePicker(
+                "",
+                selection: selectedDateBinding,
+                in: datePickerRange,
+                displayedComponents: .date
+            )
+            .labelsHidden()
+            .datePickerStyle(.compact)
+            .opacity(0.02)
         }
+        .fixedSize()
+    }
+
+    private var footerNote: some View {
+        Text("مواقيت محلية \(AppInfo.displayVersion) · تتحدث تلقائيًا")
+            .font(.caption2.weight(.bold))
+            .foregroundStyle(activeTheme.accent)
+            .lineLimit(1)
+            .minimumScaleFactor(0.75)
         .frame(maxWidth: .infinity, alignment: .trailing)
     }
 
@@ -508,6 +529,27 @@ struct ContentView: View {
         PrayerVisualTheme.selected(isNight: isNight, nightID: selectedNightThemeID, dayID: selectedDayThemeID)
     }
 
+    private var selectedDateBinding: Binding<Date> {
+        Binding<Date>(
+            get: {
+                PrayerEngine.date(from: selectedDateKey, time: "12:00") ?? now
+            },
+            set: { date in
+                let dateKey = PrayerEngine.defaultDateKey(for: date)
+                selectedDateKey = dateKey
+                followsToday = dateKey == PrayerEngine.defaultDateKey(for: now)
+            }
+        )
+    }
+
+    private var datePickerRange: ClosedRange<Date> {
+        let firstKey = PrayerEngine.availableDateKeys.first ?? selectedDateKey
+        let lastKey = PrayerEngine.availableDateKeys.last ?? selectedDateKey
+        let start = PrayerEngine.date(from: firstKey, time: "00:00") ?? now
+        let end = PrayerEngine.date(from: lastKey, time: "23:59") ?? now
+        return start...end
+    }
+
     private func rowBackground(isActive: Bool) -> Color {
         isActive ? activeTheme.activeRowBackground : activeTheme.rowBackground
     }
@@ -539,7 +581,7 @@ struct ContentView: View {
     private func elapsedText(for previous: PrayerTime?) -> String {
         guard let previous else { return "مضى --:--" }
         let seconds = max(Int(now.timeIntervalSince(previous.date)), 0)
-        return "مضى على \(previous.title) \(hourMinuteText(from: seconds))"
+        return "مضى على صلاة \(previous.title) \(hourMinuteText(from: seconds))"
     }
 
     private func hourMinuteText(from seconds: Int) -> String {

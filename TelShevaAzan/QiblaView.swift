@@ -53,7 +53,7 @@ struct QiblaView: View {
                 .padding(.bottom, 18)
                 .frame(width: proxy.size.width, height: proxy.size.height, alignment: .topTrailing)
                 .foregroundStyle(theme.primaryText)
-                .environment(\.layoutDirection, .rightToLeft)
+                .environment(\.layoutDirection, .leftToRight)
                 .multilineTextAlignment(.trailing)
             }
         }
