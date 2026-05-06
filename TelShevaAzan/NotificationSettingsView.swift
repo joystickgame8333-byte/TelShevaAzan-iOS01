@@ -26,6 +26,7 @@ struct NotificationSettingsView: View {
                         masterPanel
                         soundPanel
                         prayerPanel
+                            .padding(.top, compactHeight ? 12 : 18)
                     }
                     .padding(.horizontal, 18)
                     .padding(.top, safeTopPadding)
@@ -77,7 +78,7 @@ struct NotificationSettingsView: View {
     }
 
     private var masterPanel: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 12) {
             Toggle("", isOn: Binding(
                 get: { notifications.isEnabled },
                 set: { enabled in
@@ -212,7 +213,7 @@ struct NotificationSettingsView: View {
                 .foregroundStyle(selected ? theme.accent : theme.secondaryText.opacity(0.88))
                 .frame(width: 24, alignment: .leading)
 
-            Spacer(minLength: 10)
+            Spacer(minLength: 12)
 
             VStack(alignment: .trailing, spacing: 2) {
                 Text(title)
@@ -244,7 +245,7 @@ struct NotificationSettingsView: View {
 
             Spacer(minLength: 10)
 
-            HStack(spacing: 12) {
+            HStack(spacing: 16) {
                 Text(todayTime(for: key))
                     .font(.headline.monospacedDigit().weight(.black))
                     .foregroundStyle(theme.secondaryText.opacity(0.82))
@@ -256,7 +257,7 @@ struct NotificationSettingsView: View {
             }
             .frame(maxWidth: .infinity, alignment: .trailing)
         }
-        .padding(.vertical, 5)
+        .padding(.vertical, 9)
     }
 
     private func todayTime(for key: PrayerKey) -> String {
