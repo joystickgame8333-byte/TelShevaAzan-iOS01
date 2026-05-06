@@ -463,22 +463,7 @@ struct ContentView: View {
     }
 
     private var datePickerButton: some View {
-        Menu {
-            ForEach(PrayerEngine.availableDateKeys, id: \.self) { dateKey in
-                Button {
-                    selectedDateKey = dateKey
-                    followsToday = dateKey == PrayerEngine.defaultDateKey(for: now)
-                } label: {
-                    HStack {
-                        Text(dateMenuLabel(for: dateKey))
-
-                        if dateKey == selectedDateKey {
-                            Image(systemName: "checkmark")
-                        }
-                    }
-                }
-            }
-        } label: {
+        ZStack {
             HStack(spacing: 6) {
                 Text("اختار تاريخ")
                     .lineLimit(1)
@@ -496,21 +481,18 @@ struct ContentView: View {
                     .stroke(activeTheme.controlBorder)
             )
             .clipShape(RoundedRectangle(cornerRadius: 8))
-        }
-        .buttonStyle(.plain)
-        .environment(\.layoutDirection, .rightToLeft)
-    }
 
-    private func dateMenuLabel(for dateKey: String) -> String {
-        guard let date = PrayerEngine.date(from: dateKey, time: "12:00") else {
-            return dateKey
+            DatePicker(
+                "",
+                selection: selectedDateBinding,
+                in: datePickerRange,
+                displayedComponents: .date
+            )
+            .labelsHidden()
+            .datePickerStyle(.compact)
+            .opacity(0.02)
         }
-
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.timeZone = PrayerEngine.timeZone
-        formatter.dateFormat = "dd/MM/yyyy"
-        return formatter.string(from: date)
+        .fixedSize()
     }
 
     private var footerNote: some View {
@@ -551,6 +533,27 @@ struct ContentView: View {
 
     private var activeTheme: PrayerVisualTheme {
         PrayerVisualTheme.selected(isNight: isNight, nightID: selectedNightThemeID, dayID: selectedDayThemeID)
+    }
+
+    private var selectedDateBinding: Binding<Date> {
+        Binding<Date>(
+            get: {
+                PrayerEngine.date(from: selectedDateKey, time: "12:00") ?? now
+            },
+            set: { date in
+                let dateKey = PrayerEngine.defaultDateKey(for: date)
+                selectedDateKey = dateKey
+                followsToday = dateKey == PrayerEngine.defaultDateKey(for: now)
+            }
+        )
+    }
+
+    private var datePickerRange: ClosedRange<Date> {
+        let firstKey = PrayerEngine.availableDateKeys.first ?? selectedDateKey
+        let lastKey = PrayerEngine.availableDateKeys.last ?? selectedDateKey
+        let start = PrayerEngine.date(from: firstKey, time: "00:00") ?? now
+        let end = PrayerEngine.date(from: lastKey, time: "23:59") ?? now
+        return start...end
     }
 
     private func rowBackground(isActive: Bool) -> Color {
