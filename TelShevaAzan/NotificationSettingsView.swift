@@ -9,6 +9,7 @@ struct NotificationSettingsView: View {
     var body: some View {
         GeometryReader { proxy in
             let compactHeight = proxy.size.height < 720
+            let safeTopPadding = max(proxy.safeAreaInsets.top, 44) + (compactHeight ? 12 : 18)
 
             ZStack {
                 LinearGradient(
@@ -27,7 +28,7 @@ struct NotificationSettingsView: View {
                         previewButton
                     }
                     .padding(.horizontal, 18)
-                    .padding(.top, 14)
+                    .padding(.top, safeTopPadding)
                     .padding(.bottom, 24)
                     .frame(maxWidth: .infinity, alignment: .topTrailing)
                 }
