@@ -10,6 +10,7 @@ struct NotificationSettingsView: View {
         GeometryReader { proxy in
             let compactHeight = proxy.size.height < 720
             let safeTopPadding = max(proxy.safeAreaInsets.top, 44) + (compactHeight ? 12 : 18)
+            let contentMinHeight = max(proxy.size.height - safeTopPadding - proxy.safeAreaInsets.bottom - 24, 0)
 
             ZStack {
                 LinearGradient(
@@ -25,12 +26,11 @@ struct NotificationSettingsView: View {
                         masterPanel
                         soundPanel
                         prayerPanel
-                        previewButton
                     }
                     .padding(.horizontal, 18)
                     .padding(.top, safeTopPadding)
                     .padding(.bottom, 24)
-                    .frame(maxWidth: .infinity, alignment: .topTrailing)
+                    .frame(maxWidth: .infinity, minHeight: contentMinHeight, alignment: .topTrailing)
                 }
             }
         }
@@ -136,6 +136,13 @@ struct NotificationSettingsView: View {
                             .background(theme.controlBorder)
                     }
                 }
+
+                Divider()
+                    .background(theme.controlBorder)
+                    .padding(.top, 2)
+
+                previewButton
+                    .padding(.top, 12)
             }
         }
     }
