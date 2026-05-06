@@ -50,7 +50,7 @@ struct ContentView: View {
                     footerNote
                 }
                 .padding(.horizontal, 16)
-                .padding(.top, 8)
+                .padding(.top, compactHeight ? 12 : 18)
                 .padding(.bottom, 18)
                 .frame(width: proxy.size.width, height: proxy.size.height, alignment: .topTrailing)
                 .foregroundStyle(activeTheme.primaryText)
@@ -96,10 +96,10 @@ struct ContentView: View {
     private var quranVerse: some View {
         VStack(alignment: .trailing, spacing: 0) {
             Text("إِنَّ ٱلصَّلَوٰةَ كَانَتْ عَلَى ٱلْمُؤْمِنِينَ كِتَـٰبًا مَّوْقُوتًا")
-                .font(.custom("AmiriQuran-Regular", size: 23))
+                .font(.custom("AmiriQuran-Regular", size: 25))
                 .foregroundStyle(activeTheme.accent)
                 .lineLimit(2)
-                .minimumScaleFactor(0.68)
+                .minimumScaleFactor(0.64)
 
             Text("النساء ١٠٣")
                 .font(.caption.weight(.bold))
@@ -160,11 +160,11 @@ struct ContentView: View {
             }
         } label: {
             HStack(spacing: 6) {
-                Image(systemName: activeTheme.symbol)
-
                 Text(activeTheme.modeTitle)
                     .lineLimit(1)
                     .minimumScaleFactor(0.75)
+
+                Image(systemName: activeTheme.symbol)
             }
             .font(.caption2.weight(.black))
             .foregroundStyle(activeTheme.accent)
@@ -186,10 +186,10 @@ struct ContentView: View {
             isRadioPresented = true
         } label: {
             HStack(spacing: 6) {
-                Image(systemName: "radio.fill")
-
                 Text("الراديو")
                     .lineLimit(1)
+
+                Image(systemName: "radio.fill")
             }
             .font(.caption2.weight(.black))
             .foregroundStyle(activeTheme.accent)
@@ -211,10 +211,10 @@ struct ContentView: View {
             notifications.sendTestNotification()
         } label: {
             HStack(spacing: 6) {
-                Image(systemName: "play.circle.fill")
-
                 Text("تجربة")
                     .lineLimit(1)
+
+                Image(systemName: "play.circle.fill")
             }
             .font(.caption2.weight(.black))
             .foregroundStyle(activeTheme.accent)
@@ -236,10 +236,10 @@ struct ContentView: View {
             isQiblaPresented = true
         } label: {
             HStack(spacing: 6) {
-                Image(systemName: "location.north.fill")
-
                 Text("القبلة")
                     .lineLimit(1)
+
+                Image(systemName: "location.north.fill")
             }
             .font(.caption2.weight(.black))
             .foregroundStyle(activeTheme.accent)
@@ -261,10 +261,10 @@ struct ContentView: View {
             isNotificationSettingsPresented = true
         } label: {
             HStack(spacing: 6) {
-                Image(systemName: notifications.isEnabled ? "bell.badge.fill" : "bell")
-
                 Text("تنبيه")
                     .lineLimit(1)
+
+                Image(systemName: notifications.isEnabled ? "bell.badge.fill" : "bell")
             }
             .font(.caption2.weight(.black))
             .foregroundStyle(activeTheme.accent)
@@ -439,8 +439,6 @@ struct ContentView: View {
 
     private var dateControls: some View {
         HStack(spacing: 8) {
-            datePickerButton
-
             Button("اليوم التالي") {
                 moveDay(1)
             }
@@ -458,35 +456,51 @@ struct ContentView: View {
             }
             .buttonStyle(CompactButtonStyle(theme: activeTheme))
             .disabled(!PrayerEngine.canMove(from: selectedDateKey, by: -1))
+
+            Spacer(minLength: 10)
+
+            datePickerButton
         }
         .frame(maxWidth: .infinity, alignment: .trailing)
     }
 
     private var datePickerButton: some View {
-        ZStack {
-            Text("اختار تاريخ")
-                .font(.caption.weight(.bold))
-                .foregroundStyle(activeTheme.primaryText)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 9)
-                .background(activeTheme.controlBackground)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 8)
-                        .stroke(activeTheme.controlBorder)
-                )
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+        Menu {
+            ForEach(PrayerEngine.availableDateKeys, id: \.self) { dateKey in
+                Button {
+                    selectedDateKey = dateKey
+                    followsToday = dateKey == PrayerEngine.defaultDateKey(for: now)
+                } label: {
+                    HStack {
+                        Text(PrayerEngine.longDateLabel(for: dateKey))
 
-            DatePicker(
-                "",
-                selection: selectedDateBinding,
-                in: datePickerRange,
-                displayedComponents: .date
+                        if dateKey == selectedDateKey {
+                            Image(systemName: "checkmark")
+                        }
+                    }
+                }
+            }
+        } label: {
+            HStack(spacing: 6) {
+                Text("اختار تاريخ")
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.78)
+
+                Image(systemName: "calendar")
+            }
+            .font(.caption.weight(.bold))
+            .foregroundStyle(activeTheme.primaryText)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 9)
+            .background(activeTheme.controlBackground)
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(activeTheme.controlBorder)
             )
-            .labelsHidden()
-            .datePickerStyle(.compact)
-            .opacity(0.02)
+            .clipShape(RoundedRectangle(cornerRadius: 8))
         }
-        .fixedSize()
+        .buttonStyle(.plain)
+        .environment(\.layoutDirection, .rightToLeft)
     }
 
     private var footerNote: some View {
@@ -527,27 +541,6 @@ struct ContentView: View {
 
     private var activeTheme: PrayerVisualTheme {
         PrayerVisualTheme.selected(isNight: isNight, nightID: selectedNightThemeID, dayID: selectedDayThemeID)
-    }
-
-    private var selectedDateBinding: Binding<Date> {
-        Binding<Date>(
-            get: {
-                PrayerEngine.date(from: selectedDateKey, time: "12:00") ?? now
-            },
-            set: { date in
-                let dateKey = PrayerEngine.defaultDateKey(for: date)
-                selectedDateKey = dateKey
-                followsToday = dateKey == PrayerEngine.defaultDateKey(for: now)
-            }
-        )
-    }
-
-    private var datePickerRange: ClosedRange<Date> {
-        let firstKey = PrayerEngine.availableDateKeys.first ?? selectedDateKey
-        let lastKey = PrayerEngine.availableDateKeys.last ?? selectedDateKey
-        let start = PrayerEngine.date(from: firstKey, time: "00:00") ?? now
-        let end = PrayerEngine.date(from: lastKey, time: "23:59") ?? now
-        return start...end
     }
 
     private func rowBackground(isActive: Bool) -> Color {
