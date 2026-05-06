@@ -9,8 +9,8 @@ struct NotificationSettingsView: View {
     var body: some View {
         GeometryReader { proxy in
             let compactHeight = proxy.size.height < 720
-            let safeTopPadding = max(proxy.safeAreaInsets.top, 44) + (compactHeight ? 12 : 18)
-            let contentMinHeight = max(proxy.size.height - safeTopPadding - proxy.safeAreaInsets.bottom - 24, 0)
+            let safeTopPadding = min(max(proxy.safeAreaInsets.top, 44), 72) + (compactHeight ? 8 : 10)
+            let contentMinHeight = max(proxy.size.height - safeTopPadding - proxy.safeAreaInsets.bottom - 18, 0)
 
             ZStack {
                 LinearGradient(
@@ -21,7 +21,7 @@ struct NotificationSettingsView: View {
                 .ignoresSafeArea()
 
                 ScrollView(showsIndicators: false) {
-                    VStack(alignment: .trailing, spacing: compactHeight ? 12 : 14) {
+                    VStack(alignment: .trailing, spacing: compactHeight ? 10 : 12) {
                         header
                         masterPanel
                         soundPanel
@@ -29,7 +29,7 @@ struct NotificationSettingsView: View {
                     }
                     .padding(.horizontal, 18)
                     .padding(.top, safeTopPadding)
-                    .padding(.bottom, 24)
+                    .padding(.bottom, 18)
                     .frame(maxWidth: .infinity, minHeight: contentMinHeight, alignment: .topTrailing)
                 }
             }
@@ -60,7 +60,7 @@ struct NotificationSettingsView: View {
 
             VStack(alignment: .trailing, spacing: 4) {
                 Text("تنبيهات الأذان")
-                    .font(.system(size: 32, weight: .black, design: .rounded))
+                    .font(.system(size: 30, weight: .black, design: .rounded))
                     .lineLimit(1)
                     .minimumScaleFactor(0.72)
                     .frame(maxWidth: .infinity, alignment: .trailing)
@@ -105,7 +105,7 @@ struct NotificationSettingsView: View {
                     .minimumScaleFactor(0.78)
             }
         }
-        .padding(14)
+        .padding(12)
         .frame(maxWidth: .infinity, alignment: .trailing)
         .background(theme.panelBackground)
         .overlay(
@@ -142,7 +142,7 @@ struct NotificationSettingsView: View {
                     .padding(.top, 2)
 
                 previewButton
-                    .padding(.top, 12)
+                    .padding(.top, 10)
             }
         }
     }
@@ -175,7 +175,7 @@ struct NotificationSettingsView: View {
             .font(.headline.weight(.black))
             .foregroundStyle(theme.primaryText)
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 14)
+            .padding(.vertical, 12)
             .background(theme.countdownBackground)
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
@@ -195,7 +195,7 @@ struct NotificationSettingsView: View {
 
             content()
         }
-        .padding(14)
+        .padding(12)
         .frame(maxWidth: .infinity, alignment: .trailing)
         .background(theme.controlBackground)
         .overlay(
@@ -229,7 +229,7 @@ struct NotificationSettingsView: View {
             }
             .frame(maxWidth: .infinity, alignment: .trailing)
         }
-        .padding(.vertical, 10)
+        .padding(.vertical, 8)
         .contentShape(Rectangle())
     }
 
@@ -256,7 +256,7 @@ struct NotificationSettingsView: View {
             }
             .frame(maxWidth: .infinity, alignment: .trailing)
         }
-        .padding(.vertical, 9)
+        .padding(.vertical, 7)
     }
 
     private func todayTime(for key: PrayerKey) -> String {
