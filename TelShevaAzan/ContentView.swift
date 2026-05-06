@@ -439,6 +439,8 @@ struct ContentView: View {
 
     private var dateControls: some View {
         HStack(spacing: 8) {
+            datePickerButton
+
             Button("اليوم التالي") {
                 moveDay(1)
             }
@@ -456,10 +458,6 @@ struct ContentView: View {
             }
             .buttonStyle(CompactButtonStyle(theme: activeTheme))
             .disabled(!PrayerEngine.canMove(from: selectedDateKey, by: -1))
-
-            Spacer(minLength: 10)
-
-            datePickerButton
         }
         .frame(maxWidth: .infinity, alignment: .trailing)
     }
@@ -472,7 +470,7 @@ struct ContentView: View {
                     followsToday = dateKey == PrayerEngine.defaultDateKey(for: now)
                 } label: {
                     HStack {
-                        Text(PrayerEngine.longDateLabel(for: dateKey))
+                        Text(dateMenuLabel(for: dateKey))
 
                         if dateKey == selectedDateKey {
                             Image(systemName: "checkmark")
@@ -501,6 +499,18 @@ struct ContentView: View {
         }
         .buttonStyle(.plain)
         .environment(\.layoutDirection, .rightToLeft)
+    }
+
+    private func dateMenuLabel(for dateKey: String) -> String {
+        guard let date = PrayerEngine.date(from: dateKey, time: "12:00") else {
+            return dateKey
+        }
+
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = PrayerEngine.timeZone
+        formatter.dateFormat = "dd/MM/yyyy"
+        return formatter.string(from: date)
     }
 
     private var footerNote: some View {

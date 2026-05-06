@@ -89,7 +89,6 @@ struct QuranRadioView: View {
                     .font(.caption.weight(.bold))
                     .foregroundStyle(theme.secondaryText.opacity(0.86))
                     .lineLimit(1)
-                    .environment(\.layoutDirection, .rightToLeft)
             }
             .frame(maxWidth: .infinity, alignment: .trailing)
 
@@ -114,7 +113,6 @@ struct QuranRadioView: View {
             }
             .frame(maxWidth: .infinity, alignment: .trailing)
             .multilineTextAlignment(.trailing)
-            .environment(\.layoutDirection, .rightToLeft)
 
             Button {
                 player.toggle()
@@ -158,7 +156,6 @@ struct QuranRadioView: View {
                 .foregroundStyle(theme.accent)
                 .lineLimit(1)
                 .frame(maxWidth: .infinity, alignment: .trailing)
-                .environment(\.layoutDirection, .rightToLeft)
 
             Text("بث مباشر من إذاعة القرآن الكريم من نابلس. يحتاج اتصال إنترنت ويستمر في الخلفية.")
                 .font(.caption.weight(.semibold))
@@ -166,12 +163,11 @@ struct QuranRadioView: View {
                 .lineLimit(3)
                 .frame(maxWidth: .infinity, alignment: .trailing)
                 .multilineTextAlignment(.trailing)
-                .environment(\.layoutDirection, .rightToLeft)
 
             Link(destination: URL(string: "https://quran-radio.com/")!) {
                 HStack(spacing: 6) {
-                    Image(systemName: "safari.fill")
                     Text("فتح موقع الإذاعة")
+                    Image(systemName: "safari.fill")
                 }
                 .font(.caption.weight(.black))
                 .foregroundStyle(theme.accent)
@@ -183,7 +179,6 @@ struct QuranRadioView: View {
                         .stroke(theme.controlBorder)
                 )
                 .clipShape(RoundedRectangle(cornerRadius: 8))
-                .environment(\.layoutDirection, .rightToLeft)
             }
             .frame(maxWidth: .infinity, alignment: .trailing)
         }
@@ -195,6 +190,5 @@ struct QuranRadioView: View {
                 .stroke(theme.controlBorder)
         )
         .clipShape(RoundedRectangle(cornerRadius: 8))
-        .environment(\.layoutDirection, .rightToLeft)
     }
 }
