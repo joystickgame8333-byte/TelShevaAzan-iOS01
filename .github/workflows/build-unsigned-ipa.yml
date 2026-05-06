@@ -45,13 +45,35 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY=""
 
+      - name: Build watch app without App Store signing
+        run: |
+          set -euxo pipefail
+          xcodebuild \
+            -project TelShevaAzan.xcodeproj \
+            -scheme TelShevaAzanWatch \
+            -configuration Release \
+            -sdk watchos \
+            -destination 'generic/platform=watchOS' \
+            -derivedDataPath build \
+            build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY=""
+
       - name: Package IPA
         run: |
           set -euxo pipefail
           APP_PATH="$(find build/Build/Products -path '*Release-iphoneos/*.app' -print -quit)"
           APPEX_PATH="$(find build/Build/Products -path '*Release-iphoneos/*.appex' ! -path '*/PlugIns/*.appex' -print -quit)"
+          WATCH_APP_PATH="$(find build/Build/Products -path '*Release-watchos/*.app' -name 'TelShevaAzanWatch.app' -print -quit)"
+          WATCH_APPEX_PATH="$(find build/Build/Products -path '*Release-watchos/*.appex' ! -path '*/PlugIns/*.appex' -print -quit)"
           if [ -z "$APP_PATH" ]; then
             echo "Built .app was not found"
+            exit 1
+          fi
+          if [ -z "$WATCH_APP_PATH" ]; then
+            echo "Built watch .app was not found"
+            find build/Build/Products -maxdepth 6 -print
             exit 1
           fi
           mkdir -p "$APP_PATH/PlugIns"
@@ -66,6 +88,23 @@ jobs:
             find build/Build/Products -maxdepth 6 -print
             exit 1
           fi
+
+          mkdir -p "$APP_PATH/Watch"
+          rm -rf "$APP_PATH/Watch/"*.app
+          cp -R "$WATCH_APP_PATH" "$APP_PATH/Watch/"
+          WATCH_APP_IN_APP="$APP_PATH/Watch/$(basename "$WATCH_APP_PATH")"
+          mkdir -p "$WATCH_APP_IN_APP/PlugIns"
+          EMBEDDED_WATCH_APPEX_PATH="$(find "$WATCH_APP_IN_APP/PlugIns" -maxdepth 1 -name '*.appex' -print -quit 2>/dev/null || true)"
+          if [ -n "$WATCH_APPEX_PATH" ] && [ -z "$EMBEDDED_WATCH_APPEX_PATH" ]; then
+            cp -R "$WATCH_APPEX_PATH" "$WATCH_APP_IN_APP/PlugIns/"
+          fi
+          WATCH_PLUGIN_PATH="$(find "$WATCH_APP_IN_APP/PlugIns" -maxdepth 1 -name '*.appex' -print -quit 2>/dev/null || true)"
+          if [ -z "$WATCH_PLUGIN_PATH" ]; then
+            echo "Watch Widget extension was not packaged into the watch app"
+            find "$WATCH_APP_IN_APP" -maxdepth 5 -print
+            exit 1
+          fi
+
           PLUGIN_PATH="$(find "$APP_PATH/PlugIns" -maxdepth 1 -name '*.appex' -print -quit)"
           if [ -z "$PLUGIN_PATH" ]; then
             echo "Widget extension was not packaged into PlugIns"
@@ -110,6 +149,11 @@ jobs:
           echo "App icon registration:"
           /usr/libexec/PlistBuddy -c "Print :CFBundleIcons:CFBundlePrimaryIcon:CFBundleIconName" "$APP_PATH/Info.plist" || true
           /usr/libexec/PlistBuddy -c "Print :CFBundleIcons:CFBundlePrimaryIcon:CFBundleIconFiles" "$APP_PATH/Info.plist"
+          echo "Watch app registration:"
+          /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$WATCH_APP_IN_APP/Info.plist" || true
+          /usr/libexec/PlistBuddy -c "Print :WKCompanionAppBundleIdentifier" "$WATCH_APP_IN_APP/Info.plist" || true
+          /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$WATCH_PLUGIN_PATH/Info.plist" || true
+          /usr/libexec/PlistBuddy -c "Print :NSExtension:NSExtensionPointIdentifier" "$WATCH_PLUGIN_PATH/Info.plist" || true
           for icon in Icon-20@2x.png Icon-20@3x.png Icon-29@2x.png Icon-29@3x.png Icon-40@2x.png Icon-40@3x.png Icon-60@2x.png Icon-60@3x.png; do
             if [ ! -f "$APP_PATH/$icon" ]; then
               echo "Missing packaged icon: $APP_PATH/$icon"
@@ -132,10 +176,18 @@ jobs:
 
           APP_EXECUTABLE="$(/usr/libexec/PlistBuddy -c "Print :CFBundleExecutable" "$APP_PATH/Info.plist")"
           PLUGIN_EXECUTABLE="$(/usr/libexec/PlistBuddy -c "Print :CFBundleExecutable" "$PLUGIN_PATH/Info.plist")"
-          rm -rf "$APP_PATH/_CodeSignature" "$PLUGIN_PATH/_CodeSignature"
+          WATCH_EXECUTABLE="$(/usr/libexec/PlistBuddy -c "Print :CFBundleExecutable" "$WATCH_APP_IN_APP/Info.plist")"
+          WATCH_PLUGIN_EXECUTABLE="$(/usr/libexec/PlistBuddy -c "Print :CFBundleExecutable" "$WATCH_PLUGIN_PATH/Info.plist")"
+          rm -rf "$APP_PATH/_CodeSignature" "$PLUGIN_PATH/_CodeSignature" "$WATCH_APP_IN_APP/_CodeSignature" "$WATCH_PLUGIN_PATH/_CodeSignature"
           echo "TrollStore ldid signing:"
+          ldid -S"TelShevaAzanWatchWidget/TelShevaAzanWatchWidget.entitlements" "$WATCH_PLUGIN_PATH/$WATCH_PLUGIN_EXECUTABLE"
+          ldid -S"TelShevaAzanWatch/TelShevaAzanWatch.entitlements" "$WATCH_APP_IN_APP/$WATCH_EXECUTABLE"
           ldid -S"TelShevaAzanWidget/TelShevaAzanWidget.entitlements" "$PLUGIN_PATH/$PLUGIN_EXECUTABLE"
           ldid -S"TelShevaAzan/TelShevaAzan.entitlements" "$APP_PATH/$APP_EXECUTABLE"
+          echo "Watch widget entitlements after ldid:"
+          ldid -e "$WATCH_PLUGIN_PATH/$WATCH_PLUGIN_EXECUTABLE"
+          echo "Watch app entitlements after ldid:"
+          ldid -e "$WATCH_APP_IN_APP/$WATCH_EXECUTABLE"
           echo "Widget entitlements after ldid:"
           ldid -e "$PLUGIN_PATH/$PLUGIN_EXECUTABLE"
           echo "App entitlements after ldid:"
@@ -153,6 +205,17 @@ jobs:
             /usr/libexec/PlistBuddy -c "Print :NSPrincipalClass" "$PLUGIN_PATH/Info.plist" || true
             echo "Plugin executable:"
             ls -la "$PLUGIN_PATH/$PLUGIN_EXECUTABLE"
+            echo "Watch app bundle:"
+            /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$WATCH_APP_IN_APP/Info.plist"
+            /usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$WATCH_APP_IN_APP/Info.plist"
+            /usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$WATCH_APP_IN_APP/Info.plist"
+            /usr/libexec/PlistBuddy -c "Print :WKCompanionAppBundleIdentifier" "$WATCH_APP_IN_APP/Info.plist"
+            echo "Watch widget bundle:"
+            /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$WATCH_PLUGIN_PATH/Info.plist"
+            /usr/libexec/PlistBuddy -c "Print :NSExtension:NSExtensionPointIdentifier" "$WATCH_PLUGIN_PATH/Info.plist"
+            echo "Watch executables:"
+            ls -la "$WATCH_APP_IN_APP/$WATCH_EXECUTABLE"
+            ls -la "$WATCH_PLUGIN_PATH/$WATCH_PLUGIN_EXECUTABLE"
           } > build-diagnostics.txt
           mkdir -p Payload
           cp -R "$APP_PATH" Payload/TelShevaAzan.app
@@ -166,6 +229,8 @@ jobs:
           grep -q 'Payload/TelShevaAzan.app/adhan.caf' ipa-contents.txt
           grep -q 'Payload/TelShevaAzan.app/PlugIns/.*\.appex/' ipa-contents.txt
           grep -q 'Payload/TelShevaAzan.app/PlugIns/.*/TelShevaAzanWidgetExtension' ipa-contents.txt
+          grep -q 'Payload/TelShevaAzan.app/Watch/TelShevaAzanWatch.app/' ipa-contents.txt
+          grep -q 'Payload/TelShevaAzan.app/Watch/TelShevaAzanWatch.app/PlugIns/.*\.appex/' ipa-contents.txt
 
       - name: Upload IPA
         uses: actions/upload-artifact@v4
