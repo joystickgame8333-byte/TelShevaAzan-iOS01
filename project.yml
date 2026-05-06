@@ -25,8 +25,8 @@ targets:
       properties:
         CFBundleDisplayName: أذان تل السبع
         CFBundlePackageType: APPL
-        CFBundleShortVersionString: "0.5.1"
-        CFBundleVersion: "82"
+        CFBundleShortVersionString: "0.5.2"
+        CFBundleVersion: "83"
         CFBundleIcons:
           CFBundlePrimaryIcon:
             CFBundleIconFiles:
@@ -59,8 +59,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.omaralasam.telshevaazan
         PRODUCT_NAME: TelShevaAzan
-        MARKETING_VERSION: 0.5.1
-        CURRENT_PROJECT_VERSION: 82
+        MARKETING_VERSION: 0.5.2
+        CURRENT_PROJECT_VERSION: 83
         TARGETED_DEVICE_FAMILY: 1
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
@@ -84,8 +84,8 @@ targets:
       properties:
         CFBundleDisplayName: TelSheva Azan Widget
         CFBundlePackageType: XPC!
-        CFBundleShortVersionString: "0.5.1"
-        CFBundleVersion: "82"
+        CFBundleShortVersionString: "0.5.2"
+        CFBundleVersion: "83"
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
         NSPrincipalClass: ""
@@ -93,8 +93,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.omaralasam.telshevaazan.nextprayerwidget3
         PRODUCT_NAME: TelShevaAzanWidgetExtension
-        MARKETING_VERSION: 0.5.1
-        CURRENT_PROJECT_VERSION: 82
+        MARKETING_VERSION: 0.5.2
+        CURRENT_PROJECT_VERSION: 83
         IPHONEOS_DEPLOYMENT_TARGET: 16.0
         TARGETED_DEVICE_FAMILY: "1,2"
         APPLICATION_EXTENSION_API_ONLY: YES
@@ -115,17 +115,17 @@ targets:
       properties:
         CFBundleDisplayName: أذان تل السبع
         CFBundlePackageType: APPL
-        CFBundleShortVersionString: "0.5.1"
-        CFBundleVersion: "82"
+        CFBundleShortVersionString: "0.5.2"
+        CFBundleVersion: "83"
         WKApplication: true
         WKCompanionAppBundleIdentifier: com.omaralasam.telshevaazan.76XJH357A8
         WKRunsIndependentlyOfCompanionApp: true
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.omaralasam.telshevaazan.watchkitapp
+        PRODUCT_BUNDLE_IDENTIFIER: com.omaralasam.telshevaazan.76XJH357A8.watchkitapp
         PRODUCT_NAME: TelShevaAzanWatch
-        MARKETING_VERSION: 0.5.1
-        CURRENT_PROJECT_VERSION: 82
+        MARKETING_VERSION: 0.5.2
+        CURRENT_PROJECT_VERSION: 83
         TARGETED_DEVICE_FAMILY: 4
         WATCHOS_DEPLOYMENT_TARGET: 9.0
         CODE_SIGN_STYLE: Manual
@@ -148,17 +148,17 @@ targets:
       properties:
         CFBundleDisplayName: أذان تل السبع
         CFBundlePackageType: XPC!
-        CFBundleShortVersionString: "0.5.1"
-        CFBundleVersion: "82"
+        CFBundleShortVersionString: "0.5.2"
+        CFBundleVersion: "83"
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
         NSPrincipalClass: ""
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.omaralasam.telshevaazan.watchkitapp.watchwidget
+        PRODUCT_BUNDLE_IDENTIFIER: com.omaralasam.telshevaazan.76XJH357A8.watchkitapp.watchwidget
         PRODUCT_NAME: TelShevaAzanWatchWidgetExtension
-        MARKETING_VERSION: 0.5.1
-        CURRENT_PROJECT_VERSION: 82
+        MARKETING_VERSION: 0.5.2
+        CURRENT_PROJECT_VERSION: 83
         WATCHOS_DEPLOYMENT_TARGET: 9.0
         TARGETED_DEVICE_FAMILY: 4
         APPLICATION_EXTENSION_API_ONLY: YES
