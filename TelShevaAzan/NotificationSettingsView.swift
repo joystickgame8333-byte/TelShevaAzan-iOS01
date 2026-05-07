@@ -29,7 +29,7 @@ struct NotificationSettingsView: View {
                     .padding(.horizontal, 18)
                     .padding(.top, compactHeight ? 18 : 28)
                     .padding(.bottom, 18)
-                    .frame(width: proxy.size.width, minHeight: contentMinHeight, alignment: .topTrailing)
+                    .frame(maxWidth: .infinity, minHeight: contentMinHeight, alignment: .topTrailing)
                 }
             }
         }
