@@ -11,6 +11,7 @@ struct ContentView: View {
     @State private var isThemePickerPresented = false
     @State private var isQiblaPresented = false
     @State private var isRadioPresented = false
+    @State private var isAdhkarPresented = false
     @State private var isNotificationSettingsPresented = false
     @StateObject private var notifications = PrayerNotificationManager.shared
 
@@ -88,6 +89,9 @@ struct ContentView: View {
         .fullScreenCover(isPresented: $isRadioPresented) {
             QuranRadioView(theme: activeTheme)
         }
+        .fullScreenCover(isPresented: $isAdhkarPresented) {
+            AdhkarView(theme: activeTheme)
+        }
         .fullScreenCover(isPresented: $isNotificationSettingsPresented) {
             NotificationSettingsView(theme: activeTheme)
         }
@@ -127,27 +131,18 @@ struct ContentView: View {
     }
 
     private var headerControls: some View {
-        ViewThatFits(in: .horizontal) {
+        VStack(alignment: .trailing, spacing: 6) {
             HStack(spacing: 8) {
                 Spacer(minLength: 0)
                 themeMenu
+                adhkarButton
                 radioButton
-                qiblaButton
-                notificationButton
             }
 
-            VStack(alignment: .trailing, spacing: 6) {
-                HStack(spacing: 8) {
-                    Spacer(minLength: 0)
-                    themeMenu
-                    radioButton
-                }
-
-                HStack(spacing: 8) {
-                    Spacer(minLength: 0)
-                    qiblaButton
-                    notificationButton
-                }
+            HStack(spacing: 8) {
+                Spacer(minLength: 0)
+                qiblaButton
+                notificationButton
             }
         }
         .frame(maxWidth: .infinity, alignment: .trailing)
@@ -190,6 +185,31 @@ struct ContentView: View {
                     .lineLimit(1)
 
                 Image(systemName: "radio.fill")
+            }
+            .font(.caption2.weight(.black))
+            .foregroundStyle(activeTheme.accent)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 7)
+            .background(activeTheme.controlBackground)
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(activeTheme.controlBorder)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+        }
+        .buttonStyle(.plain)
+        .environment(\.layoutDirection, .rightToLeft)
+    }
+
+    private var adhkarButton: some View {
+        Button {
+            isAdhkarPresented = true
+        } label: {
+            HStack(spacing: 6) {
+                Text("أذكار")
+                    .lineLimit(1)
+
+                Image(systemName: "sparkles")
             }
             .font(.caption2.weight(.black))
             .foregroundStyle(activeTheme.accent)
