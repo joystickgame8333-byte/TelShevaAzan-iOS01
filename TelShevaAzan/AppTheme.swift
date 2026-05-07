@@ -43,6 +43,8 @@ enum PrayerVisualTheme: String, CaseIterable, Identifiable {
     case dayMint
     case dayPearl
     case daySky
+    case dayOlive
+    case dayAqua
     case dayRose
 
     var id: String { rawValue }
@@ -50,7 +52,7 @@ enum PrayerVisualTheme: String, CaseIterable, Identifiable {
     static let defaultNight: PrayerVisualTheme = .nightEmerald
     static let defaultDay: PrayerVisualTheme = .dayMint
     static let nightChoices: [PrayerVisualTheme] = [.nightOld, .nightEmerald, .nightMidnight, .nightAmber, .nightCalendar]
-    static let dayChoices: [PrayerVisualTheme] = [.dayMint, .dayPearl, .daySky]
+    static let dayChoices: [PrayerVisualTheme] = [.dayMint, .dayPearl, .daySky, .dayOlive, .dayAqua]
 
     static func selected(isNight: Bool, nightID: String, dayID: String) -> PrayerVisualTheme {
         let choices = isNight ? Self.nightChoices : Self.dayChoices
@@ -78,6 +80,10 @@ enum PrayerVisualTheme: String, CaseIterable, Identifiable {
             return "صفاء اللؤلؤ"
         case .daySky:
             return "سماء صافية"
+        case .dayOlive:
+            return "ظل الزيتون"
+        case .dayAqua:
+            return "نسيم البحر"
         case .dayRose:
             return "ورد هادئ"
         }
@@ -107,6 +113,10 @@ enum PrayerVisualTheme: String, CaseIterable, Identifiable {
             return "sun.max.fill"
         case .daySky:
             return "cloud.sun.fill"
+        case .dayOlive:
+            return "leaf.circle.fill"
+        case .dayAqua:
+            return "drop.fill"
         case .dayRose:
             return "camera.macro"
         }
@@ -116,7 +126,7 @@ enum PrayerVisualTheme: String, CaseIterable, Identifiable {
         switch self {
         case .nightOld, .nightEmerald, .nightMidnight, .nightAmber, .nightViolet, .nightCalendar:
             return true
-        case .dayMint, .dayPearl, .daySky, .dayRose:
+        case .dayMint, .dayPearl, .daySky, .dayOlive, .dayAqua, .dayRose:
             return false
         }
     }
@@ -289,6 +299,44 @@ enum PrayerVisualTheme: String, CaseIterable, Identifiable {
                 activeRowBackground: Color(red: 0.10, green: 0.50, blue: 0.78).opacity(0.13),
                 rowBorder: .black.opacity(0.08),
                 activeRowBorder: Color(red: 0.05, green: 0.34, blue: 0.64).opacity(0.45),
+                chipBackground: .white.opacity(0.66),
+                controlBackground: .white.opacity(0.95),
+                controlPressedBackground: .white.opacity(0.66),
+                controlBorder: .black.opacity(0.10)
+            )
+        case .dayOlive:
+            return ThemePalette(
+                appBackground: [Color(red: 0.91, green: 0.96, blue: 0.91), Color(red: 0.97, green: 0.98, blue: 0.93)],
+                widgetBackground: [Color(red: 0.82, green: 0.93, blue: 0.82), Color(red: 0.94, green: 0.98, blue: 0.89)],
+                accent: Color(red: 0.16, green: 0.42, blue: 0.24),
+                primaryText: Color(red: 0.05, green: 0.18, blue: 0.10),
+                secondaryText: Color(red: 0.25, green: 0.48, blue: 0.30),
+                mutedText: Color(red: 0.18, green: 0.34, blue: 0.22).opacity(0.86),
+                panelBackground: .white.opacity(0.90),
+                countdownBackground: Color(red: 0.16, green: 0.39, blue: 0.24),
+                rowBackground: .white.opacity(0.82),
+                activeRowBackground: Color(red: 0.22, green: 0.55, blue: 0.28).opacity(0.14),
+                rowBorder: .black.opacity(0.08),
+                activeRowBorder: Color(red: 0.16, green: 0.42, blue: 0.24).opacity(0.48),
+                chipBackground: .white.opacity(0.66),
+                controlBackground: .white.opacity(0.95),
+                controlPressedBackground: .white.opacity(0.66),
+                controlBorder: .black.opacity(0.10)
+            )
+        case .dayAqua:
+            return ThemePalette(
+                appBackground: [Color(red: 0.90, green: 0.98, blue: 0.98), Color(red: 0.96, green: 0.98, blue: 0.92)],
+                widgetBackground: [Color(red: 0.76, green: 0.94, blue: 0.96), Color(red: 0.91, green: 0.98, blue: 0.88)],
+                accent: Color(red: 0.02, green: 0.41, blue: 0.50),
+                primaryText: Color(red: 0.03, green: 0.16, blue: 0.20),
+                secondaryText: Color(red: 0.12, green: 0.42, blue: 0.50),
+                mutedText: Color(red: 0.12, green: 0.33, blue: 0.38).opacity(0.86),
+                panelBackground: .white.opacity(0.90),
+                countdownBackground: Color(red: 0.02, green: 0.34, blue: 0.44),
+                rowBackground: .white.opacity(0.82),
+                activeRowBackground: Color(red: 0.03, green: 0.52, blue: 0.60).opacity(0.14),
+                rowBorder: .black.opacity(0.08),
+                activeRowBorder: Color(red: 0.02, green: 0.41, blue: 0.50).opacity(0.48),
                 chipBackground: .white.opacity(0.66),
                 controlBackground: .white.opacity(0.95),
                 controlPressedBackground: .white.opacity(0.66),

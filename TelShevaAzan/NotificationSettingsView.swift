@@ -8,9 +8,8 @@ struct NotificationSettingsView: View {
 
     var body: some View {
         GeometryReader { proxy in
-            let compactHeight = proxy.size.height < 900
-            let safeTopPadding = min(max(proxy.safeAreaInsets.top, 34), 56) + (compactHeight ? 4 : 6)
-            let contentMinHeight = max(proxy.size.height - safeTopPadding - proxy.safeAreaInsets.bottom - 12, 0)
+            let compactHeight = proxy.size.height < 820
+            let contentMinHeight = max(proxy.size.height - proxy.safeAreaInsets.top - proxy.safeAreaInsets.bottom, 0)
 
             ZStack {
                 LinearGradient(
@@ -21,17 +20,16 @@ struct NotificationSettingsView: View {
                 .ignoresSafeArea()
 
                 ScrollView(showsIndicators: false) {
-                    VStack(alignment: .trailing, spacing: compactHeight ? 8 : 10) {
+                    VStack(alignment: .trailing, spacing: compactHeight ? 11 : 14) {
                         header
                         masterPanel
                         soundPanel
                         prayerPanel
-                            .padding(.top, compactHeight ? 12 : 18)
                     }
                     .padding(.horizontal, 18)
-                    .padding(.top, safeTopPadding)
-                    .padding(.bottom, 12)
-                    .frame(maxWidth: .infinity, minHeight: contentMinHeight, alignment: .topTrailing)
+                    .padding(.top, compactHeight ? 18 : 28)
+                    .padding(.bottom, 18)
+                    .frame(width: proxy.size.width, minHeight: contentMinHeight, alignment: .topTrailing)
                 }
             }
         }
@@ -41,13 +39,13 @@ struct NotificationSettingsView: View {
     }
 
     private var header: some View {
-        HStack(alignment: .top, spacing: 10) {
+        HStack(alignment: .top, spacing: 12) {
             Button {
                 dismiss()
             } label: {
                 Image(systemName: "xmark")
-                    .font(.system(size: 15, weight: .black))
-                    .frame(width: 34, height: 34)
+                    .font(.system(size: 16, weight: .black))
+                    .frame(width: 38, height: 38)
                     .background(theme.controlBackground)
                     .overlay(
                         RoundedRectangle(cornerRadius: 8)
@@ -57,24 +55,24 @@ struct NotificationSettingsView: View {
             }
             .buttonStyle(.plain)
 
-            Spacer(minLength: 12)
+            Spacer(minLength: 16)
 
-            VStack(alignment: .trailing, spacing: 2) {
+            VStack(alignment: .trailing, spacing: 4) {
                 Text("تنبيهات الأذان")
-                    .font(.system(size: 28, weight: .black, design: .rounded))
+                    .font(.system(size: 34, weight: .black, design: .rounded))
                     .lineLimit(1)
-                    .minimumScaleFactor(0.72)
+                    .minimumScaleFactor(0.66)
                     .frame(maxWidth: .infinity, alignment: .trailing)
 
                 Text("اختر الصوت والصلوات التي تريدها")
-                    .font(.caption2.weight(.bold))
+                    .font(.caption.weight(.bold))
                     .foregroundStyle(theme.accent)
                     .lineLimit(1)
                     .minimumScaleFactor(0.75)
                     .frame(maxWidth: .infinity, alignment: .trailing)
             }
         }
-        .frame(maxWidth: .infinity, alignment: .topLeading)
+        .frame(maxWidth: .infinity, alignment: .topTrailing)
     }
 
     private var masterPanel: some View {
@@ -106,7 +104,7 @@ struct NotificationSettingsView: View {
                     .minimumScaleFactor(0.78)
             }
         }
-        .padding(10)
+        .padding(14)
         .frame(maxWidth: .infinity, alignment: .trailing)
         .background(theme.panelBackground)
         .overlay(
@@ -143,7 +141,7 @@ struct NotificationSettingsView: View {
                     .padding(.top, 2)
 
                 previewButton
-                    .padding(.top, 8)
+                    .padding(.top, 10)
             }
         }
     }
@@ -176,7 +174,7 @@ struct NotificationSettingsView: View {
             .font(.subheadline.weight(.black))
             .foregroundStyle(theme.primaryText)
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 9)
+            .padding(.vertical, 11)
             .background(theme.countdownBackground)
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
@@ -188,7 +186,7 @@ struct NotificationSettingsView: View {
     }
 
     private func panel<Content: View>(title: String, @ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .trailing, spacing: 8) {
+        VStack(alignment: .trailing, spacing: 10) {
             Text(title)
                 .font(.caption.weight(.bold))
                 .foregroundStyle(theme.accent)
@@ -196,7 +194,7 @@ struct NotificationSettingsView: View {
 
             content()
         }
-        .padding(10)
+        .padding(14)
         .frame(maxWidth: .infinity, alignment: .trailing)
         .background(theme.controlBackground)
         .overlay(
@@ -207,11 +205,11 @@ struct NotificationSettingsView: View {
     }
 
     private func optionRow(title: String, subtitle: String, symbol: String, selected: Bool) -> some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 12) {
             Image(systemName: selected ? "checkmark.circle.fill" : symbol)
                 .font(.system(size: 18, weight: .bold))
                 .foregroundStyle(selected ? theme.accent : theme.secondaryText.opacity(0.88))
-                .frame(width: 24, alignment: .leading)
+                .frame(width: 28, alignment: .leading)
 
             Spacer(minLength: 12)
 
@@ -230,12 +228,12 @@ struct NotificationSettingsView: View {
             }
             .frame(maxWidth: .infinity, alignment: .trailing)
         }
-        .padding(.vertical, 5)
+        .padding(.vertical, 8)
         .contentShape(Rectangle())
     }
 
     private func prayerToggleRow(_ key: PrayerKey) -> some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 12) {
             Toggle("", isOn: Binding(
                 get: { notifications.isPrayerEnabled(key) },
                 set: { notifications.setPrayer(key, enabled: $0) }
@@ -243,9 +241,9 @@ struct NotificationSettingsView: View {
             .labelsHidden()
             .tint(theme.accent)
 
-            Spacer(minLength: 10)
+            Spacer(minLength: 12)
 
-            HStack(spacing: 16) {
+            HStack(spacing: 18) {
                 Text(todayTime(for: key))
                     .font(.headline.monospacedDigit().weight(.black))
                     .foregroundStyle(theme.secondaryText.opacity(0.82))
@@ -257,7 +255,7 @@ struct NotificationSettingsView: View {
             }
             .frame(maxWidth: .infinity, alignment: .trailing)
         }
-        .padding(.vertical, 9)
+        .padding(.vertical, 10)
     }
 
     private func todayTime(for key: PrayerKey) -> String {

@@ -129,28 +129,28 @@ struct ContentView: View {
     private var headerControls: some View {
         ViewThatFits(in: .horizontal) {
             HStack(spacing: 8) {
+                Spacer(minLength: 0)
                 themeMenu
                 radioButton
                 qiblaButton
                 notificationButton
-                Spacer(minLength: 0)
             }
 
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .trailing, spacing: 6) {
                 HStack(spacing: 8) {
+                    Spacer(minLength: 0)
                     themeMenu
                     radioButton
-                    Spacer(minLength: 0)
                 }
 
                 HStack(spacing: 8) {
+                    Spacer(minLength: 0)
                     qiblaButton
                     notificationButton
-                    Spacer(minLength: 0)
                 }
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, alignment: .trailing)
     }
 
     private var themeMenu: some View {
