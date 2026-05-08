@@ -3,6 +3,7 @@ import SwiftUI
 struct NotificationSettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject private var notifications = PrayerNotificationManager.shared
+    @State private var selectedPage: NotificationSettingsPage = .adhan
 
     let theme: PrayerVisualTheme
 
@@ -20,11 +21,15 @@ struct NotificationSettingsView: View {
                 .ignoresSafeArea()
 
                 ScrollView(showsIndicators: false) {
-                    VStack(alignment: .trailing, spacing: compactHeight ? 11 : 14) {
+                    VStack(alignment: .trailing, spacing: compactHeight ? 10 : 13) {
                         header
-                        masterPanel
-                        soundPanel
-                        prayerPanel
+                        pageSelector
+
+                        if selectedPage == .adhan {
+                            adhanSettings
+                        } else {
+                            adhkarSettings
+                        }
                     }
                     .padding(.horizontal, 18)
                     .padding(.top, compactHeight ? 18 : 28)
@@ -64,7 +69,7 @@ struct NotificationSettingsView: View {
                     .minimumScaleFactor(0.66)
                     .frame(maxWidth: .infinity, alignment: .trailing)
 
-                Text("اختر الصوت والصلوات التي تريدها")
+                Text("الأذان والأذكار في نافذة واحدة")
                     .font(.caption.weight(.bold))
                     .foregroundStyle(theme.accent)
                     .lineLimit(1)
@@ -75,9 +80,66 @@ struct NotificationSettingsView: View {
         .frame(maxWidth: .infinity, alignment: .topTrailing)
     }
 
+    private var pageSelector: some View {
+        HStack(spacing: 8) {
+            notificationPageButton(.adhkar)
+            notificationPageButton(.adhan)
+        }
+        .frame(maxWidth: .infinity, alignment: .trailing)
+        .environment(\.layoutDirection, .rightToLeft)
+    }
+
+    private func notificationPageButton(_ page: NotificationSettingsPage) -> some View {
+        Button {
+            withAnimation(.easeInOut(duration: 0.18)) {
+                selectedPage = page
+            }
+        } label: {
+            HStack(spacing: 6) {
+                Text(page.title)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.78)
+
+                Image(systemName: page.systemImage)
+            }
+            .font(.caption.weight(.black))
+            .foregroundStyle(selectedPage == page ? theme.primaryText : theme.secondaryText.opacity(0.82))
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(selectedPage == page ? theme.countdownBackground : theme.controlBackground)
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(selectedPage == page ? theme.activeRowBorder : theme.controlBorder)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var adhanSettings: some View {
+        VStack(alignment: .trailing, spacing: 12) {
+            masterPanel
+            soundPanel
+            prayerPanel
+        }
+        .transition(.opacity)
+    }
+
+    private var adhkarSettings: some View {
+        VStack(alignment: .trailing, spacing: 12) {
+            adhkarMasterPanel
+            adhkarDelayPanel
+            adhkarStylePanel
+            adhkarPrayerPanel
+        }
+        .transition(.opacity)
+    }
+
     private var masterPanel: some View {
-        HStack(spacing: 12) {
-            Toggle("", isOn: Binding(
+        toggleSummaryPanel(
+            title: "تشغيل تنبيهات الأذان",
+            subtitle: notifications.statusText,
+            isOn: Binding(
                 get: { notifications.isEnabled },
                 set: { enabled in
                     if enabled {
@@ -86,32 +148,19 @@ struct NotificationSettingsView: View {
                         notifications.disable()
                     }
                 }
-            ))
-            .labelsHidden()
-            .tint(theme.accent)
-
-            Spacer(minLength: 12)
-
-            VStack(alignment: .trailing, spacing: 2) {
-                Text("تشغيل التنبيهات")
-                    .font(.subheadline.weight(.black))
-                    .lineLimit(1)
-
-                Text(notifications.statusText)
-                    .font(.caption2.weight(.semibold))
-                    .foregroundStyle(theme.secondaryText.opacity(0.82))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.78)
-            }
-        }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .trailing)
-        .background(theme.panelBackground)
-        .overlay(
-            RoundedRectangle(cornerRadius: 8)
-                .stroke(theme.controlBorder)
+            )
         )
-        .clipShape(RoundedRectangle(cornerRadius: 8))
+    }
+
+    private var adhkarMasterPanel: some View {
+        toggleSummaryPanel(
+            title: "تذكير الأذكار",
+            subtitle: notifications.isAdhkarReminderEnabled ? "يظهر تذكير خفيف بعد الصلوات المختارة" : "التذكير بالأذكار متوقف",
+            isOn: Binding(
+                get: { notifications.isAdhkarReminderEnabled },
+                set: { notifications.setAdhkarReminderEnabled($0) }
+            )
+        )
     }
 
     private var soundPanel: some View {
@@ -150,7 +199,98 @@ struct NotificationSettingsView: View {
         panel(title: "الصلوات التي يصدر لها الأذان") {
             VStack(spacing: 0) {
                 ForEach(Array(PrayerEngine.prayerOrder.enumerated()), id: \.element.id) { index, key in
-                    prayerToggleRow(key)
+                    prayerToggleRow(
+                        key,
+                        isOn: Binding(
+                            get: { notifications.isPrayerEnabled(key) },
+                            set: { notifications.setPrayer(key, enabled: $0) }
+                        )
+                    )
+
+                    if index < PrayerEngine.prayerOrder.count - 1 {
+                        Divider()
+                            .background(theme.controlBorder)
+                    }
+                }
+            }
+        }
+    }
+
+    private var adhkarDelayPanel: some View {
+        panel(title: "وقت تذكير الأذكار") {
+            VStack(alignment: .trailing, spacing: 10) {
+                Text("بعد صلاة كل صلاة تختارها")
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(theme.secondaryText.opacity(0.82))
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+
+                HStack(spacing: 8) {
+                    ForEach([15, 10, 5, 2], id: \.self) { minutes in
+                        delayButton(minutes)
+                    }
+                }
+            }
+        }
+    }
+
+    private func delayButton(_ minutes: Int) -> some View {
+        let selected = notifications.adhkarDelayMinutes == minutes
+        return Button {
+            notifications.setAdhkarDelayMinutes(minutes)
+        } label: {
+            Text("بعد \(minutes) د")
+                .font(.caption.weight(.black))
+                .foregroundStyle(selected ? theme.primaryText : theme.secondaryText.opacity(0.84))
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 9)
+                .background(selected ? theme.countdownBackground : theme.rowBackground)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(selected ? theme.activeRowBorder : theme.rowBorder)
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var adhkarStylePanel: some View {
+        panel(title: "نوع الذكر") {
+            VStack(spacing: 0) {
+                ForEach(Array(AdhkarReminderStyle.allCases.enumerated()), id: \.element.id) { index, style in
+                    Button {
+                        notifications.selectAdhkarStyle(style)
+                    } label: {
+                        optionRow(
+                            title: style.title,
+                            subtitle: style.subtitle,
+                            symbol: style.systemImage,
+                            selected: notifications.selectedAdhkarStyleID == style.rawValue
+                        )
+                    }
+                    .buttonStyle(.plain)
+
+                    if index < AdhkarReminderStyle.allCases.count - 1 {
+                        Divider()
+                            .background(theme.controlBorder)
+                    }
+                }
+            }
+        }
+    }
+
+    private var adhkarPrayerPanel: some View {
+        panel(title: "الصلوات التي يظهر بعدها التذكير") {
+            VStack(spacing: 0) {
+                ForEach(Array(PrayerEngine.prayerOrder.enumerated()), id: \.element.id) { index, key in
+                    prayerToggleRow(
+                        key,
+                        isOn: Binding(
+                            get: { notifications.isAdhkarPrayerEnabled(key) },
+                            set: { notifications.setAdhkarPrayer(key, enabled: $0) }
+                        )
+                    )
 
                     if index < PrayerEngine.prayerOrder.count - 1 {
                         Divider()
@@ -183,6 +323,36 @@ struct NotificationSettingsView: View {
             .clipShape(RoundedRectangle(cornerRadius: 8))
         }
         .buttonStyle(.plain)
+    }
+
+    private func toggleSummaryPanel(title: String, subtitle: String, isOn: Binding<Bool>) -> some View {
+        HStack(spacing: 12) {
+            Toggle("", isOn: isOn)
+                .labelsHidden()
+                .tint(theme.accent)
+
+            Spacer(minLength: 12)
+
+            VStack(alignment: .trailing, spacing: 2) {
+                Text(title)
+                    .font(.subheadline.weight(.black))
+                    .lineLimit(1)
+
+                Text(subtitle)
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(theme.secondaryText.opacity(0.82))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.70)
+            }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .trailing)
+        .background(theme.panelBackground)
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(theme.controlBorder)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 8))
     }
 
     private func panel<Content: View>(title: String, @ViewBuilder content: () -> Content) -> some View {
@@ -224,7 +394,7 @@ struct NotificationSettingsView: View {
                     .font(.caption2.weight(.semibold))
                     .foregroundStyle(theme.secondaryText.opacity(0.80))
                     .lineLimit(1)
-                    .minimumScaleFactor(0.75)
+                    .minimumScaleFactor(0.70)
             }
             .frame(maxWidth: .infinity, alignment: .trailing)
         }
@@ -232,14 +402,11 @@ struct NotificationSettingsView: View {
         .contentShape(Rectangle())
     }
 
-    private func prayerToggleRow(_ key: PrayerKey) -> some View {
+    private func prayerToggleRow(_ key: PrayerKey, isOn: Binding<Bool>) -> some View {
         HStack(spacing: 12) {
-            Toggle("", isOn: Binding(
-                get: { notifications.isPrayerEnabled(key) },
-                set: { notifications.setPrayer(key, enabled: $0) }
-            ))
-            .labelsHidden()
-            .tint(theme.accent)
+            Toggle("", isOn: isOn)
+                .labelsHidden()
+                .tint(theme.accent)
 
             Spacer(minLength: 12)
 
@@ -261,5 +428,30 @@ struct NotificationSettingsView: View {
     private func todayTime(for key: PrayerKey) -> String {
         let schedule = PrayerEngine.schedule(for: PrayerEngine.defaultDateKey())
         return schedule.times[key] ?? "--:--"
+    }
+}
+
+private enum NotificationSettingsPage: String, CaseIterable, Identifiable {
+    case adhan
+    case adhkar
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .adhan:
+            return "الأذان"
+        case .adhkar:
+            return "الأذكار"
+        }
+    }
+
+    var systemImage: String {
+        switch self {
+        case .adhan:
+            return "bell.badge.fill"
+        case .adhkar:
+            return "sparkles"
+        }
     }
 }
