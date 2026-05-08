@@ -3,7 +3,7 @@ import SwiftUI
 struct NotificationSettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject private var notifications = PrayerNotificationManager.shared
-    @State private var selectedPage: NotificationSettingsPage = .adhan
+    @State private var selectedPage: NotificationSettingsPage = .nafahat
 
     let theme: PrayerVisualTheme
 
@@ -82,11 +82,12 @@ struct NotificationSettingsView: View {
 
     private var pageSelector: some View {
         HStack(spacing: 8) {
+            Spacer(minLength: 0)
             notificationPageButton(.nafahat)
             notificationPageButton(.adhan)
         }
-        .frame(maxWidth: .infinity, alignment: .trailing)
-        .environment(\.layoutDirection, .rightToLeft)
+        .frame(maxWidth: .infinity, alignment: .topTrailing)
+        .environment(\.layoutDirection, .leftToRight)
     }
 
     private func notificationPageButton(_ page: NotificationSettingsPage) -> some View {
@@ -102,6 +103,7 @@ struct NotificationSettingsView: View {
 
                 Image(systemName: page.systemImage)
             }
+            .environment(\.layoutDirection, .rightToLeft)
             .font(.caption.weight(.black))
             .foregroundStyle(selectedPage == page ? theme.primaryText : theme.secondaryText.opacity(0.82))
             .padding(.horizontal, 12)
@@ -128,6 +130,7 @@ struct NotificationSettingsView: View {
     private var nafahatSettings: some View {
         VStack(alignment: .trailing, spacing: 12) {
             nafahatMasterPanel
+            nafahatPreviewPanel
             nafahatIntervalPanel
             nafahatTextPanel
             nafahatQuietPanel
@@ -172,6 +175,40 @@ struct NotificationSettingsView: View {
                 set: { notifications.setNafahatEnabled($0) }
             )
         )
+    }
+
+    private var nafahatPreviewPanel: some View {
+        panel(title: "اختبار التذكير") {
+            Button {
+                notifications.sendNafahatPreviewNotification()
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "bell.badge.fill")
+
+                    VStack(alignment: .trailing, spacing: 2) {
+                        Text("جرّب نَفَحة الآن")
+                            .font(.subheadline.weight(.black))
+                            .lineLimit(1)
+
+                        Text("يوصل تذكير تجريبي بعد ثانيتين")
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(theme.secondaryText.opacity(0.82))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.75)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .trailing)
+                .padding(.vertical, 11)
+                .padding(.horizontal, 12)
+                .background(theme.countdownBackground)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(theme.activeRowBorder)
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+            }
+            .buttonStyle(.plain)
+        }
     }
 
     private var soundPanel: some View {

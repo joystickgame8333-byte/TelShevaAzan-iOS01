@@ -132,11 +132,19 @@ enum NafahatReminderInterval: Int, CaseIterable, Identifiable {
     }
 }
 
+struct NafahatReminderMessage {
+    let title: String
+    let body: String
+}
+
 enum NafahatReminderText: String, CaseIterable, Identifiable {
     case salawat
     case istighfar
     case tasbih
     case dua
+    case protection
+    case gratitude
+    case quran
     case mixed
 
     var id: String { rawValue }
@@ -150,7 +158,13 @@ enum NafahatReminderText: String, CaseIterable, Identifiable {
         case .tasbih:
             return "تسبيح"
         case .dua:
-            return "دعاء قصير"
+            return "أدعية قصيرة"
+        case .protection:
+            return "تحصين"
+        case .gratitude:
+            return "شكر"
+        case .quran:
+            return "آيات وتذكير"
         case .mixed:
             return "منوّع"
         }
@@ -165,39 +179,15 @@ enum NafahatReminderText: String, CaseIterable, Identifiable {
         case .tasbih:
             return "سبحان الله وبحمده"
         case .dua:
-            return "دعاء خفيف كل فترة"
+            return "أدعية خفيفة كل فترة"
+        case .protection:
+            return "أذكار تحفظ القلب وتطمئنه"
+        case .gratitude:
+            return "تذكير بالحمد والرضا"
+        case .quran:
+            return "آيات قصيرة ومعانٍ لطيفة"
         case .mixed:
             return "يتغير بين صلاة واستغفار وتسبيح ودعاء"
-        }
-    }
-
-    var notificationTitle: String {
-        switch self {
-        case .salawat:
-            return "صلِّ على النبي"
-        case .istighfar:
-            return "استغفار"
-        case .tasbih:
-            return "تسبيح"
-        case .dua:
-            return "دعاء خفيف"
-        case .mixed:
-            return "نَفَحة ذكر"
-        }
-    }
-
-    var notificationBody: String {
-        switch self {
-        case .salawat:
-            return "اللهم صل وسلم على نبينا محمد"
-        case .istighfar:
-            return "أستغفر الله وأتوب إليه"
-        case .tasbih:
-            return "سبحان الله وبحمده، سبحان الله العظيم"
-        case .dua:
-            return "اللهم أعني على ذكرك وشكرك وحسن عبادتك"
-        case .mixed:
-            return "اذكر الله ذكرًا خفيفًا"
         }
     }
 
@@ -211,8 +201,76 @@ enum NafahatReminderText: String, CaseIterable, Identifiable {
             return "sparkles"
         case .dua:
             return "hands.sparkles.fill"
+        case .protection:
+            return "shield.lefthalf.filled"
+        case .gratitude:
+            return "sun.max.fill"
+        case .quran:
+            return "book.closed.fill"
         case .mixed:
             return "shuffle"
+        }
+    }
+
+    var messages: [NafahatReminderMessage] {
+        switch self {
+        case .salawat:
+            return [
+                NafahatReminderMessage(title: "صلِّ على النبي", body: "اللهم صل وسلم وبارك على نبينا محمد"),
+                NafahatReminderMessage(title: "صلاة وسلام", body: "اللهم صل على محمد وعلى آل محمد"),
+                NafahatReminderMessage(title: "نَفَحة صلاة", body: "صلِّ على النبي بقلب حاضر"),
+                NafahatReminderMessage(title: "محبة النبي", body: "اللهم اجعل صلاتنا عليه نورًا وطمأنينة")
+            ]
+        case .istighfar:
+            return [
+                NafahatReminderMessage(title: "استغفار", body: "أستغفر الله العظيم وأتوب إليه"),
+                NafahatReminderMessage(title: "باب التوبة", body: "رب اغفر لي وتب علي إنك أنت التواب الرحيم"),
+                NafahatReminderMessage(title: "رجوع إلى الله", body: "اللهم اغفر لي ذنبي كله دقه وجله"),
+                NafahatReminderMessage(title: "استغفار خفيف", body: "أستغفر الله الذي لا إله إلا هو الحي القيوم وأتوب إليه")
+            ]
+        case .tasbih:
+            return [
+                NafahatReminderMessage(title: "تسبيح", body: "سبحان الله وبحمده، سبحان الله العظيم"),
+                NafahatReminderMessage(title: "ذكر خفيف", body: "سبحان الله، والحمد لله، ولا إله إلا الله، والله أكبر"),
+                NafahatReminderMessage(title: "حمد وتسبيح", body: "الحمد لله رب العالمين"),
+                NafahatReminderMessage(title: "ذكر طيب", body: "لا حول ولا قوة إلا بالله")
+            ]
+        case .dua:
+            return [
+                NafahatReminderMessage(title: "دعاء خفيف", body: "اللهم أعني على ذكرك وشكرك وحسن عبادتك"),
+                NafahatReminderMessage(title: "يا رب", body: "اللهم آت نفسي تقواها وزكها أنت خير من زكاها"),
+                NafahatReminderMessage(title: "راحة القلب", body: "اللهم اجعل لي من كل هم فرجًا ومن كل ضيق مخرجًا"),
+                NafahatReminderMessage(title: "ثبات", body: "يا مقلب القلوب ثبت قلبي على دينك"),
+                NafahatReminderMessage(title: "نور", body: "اللهم اجعل في قلبي نورًا وفي سمعي نورًا وفي بصري نورًا")
+            ]
+        case .protection:
+            return [
+                NafahatReminderMessage(title: "تحصين", body: "بسم الله الذي لا يضر مع اسمه شيء في الأرض ولا في السماء"),
+                NafahatReminderMessage(title: "كفاية", body: "حسبي الله لا إله إلا هو عليه توكلت وهو رب العرش العظيم"),
+                NafahatReminderMessage(title: "طمأنينة", body: "أعوذ بكلمات الله التامات من شر ما خلق"),
+                NafahatReminderMessage(title: "حفظ", body: "اللهم احفظني من بين يدي ومن خلفي وعن يميني وعن شمالي")
+            ]
+        case .gratitude:
+            return [
+                NafahatReminderMessage(title: "شكر", body: "الحمد لله حمدًا كثيرًا طيبًا مباركًا فيه"),
+                NafahatReminderMessage(title: "نعمة", body: "اللهم لك الحمد كما ينبغي لجلال وجهك وعظيم سلطانك"),
+                NafahatReminderMessage(title: "رضا", body: "رضيت بالله ربًا وبالإسلام دينًا وبمحمد صلى الله عليه وسلم نبيًا")
+            ]
+        case .quran:
+            return [
+                NafahatReminderMessage(title: "تذكير قرآني", body: "أَلَا بِذِكْرِ اللَّهِ تَطْمَئِنُّ الْقُلُوبُ"),
+                NafahatReminderMessage(title: "واذكر ربك", body: "وَاذْكُر رَّبَّكَ إِذَا نَسِيتَ"),
+                NafahatReminderMessage(title: "نور", body: "اللَّهُ نُورُ السَّمَاوَاتِ وَالْأَرْضِ"),
+                NafahatReminderMessage(title: "سعة", body: "فَإِنَّ مَعَ الْعُسْرِ يُسْرًا")
+            ]
+        case .mixed:
+            return NafahatReminderText.salawat.messages
+                + NafahatReminderText.istighfar.messages
+                + NafahatReminderText.tasbih.messages
+                + NafahatReminderText.dua.messages
+                + NafahatReminderText.protection.messages
+                + NafahatReminderText.gratitude.messages
+                + NafahatReminderText.quran.messages
         }
     }
 }
@@ -531,6 +589,36 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
         sendPreviewNotification()
     }
 
+    func sendNafahatPreviewNotification() {
+        center.getNotificationSettings { [weak self] settings in
+            guard let self else { return }
+
+            switch settings.authorizationStatus {
+            case .authorized, .provisional:
+                self.scheduleNafahatPreviewNotification()
+            case .notDetermined:
+                self.center.requestAuthorization(options: [.alert, .sound]) { [weak self] granted, _ in
+                    guard let self else { return }
+                    DispatchQueue.main.async {
+                        guard granted else {
+                            self.statusText = "اسمح بالإشعارات من إعدادات الآيفون"
+                            return
+                        }
+
+                        self.isEnabled = true
+                        self.defaults.set(true, forKey: Self.enabledKey)
+                        self.scheduleNafahatPreviewNotification()
+                        self.scheduleUpcomingPrayerNotifications()
+                    }
+                }
+            default:
+                DispatchQueue.main.async {
+                    self.statusText = "اسمح بالإشعارات من إعدادات الآيفون"
+                }
+            }
+        }
+    }
+
     private func rescheduleIfEnabled() {
         guard isEnabled else {
             refreshStatus()
@@ -607,7 +695,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
         case .adhkar:
             return adhkarRequest(for: event.prayer, date: event.date)
         case .nafahat:
-            return nafahatRequest(for: event.nafahatText ?? selectedNafahatText, date: event.date)
+            return nafahatRequest(for: event.nafahatMessage ?? nafahatMessage(for: 0), date: event.date)
         }
     }
 
@@ -639,10 +727,10 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
         return UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
     }
 
-    private func nafahatRequest(for text: NafahatReminderText, date: Date) -> UNNotificationRequest {
+    private func nafahatRequest(for message: NafahatReminderMessage, date: Date) -> UNNotificationRequest {
         let content = UNMutableNotificationContent()
-        content.title = text.notificationTitle
-        content.body = text.notificationBody
+        content.title = message.title
+        content.body = message.body
         content.sound = .default
 
         var components = PrayerEngine.calendar.dateComponents([.year, .month, .day, .hour, .minute], from: date)
@@ -668,7 +756,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
                         kind: .nafahat,
                         prayer: PrayerTime(key: .fajr, title: "", time: "", date: date),
                         date: date,
-                        nafahatText: nafahatText(for: index)
+                        nafahatMessage: nafahatMessage(for: index)
                     )
                 )
                 index += 1
@@ -680,10 +768,13 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
         return events
     }
 
-    private func nafahatText(for index: Int) -> NafahatReminderText {
-        guard selectedNafahatText == .mixed else { return selectedNafahatText }
-        let choices: [NafahatReminderText] = [.salawat, .istighfar, .tasbih, .dua]
-        return choices[index % choices.count]
+    private func nafahatMessage(for index: Int) -> NafahatReminderMessage {
+        let messages = selectedNafahatText.messages
+        guard !messages.isEmpty else {
+            return NafahatReminderMessage(title: "نَفَحة ذكر", body: "اذكر الله ذكرًا خفيفًا")
+        }
+
+        return messages[index % messages.count]
     }
 
     private func isWithinQuietWindow(_ date: Date) -> Bool {
@@ -725,6 +816,26 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
             DispatchQueue.main.async {
                 guard let self else { return }
                 self.statusText = error == nil ? "ستسمع معاينة الصوت بعد ثانيتين" : "تعذر إرسال معاينة الصوت"
+            }
+        }
+    }
+
+    private func scheduleNafahatPreviewNotification() {
+        let message = nafahatMessage(for: Int(Date().timeIntervalSince1970))
+        let content = UNMutableNotificationContent()
+        content.title = message.title
+        content.body = message.body
+        content.sound = .default
+
+        let identifier = previewNotificationIdentifier + "-nafahat"
+        center.removePendingNotificationRequests(withIdentifiers: [identifier])
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 2, repeats: false)
+        let request = UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
+
+        center.add(request) { [weak self] error in
+            DispatchQueue.main.async {
+                guard let self else { return }
+                self.statusText = error == nil ? "ستصلك نَفَحة تجريبية بعد ثانيتين" : "تعذر إرسال اختبار النَفَحة"
             }
         }
     }
@@ -799,7 +910,7 @@ private struct ScheduledPrayerNotification {
     let kind: Kind
     let prayer: PrayerTime
     let date: Date
-    var nafahatText: NafahatReminderText? = nil
+    var nafahatMessage: NafahatReminderMessage? = nil
 }
 
 extension PrayerEngine {
