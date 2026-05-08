@@ -127,18 +127,12 @@ struct ContentView: View {
     }
 
     private var headerControls: some View {
-        VStack(alignment: .trailing, spacing: 6) {
-            HStack(spacing: 8) {
-                Spacer(minLength: 0)
-                themeMenu
-                radioButton
-            }
-
-            HStack(spacing: 8) {
-                Spacer(minLength: 0)
-                qiblaButton
-                notificationButton
-            }
+        HStack(spacing: 6) {
+            Spacer(minLength: 0)
+            themeMenu
+            radioButton
+            qiblaButton
+            notificationButton
         }
         .frame(maxWidth: .infinity, alignment: .trailing)
     }
@@ -158,7 +152,7 @@ struct ContentView: View {
             }
             .font(.caption2.weight(.black))
             .foregroundStyle(activeTheme.accent)
-            .padding(.horizontal, 10)
+            .padding(.horizontal, 8)
             .padding(.vertical, 7)
             .background(activeTheme.controlBackground)
             .overlay(
@@ -183,7 +177,7 @@ struct ContentView: View {
             }
             .font(.caption2.weight(.black))
             .foregroundStyle(activeTheme.accent)
-            .padding(.horizontal, 10)
+            .padding(.horizontal, 8)
             .padding(.vertical, 7)
             .background(activeTheme.controlBackground)
             .overlay(
@@ -208,7 +202,7 @@ struct ContentView: View {
             }
             .font(.caption2.weight(.black))
             .foregroundStyle(activeTheme.accent)
-            .padding(.horizontal, 10)
+            .padding(.horizontal, 8)
             .padding(.vertical, 7)
             .background(activeTheme.controlBackground)
             .overlay(
@@ -233,7 +227,7 @@ struct ContentView: View {
             }
             .font(.caption2.weight(.black))
             .foregroundStyle(activeTheme.accent)
-            .padding(.horizontal, 10)
+            .padding(.horizontal, 8)
             .padding(.vertical, 7)
             .background(activeTheme.controlBackground)
             .overlay(
@@ -258,7 +252,7 @@ struct ContentView: View {
             }
             .font(.caption2.weight(.black))
             .foregroundStyle(activeTheme.accent)
-            .padding(.horizontal, 10)
+            .padding(.horizontal, 8)
             .padding(.vertical, 7)
             .background(activeTheme.controlBackground)
             .overlay(
