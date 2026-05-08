@@ -123,6 +123,9 @@ jobs:
           echo "Force-copy bundled adhan sound into the app bundle:"
           cp -f "TelShevaAzan/Sounds/adhan.caf" "$APP_PATH/adhan.caf"
 
+          echo "Force-copy bundled Nafahat sound into the app bundle:"
+          cp -f "TelShevaAzan/Sounds/nafahat.wav" "$APP_PATH/nafahat.wav"
+
           echo "Force app icon keys into the built Info.plist:"
           /usr/libexec/PlistBuddy -c "Delete :CFBundleIcons" "$APP_PATH/Info.plist" || true
           /usr/libexec/PlistBuddy -c "Add :CFBundleIcons dict" "$APP_PATH/Info.plist"
@@ -169,6 +172,11 @@ jobs:
           if [ ! -f "$APP_PATH/adhan.caf" ]; then
             echo "Missing packaged adhan sound: $APP_PATH/adhan.caf"
             find "$APP_PATH" -maxdepth 3 -type f -name '*.caf' -print
+            exit 1
+          fi
+          if [ ! -f "$APP_PATH/nafahat.wav" ]; then
+            echo "Missing packaged Nafahat sound: $APP_PATH/nafahat.wav"
+            find "$APP_PATH" -maxdepth 3 -type f \( -name '*.wav' -o -name '*.caf' -o -name '*.aiff' \) -print
             exit 1
           fi
           echo "Packaged app contents:"
@@ -228,6 +236,7 @@ jobs:
           grep -q 'Payload/TelShevaAzan.app/Icon-60@3x.png' ipa-contents.txt
           grep -q 'Payload/TelShevaAzan.app/AmiriQuran-Regular.ttf' ipa-contents.txt
           grep -q 'Payload/TelShevaAzan.app/adhan.caf' ipa-contents.txt
+          grep -q 'Payload/TelShevaAzan.app/nafahat.wav' ipa-contents.txt
           grep -q 'Payload/TelShevaAzan.app/PlugIns/.*\.appex/' ipa-contents.txt
           grep -q 'Payload/TelShevaAzan.app/PlugIns/.*/TelShevaAzanWidgetExtension' ipa-contents.txt
           grep -q 'Payload/TelShevaAzan.app/Watch/TelShevaAzanWatch.app/' ipa-contents.txt

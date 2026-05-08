@@ -376,7 +376,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
     }
 
     private var selectedNafahatText: NafahatReminderText {
-        NafahatReminderText(rawValue: selectedNafahatTextID) ?? .salawat
+        NafahatReminderText(rawValue: selectedNafahatTextID) ?? .mixed
     }
 
     private var selectedNafahatQuietWindow: NafahatQuietWindow {
@@ -410,7 +410,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
         let savedNafahatInterval = UserDefaults.standard.integer(forKey: Self.nafahatIntervalMinutesKey)
         nafahatIntervalMinutes = savedNafahatInterval == 0 ? NafahatReminderInterval.twoHours.rawValue : savedNafahatInterval
         let savedNafahatTextID = UserDefaults.standard.string(forKey: Self.selectedNafahatTextIDKey)
-        selectedNafahatTextID = savedNafahatTextID ?? NafahatReminderText.salawat.rawValue
+        selectedNafahatTextID = savedNafahatTextID ?? NafahatReminderText.mixed.rawValue
         let savedNafahatQuietID = UserDefaults.standard.string(forKey: Self.selectedNafahatQuietWindowIDKey)
         selectedNafahatQuietWindowID = savedNafahatQuietID ?? NafahatQuietWindow.lateNight.rawValue
 
@@ -695,7 +695,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
         case .adhkar:
             return adhkarRequest(for: event.prayer, date: event.date)
         case .nafahat:
-            return nafahatRequest(for: event.nafahatMessage ?? nafahatMessage(for: 0), date: event.date)
+            return nafahatRequest(for: event.nafahatMessage ?? nafahatMessage(for: 0, date: event.date), date: event.date)
         }
     }
 
@@ -731,7 +731,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
         let content = UNMutableNotificationContent()
         content.title = message.title
         content.body = message.body
-        content.sound = .default
+        content.sound = nafahatNotificationSound
 
         var components = PrayerEngine.calendar.dateComponents([.year, .month, .day, .hour, .minute], from: date)
         components.timeZone = PrayerEngine.timeZone
@@ -756,7 +756,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
                         kind: .nafahat,
                         prayer: PrayerTime(key: .fajr, title: "", time: "", date: date),
                         date: date,
-                        nafahatMessage: nafahatMessage(for: index)
+                        nafahatMessage: nafahatMessage(for: index, date: date)
                     )
                 )
                 index += 1
@@ -768,10 +768,15 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
         return events
     }
 
-    private func nafahatMessage(for index: Int) -> NafahatReminderMessage {
+    private func nafahatMessage(for index: Int, date: Date = Date()) -> NafahatReminderMessage {
         let messages = selectedNafahatText.messages
         guard !messages.isEmpty else {
             return NafahatReminderMessage(title: "نَفَحة ذكر", body: "اذكر الله ذكرًا خفيفًا")
+        }
+
+        if selectedNafahatText == .mixed {
+            let seed = Int(date.timeIntervalSince1970 / 60)
+            return messages[abs(seed + (index * 13)) % messages.count]
         }
 
         return messages[index % messages.count]
@@ -821,11 +826,12 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
     }
 
     private func scheduleNafahatPreviewNotification() {
-        let message = nafahatMessage(for: Int(Date().timeIntervalSince1970))
+        let previewDate = Date()
+        let message = nafahatMessage(for: Int(previewDate.timeIntervalSince1970), date: previewDate)
         let content = UNMutableNotificationContent()
         content.title = message.title
         content.body = message.body
-        content.sound = .default
+        content.sound = nafahatNotificationSound
 
         let identifier = previewNotificationIdentifier + "-nafahat"
         center.removePendingNotificationRequests(withIdentifiers: [identifier])
@@ -856,6 +862,19 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
 
             return .default
         }
+    }
+
+    private var nafahatNotificationSound: UNNotificationSound {
+        for fileName in ["nafahat.wav", "nafahat.caf", "nafahat.aiff"] {
+            let parts = fileName.split(separator: ".", maxSplits: 1).map(String.init)
+            guard parts.count == 2 else { continue }
+
+            if Bundle.main.url(forResource: parts[0], withExtension: parts[1]) != nil {
+                return UNNotificationSound(named: UNNotificationSoundName(fileName))
+            }
+        }
+
+        return .default
     }
 
     private func removeScheduledPrayerNotifications(completion: (() -> Void)? = nil) {
