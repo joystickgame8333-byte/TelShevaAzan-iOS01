@@ -97,6 +97,178 @@ enum AdhkarReminderStyle: String, CaseIterable, Identifiable {
     }
 }
 
+enum NafahatReminderInterval: Int, CaseIterable, Identifiable {
+    case thirtyMinutes = 30
+    case oneHour = 60
+    case twoHours = 120
+    case threeHours = 180
+
+    var id: Int { rawValue }
+
+    var title: String {
+        switch self {
+        case .thirtyMinutes:
+            return "كل نصف ساعة"
+        case .oneHour:
+            return "كل ساعة"
+        case .twoHours:
+            return "كل ساعتين"
+        case .threeHours:
+            return "كل 3 ساعات"
+        }
+    }
+
+    var subtitle: String {
+        switch self {
+        case .thirtyMinutes:
+            return "تذكير قريب وخفيف"
+        case .oneHour:
+            return "توازن جميل خلال اليوم"
+        case .twoHours:
+            return "هادئ ومناسب للبداية"
+        case .threeHours:
+            return "تنبيهات قليلة جدًا"
+        }
+    }
+}
+
+enum NafahatReminderText: String, CaseIterable, Identifiable {
+    case salawat
+    case istighfar
+    case tasbih
+    case dua
+    case mixed
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .salawat:
+            return "الصلاة على النبي"
+        case .istighfar:
+            return "استغفار"
+        case .tasbih:
+            return "تسبيح"
+        case .dua:
+            return "دعاء قصير"
+        case .mixed:
+            return "منوّع"
+        }
+    }
+
+    var subtitle: String {
+        switch self {
+        case .salawat:
+            return "اللهم صل وسلم على نبينا محمد"
+        case .istighfar:
+            return "أستغفر الله وأتوب إليه"
+        case .tasbih:
+            return "سبحان الله وبحمده"
+        case .dua:
+            return "دعاء خفيف كل فترة"
+        case .mixed:
+            return "يتغير بين صلاة واستغفار وتسبيح ودعاء"
+        }
+    }
+
+    var notificationTitle: String {
+        switch self {
+        case .salawat:
+            return "صلِّ على النبي"
+        case .istighfar:
+            return "استغفار"
+        case .tasbih:
+            return "تسبيح"
+        case .dua:
+            return "دعاء خفيف"
+        case .mixed:
+            return "نَفَحة ذكر"
+        }
+    }
+
+    var notificationBody: String {
+        switch self {
+        case .salawat:
+            return "اللهم صل وسلم على نبينا محمد"
+        case .istighfar:
+            return "أستغفر الله وأتوب إليه"
+        case .tasbih:
+            return "سبحان الله وبحمده، سبحان الله العظيم"
+        case .dua:
+            return "اللهم أعني على ذكرك وشكرك وحسن عبادتك"
+        case .mixed:
+            return "اذكر الله ذكرًا خفيفًا"
+        }
+    }
+
+    var systemImage: String {
+        switch self {
+        case .salawat:
+            return "heart.fill"
+        case .istighfar:
+            return "leaf.fill"
+        case .tasbih:
+            return "sparkles"
+        case .dua:
+            return "hands.sparkles.fill"
+        case .mixed:
+            return "shuffle"
+        }
+    }
+}
+
+enum NafahatQuietWindow: String, CaseIterable, Identifiable {
+    case none
+    case lateNight
+    case midnight
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .none:
+            return "بدون هدوء"
+        case .lateNight:
+            return "راحة الليل"
+        case .midnight:
+            return "هدوء عميق"
+        }
+    }
+
+    var subtitle: String {
+        switch self {
+        case .none:
+            return "تعمل النفحات طوال اليوم"
+        case .lateNight:
+            return "تتوقف من 11 ليلًا إلى 6 صباحًا"
+        case .midnight:
+            return "تتوقف من 12 ليلًا إلى 7 صباحًا"
+        }
+    }
+
+    var systemImage: String {
+        switch self {
+        case .none:
+            return "bell.fill"
+        case .lateNight:
+            return "moon.stars.fill"
+        case .midnight:
+            return "moon.zzz.fill"
+        }
+    }
+
+    var hours: (start: Int, end: Int)? {
+        switch self {
+        case .none:
+            return nil
+        case .lateNight:
+            return (23, 6)
+        case .midnight:
+            return (0, 7)
+        }
+    }
+}
+
 final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotificationCenterDelegate {
     static let openSettingsNotification = Notification.Name("PrayerNotificationManagerOpenSettings")
 
@@ -107,6 +279,10 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
     private static let adhkarDelayMinutesKey = "prayer_notifications_adhkar_delay_minutes"
     private static let adhkarPrayerIDsKey = "prayer_notifications_adhkar_prayers"
     private static let selectedAdhkarStyleIDKey = "prayer_notifications_adhkar_style"
+    private static let nafahatEnabledKey = "prayer_notifications_nafahat_enabled"
+    private static let nafahatIntervalMinutesKey = "prayer_notifications_nafahat_interval_minutes"
+    private static let selectedNafahatTextIDKey = "prayer_notifications_nafahat_text"
+    private static let selectedNafahatQuietWindowIDKey = "prayer_notifications_nafahat_quiet_window"
 
     static let shared = PrayerNotificationManager()
 
@@ -118,6 +294,10 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
     @Published private(set) var adhkarDelayMinutes: Int
     @Published private(set) var enabledAdhkarPrayerIDs: Set<String>
     @Published private(set) var selectedAdhkarStyleID: String
+    @Published private(set) var isNafahatEnabled: Bool
+    @Published private(set) var nafahatIntervalMinutes: Int
+    @Published private(set) var selectedNafahatTextID: String
+    @Published private(set) var selectedNafahatQuietWindowID: String
 
     private let center = UNUserNotificationCenter.current()
     private let notificationPrefix = "tel-sheva-prayer-"
@@ -131,6 +311,18 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
 
     private var selectedAdhkarStyle: AdhkarReminderStyle {
         AdhkarReminderStyle(rawValue: selectedAdhkarStyleID) ?? .tasbih
+    }
+
+    private var selectedNafahatInterval: NafahatReminderInterval {
+        NafahatReminderInterval(rawValue: nafahatIntervalMinutes) ?? .twoHours
+    }
+
+    private var selectedNafahatText: NafahatReminderText {
+        NafahatReminderText(rawValue: selectedNafahatTextID) ?? .salawat
+    }
+
+    private var selectedNafahatQuietWindow: NafahatQuietWindow {
+        NafahatQuietWindow(rawValue: selectedNafahatQuietWindowID) ?? .lateNight
     }
 
     private override init() {
@@ -156,6 +348,13 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
 
         let savedAdhkarStyleID = UserDefaults.standard.string(forKey: Self.selectedAdhkarStyleIDKey)
         selectedAdhkarStyleID = savedAdhkarStyleID ?? AdhkarReminderStyle.tasbih.rawValue
+        isNafahatEnabled = UserDefaults.standard.bool(forKey: Self.nafahatEnabledKey)
+        let savedNafahatInterval = UserDefaults.standard.integer(forKey: Self.nafahatIntervalMinutesKey)
+        nafahatIntervalMinutes = savedNafahatInterval == 0 ? NafahatReminderInterval.twoHours.rawValue : savedNafahatInterval
+        let savedNafahatTextID = UserDefaults.standard.string(forKey: Self.selectedNafahatTextIDKey)
+        selectedNafahatTextID = savedNafahatTextID ?? NafahatReminderText.salawat.rawValue
+        let savedNafahatQuietID = UserDefaults.standard.string(forKey: Self.selectedNafahatQuietWindowIDKey)
+        selectedNafahatQuietWindowID = savedNafahatQuietID ?? NafahatQuietWindow.lateNight.rawValue
 
         super.init()
         center.delegate = self
@@ -269,6 +468,35 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
         enabledAdhkarPrayerIDs.contains(key.rawValue)
     }
 
+    func setNafahatEnabled(_ enabled: Bool) {
+        isNafahatEnabled = enabled
+        defaults.set(enabled, forKey: Self.nafahatEnabledKey)
+
+        if enabled && !isEnabled {
+            enable()
+        } else {
+            rescheduleIfEnabled()
+        }
+    }
+
+    func setNafahatInterval(_ interval: NafahatReminderInterval) {
+        nafahatIntervalMinutes = interval.rawValue
+        defaults.set(interval.rawValue, forKey: Self.nafahatIntervalMinutesKey)
+        rescheduleIfEnabled()
+    }
+
+    func selectNafahatText(_ text: NafahatReminderText) {
+        selectedNafahatTextID = text.rawValue
+        defaults.set(text.rawValue, forKey: Self.selectedNafahatTextIDKey)
+        rescheduleIfEnabled()
+    }
+
+    func selectNafahatQuietWindow(_ window: NafahatQuietWindow) {
+        selectedNafahatQuietWindowID = window.rawValue
+        defaults.set(window.rawValue, forKey: Self.selectedNafahatQuietWindowIDKey)
+        rescheduleIfEnabled()
+    }
+
     func sendPreviewNotification() {
         center.getNotificationSettings { [weak self] settings in
             guard let self else { return }
@@ -328,7 +556,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
             }
 
             DispatchQueue.main.async {
-                if self.enabledPrayerIDs.isEmpty && (!self.isAdhkarReminderEnabled || self.enabledAdhkarPrayerIDs.isEmpty) {
+                if self.enabledPrayerIDs.isEmpty && (!self.isAdhkarReminderEnabled || self.enabledAdhkarPrayerIDs.isEmpty) && !self.isNafahatEnabled {
                     self.statusText = "اختر صلاة واحدة على الأقل للتنبيه"
                 } else {
                     self.statusText = events.isEmpty ? "لا توجد صلوات قادمة في الجدول" : "التنبيهات مفعلة للصلوات المختارة"
@@ -339,7 +567,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
 
     private func upcomingNotificationEvents() -> [ScheduledPrayerNotification] {
         let now = Date()
-        let events = PrayerEngine.availableDateKeys.flatMap { dateKey in
+        var events = PrayerEngine.availableDateKeys.flatMap { dateKey in
             PrayerEngine.prayerOrder.flatMap { key -> [ScheduledPrayerNotification] in
                 guard let time = PrayerEngine.schedule(for: dateKey).times[key],
                       let date = PrayerEngine.date(from: dateKey, time: time) else {
@@ -364,6 +592,8 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
             }
         }
 
+        events.append(contentsOf: upcomingNafahatEvents(now: now))
+
         return events
             .sorted { $0.date < $1.date }
             .prefix(maxPendingNotifications)
@@ -376,6 +606,8 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
             return adhanRequest(for: event.prayer, date: event.date)
         case .adhkar:
             return adhkarRequest(for: event.prayer, date: event.date)
+        case .nafahat:
+            return nafahatRequest(for: event.nafahatText ?? selectedNafahatText, date: event.date)
         }
     }
 
@@ -405,6 +637,78 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
         let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
         let identifier = notificationPrefix + PrayerEngine.calendarIdentifier(for: date) + "-adhkar-" + prayer.key.rawValue
         return UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
+    }
+
+    private func nafahatRequest(for text: NafahatReminderText, date: Date) -> UNNotificationRequest {
+        let content = UNMutableNotificationContent()
+        content.title = text.notificationTitle
+        content.body = text.notificationBody
+        content.sound = .default
+
+        var components = PrayerEngine.calendar.dateComponents([.year, .month, .day, .hour, .minute], from: date)
+        components.timeZone = PrayerEngine.timeZone
+
+        let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
+        let identifier = notificationPrefix + PrayerEngine.calendarIdentifier(for: date) + "-nafahat"
+        return UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
+    }
+
+    private func upcomingNafahatEvents(now: Date) -> [ScheduledPrayerNotification] {
+        guard isNafahatEnabled else { return [] }
+
+        var events: [ScheduledPrayerNotification] = []
+        var date = now.addingTimeInterval(TimeInterval(selectedNafahatInterval.rawValue * 60))
+        let end = now.addingTimeInterval(3 * 24 * 60 * 60)
+        var index = 0
+
+        while date < end && events.count < 24 {
+            if !isWithinQuietWindow(date) && !isNearPrayerTime(date) {
+                events.append(
+                    ScheduledPrayerNotification(
+                        kind: .nafahat,
+                        prayer: PrayerTime(key: .fajr, title: "", time: "", date: date),
+                        date: date,
+                        nafahatText: nafahatText(for: index)
+                    )
+                )
+                index += 1
+            }
+
+            date = date.addingTimeInterval(TimeInterval(selectedNafahatInterval.rawValue * 60))
+        }
+
+        return events
+    }
+
+    private func nafahatText(for index: Int) -> NafahatReminderText {
+        guard selectedNafahatText == .mixed else { return selectedNafahatText }
+        let choices: [NafahatReminderText] = [.salawat, .istighfar, .tasbih, .dua]
+        return choices[index % choices.count]
+    }
+
+    private func isWithinQuietWindow(_ date: Date) -> Bool {
+        guard let hours = selectedNafahatQuietWindow.hours else { return false }
+        let hour = PrayerEngine.calendar.component(.hour, from: date)
+
+        if hours.start < hours.end {
+            return hour >= hours.start && hour < hours.end
+        }
+
+        return hour >= hours.start || hour < hours.end
+    }
+
+    private func isNearPrayerTime(_ date: Date) -> Bool {
+        let dateKey = PrayerEngine.defaultDateKey(for: date)
+        let schedule = PrayerEngine.schedule(for: dateKey)
+
+        return PrayerEngine.prayerOrder.contains { key in
+            guard let time = schedule.times[key],
+                  let prayerDate = PrayerEngine.date(from: dateKey, time: time) else {
+                return false
+            }
+
+            return abs(date.timeIntervalSince(prayerDate)) <= 10 * 60
+        }
     }
 
     private func schedulePreviewNotification() {
@@ -464,7 +768,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
                 guard let self else { return }
                 if self.isEnabled && (settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional) {
                     let hasAdhkarSelection = self.isAdhkarReminderEnabled && !self.enabledAdhkarPrayerIDs.isEmpty
-                    self.statusText = self.enabledPrayerIDs.isEmpty && !hasAdhkarSelection ? "اختر صلاة واحدة على الأقل للتنبيه" : "التنبيهات مفعلة"
+                    self.statusText = self.enabledPrayerIDs.isEmpty && !hasAdhkarSelection && !self.isNafahatEnabled ? "اختر صلاة واحدة على الأقل للتنبيه" : "التنبيهات مفعلة"
                 } else if settings.authorizationStatus == .denied {
                     self.statusText = "اسمح بالإشعارات من إعدادات الآيفون"
                 } else {
@@ -489,11 +793,13 @@ private struct ScheduledPrayerNotification {
     enum Kind {
         case adhan
         case adhkar
+        case nafahat
     }
 
     let kind: Kind
     let prayer: PrayerTime
     let date: Date
+    var nafahatText: NafahatReminderText? = nil
 }
 
 extension PrayerEngine {

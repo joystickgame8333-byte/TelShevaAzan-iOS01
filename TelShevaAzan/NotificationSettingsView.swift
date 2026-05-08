@@ -28,7 +28,7 @@ struct NotificationSettingsView: View {
                         if selectedPage == .adhan {
                             adhanSettings
                         } else {
-                            adhkarSettings
+                            nafahatSettings
                         }
                     }
                     .padding(.horizontal, 18)
@@ -69,7 +69,7 @@ struct NotificationSettingsView: View {
                     .minimumScaleFactor(0.66)
                     .frame(maxWidth: .infinity, alignment: .trailing)
 
-                Text("الأذان والأذكار في نافذة واحدة")
+                Text("الأذان ونَفَحات الذكر في نافذة واحدة")
                     .font(.caption.weight(.bold))
                     .foregroundStyle(theme.accent)
                     .lineLimit(1)
@@ -82,7 +82,7 @@ struct NotificationSettingsView: View {
 
     private var pageSelector: some View {
         HStack(spacing: 8) {
-            notificationPageButton(.adhkar)
+            notificationPageButton(.nafahat)
             notificationPageButton(.adhan)
         }
         .frame(maxWidth: .infinity, alignment: .trailing)
@@ -125,12 +125,12 @@ struct NotificationSettingsView: View {
         .transition(.opacity)
     }
 
-    private var adhkarSettings: some View {
+    private var nafahatSettings: some View {
         VStack(alignment: .trailing, spacing: 12) {
-            adhkarMasterPanel
-            adhkarDelayPanel
-            adhkarStylePanel
-            adhkarPrayerPanel
+            nafahatMasterPanel
+            nafahatIntervalPanel
+            nafahatTextPanel
+            nafahatQuietPanel
         }
         .transition(.opacity)
     }
@@ -159,6 +159,17 @@ struct NotificationSettingsView: View {
             isOn: Binding(
                 get: { notifications.isAdhkarReminderEnabled },
                 set: { notifications.setAdhkarReminderEnabled($0) }
+            )
+        )
+    }
+
+    private var nafahatMasterPanel: some View {
+        toggleSummaryPanel(
+            title: "تشغيل نَفَحات",
+            subtitle: notifications.isNafahatEnabled ? "تذكير خفيف \(selectedNafahatIntervalTitle)" : "نَفَحات الذكر متوقفة",
+            isOn: Binding(
+                get: { notifications.isNafahatEnabled },
+                set: { notifications.setNafahatEnabled($0) }
             )
         )
     }
@@ -208,6 +219,88 @@ struct NotificationSettingsView: View {
                     )
 
                     if index < PrayerEngine.prayerOrder.count - 1 {
+                        Divider()
+                            .background(theme.controlBorder)
+                    }
+                }
+            }
+        }
+    }
+
+    private var nafahatIntervalPanel: some View {
+        panel(title: "وقت النَفَحات") {
+            VStack(alignment: .trailing, spacing: 10) {
+                Text("اختر كل كم وقت يصلك ذكر خفيف")
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(theme.secondaryText.opacity(0.82))
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+
+                VStack(spacing: 0) {
+                    ForEach(Array(NafahatReminderInterval.allCases.enumerated()), id: \.element.id) { index, interval in
+                        Button {
+                            notifications.setNafahatInterval(interval)
+                        } label: {
+                            optionRow(
+                                title: interval.title,
+                                subtitle: interval.subtitle,
+                                symbol: "clock.fill",
+                                selected: notifications.nafahatIntervalMinutes == interval.rawValue
+                            )
+                        }
+                        .buttonStyle(.plain)
+
+                        if index < NafahatReminderInterval.allCases.count - 1 {
+                            Divider()
+                                .background(theme.controlBorder)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private var nafahatTextPanel: some View {
+        panel(title: "نوع الذكر") {
+            VStack(spacing: 0) {
+                ForEach(Array(NafahatReminderText.allCases.enumerated()), id: \.element.id) { index, text in
+                    Button {
+                        notifications.selectNafahatText(text)
+                    } label: {
+                        optionRow(
+                            title: text.title,
+                            subtitle: text.subtitle,
+                            symbol: text.systemImage,
+                            selected: notifications.selectedNafahatTextID == text.rawValue
+                        )
+                    }
+                    .buttonStyle(.plain)
+
+                    if index < NafahatReminderText.allCases.count - 1 {
+                        Divider()
+                            .background(theme.controlBorder)
+                    }
+                }
+            }
+        }
+    }
+
+    private var nafahatQuietPanel: some View {
+        panel(title: "وقت الهدوء") {
+            VStack(spacing: 0) {
+                ForEach(Array(NafahatQuietWindow.allCases.enumerated()), id: \.element.id) { index, window in
+                    Button {
+                        notifications.selectNafahatQuietWindow(window)
+                    } label: {
+                        optionRow(
+                            title: window.title,
+                            subtitle: window.subtitle,
+                            symbol: window.systemImage,
+                            selected: notifications.selectedNafahatQuietWindowID == window.rawValue
+                        )
+                    }
+                    .buttonStyle(.plain)
+
+                    if index < NafahatQuietWindow.allCases.count - 1 {
                         Divider()
                             .background(theme.controlBorder)
                     }
@@ -429,11 +522,15 @@ struct NotificationSettingsView: View {
         let schedule = PrayerEngine.schedule(for: PrayerEngine.defaultDateKey())
         return schedule.times[key] ?? "--:--"
     }
+
+    private var selectedNafahatIntervalTitle: String {
+        (NafahatReminderInterval(rawValue: notifications.nafahatIntervalMinutes) ?? .twoHours).title
+    }
 }
 
 private enum NotificationSettingsPage: String, CaseIterable, Identifiable {
     case adhan
-    case adhkar
+    case nafahat
 
     var id: String { rawValue }
 
@@ -441,8 +538,8 @@ private enum NotificationSettingsPage: String, CaseIterable, Identifiable {
         switch self {
         case .adhan:
             return "الأذان"
-        case .adhkar:
-            return "الأذكار"
+        case .nafahat:
+            return "نَفَحات"
         }
     }
 
@@ -450,7 +547,7 @@ private enum NotificationSettingsPage: String, CaseIterable, Identifiable {
         switch self {
         case .adhan:
             return "bell.badge.fill"
-        case .adhkar:
+        case .nafahat:
             return "sparkles"
         }
     }
