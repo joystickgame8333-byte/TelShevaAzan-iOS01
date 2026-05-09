@@ -14,7 +14,7 @@ struct ContentView: View {
     @StateObject private var notifications = PrayerNotificationManager.shared
 
     private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
-    private let visualRefreshKey = "v0_6_25_visual_refresh_applied"
+    private let visualRefreshKey = "v0_6_26_apple_glass_applied"
 
     var body: some View {
         let schedule = PrayerEngine.schedule(for: selectedDateKey)
@@ -787,8 +787,8 @@ struct ContentView: View {
     private func applyVisualRefreshThemeOnce() {
         guard !AppThemeStorage.defaults.bool(forKey: visualRefreshKey) else { return }
 
-        selectedNightThemeID = PrayerVisualTheme.nightSakinaGlass.rawValue
-        selectedDayThemeID = PrayerVisualTheme.dayOasisGlass.rawValue
+        selectedNightThemeID = PrayerVisualTheme.nightAppleGlass.rawValue
+        selectedDayThemeID = PrayerVisualTheme.dayAppleGlass.rawValue
         AppThemeStorage.defaults.set(selectedNightThemeID, forKey: AppThemeStorage.nightThemeKey)
         AppThemeStorage.defaults.set(selectedDayThemeID, forKey: AppThemeStorage.dayThemeKey)
         AppThemeStorage.defaults.set(true, forKey: visualRefreshKey)
