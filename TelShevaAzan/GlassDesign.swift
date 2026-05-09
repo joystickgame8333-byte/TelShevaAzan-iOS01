@@ -17,25 +17,25 @@ struct ThemeBackdrop: View {
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )
-                .blendMode(theme.isNightTheme ? .screen : .softLight)
+                .opacity(theme.isNightTheme ? 0.72 : 0.58)
 
                 LinearGradient(
                     colors: [
                         Color.clear,
-                        theme.accent.opacity(theme.isNightTheme ? 0.12 : 0.10),
-                        Color.white.opacity(theme.isNightTheme ? 0.035 : 0.30),
+                        theme.accent.opacity(theme.isNightTheme ? 0.08 : 0.07),
+                        Color.white.opacity(theme.isNightTheme ? 0.02 : 0.18),
                         Color.clear
                     ],
                     startPoint: .topTrailing,
                     endPoint: .bottomLeading
                 )
-                .opacity(theme.isNightTheme ? 0.92 : 0.70)
+                .opacity(theme.isNightTheme ? 0.66 : 0.48)
 
                 LinearGradient(
                     colors: [
-                        Color.black.opacity(theme.isNightTheme ? 0.34 : 0.00),
+                        Color.black.opacity(theme.isNightTheme ? 0.24 : 0.00),
                         Color.clear,
-                        Color.black.opacity(theme.isNightTheme ? 0.18 : 0.05)
+                        Color.black.opacity(theme.isNightTheme ? 0.14 : 0.035)
                     ],
                     startPoint: .top,
                     endPoint: .bottom
@@ -78,10 +78,6 @@ struct ThemeGlassSurface: View {
 
             if theme.isGlassTheme {
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .fill(material)
-                    .opacity(materialOpacity)
-
-                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                     .fill(highlightGradient)
                     .opacity(pressed ? 0.36 : highlightOpacity)
 
@@ -101,46 +97,24 @@ struct ThemeGlassSurface: View {
         )
     }
 
-    private var material: Material {
-        switch prominence {
-        case .quiet:
-            return theme.isNightTheme ? .ultraThinMaterial : .thinMaterial
-        case .regular:
-            return theme.isNightTheme ? .thinMaterial : .regularMaterial
-        case .strong:
-            return theme.isNightTheme ? .regularMaterial : .thickMaterial
-        }
-    }
-
-    private var materialOpacity: Double {
-        switch prominence {
-        case .quiet:
-            return theme.isNightTheme ? 0.24 : 0.38
-        case .regular:
-            return theme.isNightTheme ? 0.34 : 0.48
-        case .strong:
-            return theme.isNightTheme ? 0.46 : 0.62
-        }
-    }
-
     private var highlightOpacity: Double {
         switch prominence {
         case .quiet:
-            return theme.isNightTheme ? 0.34 : 0.46
+            return theme.isNightTheme ? 0.24 : 0.30
         case .regular:
-            return theme.isNightTheme ? 0.44 : 0.58
+            return theme.isNightTheme ? 0.32 : 0.40
         case .strong:
-            return theme.isNightTheme ? 0.54 : 0.68
+            return theme.isNightTheme ? 0.42 : 0.50
         }
     }
 
     private var highlightGradient: LinearGradient {
         LinearGradient(
             colors: [
-                Color.white.opacity(theme.isNightTheme ? 0.42 : 0.82),
-                Color.white.opacity(theme.isNightTheme ? 0.08 : 0.28),
-                theme.accent.opacity(theme.isNightTheme ? 0.18 : 0.14),
-                Color.white.opacity(theme.isNightTheme ? 0.04 : 0.24)
+                Color.white.opacity(theme.isNightTheme ? 0.34 : 0.64),
+                Color.white.opacity(theme.isNightTheme ? 0.06 : 0.18),
+                theme.accent.opacity(theme.isNightTheme ? 0.14 : 0.10),
+                Color.white.opacity(theme.isNightTheme ? 0.03 : 0.14)
             ],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
@@ -151,7 +125,7 @@ struct ThemeGlassSurface: View {
         LinearGradient(
             colors: [
                 Color.clear,
-                Color.black.opacity(theme.isNightTheme ? 0.18 : 0.07)
+                Color.black.opacity(theme.isNightTheme ? 0.12 : 0.045)
             ],
             startPoint: .top,
             endPoint: .bottom
@@ -161,9 +135,9 @@ struct ThemeGlassSurface: View {
     private var borderGradient: LinearGradient {
         LinearGradient(
             colors: [
-                Color.white.opacity(theme.isNightTheme ? 0.44 : 0.86),
-                theme.accent.opacity(theme.isNightTheme ? 0.36 : 0.26),
-                Color.white.opacity(theme.isNightTheme ? 0.10 : 0.46)
+                Color.white.opacity(theme.isNightTheme ? 0.34 : 0.62),
+                theme.accent.opacity(theme.isNightTheme ? 0.25 : 0.18),
+                Color.white.opacity(theme.isNightTheme ? 0.08 : 0.34)
             ],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
@@ -171,28 +145,28 @@ struct ThemeGlassSurface: View {
     }
 
     private var shadowColor: Color {
-        theme.isNightTheme ? Color.black.opacity(0.30) : Color(red: 0.10, green: 0.26, blue: 0.32).opacity(0.12)
+        theme.isNightTheme ? Color.black.opacity(0.20) : Color(red: 0.10, green: 0.26, blue: 0.32).opacity(0.08)
     }
 
     private var shadowRadius: CGFloat {
         switch prominence {
         case .quiet:
-            return 7
+            return 0
         case .regular:
-            return 12
+            return 4
         case .strong:
-            return 18
+            return 8
         }
     }
 
     private var shadowYOffset: CGFloat {
         switch prominence {
         case .quiet:
-            return 3
+            return 0
         case .regular:
-            return 7
+            return 3
         case .strong:
-            return 10
+            return 5
         }
     }
 }
