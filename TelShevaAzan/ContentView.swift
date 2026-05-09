@@ -12,6 +12,8 @@ struct ContentView: View {
     @State private var isQiblaPresented = false
     @State private var isRadioPresented = false
     @State private var isNotificationSettingsPresented = false
+    @State private var activeDockItem: HomeDockItem?
+    @Namespace private var dockSelectionNamespace
     @StateObject private var notifications = PrayerNotificationManager.shared
 
     private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
@@ -26,7 +28,7 @@ struct ContentView: View {
             let sectionSpacing: CGFloat = compactHeight ? 6 : 8
             let rowSpacing: CGFloat = compactHeight ? 6 : 8
             let dockBottomPadding = max(proxy.safeAreaInsets.bottom, CGFloat(8))
-            let dockReservedHeight = dockBottomPadding + (compactHeight ? 80 : 92)
+            let dockReservedHeight = dockBottomPadding + (compactHeight ? 68 : 78)
             let rowHeight = min(CGFloat(58), max(CGFloat(38), (proxy.size.height - dockReservedHeight - 430) / 6))
 
             ZStack {
@@ -59,7 +61,7 @@ struct ContentView: View {
                 .clipped()
 
                 bottomDock(bottomInset: dockBottomPadding)
-                    .padding(.horizontal, 16)
+                    .padding(.horizontal, 22)
                     .padding(.bottom, dockBottomPadding)
                     .frame(width: proxy.size.width, height: proxy.size.height, alignment: .bottom)
                     .zIndex(6)
@@ -89,6 +91,21 @@ struct ContentView: View {
             if phase == .active {
                 WidgetRefreshCenter.refreshAll()
                 WidgetRefreshCenter.refreshAgainSoon()
+            }
+        }
+        .onChange(of: isRadioPresented) { isPresented in
+            if !isPresented {
+                clearDockSelection()
+            }
+        }
+        .onChange(of: isQiblaPresented) { isPresented in
+            if !isPresented {
+                clearDockSelection()
+            }
+        }
+        .onChange(of: isNotificationSettingsPresented) { isPresented in
+            if !isPresented {
+                clearDockSelection()
             }
         }
         .onAppear {
@@ -289,17 +306,17 @@ struct ContentView: View {
                 dockButton(item)
             }
         }
-        .padding(.horizontal, 6)
-        .padding(.vertical, 6)
+        .padding(.horizontal, 5)
+        .padding(.vertical, 5)
         .frame(maxWidth: .infinity)
-        .frame(height: 72)
-        .background(glassSurface(dockBackgroundFill, radius: 30, prominence: .strong))
+        .frame(height: 62)
+        .background(glassSurface(dockBackgroundFill, radius: 25, prominence: .strong))
         .overlay(
-            RoundedRectangle(cornerRadius: 30)
+            RoundedRectangle(cornerRadius: 25)
                 .stroke(activeTheme.controlBorder.opacity(activeTheme.isGlassTheme ? 0.92 : 0.72))
         )
-        .clipShape(RoundedRectangle(cornerRadius: 30))
-        .shadow(color: .black.opacity(activeTheme.isNightTheme ? 0.34 : 0.13), radius: 18, y: 8)
+        .clipShape(RoundedRectangle(cornerRadius: 25))
+        .shadow(color: .black.opacity(activeTheme.isNightTheme ? 0.30 : 0.11), radius: 14, y: 6)
         .environment(\.layoutDirection, .leftToRight)
     }
 
@@ -312,14 +329,14 @@ struct ContentView: View {
             ZStack(alignment: .topTrailing) {
                 VStack(spacing: 2) {
                     Image(systemName: dockSymbol(for: item))
-                        .font(.system(size: selected ? 24 : 22, weight: .black, design: .rounded))
-                        .scaleEffect(selected ? 1.10 : 1.0)
+                        .font(.system(size: selected ? 21 : 19, weight: .black, design: .rounded))
+                        .scaleEffect(selected ? 1.08 : 1.0)
                         .rotationEffect(.degrees(selected ? dockRotation(for: item) : 0))
-                        .offset(y: selected ? -2 : 0)
+                        .offset(y: selected ? -3 : 0)
                         .symbolRenderingMode(.hierarchical)
 
                     Text(item.title)
-                        .font(.system(size: 11, weight: selected ? .black : .bold, design: .rounded))
+                        .font(.system(size: 9, weight: selected ? .black : .bold, design: .rounded))
                         .lineLimit(1)
                         .minimumScaleFactor(0.72)
                 }
@@ -328,29 +345,45 @@ struct ContentView: View {
                 .background(
                     Group {
                         if selected {
-                            glassSurface(activeTheme.countdownBackground, radius: 28, prominence: .strong)
+                            ZStack {
+                                glassSurface(activeTheme.countdownBackground, radius: 22, prominence: .strong)
+
+                                RoundedRectangle(cornerRadius: 22)
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [
+                                                Color.white.opacity(activeTheme.isNightTheme ? 0.16 : 0.40),
+                                                Color.white.opacity(0.02)
+                                            ],
+                                            startPoint: .topTrailing,
+                                            endPoint: .bottomLeading
+                                        )
+                                    )
+                                    .blendMode(.screen)
+                            }
+                            .matchedGeometryEffect(id: "dockSelection", in: dockSelectionNamespace)
                         } else {
                             Color.clear
                         }
                     }
                 )
-                .clipShape(RoundedRectangle(cornerRadius: 28))
+                .clipShape(RoundedRectangle(cornerRadius: 22))
 
                 if item == .notifications && notifications.isEnabled {
                     Text("✓")
-                        .font(.system(size: 10, weight: .black, design: .rounded))
+                        .font(.system(size: 8, weight: .black, design: .rounded))
                         .foregroundStyle(Color.white)
-                        .frame(width: 17, height: 17)
+                        .frame(width: 15, height: 15)
                         .background(activeTheme.accent)
                         .clipShape(Circle())
                         .overlay(Circle().stroke(Color.white.opacity(0.84), lineWidth: 1))
-                        .offset(x: -10, y: 5)
+                        .offset(x: -9, y: 4)
                 }
             }
-            .contentShape(RoundedRectangle(cornerRadius: 28))
+            .contentShape(RoundedRectangle(cornerRadius: 22))
         }
         .buttonStyle(DockButtonPressStyle())
-        .animation(.spring(response: 0.30, dampingFraction: 0.68), value: selected)
+        .animation(.spring(response: 0.34, dampingFraction: 0.70), value: selected)
         .accessibilityLabel(item.title)
     }
 
@@ -359,11 +392,12 @@ struct ContentView: View {
             return .themes
         }
 
-        return nil
+        return activeDockItem
     }
 
     private func handleDockTap(_ item: HomeDockItem) {
-        withAnimation(.spring(response: 0.30, dampingFraction: 0.72)) {
+        withAnimation(.spring(response: 0.34, dampingFraction: 0.70)) {
+            activeDockItem = item
             if item != .themes {
                 isThemePickerPresented = false
             }
@@ -375,11 +409,31 @@ struct ContentView: View {
                 isThemePickerPresented.toggle()
             }
         case .radio:
-            isRadioPresented = true
+            presentAfterDockAnimation {
+                isRadioPresented = true
+            }
         case .qibla:
-            isQiblaPresented = true
+            presentAfterDockAnimation {
+                isQiblaPresented = true
+            }
         case .notifications:
-            isNotificationSettingsPresented = true
+            presentAfterDockAnimation {
+                isNotificationSettingsPresented = true
+            }
+        }
+    }
+
+    private func presentAfterDockAnimation(_ action: @escaping () -> Void) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.13) {
+            action()
+        }
+    }
+
+    private func clearDockSelection() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
+            withAnimation(.spring(response: 0.28, dampingFraction: 0.78)) {
+                activeDockItem = nil
+            }
         }
     }
 
