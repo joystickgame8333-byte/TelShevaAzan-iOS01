@@ -25,7 +25,9 @@ struct ContentView: View {
             let compactHeight = proxy.size.height < 720
             let sectionSpacing: CGFloat = compactHeight ? 6 : 8
             let rowSpacing: CGFloat = compactHeight ? 6 : 8
-            let rowHeight = min(CGFloat(58), max(CGFloat(40), (proxy.size.height - 500) / 6))
+            let dockBottomPadding = max(proxy.safeAreaInsets.bottom, CGFloat(8))
+            let dockReservedHeight = dockBottomPadding + (compactHeight ? 80 : 92)
+            let rowHeight = min(CGFloat(58), max(CGFloat(38), (proxy.size.height - dockReservedHeight - 430) / 6))
 
             ZStack {
                 background
@@ -34,8 +36,6 @@ struct ContentView: View {
                     quranVerse
 
                     header
-
-                    headerControls
 
                     nextPrayerPanel(next: next, previous: previous, compact: compactHeight)
 
@@ -51,17 +51,23 @@ struct ContentView: View {
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, compactHeight ? 12 : 18)
-                .padding(.bottom, 18)
+                .padding(.bottom, dockReservedHeight)
                 .frame(width: proxy.size.width, height: proxy.size.height, alignment: .topTrailing)
                 .foregroundStyle(activeTheme.primaryText)
                 .environment(\.layoutDirection, .leftToRight)
                 .multilineTextAlignment(.trailing)
                 .clipped()
 
+                bottomDock(bottomInset: dockBottomPadding)
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, dockBottomPadding)
+                    .frame(width: proxy.size.width, height: proxy.size.height, alignment: .bottom)
+                    .zIndex(6)
+
                 if isThemePickerPresented {
                     themePickerOverlay(
                         width: min(proxy.size.width - 32, 330),
-                        topOffset: compactHeight ? 148 : 162,
+                        topOffset: compactHeight ? 116 : 132,
                         availableHeight: proxy.size.height
                     )
                 }
@@ -275,6 +281,132 @@ struct ContentView: View {
         }
         .buttonStyle(.plain)
         .environment(\.layoutDirection, .rightToLeft)
+    }
+
+    private func bottomDock(bottomInset: CGFloat) -> some View {
+        HStack(alignment: .center, spacing: 5) {
+            ForEach(HomeDockItem.allCases) { item in
+                dockButton(item)
+            }
+        }
+        .padding(.horizontal, 6)
+        .padding(.vertical, 6)
+        .frame(maxWidth: .infinity)
+        .frame(height: 72)
+        .background(glassSurface(dockBackgroundFill, radius: 30, prominence: .strong))
+        .overlay(
+            RoundedRectangle(cornerRadius: 30)
+                .stroke(activeTheme.controlBorder.opacity(activeTheme.isGlassTheme ? 0.92 : 0.72))
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 30))
+        .shadow(color: .black.opacity(activeTheme.isNightTheme ? 0.34 : 0.13), radius: 18, y: 8)
+        .environment(\.layoutDirection, .leftToRight)
+    }
+
+    private func dockButton(_ item: HomeDockItem) -> some View {
+        let selected = selectedDockItem == item
+
+        return Button {
+            handleDockTap(item)
+        } label: {
+            ZStack(alignment: .topTrailing) {
+                VStack(spacing: 2) {
+                    Image(systemName: dockSymbol(for: item))
+                        .font(.system(size: selected ? 24 : 22, weight: .black, design: .rounded))
+                        .scaleEffect(selected ? 1.10 : 1.0)
+                        .rotationEffect(.degrees(selected ? dockRotation(for: item) : 0))
+                        .offset(y: selected ? -2 : 0)
+                        .symbolRenderingMode(.hierarchical)
+
+                    Text(item.title)
+                        .font(.system(size: 11, weight: selected ? .black : .bold, design: .rounded))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.72)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .foregroundStyle(selected ? activeTheme.accent : activeTheme.secondaryText.opacity(0.84))
+                .background(
+                    Group {
+                        if selected {
+                            glassSurface(activeTheme.countdownBackground, radius: 28, prominence: .strong)
+                        } else {
+                            Color.clear
+                        }
+                    }
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 28))
+
+                if item == .notifications && notifications.isEnabled {
+                    Text("✓")
+                        .font(.system(size: 10, weight: .black, design: .rounded))
+                        .foregroundStyle(Color.white)
+                        .frame(width: 17, height: 17)
+                        .background(activeTheme.accent)
+                        .clipShape(Circle())
+                        .overlay(Circle().stroke(Color.white.opacity(0.84), lineWidth: 1))
+                        .offset(x: -10, y: 5)
+                }
+            }
+            .contentShape(RoundedRectangle(cornerRadius: 28))
+        }
+        .buttonStyle(DockButtonPressStyle())
+        .animation(.spring(response: 0.30, dampingFraction: 0.68), value: selected)
+        .accessibilityLabel(item.title)
+    }
+
+    private var selectedDockItem: HomeDockItem? {
+        if isThemePickerPresented {
+            return .themes
+        }
+
+        return nil
+    }
+
+    private func handleDockTap(_ item: HomeDockItem) {
+        withAnimation(.spring(response: 0.30, dampingFraction: 0.72)) {
+            if item != .themes {
+                isThemePickerPresented = false
+            }
+        }
+
+        switch item {
+        case .themes:
+            withAnimation(.spring(response: 0.32, dampingFraction: 0.76)) {
+                isThemePickerPresented.toggle()
+            }
+        case .radio:
+            isRadioPresented = true
+        case .qibla:
+            isQiblaPresented = true
+        case .notifications:
+            isNotificationSettingsPresented = true
+        }
+    }
+
+    private func dockSymbol(for item: HomeDockItem) -> String {
+        switch item {
+        case .themes:
+            return activeTheme.symbol
+        case .radio:
+            return "radio.fill"
+        case .qibla:
+            return "location.north.fill"
+        case .notifications:
+            return notifications.isEnabled ? "bell.badge.fill" : "bell.fill"
+        }
+    }
+
+    private func dockRotation(for item: HomeDockItem) -> Double {
+        switch item {
+        case .themes:
+            return isThemePickerPresented ? 12 : 0
+        case .radio:
+            return -4
+        case .qibla:
+            return 8
+        case .notifications:
+            return -7
+        }
     }
 
     private func themePickerOverlay(width: CGFloat, topOffset: CGFloat, availableHeight: CGFloat) -> some View {
@@ -629,6 +761,18 @@ struct ContentView: View {
         return activeTheme.panelBackground.opacity(0.98)
     }
 
+    private var dockBackgroundFill: Color {
+        if activeTheme.isGlassTheme {
+            if activeTheme.isNightTheme {
+                return Color(red: 0.07, green: 0.09, blue: 0.09).opacity(0.88)
+            }
+
+            return Color.white.opacity(0.84)
+        }
+
+        return activeTheme.panelBackground.opacity(0.94)
+    }
+
     private func themeOptionBackground(isSelected: Bool) -> Color {
         if isSelected {
             return activeTheme.activeRowBackground
@@ -702,6 +846,37 @@ struct ContentView: View {
         AppThemeStorage.defaults.synchronize()
         WidgetRefreshCenter.refreshAll()
         WidgetRefreshCenter.refreshAgainSoon()
+    }
+}
+
+private enum HomeDockItem: String, CaseIterable, Identifiable {
+    case themes
+    case radio
+    case qibla
+    case notifications
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .themes:
+            return "الثيم"
+        case .radio:
+            return "الراديو"
+        case .qibla:
+            return "القبلة"
+        case .notifications:
+            return "تنبيه"
+        }
+    }
+}
+
+private struct DockButtonPressStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.94 : 1.0)
+            .offset(y: configuration.isPressed ? 2 : 0)
+            .animation(.spring(response: 0.22, dampingFraction: 0.66), value: configuration.isPressed)
     }
 }
 
