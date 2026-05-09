@@ -6,6 +6,8 @@ struct NotificationSettingsView: View {
     @State private var selectedPage: NotificationSettingsPage = .adhan
 
     let theme: PrayerVisualTheme
+    var isEmbedded = false
+    var bottomReservedHeight: CGFloat = 0
 
     var body: some View {
         GeometryReader { proxy in
@@ -20,7 +22,7 @@ struct NotificationSettingsView: View {
                 }
                 .padding(.horizontal, 18)
                 .padding(.top, 14)
-                .padding(.bottom, 18)
+                .padding(.bottom, 18 + bottomReservedHeight)
                 .frame(width: proxy.size.width, height: proxy.size.height, alignment: .topTrailing)
             }
         }
@@ -31,11 +33,25 @@ struct NotificationSettingsView: View {
 
     private var header: some View {
         HStack(alignment: .top, spacing: 12) {
-            Button {
-                dismiss()
-            } label: {
-                Image(systemName: "xmark")
-                    .font(.system(size: 16, weight: .black))
+            if !isEmbedded {
+                Button {
+                    dismiss()
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 16, weight: .black))
+                        .frame(width: 38, height: 38)
+                        .background(glassSurface(theme.controlBackground, radius: 8))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(theme.controlBorder)
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                }
+                .buttonStyle(.plain)
+            } else {
+                Image(systemName: "bell.badge.fill")
+                    .font(.system(size: 17, weight: .black))
+                    .foregroundStyle(theme.accent)
                     .frame(width: 38, height: 38)
                     .background(glassSurface(theme.controlBackground, radius: 8))
                     .overlay(
@@ -44,7 +60,6 @@ struct NotificationSettingsView: View {
                     )
                     .clipShape(RoundedRectangle(cornerRadius: 8))
             }
-            .buttonStyle(.plain)
 
             Spacer(minLength: 16)
 

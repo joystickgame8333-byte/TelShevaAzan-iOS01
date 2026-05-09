@@ -9,6 +9,8 @@ struct QiblaView: View {
     @State private var lastAlignmentHaptic = Date.distantPast
 
     let theme: PrayerVisualTheme
+    var isEmbedded = false
+    var bottomReservedHeight: CGFloat = 0
 
     private let qiblaBearing = QiblaCalculator.telShevaBearing
 
@@ -45,7 +47,7 @@ struct QiblaView: View {
                 }
                 .padding(.horizontal, 18)
                 .padding(.top, 14)
-                .padding(.bottom, 18)
+                .padding(.bottom, 18 + bottomReservedHeight)
                 .frame(width: proxy.size.width, height: proxy.size.height, alignment: .topTrailing)
                 .foregroundStyle(theme.primaryText)
                 .environment(\.layoutDirection, .leftToRight)
@@ -66,11 +68,25 @@ struct QiblaView: View {
 
     private var header: some View {
         HStack(alignment: .top) {
-            Button {
-                dismiss()
-            } label: {
-                Image(systemName: "xmark")
-                    .font(.system(size: 16, weight: .black))
+            if !isEmbedded {
+                Button {
+                    dismiss()
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 16, weight: .black))
+                        .frame(width: 38, height: 38)
+                        .background(glassSurface(theme.controlBackground, radius: 8))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(theme.controlBorder)
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                }
+                .buttonStyle(.plain)
+            } else {
+                Image(systemName: "location.north.fill")
+                    .font(.system(size: 17, weight: .black))
+                    .foregroundStyle(theme.accent)
                     .frame(width: 38, height: 38)
                     .background(glassSurface(theme.controlBackground, radius: 8))
                     .overlay(
@@ -79,7 +95,6 @@ struct QiblaView: View {
                     )
                     .clipShape(RoundedRectangle(cornerRadius: 8))
             }
-            .buttonStyle(.plain)
 
             Spacer()
 

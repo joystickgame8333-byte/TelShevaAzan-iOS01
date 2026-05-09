@@ -9,14 +9,12 @@ struct ContentView: View {
     @State private var selectedDateKey = PrayerEngine.defaultDateKey()
     @State private var followsToday = true
     @State private var isThemePickerPresented = false
-    @State private var isQiblaPresented = false
-    @State private var isRadioPresented = false
-    @State private var isNotificationSettingsPresented = false
-    @State private var activeDockItem: HomeDockItem?
+    @State private var selectedTab: HomeDockItem = .schedule
     @Namespace private var dockSelectionNamespace
     @StateObject private var notifications = PrayerNotificationManager.shared
 
     private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
+    private let visualRefreshKey = "v0_6_25_visual_refresh_applied"
 
     var body: some View {
         let schedule = PrayerEngine.schedule(for: selectedDateKey)
@@ -34,31 +32,42 @@ struct ContentView: View {
             ZStack {
                 background
 
-                VStack(alignment: .trailing, spacing: sectionSpacing) {
-                    quranVerse
-
-                    header
-
-                    nextPrayerPanel(next: next, previous: previous, compact: compactHeight)
-
-                    dateControls
-
-                    VStack(spacing: rowSpacing) {
-                        ForEach(schedule.displayTimes) { item in
-                            prayerRow(item, activeKey: next?.key, rowHeight: rowHeight)
-                        }
+                Group {
+                    switch selectedTab {
+                    case .schedule:
+                        prayerScheduleContent(
+                            schedule: schedule,
+                            next: next,
+                            previous: previous,
+                            compactHeight: compactHeight,
+                            sectionSpacing: sectionSpacing,
+                            rowSpacing: rowSpacing,
+                            rowHeight: rowHeight,
+                            dockReservedHeight: dockReservedHeight,
+                            size: proxy.size
+                        )
+                    case .notifications:
+                        NotificationSettingsView(
+                            theme: activeTheme,
+                            isEmbedded: true,
+                            bottomReservedHeight: dockReservedHeight
+                        )
+                    case .qibla:
+                        QiblaView(
+                            theme: activeTheme,
+                            isEmbedded: true,
+                            bottomReservedHeight: dockReservedHeight
+                        )
+                    case .radio:
+                        QuranRadioView(
+                            theme: activeTheme,
+                            isEmbedded: true,
+                            bottomReservedHeight: dockReservedHeight
+                        )
                     }
-
-                    footerNote
                 }
-                .padding(.horizontal, 16)
-                .padding(.top, compactHeight ? 12 : 18)
-                .padding(.bottom, dockReservedHeight)
-                .frame(width: proxy.size.width, height: proxy.size.height, alignment: .topTrailing)
-                .foregroundStyle(activeTheme.primaryText)
-                .environment(\.layoutDirection, .leftToRight)
-                .multilineTextAlignment(.trailing)
-                .clipped()
+                .transition(.opacity.combined(with: .move(edge: .trailing)))
+                .animation(.easeInOut(duration: 0.18), value: selectedTab)
 
                 bottomDock(bottomInset: dockBottomPadding)
                     .padding(.horizontal, 22)
@@ -93,39 +102,55 @@ struct ContentView: View {
                 WidgetRefreshCenter.refreshAgainSoon()
             }
         }
-        .onChange(of: isRadioPresented) { isPresented in
-            if !isPresented {
-                clearDockSelection()
-            }
-        }
-        .onChange(of: isQiblaPresented) { isPresented in
-            if !isPresented {
-                clearDockSelection()
-            }
-        }
-        .onChange(of: isNotificationSettingsPresented) { isPresented in
-            if !isPresented {
-                clearDockSelection()
-            }
-        }
         .onAppear {
+            applyVisualRefreshThemeOnce()
             notifications.refreshIfEnabled()
             WidgetRefreshCenter.refreshAll()
             WidgetRefreshCenter.refreshAgainSoon()
         }
         .onReceive(NotificationCenter.default.publisher(for: PrayerNotificationManager.openSettingsNotification)) { _ in
-            isNotificationSettingsPresented = true
+            withAnimation(.easeInOut(duration: 0.18)) {
+                selectedTab = .notifications
+            }
         }
-        .fullScreenCover(isPresented: $isQiblaPresented) {
-            QiblaView(theme: activeTheme)
-                .environment(\.layoutDirection, .rightToLeft)
+    }
+
+    private func prayerScheduleContent(
+        schedule: DaySchedule,
+        next: PrayerTime?,
+        previous: PrayerTime?,
+        compactHeight: Bool,
+        sectionSpacing: CGFloat,
+        rowSpacing: CGFloat,
+        rowHeight: CGFloat,
+        dockReservedHeight: CGFloat,
+        size: CGSize
+    ) -> some View {
+        VStack(alignment: .trailing, spacing: sectionSpacing) {
+            quranVerse
+
+            header
+
+            nextPrayerPanel(next: next, previous: previous, compact: compactHeight)
+
+            dateControls
+
+            VStack(spacing: rowSpacing) {
+                ForEach(schedule.displayTimes) { item in
+                    prayerRow(item, activeKey: next?.key, rowHeight: rowHeight)
+                }
+            }
+
+            footerNote
         }
-        .fullScreenCover(isPresented: $isRadioPresented) {
-            QuranRadioView(theme: activeTheme)
-        }
-        .fullScreenCover(isPresented: $isNotificationSettingsPresented) {
-            NotificationSettingsView(theme: activeTheme)
-        }
+        .padding(.horizontal, 16)
+        .padding(.top, compactHeight ? 12 : 18)
+        .padding(.bottom, dockReservedHeight)
+        .frame(width: size.width, height: size.height, alignment: .topTrailing)
+        .foregroundStyle(activeTheme.primaryText)
+        .environment(\.layoutDirection, .leftToRight)
+        .multilineTextAlignment(.trailing)
+        .clipped()
     }
 
     private var quranVerse: some View {
@@ -145,29 +170,25 @@ struct ContentView: View {
     }
 
     private var header: some View {
-        VStack(alignment: .trailing, spacing: 3) {
-            Text("أذان تل السبع")
-                .font(.system(size: 28, weight: .black, design: .rounded))
-                .lineLimit(1)
-                .minimumScaleFactor(0.72)
-                .frame(maxWidth: .infinity, alignment: .trailing)
-
-            Text(PrayerEngine.longDateLabel(for: selectedDateKey))
-                .font(.caption2.weight(.semibold))
-                .foregroundStyle(activeTheme.secondaryText.opacity(0.82))
-                .lineLimit(1)
-                .minimumScaleFactor(0.75)
-                .frame(maxWidth: .infinity, alignment: .trailing)
-        }
-    }
-
-    private var headerControls: some View {
-        HStack(spacing: 6) {
-            Spacer(minLength: 0)
+        HStack(alignment: .bottom, spacing: 12) {
             themeMenu
-            radioButton
-            qiblaButton
-            notificationButton
+
+            Spacer(minLength: 10)
+
+            VStack(alignment: .trailing, spacing: 3) {
+                Text("أذان تل السبع")
+                    .font(.system(size: 28, weight: .black, design: .rounded))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.72)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+
+                Text(PrayerEngine.longDateLabel(for: selectedDateKey))
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(activeTheme.secondaryText.opacity(0.82))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .trailing)
     }
@@ -200,106 +221,6 @@ struct ContentView: View {
         .environment(\.layoutDirection, .rightToLeft)
     }
 
-    private var radioButton: some View {
-        Button {
-            isRadioPresented = true
-        } label: {
-            HStack(spacing: 6) {
-                Text("الراديو")
-                    .lineLimit(1)
-
-                Image(systemName: "radio.fill")
-            }
-            .font(.caption2.weight(.black))
-            .foregroundStyle(activeTheme.accent)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 7)
-            .background(glassSurface(activeTheme.controlBackground, radius: 8))
-            .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(activeTheme.controlBorder)
-            )
-            .clipShape(RoundedRectangle(cornerRadius: 8))
-        }
-        .buttonStyle(.plain)
-        .environment(\.layoutDirection, .rightToLeft)
-    }
-
-    private var testNotificationButton: some View {
-        Button {
-            notifications.sendTestNotification()
-        } label: {
-            HStack(spacing: 6) {
-                Text("تجربة")
-                    .lineLimit(1)
-
-                Image(systemName: "play.circle.fill")
-            }
-            .font(.caption2.weight(.black))
-            .foregroundStyle(activeTheme.accent)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 7)
-            .background(glassSurface(activeTheme.controlBackground, radius: 8))
-            .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(activeTheme.controlBorder)
-            )
-            .clipShape(RoundedRectangle(cornerRadius: 8))
-        }
-        .buttonStyle(.plain)
-        .environment(\.layoutDirection, .rightToLeft)
-    }
-
-    private var qiblaButton: some View {
-        Button {
-            isQiblaPresented = true
-        } label: {
-            HStack(spacing: 6) {
-                Text("القبلة")
-                    .lineLimit(1)
-
-                Image(systemName: "location.north.fill")
-            }
-            .font(.caption2.weight(.black))
-            .foregroundStyle(activeTheme.accent)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 7)
-            .background(glassSurface(activeTheme.controlBackground, radius: 8))
-            .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(activeTheme.controlBorder)
-            )
-            .clipShape(RoundedRectangle(cornerRadius: 8))
-        }
-        .buttonStyle(.plain)
-        .environment(\.layoutDirection, .rightToLeft)
-    }
-
-    private var notificationButton: some View {
-        Button {
-            isNotificationSettingsPresented = true
-        } label: {
-            HStack(spacing: 6) {
-                Text("تنبيه")
-                    .lineLimit(1)
-
-                Image(systemName: notifications.isEnabled ? "bell.badge.fill" : "bell")
-            }
-            .font(.caption2.weight(.black))
-            .foregroundStyle(activeTheme.accent)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 7)
-            .background(glassSurface(activeTheme.controlBackground, radius: 8))
-            .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(activeTheme.controlBorder)
-            )
-            .clipShape(RoundedRectangle(cornerRadius: 8))
-        }
-        .buttonStyle(.plain)
-        .environment(\.layoutDirection, .rightToLeft)
-    }
-
     private func bottomDock(bottomInset: CGFloat) -> some View {
         HStack(alignment: .center, spacing: 5) {
             ForEach(HomeDockItem.allCases) { item in
@@ -309,15 +230,15 @@ struct ContentView: View {
         .padding(.horizontal, 5)
         .padding(.vertical, 5)
         .frame(maxWidth: .infinity)
-        .frame(height: 62)
-        .background(glassSurface(dockBackgroundFill, radius: 25, prominence: .strong))
+        .frame(height: 58)
+        .background(glassSurface(dockBackgroundFill, radius: 23, prominence: .strong))
         .overlay(
-            RoundedRectangle(cornerRadius: 25)
+            RoundedRectangle(cornerRadius: 23)
                 .stroke(activeTheme.controlBorder.opacity(activeTheme.isGlassTheme ? 0.92 : 0.72))
         )
-        .clipShape(RoundedRectangle(cornerRadius: 25))
-        .shadow(color: .black.opacity(activeTheme.isNightTheme ? 0.30 : 0.11), radius: 14, y: 6)
-        .environment(\.layoutDirection, .leftToRight)
+        .clipShape(RoundedRectangle(cornerRadius: 23))
+        .shadow(color: .black.opacity(activeTheme.isNightTheme ? 0.24 : 0.08), radius: 11, y: 5)
+        .environment(\.layoutDirection, .rightToLeft)
     }
 
     private func dockButton(_ item: HomeDockItem) -> some View {
@@ -329,14 +250,14 @@ struct ContentView: View {
             ZStack(alignment: .topTrailing) {
                 VStack(spacing: 2) {
                     Image(systemName: dockSymbol(for: item))
-                        .font(.system(size: selected ? 21 : 19, weight: .black, design: .rounded))
+                        .font(.system(size: selected ? 20 : 18, weight: .black, design: .rounded))
                         .scaleEffect(selected ? 1.08 : 1.0)
                         .rotationEffect(.degrees(selected ? dockRotation(for: item) : 0))
                         .offset(y: selected ? -3 : 0)
                         .symbolRenderingMode(.hierarchical)
 
                     Text(item.title)
-                        .font(.system(size: 9, weight: selected ? .black : .bold, design: .rounded))
+                        .font(.system(size: 8.5, weight: selected ? .black : .bold, design: .rounded))
                         .lineLimit(1)
                         .minimumScaleFactor(0.72)
                 }
@@ -346,9 +267,9 @@ struct ContentView: View {
                     Group {
                         if selected {
                             ZStack {
-                                glassSurface(activeTheme.countdownBackground, radius: 22, prominence: .strong)
+                                glassSurface(activeTheme.countdownBackground, radius: 20, prominence: .strong)
 
-                                RoundedRectangle(cornerRadius: 22)
+                                RoundedRectangle(cornerRadius: 20)
                                     .fill(
                                         LinearGradient(
                                             colors: [
@@ -367,7 +288,7 @@ struct ContentView: View {
                         }
                     }
                 )
-                .clipShape(RoundedRectangle(cornerRadius: 22))
+                            .clipShape(RoundedRectangle(cornerRadius: 20))
 
                 if item == .notifications && notifications.isEnabled {
                     Text("✓")
@@ -380,7 +301,7 @@ struct ContentView: View {
                         .offset(x: -9, y: 4)
                 }
             }
-            .contentShape(RoundedRectangle(cornerRadius: 22))
+            .contentShape(RoundedRectangle(cornerRadius: 20))
         }
         .buttonStyle(DockButtonPressStyle())
         .animation(.spring(response: 0.34, dampingFraction: 0.70), value: selected)
@@ -388,59 +309,20 @@ struct ContentView: View {
     }
 
     private var selectedDockItem: HomeDockItem? {
-        if isThemePickerPresented {
-            return .themes
-        }
-
-        return activeDockItem
+        selectedTab
     }
 
     private func handleDockTap(_ item: HomeDockItem) {
         withAnimation(.spring(response: 0.34, dampingFraction: 0.70)) {
-            activeDockItem = item
-            if item != .themes {
-                isThemePickerPresented = false
-            }
-        }
-
-        switch item {
-        case .themes:
-            withAnimation(.spring(response: 0.32, dampingFraction: 0.76)) {
-                isThemePickerPresented.toggle()
-            }
-        case .radio:
-            presentAfterDockAnimation {
-                isRadioPresented = true
-            }
-        case .qibla:
-            presentAfterDockAnimation {
-                isQiblaPresented = true
-            }
-        case .notifications:
-            presentAfterDockAnimation {
-                isNotificationSettingsPresented = true
-            }
-        }
-    }
-
-    private func presentAfterDockAnimation(_ action: @escaping () -> Void) {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.13) {
-            action()
-        }
-    }
-
-    private func clearDockSelection() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
-            withAnimation(.spring(response: 0.28, dampingFraction: 0.78)) {
-                activeDockItem = nil
-            }
+            selectedTab = item
+            isThemePickerPresented = false
         }
     }
 
     private func dockSymbol(for item: HomeDockItem) -> String {
         switch item {
-        case .themes:
-            return activeTheme.symbol
+        case .schedule:
+            return "clock.fill"
         case .radio:
             return "radio.fill"
         case .qibla:
@@ -452,8 +334,8 @@ struct ContentView: View {
 
     private func dockRotation(for item: HomeDockItem) -> Double {
         switch item {
-        case .themes:
-            return isThemePickerPresented ? 12 : 0
+        case .schedule:
+            return -5
         case .radio:
             return -4
         case .qibla:
@@ -901,20 +783,33 @@ struct ContentView: View {
         WidgetRefreshCenter.refreshAll()
         WidgetRefreshCenter.refreshAgainSoon()
     }
+
+    private func applyVisualRefreshThemeOnce() {
+        guard !AppThemeStorage.defaults.bool(forKey: visualRefreshKey) else { return }
+
+        selectedNightThemeID = PrayerVisualTheme.nightSakinaGlass.rawValue
+        selectedDayThemeID = PrayerVisualTheme.dayOasisGlass.rawValue
+        AppThemeStorage.defaults.set(selectedNightThemeID, forKey: AppThemeStorage.nightThemeKey)
+        AppThemeStorage.defaults.set(selectedDayThemeID, forKey: AppThemeStorage.dayThemeKey)
+        AppThemeStorage.defaults.set(true, forKey: visualRefreshKey)
+        AppThemeStorage.defaults.synchronize()
+        WidgetRefreshCenter.refreshAll()
+        WidgetRefreshCenter.refreshAgainSoon()
+    }
 }
 
 private enum HomeDockItem: String, CaseIterable, Identifiable {
-    case themes
-    case radio
-    case qibla
+    case schedule
     case notifications
+    case qibla
+    case radio
 
     var id: String { rawValue }
 
     var title: String {
         switch self {
-        case .themes:
-            return "الثيم"
+        case .schedule:
+            return "مواقيت"
         case .radio:
             return "الراديو"
         case .qibla:

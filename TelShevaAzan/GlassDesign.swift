@@ -176,19 +176,19 @@ struct ThemeGlassSurface: View {
         case .quiet:
             return theme.isNightTheme ? 0.20 : 0.24
         case .regular:
-            return theme.isNightTheme ? 0.28 : 0.34
+            return theme.isNightTheme ? 0.18 : 0.22
         case .strong:
-            return theme.isNightTheme ? 0.36 : 0.42
+            return theme.isNightTheme ? 0.24 : 0.30
         }
     }
 
     private var highlightGradient: LinearGradient {
         LinearGradient(
             colors: [
-                Color.white.opacity(theme.isNightTheme ? 0.28 : 0.50),
-                Color.white.opacity(theme.isNightTheme ? 0.07 : 0.16),
-                theme.accent.opacity(theme.isNightTheme ? 0.13 : 0.10),
-                Color.white.opacity(theme.isNightTheme ? 0.04 : 0.12)
+                Color.white.opacity(theme.isNightTheme ? 0.20 : 0.34),
+                Color.white.opacity(theme.isNightTheme ? 0.05 : 0.11),
+                theme.accent.opacity(theme.isNightTheme ? 0.08 : 0.06),
+                Color.white.opacity(theme.isNightTheme ? 0.03 : 0.08)
             ],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
@@ -219,7 +219,7 @@ struct ThemeGlassSurface: View {
     }
 
     private var shadowColor: Color {
-        theme.isNightTheme ? Color.black.opacity(0.20) : Color(red: 0.10, green: 0.26, blue: 0.32).opacity(0.08)
+        theme.isNightTheme ? Color.black.opacity(0.14) : Color(red: 0.10, green: 0.26, blue: 0.32).opacity(0.05)
     }
 
     private var shadowRadius: CGFloat {
@@ -227,9 +227,9 @@ struct ThemeGlassSurface: View {
         case .quiet:
             return 0
         case .regular:
-            return 4
+            return 2
         case .strong:
-            return 8
+            return 5
         }
     }
 
@@ -238,9 +238,9 @@ struct ThemeGlassSurface: View {
         case .quiet:
             return 0
         case .regular:
-            return 3
+            return 2
         case .strong:
-            return 5
+            return 3
         }
     }
 }

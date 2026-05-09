@@ -42,6 +42,7 @@ enum PrayerVisualTheme: String, CaseIterable, Identifiable {
     case nightCalendar
     case nightGlass
     case nightDawnGlass
+    case nightSakinaGlass
     case dayMint
     case dayPearl
     case daySky
@@ -49,14 +50,15 @@ enum PrayerVisualTheme: String, CaseIterable, Identifiable {
     case dayAqua
     case dayGlass
     case dayDawnGlass
+    case dayOasisGlass
     case dayRose
 
     var id: String { rawValue }
 
     static let defaultNight: PrayerVisualTheme = .nightEmerald
     static let defaultDay: PrayerVisualTheme = .dayMint
-    static let nightChoices: [PrayerVisualTheme] = [.nightDawnGlass, .nightGlass, .nightOld, .nightEmerald, .nightMidnight, .nightAmber, .nightCalendar]
-    static let dayChoices: [PrayerVisualTheme] = [.dayDawnGlass, .dayGlass, .dayMint, .dayPearl, .daySky, .dayOlive, .dayAqua]
+    static let nightChoices: [PrayerVisualTheme] = [.nightSakinaGlass, .nightDawnGlass, .nightGlass, .nightOld, .nightEmerald, .nightMidnight, .nightAmber, .nightCalendar]
+    static let dayChoices: [PrayerVisualTheme] = [.dayOasisGlass, .dayDawnGlass, .dayGlass, .dayMint, .dayPearl, .daySky, .dayOlive, .dayAqua]
 
     static func selected(isNight: Bool, nightID: String, dayID: String) -> PrayerVisualTheme {
         let choices = isNight ? Self.nightChoices : Self.dayChoices
@@ -82,6 +84,8 @@ enum PrayerVisualTheme: String, CaseIterable, Identifiable {
             return "زجاج الليل"
         case .nightDawnGlass:
             return "زجاج المدار"
+        case .nightSakinaGlass:
+            return "زجاج السكينة"
         case .dayMint:
             return "ندى الصباح"
         case .dayPearl:
@@ -96,6 +100,8 @@ enum PrayerVisualTheme: String, CaseIterable, Identifiable {
             return "زجاج النهار"
         case .dayDawnGlass:
             return "زجاج الشروق"
+        case .dayOasisGlass:
+            return "زجاج الواحة"
         case .dayRose:
             return "ورد هادئ"
         }
@@ -123,6 +129,8 @@ enum PrayerVisualTheme: String, CaseIterable, Identifiable {
             return "circle.hexagongrid.fill"
         case .nightDawnGlass:
             return "sparkles"
+        case .nightSakinaGlass:
+            return "moon.stars.fill"
         case .dayMint:
             return "leaf.fill"
         case .dayPearl:
@@ -137,6 +145,8 @@ enum PrayerVisualTheme: String, CaseIterable, Identifiable {
             return "sparkles"
         case .dayDawnGlass:
             return "sun.max.fill"
+        case .dayOasisGlass:
+            return "leaf.fill"
         case .dayRose:
             return "camera.macro"
         }
@@ -144,15 +154,15 @@ enum PrayerVisualTheme: String, CaseIterable, Identifiable {
 
     var isNightTheme: Bool {
         switch self {
-        case .nightOld, .nightEmerald, .nightMidnight, .nightAmber, .nightViolet, .nightCalendar, .nightGlass, .nightDawnGlass:
+        case .nightOld, .nightEmerald, .nightMidnight, .nightAmber, .nightViolet, .nightCalendar, .nightGlass, .nightDawnGlass, .nightSakinaGlass:
             return true
-        case .dayMint, .dayPearl, .daySky, .dayOlive, .dayAqua, .dayGlass, .dayDawnGlass, .dayRose:
+        case .dayMint, .dayPearl, .daySky, .dayOlive, .dayAqua, .dayGlass, .dayDawnGlass, .dayOasisGlass, .dayRose:
             return false
         }
     }
 
     var isGlassTheme: Bool {
-        self == .nightGlass || self == .dayGlass || self == .nightDawnGlass || self == .dayDawnGlass
+        self == .nightGlass || self == .dayGlass || self == .nightDawnGlass || self == .dayDawnGlass || self == .nightSakinaGlass || self == .dayOasisGlass
     }
 
     var palette: ThemePalette {
@@ -319,6 +329,30 @@ enum PrayerVisualTheme: String, CaseIterable, Identifiable {
                 controlPressedBackground: Color(red: 0.26, green: 0.24, blue: 0.17).opacity(0.90),
                 controlBorder: .white.opacity(0.26)
             )
+        case .nightSakinaGlass:
+            return ThemePalette(
+                appBackground: [
+                    Color(red: 0.005, green: 0.020, blue: 0.022),
+                    Color(red: 0.018, green: 0.095, blue: 0.088),
+                    Color(red: 0.012, green: 0.035, blue: 0.052),
+                    Color(red: 0.115, green: 0.078, blue: 0.020)
+                ],
+                widgetBackground: [Color(red: 0.020, green: 0.090, blue: 0.088), Color(red: 0.006, green: 0.020, blue: 0.026)],
+                accent: Color(red: 1.00, green: 0.78, blue: 0.36),
+                primaryText: .white,
+                secondaryText: Color(red: 0.76, green: 0.94, blue: 0.89),
+                mutedText: .white.opacity(0.84),
+                panelBackground: Color.white.opacity(0.118),
+                countdownBackground: Color(red: 0.50, green: 0.34, blue: 0.10).opacity(0.96),
+                rowBackground: Color.white.opacity(0.078),
+                activeRowBackground: Color(red: 0.80, green: 0.58, blue: 0.20).opacity(0.22),
+                rowBorder: .white.opacity(0.16),
+                activeRowBorder: Color(red: 1.00, green: 0.78, blue: 0.36).opacity(0.62),
+                chipBackground: .white.opacity(0.14),
+                controlBackground: .white.opacity(0.13),
+                controlPressedBackground: .white.opacity(0.08),
+                controlBorder: .white.opacity(0.23)
+            )
         case .dayMint:
             return ThemePalette(
                 appBackground: [Color(red: 0.95, green: 0.93, blue: 0.88), Color(red: 0.90, green: 0.96, blue: 0.94)],
@@ -461,6 +495,30 @@ enum PrayerVisualTheme: String, CaseIterable, Identifiable {
                 controlBackground: .white.opacity(0.82),
                 controlPressedBackground: .white.opacity(0.60),
                 controlBorder: .white.opacity(0.92)
+            )
+        case .dayOasisGlass:
+            return ThemePalette(
+                appBackground: [
+                    Color(red: 0.900, green: 0.985, blue: 0.980),
+                    Color(red: 0.990, green: 0.980, blue: 0.900),
+                    Color(red: 0.780, green: 0.925, blue: 0.885),
+                    Color(red: 0.740, green: 0.900, blue: 0.955)
+                ],
+                widgetBackground: [Color(red: 0.870, green: 0.975, blue: 0.960), Color(red: 0.900, green: 0.955, blue: 0.875)],
+                accent: Color(red: 0.020, green: 0.345, blue: 0.405),
+                primaryText: Color(red: 0.000, green: 0.075, blue: 0.088),
+                secondaryText: Color(red: 0.105, green: 0.355, blue: 0.375),
+                mutedText: Color(red: 0.090, green: 0.250, blue: 0.285).opacity(0.88),
+                panelBackground: Color.white.opacity(0.70),
+                countdownBackground: Color(red: 0.025, green: 0.315, blue: 0.390).opacity(0.95),
+                rowBackground: Color.white.opacity(0.58),
+                activeRowBackground: Color(red: 0.050, green: 0.410, blue: 0.475).opacity(0.18),
+                rowBorder: .white.opacity(0.82),
+                activeRowBorder: Color(red: 0.020, green: 0.345, blue: 0.405).opacity(0.50),
+                chipBackground: .white.opacity(0.68),
+                controlBackground: .white.opacity(0.72),
+                controlPressedBackground: .white.opacity(0.54),
+                controlBorder: .white.opacity(0.84)
             )
         case .dayRose:
             return ThemePalette(
