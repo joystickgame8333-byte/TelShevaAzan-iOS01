@@ -76,7 +76,16 @@ struct TelShevaAzanWidgetView: View {
     }
 
     private var theme: PrayerVisualTheme {
-        PrayerVisualTheme.selected(isNight: isNight, nightID: selectedNightThemeID, dayID: selectedDayThemeID)
+        let selectedTheme = PrayerVisualTheme.selected(isNight: isNight, nightID: selectedNightThemeID, dayID: selectedDayThemeID)
+
+        switch selectedTheme {
+        case .nightDawnGlass:
+            return .nightGlass
+        case .dayDawnGlass:
+            return .dayGlass
+        default:
+            return selectedTheme
+        }
     }
 
     private var accent: Color {

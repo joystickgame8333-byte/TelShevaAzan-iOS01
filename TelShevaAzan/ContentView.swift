@@ -81,6 +81,7 @@ struct ContentView: View {
         }
         .onAppear {
             notifications.refreshIfEnabled()
+            WidgetCenter.shared.reloadAllTimelines()
         }
         .onReceive(NotificationCenter.default.publisher(for: PrayerNotificationManager.openSettingsNotification)) { _ in
             isNotificationSettingsPresented = true
