@@ -154,7 +154,7 @@ struct ContentView: View {
             .foregroundStyle(activeTheme.accent)
             .padding(.horizontal, 8)
             .padding(.vertical, 7)
-            .background(activeTheme.controlBackground)
+            .background(glassSurface(activeTheme.controlBackground, radius: 8))
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
                     .stroke(activeTheme.controlBorder)
@@ -179,7 +179,7 @@ struct ContentView: View {
             .foregroundStyle(activeTheme.accent)
             .padding(.horizontal, 8)
             .padding(.vertical, 7)
-            .background(activeTheme.controlBackground)
+            .background(glassSurface(activeTheme.controlBackground, radius: 8))
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
                     .stroke(activeTheme.controlBorder)
@@ -204,7 +204,7 @@ struct ContentView: View {
             .foregroundStyle(activeTheme.accent)
             .padding(.horizontal, 8)
             .padding(.vertical, 7)
-            .background(activeTheme.controlBackground)
+            .background(glassSurface(activeTheme.controlBackground, radius: 8))
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
                     .stroke(activeTheme.controlBorder)
@@ -229,7 +229,7 @@ struct ContentView: View {
             .foregroundStyle(activeTheme.accent)
             .padding(.horizontal, 8)
             .padding(.vertical, 7)
-            .background(activeTheme.controlBackground)
+            .background(glassSurface(activeTheme.controlBackground, radius: 8))
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
                     .stroke(activeTheme.controlBorder)
@@ -254,7 +254,7 @@ struct ContentView: View {
             .foregroundStyle(activeTheme.accent)
             .padding(.horizontal, 8)
             .padding(.vertical, 7)
-            .background(activeTheme.controlBackground)
+            .background(glassSurface(activeTheme.controlBackground, radius: 8))
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
                     .stroke(activeTheme.controlBorder)
@@ -307,7 +307,7 @@ struct ContentView: View {
         }
         .padding(.vertical, 8)
         .frame(width: width, alignment: .trailing)
-        .background(activeTheme.panelBackground.opacity(0.98))
+        .background(glassSurface(activeTheme.panelBackground.opacity(activeTheme.isGlassTheme ? 0.82 : 0.98), radius: 12))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
                 .stroke(activeTheme.controlBorder)
@@ -416,7 +416,7 @@ struct ContentView: View {
         }
         .frame(maxWidth: .infinity, alignment: .trailing)
         .padding(compact ? 12 : 14)
-        .background(activeTheme.panelBackground)
+        .background(glassSurface(activeTheme.panelBackground, radius: 8))
         .clipShape(RoundedRectangle(cornerRadius: 8))
         .shadow(color: .black.opacity(isNight ? 0.22 : 0.06), radius: 12, y: 6)
     }
@@ -459,7 +459,7 @@ struct ContentView: View {
             .foregroundStyle(activeTheme.primaryText)
             .padding(.horizontal, 12)
             .padding(.vertical, 9)
-            .background(activeTheme.controlBackground)
+            .background(glassSurface(activeTheme.controlBackground, radius: 8))
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
                     .stroke(activeTheme.controlBorder)
@@ -503,7 +503,7 @@ struct ContentView: View {
         .lineLimit(1)
         .padding(.horizontal, 12)
         .frame(height: rowHeight)
-        .background(rowBackground(isActive: item.key == activeKey))
+        .background(glassSurface(rowBackground(isActive: item.key == activeKey), radius: 8))
         .overlay(
             RoundedRectangle(cornerRadius: 8)
                 .stroke(rowBorder(isActive: item.key == activeKey))
@@ -549,12 +549,40 @@ struct ContentView: View {
     }
 
     private var background: some View {
-        LinearGradient(
-            colors: activeTheme.appBackground,
-            startPoint: .topTrailing,
-            endPoint: .bottomLeading
-        )
+        ZStack {
+            LinearGradient(
+                colors: activeTheme.appBackground,
+                startPoint: .topTrailing,
+                endPoint: .bottomLeading
+            )
+
+            if activeTheme.isGlassTheme {
+                LinearGradient(
+                    colors: [
+                        Color.white.opacity(activeTheme.isNightTheme ? 0.05 : 0.42),
+                        Color.clear,
+                        activeTheme.accent.opacity(activeTheme.isNightTheme ? 0.13 : 0.18)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+
+                LinearGradient(
+                    colors: [
+                        Color.clear,
+                        activeTheme.primaryText.opacity(activeTheme.isNightTheme ? 0.00 : 0.045),
+                        Color.clear
+                    ],
+                    startPoint: .topTrailing,
+                    endPoint: .bottomLeading
+                )
+            }
+        }
         .ignoresSafeArea()
+    }
+
+    private func glassSurface(_ base: Color, radius: CGFloat, pressed: Bool = false) -> some View {
+        LiquidGlassSurface(theme: activeTheme, base: base, cornerRadius: radius, pressed: pressed)
     }
 
     private func countdownText(for next: PrayerTime?) -> String {
@@ -614,12 +642,71 @@ private struct CompactButtonStyle: ButtonStyle {
             .foregroundStyle(theme.primaryText)
             .padding(.horizontal, 12)
             .padding(.vertical, 9)
-            .background(configuration.isPressed ? theme.controlPressedBackground : theme.controlBackground)
+            .background(
+                LiquidGlassSurface(
+                    theme: theme,
+                    base: configuration.isPressed ? theme.controlPressedBackground : theme.controlBackground,
+                    cornerRadius: 8,
+                    pressed: configuration.isPressed
+                )
+            )
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
                     .stroke(theme.controlBorder)
             )
             .clipShape(RoundedRectangle(cornerRadius: 8))
+    }
+}
+
+private struct LiquidGlassSurface: View {
+    let theme: PrayerVisualTheme
+    let base: Color
+    let cornerRadius: CGFloat
+    let pressed: Bool
+
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                .fill(base)
+
+            if theme.isGlassTheme {
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .fill(material)
+                    .opacity(theme.isNightTheme ? 0.20 : 0.42)
+
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Color.white.opacity(theme.isNightTheme ? 0.30 : 0.72),
+                                Color.white.opacity(theme.isNightTheme ? 0.06 : 0.20),
+                                theme.accent.opacity(theme.isNightTheme ? 0.18 : 0.12)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .opacity(pressed ? 0.28 : 0.44)
+
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .strokeBorder(
+                        LinearGradient(
+                            colors: [
+                                Color.white.opacity(theme.isNightTheme ? 0.34 : 0.82),
+                                theme.accent.opacity(theme.isNightTheme ? 0.30 : 0.24),
+                                Color.white.opacity(theme.isNightTheme ? 0.08 : 0.42)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 1
+                    )
+            }
+        }
+    }
+
+    private var material: Material {
+        theme.isNightTheme ? .ultraThinMaterial : .thinMaterial
     }
 }
 
