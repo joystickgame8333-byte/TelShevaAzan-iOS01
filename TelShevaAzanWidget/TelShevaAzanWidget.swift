@@ -49,6 +49,8 @@ struct TelShevaAzanWidgetView: View {
         Group {
             if isLockScreenFamily {
                 lockScreenLayout
+            } else if presentation == .countdown {
+                countdownHomeLayout
             } else if presentation == .schedule {
                 scheduleHomeLayout
             } else {
@@ -190,6 +192,25 @@ struct TelShevaAzanWidgetView: View {
                 largeScheduleLayout
             default:
                 mediumScheduleLayout
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(widgetBackground)
+        .widgetContainerBackground {
+            widgetBackground
+        }
+    }
+
+    private var countdownHomeLayout: some View {
+        ZStack {
+            widgetBackground
+                .ignoresSafeArea()
+
+            switch family {
+            case .systemMedium:
+                mediumCountdownLayout
+            default:
+                smallCountdownLayout
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -416,6 +437,117 @@ struct TelShevaAzanWidgetView: View {
         .padding(16)
     }
 
+    private var smallCountdownLayout: some View {
+        VStack(alignment: .trailing, spacing: 6) {
+            HStack(spacing: 5) {
+                Spacer(minLength: 0)
+
+                Text("عداد الصلاة")
+                    .font(.system(size: 11, weight: .black, design: .rounded))
+                    .lineLimit(1)
+
+                Image(systemName: "hourglass.circle.fill")
+                    .font(.system(size: 12, weight: .black, design: .rounded))
+            }
+            .foregroundColor(secondaryText)
+            .frame(maxWidth: .infinity, alignment: .trailing)
+
+            Spacer(minLength: 1)
+
+            Text("باقي على \(nextTitle)")
+                .font(.system(size: 13, weight: .black, design: .rounded))
+                .foregroundColor(secondaryText)
+                .lineLimit(1)
+                .minimumScaleFactor(0.72)
+                .frame(maxWidth: .infinity, alignment: .trailing)
+
+            Text(compactRemainingValue)
+                .font(.system(size: 39, weight: .black, design: .rounded).monospacedDigit())
+                .foregroundColor(accent)
+                .lineLimit(1)
+                .minimumScaleFactor(0.62)
+                .frame(maxWidth: .infinity, alignment: .trailing)
+
+            countdownProgressBar(height: 7)
+
+            Text("\(nextTime) · \(nextTitle)")
+                .font(.system(size: 11, weight: .black, design: .rounded).monospacedDigit())
+                .foregroundColor(primaryText)
+                .lineLimit(1)
+                .minimumScaleFactor(0.72)
+                .frame(maxWidth: .infinity, alignment: .trailing)
+
+            Text(compactElapsedText)
+                .font(.system(size: 8, weight: .bold, design: .rounded))
+                .foregroundColor(secondaryText.opacity(0.76))
+                .lineLimit(1)
+                .minimumScaleFactor(0.66)
+                .frame(maxWidth: .infinity, alignment: .trailing)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
+        .multilineTextAlignment(.trailing)
+        .environment(\.layoutDirection, .leftToRight)
+        .padding(11)
+    }
+
+    private var mediumCountdownLayout: some View {
+        HStack(alignment: .center, spacing: 12) {
+            VStack(alignment: .trailing, spacing: 8) {
+                Text("عداد الصلاة")
+                    .font(.system(size: 13, weight: .black, design: .rounded))
+                    .foregroundColor(accent)
+                    .lineLimit(1)
+
+                Text("باقي على \(nextTitle)")
+                    .font(.system(size: 12, weight: .black, design: .rounded))
+                    .foregroundColor(secondaryText)
+                    .lineLimit(1)
+
+                Text(compactRemainingValue)
+                    .font(.system(size: 40, weight: .black, design: .rounded).monospacedDigit())
+                    .foregroundColor(accent)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.72)
+
+                countdownProgressBar(height: 8)
+
+                Text(compactElapsedText)
+                    .font(.system(size: 9, weight: .bold, design: .rounded))
+                    .foregroundColor(secondaryText.opacity(0.78))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.72)
+            }
+            .frame(maxWidth: .infinity, alignment: .trailing)
+
+            VStack(alignment: .trailing, spacing: 6) {
+                Image(systemName: "hourglass.circle.fill")
+                    .font(.system(size: 26, weight: .black, design: .rounded))
+                    .foregroundColor(accent)
+
+                Text(nextTitle)
+                    .font(.system(size: 25, weight: .black, design: .rounded))
+                    .foregroundColor(primaryText)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.72)
+
+                Text(nextTime)
+                    .font(.system(size: 30, weight: .black, design: .rounded).monospacedDigit())
+                    .foregroundColor(primaryText)
+                    .lineLimit(1)
+
+                Text("تل السبع")
+                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                    .foregroundColor(secondaryText.opacity(0.80))
+                    .lineLimit(1)
+            }
+            .frame(width: 104, alignment: .trailing)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .multilineTextAlignment(.trailing)
+        .environment(\.layoutDirection, .leftToRight)
+        .padding(12)
+    }
+
     private func remainingChip(fontSize: CGFloat) -> some View {
         VStack(alignment: .trailing, spacing: 1) {
             Text("باقي على الصلاة")
@@ -441,6 +573,29 @@ struct TelShevaAzanWidgetView: View {
         let minutes = max((seconds + 59) / 60, 1)
 
         return hourMinuteText(fromMinutes: minutes)
+    }
+
+    private var prayerProgress: CGFloat {
+        guard let previous = entry.previousPrayer, let next = entry.nextPrayer else { return 0 }
+        let total = max(next.date.timeIntervalSince(previous.date), 1)
+        let elapsed = min(max(entry.date.timeIntervalSince(previous.date), 0), total)
+
+        return CGFloat(elapsed / total)
+    }
+
+    private func countdownProgressBar(height: CGFloat) -> some View {
+        GeometryReader { proxy in
+            ZStack(alignment: .trailing) {
+                Capsule()
+                    .fill(chipBackground.opacity(0.64))
+
+                Capsule()
+                    .fill(accent)
+                    .frame(width: max(height, proxy.size.width * prayerProgress))
+                    .shadow(color: accent.opacity(0.24), radius: 5)
+            }
+        }
+        .frame(height: height)
     }
 
     private func hourMinuteText(fromMinutes minutes: Int) -> String {
@@ -576,6 +731,7 @@ struct TelShevaAzanWidgetView: View {
 enum TelShevaWidgetPresentation {
     case nextPrayer
     case schedule
+    case countdown
 }
 
 @main
@@ -586,6 +742,7 @@ struct TelShevaAzanWidgetBundle: WidgetBundle {
 #else
         TelShevaAzanWidget()
         TelShevaAzanScheduleWidget()
+        TelShevaAzanCountdownWidget()
 #endif
     }
 }
@@ -622,8 +779,8 @@ struct TelShevaAzanLegacyWidget: Widget {
             TelShevaAzanWidgetView(entry: entry)
                 .environment(\.layoutDirection, .rightToLeft)
         }
-        .configurationDisplayName("الصلاة القادمة")
-        .description("توافق مع الودجت السابق.")
+        .configurationDisplayName("الصلاة القادمة الاحتياطي")
+        .description("توافق مع الودجت السابق حتى لا يظهر الودجت القديم باللون الأسود.")
         .supportedFamilies([.systemSmall, .systemMedium, .accessoryInline, .accessoryCircular, .accessoryRectangular])
     }
 }
@@ -639,6 +796,20 @@ struct TelShevaAzanScheduleWidget: Widget {
         .configurationDisplayName("جدول الصلاة")
         .description("ودجت جديد يعرض مواقيت اليوم والصلاة القادمة.")
         .supportedFamilies([.systemMedium, .systemLarge])
+    }
+}
+
+struct TelShevaAzanCountdownWidget: Widget {
+    let kind = "com.omaralasam.telshevaazan.countdown.v1"
+
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: kind, provider: TelShevaWidgetProvider()) { entry in
+            TelShevaAzanWidgetView(entry: entry, presentation: .countdown)
+                .environment(\.layoutDirection, .rightToLeft)
+        }
+        .configurationDisplayName("عداد الصلاة")
+        .description("ودجت زجاجي يركز على الوقت المتبقي للصلاة القادمة.")
+        .supportedFamilies([.systemSmall, .systemMedium])
     }
 }
 

@@ -1,5 +1,4 @@
 import SwiftUI
-import WidgetKit
 
 @main
 struct TelShevaAzanApp: App {
@@ -8,7 +7,7 @@ struct TelShevaAzanApp: App {
             ContentView()
                 .environment(\.layoutDirection, .rightToLeft)
                 .onAppear {
-                    WidgetCenter.shared.reloadAllTimelines()
+                    WidgetRefreshCenter.refreshAll()
                 }
         }
     }

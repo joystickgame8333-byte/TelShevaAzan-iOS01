@@ -1,8 +1,8 @@
 import SwiftUI
-import WidgetKit
 
 struct ContentView: View {
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.scenePhase) private var scenePhase
     @AppStorage(AppThemeStorage.nightThemeKey, store: AppThemeStorage.defaults) private var selectedNightThemeID = PrayerVisualTheme.defaultNight.rawValue
     @AppStorage(AppThemeStorage.dayThemeKey, store: AppThemeStorage.defaults) private var selectedDayThemeID = PrayerVisualTheme.defaultDay.rawValue
     @State private var now = Date()
@@ -74,14 +74,21 @@ struct ContentView: View {
             }
         }
         .onChange(of: selectedNightThemeID) { _ in
-            WidgetCenter.shared.reloadAllTimelines()
+            WidgetRefreshCenter.refreshAll()
         }
         .onChange(of: selectedDayThemeID) { _ in
-            WidgetCenter.shared.reloadAllTimelines()
+            WidgetRefreshCenter.refreshAll()
+        }
+        .onChange(of: scenePhase) { phase in
+            if phase == .active {
+                WidgetRefreshCenter.refreshAll()
+                WidgetRefreshCenter.refreshAgainSoon()
+            }
         }
         .onAppear {
             notifications.refreshIfEnabled()
-            WidgetCenter.shared.reloadAllTimelines()
+            WidgetRefreshCenter.refreshAll()
+            WidgetRefreshCenter.refreshAgainSoon()
         }
         .onReceive(NotificationCenter.default.publisher(for: PrayerNotificationManager.openSettingsNotification)) { _ in
             isNotificationSettingsPresented = true
@@ -310,6 +317,12 @@ struct ContentView: View {
                 ) { theme in
                     selectTheme(theme)
                 }
+
+                Divider()
+                    .background(activeTheme.controlBorder)
+                    .padding(.vertical, 4)
+
+                widgetRefreshButton
             }
             .padding(.vertical, 8)
         }
@@ -342,7 +355,7 @@ struct ContentView: View {
             ForEach(themes) { theme in
                 Button {
                     select(theme)
-                    WidgetCenter.shared.reloadAllTimelines()
+                    WidgetRefreshCenter.refreshAll()
                     withAnimation(.easeInOut(duration: 0.18)) {
                         isThemePickerPresented = false
                     }
@@ -374,6 +387,46 @@ struct ContentView: View {
             }
         }
         .multilineTextAlignment(.trailing)
+    }
+
+    private var widgetRefreshButton: some View {
+        Button {
+            WidgetRefreshCenter.refreshAll()
+            WidgetRefreshCenter.refreshAgainSoon()
+            withAnimation(.easeInOut(duration: 0.18)) {
+                isThemePickerPresented = false
+            }
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "arrow.clockwise.circle.fill")
+                    .font(.system(size: 19, weight: .black))
+                    .frame(width: 26, alignment: .leading)
+
+                Spacer(minLength: 16)
+
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text("تحديث الويجت")
+                        .font(.headline.weight(.black))
+                        .lineLimit(1)
+
+                    Text("بديل سريع عن إعادة تشغيل الهاتف")
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(activeTheme.secondaryText.opacity(0.78))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.78)
+                }
+                .frame(maxWidth: .infinity, alignment: .trailing)
+                .environment(\.layoutDirection, .rightToLeft)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .environment(\.layoutDirection, .leftToRight)
+            .foregroundStyle(activeTheme.accent)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+            .background(themeOptionBackground(isSelected: false))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 
     private func nextPrayerPanel(next: PrayerTime?, previous: PrayerTime?, compact: Bool) -> some View {
@@ -647,11 +700,8 @@ struct ContentView: View {
         }
 
         AppThemeStorage.defaults.synchronize()
-        WidgetCenter.shared.reloadAllTimelines()
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-            WidgetCenter.shared.reloadAllTimelines()
-        }
+        WidgetRefreshCenter.refreshAll()
+        WidgetRefreshCenter.refreshAgainSoon()
     }
 }
 
