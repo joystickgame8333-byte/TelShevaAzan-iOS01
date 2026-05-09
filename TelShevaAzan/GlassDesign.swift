@@ -46,6 +46,24 @@ struct ThemeBackdrop: View {
     }
 
     private var glassVeilColors: [Color] {
+        if theme == .nightDawnGlass {
+            return [
+                Color.white.opacity(0.06),
+                Color.clear,
+                Color(red: 0.10, green: 0.34, blue: 0.32).opacity(0.20),
+                theme.accent.opacity(0.10)
+            ]
+        }
+
+        if theme == .dayDawnGlass {
+            return [
+                Color.white.opacity(0.64),
+                Color(red: 0.80, green: 0.96, blue: 0.98).opacity(0.20),
+                Color.clear,
+                Color(red: 0.70, green: 0.90, blue: 0.80).opacity(0.22)
+            ]
+        }
+
         if theme.isNightTheme {
             return [
                 Color.white.opacity(0.08),

@@ -59,7 +59,11 @@ struct ContentView: View {
                 .clipped()
 
                 if isThemePickerPresented {
-                    themePickerOverlay(width: min(proxy.size.width - 32, 330), topOffset: compactHeight ? 148 : 162)
+                    themePickerOverlay(
+                        width: min(proxy.size.width - 32, 330),
+                        topOffset: compactHeight ? 148 : 162,
+                        availableHeight: proxy.size.height
+                    )
                 }
             }
         }
@@ -265,9 +269,9 @@ struct ContentView: View {
         .environment(\.layoutDirection, .rightToLeft)
     }
 
-    private func themePickerOverlay(width: CGFloat, topOffset: CGFloat) -> some View {
-        ZStack(alignment: .topLeading) {
-            Color.black.opacity(0.001)
+    private func themePickerOverlay(width: CGFloat, topOffset: CGFloat, availableHeight: CGFloat) -> some View {
+        ZStack(alignment: .topTrailing) {
+            themePickerScrim
                 .ignoresSafeArea()
                 .onTapGesture {
                     withAnimation(.easeInOut(duration: 0.18)) {
@@ -275,45 +279,48 @@ struct ContentView: View {
                     }
                 }
 
-            themePickerPanel(width: width)
+            themePickerPanel(width: width, maxHeight: max(360, availableHeight - topOffset - 28))
                 .padding(.top, topOffset)
-                .padding(.leading, 16)
-                .transition(.opacity.combined(with: .scale(scale: 0.98, anchor: .topLeading)))
+                .padding(.trailing, 16)
+                .transition(.opacity.combined(with: .scale(scale: 0.98, anchor: .topTrailing)))
         }
         .zIndex(10)
     }
 
-    private func themePickerPanel(width: CGFloat) -> some View {
-        VStack(alignment: .trailing, spacing: 0) {
-            themeSection(
-                title: "أنماط الليل",
-                themes: PrayerVisualTheme.nightChoices,
-                selectedID: selectedNightThemeID
-            ) { theme in
-                selectTheme(theme)
-            }
+    private func themePickerPanel(width: CGFloat, maxHeight: CGFloat) -> some View {
+        ScrollView(.vertical, showsIndicators: false) {
+            VStack(alignment: .trailing, spacing: 0) {
+                themeSection(
+                    title: "أنماط الليل",
+                    themes: PrayerVisualTheme.nightChoices,
+                    selectedID: selectedNightThemeID
+                ) { theme in
+                    selectTheme(theme)
+                }
 
-            Divider()
-                .background(activeTheme.controlBorder)
-                .padding(.vertical, 4)
+                Divider()
+                    .background(activeTheme.controlBorder)
+                    .padding(.vertical, 4)
 
-            themeSection(
-                title: "أنماط النهار",
-                themes: PrayerVisualTheme.dayChoices,
-                selectedID: selectedDayThemeID
-            ) { theme in
-                selectTheme(theme)
+                themeSection(
+                    title: "أنماط النهار",
+                    themes: PrayerVisualTheme.dayChoices,
+                    selectedID: selectedDayThemeID
+                ) { theme in
+                    selectTheme(theme)
+                }
             }
+            .padding(.vertical, 8)
         }
-        .padding(.vertical, 8)
         .frame(width: width, alignment: .trailing)
-        .background(glassSurface(activeTheme.panelBackground.opacity(activeTheme.isGlassTheme ? 0.90 : 0.98), radius: 12, prominence: .strong))
+        .frame(maxHeight: maxHeight)
+        .background(glassSurface(themePickerPanelFill, radius: 12, prominence: .strong))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
                 .stroke(activeTheme.controlBorder)
         )
         .clipShape(RoundedRectangle(cornerRadius: 12))
-        .shadow(color: .black.opacity(0.26), radius: 18, y: 8)
+        .shadow(color: .black.opacity(activeTheme.isNightTheme ? 0.30 : 0.10), radius: 10, y: 5)
         .environment(\.layoutDirection, .rightToLeft)
     }
 
@@ -358,8 +365,8 @@ struct ContentView: View {
                     .environment(\.layoutDirection, .leftToRight)
                     .foregroundStyle(selectedID == theme.rawValue ? activeTheme.accent : activeTheme.primaryText)
                     .padding(.horizontal, 14)
-                    .padding(.vertical, 11)
-                    .background(selectedID == theme.rawValue ? activeTheme.activeRowBackground : Color.clear)
+                    .padding(.vertical, 9)
+                    .background(themeOptionBackground(isSelected: selectedID == theme.rawValue))
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
@@ -546,6 +553,38 @@ struct ContentView: View {
 
     private func rowBorder(isActive: Bool) -> Color {
         isActive ? activeTheme.activeRowBorder : activeTheme.rowBorder
+    }
+
+    private var themePickerScrim: Color {
+        if activeTheme.isNightTheme {
+            return Color.black.opacity(activeTheme.isGlassTheme ? 0.22 : 0.14)
+        }
+
+        return Color.white.opacity(activeTheme.isGlassTheme ? 0.34 : 0.18)
+    }
+
+    private var themePickerPanelFill: Color {
+        if activeTheme.isGlassTheme {
+            if activeTheme.isNightTheme {
+                return Color(red: 0.06, green: 0.08, blue: 0.08).opacity(0.96)
+            }
+
+            return Color(red: 0.94, green: 0.98, blue: 0.98).opacity(0.96)
+        }
+
+        return activeTheme.panelBackground.opacity(0.98)
+    }
+
+    private func themeOptionBackground(isSelected: Bool) -> Color {
+        if isSelected {
+            return activeTheme.activeRowBackground
+        }
+
+        if activeTheme.isGlassTheme {
+            return activeTheme.rowBackground.opacity(activeTheme.isNightTheme ? 0.72 : 0.58)
+        }
+
+        return Color.clear
     }
 
     private var background: some View {
