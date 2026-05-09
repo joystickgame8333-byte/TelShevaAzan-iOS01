@@ -334,12 +334,12 @@ struct TelShevaAzanWidgetView: View {
             .frame(maxWidth: .infinity, alignment: .trailing)
 
             VStack(alignment: .trailing, spacing: 5) {
-                Text("Ø¬Ø¯ÙˆÙ„ Ø§Ù„ÙŠÙˆÙ…")
+                Text("جدول اليوم")
                     .font(.system(size: 15, weight: .black, design: .rounded))
                     .foregroundColor(accent)
                     .lineLimit(1)
 
-                Text("ØªÙ„ Ø§Ù„Ø³Ø¨Ø¹")
+                Text("تل السبع")
                     .font(.system(size: 20, weight: .black, design: .rounded))
                     .foregroundColor(primaryText)
                     .lineLimit(1)
@@ -377,12 +377,12 @@ struct TelShevaAzanWidgetView: View {
                 Spacer(minLength: 8)
 
                 VStack(alignment: .trailing, spacing: 2) {
-                    Text("Ø¬Ø¯ÙˆÙ„ ØµÙ„Ø§Ø© Ø§Ù„ÙŠÙˆÙ…")
+                    Text("جدول صلاة اليوم")
                         .font(.system(size: 15, weight: .black, design: .rounded))
                         .foregroundColor(accent)
                         .lineLimit(1)
 
-                    Text("Ø£Ø°Ø§Ù† ØªÙ„ Ø§Ù„Ø³Ø¨Ø¹")
+                    Text("أذان تل السبع")
                         .font(.system(size: 24, weight: .black, design: .rounded))
                         .foregroundColor(primaryText)
                         .lineLimit(1)
@@ -403,7 +403,7 @@ struct TelShevaAzanWidgetView: View {
 
             Spacer(minLength: 0)
 
-            Text("Ù…ÙˆØ§Ù‚ÙŠØª Ù…Ø­Ù„ÙŠØ© Â· v\(AppInfo.displayVersion)")
+            Text("مواقيت محلية · \(AppInfo.displayVersion)")
                 .font(.system(size: 11, weight: .bold, design: .rounded).monospacedDigit())
                 .foregroundColor(secondaryText.opacity(0.82))
                 .lineLimit(1)
@@ -581,9 +581,12 @@ enum TelShevaWidgetPresentation {
 @main
 struct TelShevaAzanWidgetBundle: WidgetBundle {
     var body: some Widget {
-        TelShevaAzanWidget()
+#if WIDGET_V3
         TelShevaAzanLegacyWidget()
+#else
+        TelShevaAzanWidget()
         TelShevaAzanScheduleWidget()
+#endif
     }
 }
 
@@ -619,8 +622,8 @@ struct TelShevaAzanLegacyWidget: Widget {
             TelShevaAzanWidgetView(entry: entry)
                 .environment(\.layoutDirection, .rightToLeft)
         }
-        .configurationDisplayName("Ø§Ù„ØµÙ„Ø§Ø© Ø§Ù„Ù‚Ø§Ø¯Ù…Ø©")
-        .description("ØªÙˆØ§ÙÙ‚ Ù…Ø¹ Ø§Ù„ÙˆØ¯Ø¬Øª Ø§Ù„Ø³Ø§Ø¨Ù‚.")
+        .configurationDisplayName("الصلاة القادمة")
+        .description("توافق مع الودجت السابق.")
         .supportedFamilies([.systemSmall, .systemMedium, .accessoryInline, .accessoryCircular, .accessoryRectangular])
     }
 }
@@ -633,8 +636,8 @@ struct TelShevaAzanScheduleWidget: Widget {
             TelShevaAzanWidgetView(entry: entry, presentation: .schedule)
                 .environment(\.layoutDirection, .rightToLeft)
         }
-        .configurationDisplayName("Ø¬Ø¯ÙˆÙ„ Ø§Ù„ØµÙ„Ø§Ø©")
-        .description("ÙˆØ¯Ø¬Øª Ø¬Ø¯ÙŠØ¯ ÙŠØ¹Ø±Ø¶ Ù…ÙˆØ§Ù‚ÙŠØª Ø§Ù„ÙŠÙˆÙ… ÙˆØ§Ù„ØµÙ„Ø§Ø© Ø§Ù„Ù‚Ø§Ø¯Ù…Ø©.")
+        .configurationDisplayName("جدول الصلاة")
+        .description("ودجت جديد يعرض مواقيت اليوم والصلاة القادمة.")
         .supportedFamilies([.systemMedium, .systemLarge])
     }
 }

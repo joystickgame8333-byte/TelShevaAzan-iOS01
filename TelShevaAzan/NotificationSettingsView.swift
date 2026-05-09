@@ -9,29 +9,29 @@ struct NotificationSettingsView: View {
 
     var body: some View {
         GeometryReader { proxy in
-            let compactHeight = proxy.size.height < 820
+            let compactHeight = proxy.size.height < 760
 
             ZStack {
                 ThemeBackdrop(theme: theme)
 
-                VStack(alignment: .trailing, spacing: compactHeight ? 9 : 11) {
+                VStack(alignment: .trailing, spacing: compactHeight ? 12 : 16) {
                     header
                     pageSelector
 
                     ScrollView(showsIndicators: false) {
-                        VStack(alignment: .trailing, spacing: compactHeight ? 10 : 13) {
+                        VStack(alignment: .trailing, spacing: compactHeight ? 14 : 18) {
                             if selectedPage == .adhan {
                                 adhanSettings
                             } else {
                                 nafahatSettings
                             }
                         }
-                        .padding(.bottom, proxy.safeAreaInsets.bottom + 18)
+                        .padding(.bottom, proxy.safeAreaInsets.bottom + 28)
                         .frame(maxWidth: .infinity, alignment: .topTrailing)
                     }
                 }
                 .padding(.horizontal, 18)
-                .padding(.top, proxy.safeAreaInsets.top + (compactHeight ? 8 : 14))
+                .padding(.top, proxy.safeAreaInsets.top + (compactHeight ? 12 : 18))
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
             }
         }
@@ -61,9 +61,9 @@ struct NotificationSettingsView: View {
 
             VStack(alignment: .trailing, spacing: 4) {
                 Text("تنبيهات الأذان")
-                    .font(.system(size: 34, weight: .black, design: .rounded))
+                    .font(.system(size: 31, weight: .black, design: .rounded))
                     .lineLimit(1)
-                    .minimumScaleFactor(0.66)
+                    .minimumScaleFactor(0.72)
                     .frame(maxWidth: .infinity, alignment: .trailing)
 
                 Text("الأذان ونَفَحات الذكر في نافذة واحدة")
@@ -85,6 +85,7 @@ struct NotificationSettingsView: View {
         }
         .frame(maxWidth: .infinity, alignment: .topTrailing)
         .environment(\.layoutDirection, .leftToRight)
+        .padding(.top, 2)
     }
 
     private func notificationPageButton(_ page: NotificationSettingsPage) -> some View {
@@ -103,8 +104,8 @@ struct NotificationSettingsView: View {
             .environment(\.layoutDirection, .rightToLeft)
             .font(.caption.weight(.black))
             .foregroundStyle(selectedPage == page ? theme.primaryText : theme.secondaryText.opacity(0.82))
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 9)
             .background(glassSurface(selectedPage == page ? theme.countdownBackground : theme.controlBackground, radius: 8, prominence: selectedPage == page ? .strong : .regular))
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
@@ -116,7 +117,7 @@ struct NotificationSettingsView: View {
     }
 
     private var adhanSettings: some View {
-        VStack(alignment: .trailing, spacing: 12) {
+        VStack(alignment: .trailing, spacing: 16) {
             masterPanel
             soundPanel
             prayerPanel
@@ -125,7 +126,7 @@ struct NotificationSettingsView: View {
     }
 
     private var nafahatSettings: some View {
-        VStack(alignment: .trailing, spacing: 12) {
+        VStack(alignment: .trailing, spacing: 16) {
             nafahatMasterPanel
             nafahatPreviewPanel
             nafahatIntervalPanel
@@ -472,7 +473,7 @@ struct NotificationSettingsView: View {
                     .minimumScaleFactor(0.70)
             }
         }
-        .padding(14)
+        .padding(16)
         .frame(maxWidth: .infinity, alignment: .trailing)
         .background(glassSurface(settingsPanelFill, radius: 8, prominence: .strong))
         .overlay(
@@ -483,7 +484,7 @@ struct NotificationSettingsView: View {
     }
 
     private func panel<Content: View>(title: String, @ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .trailing, spacing: 10) {
+        VStack(alignment: .trailing, spacing: 12) {
             Text(title)
                 .font(.caption.weight(.bold))
                 .foregroundStyle(theme.accent)
@@ -491,7 +492,7 @@ struct NotificationSettingsView: View {
 
             content()
         }
-        .padding(14)
+        .padding(16)
         .frame(maxWidth: .infinity, alignment: .trailing)
         .background(glassSurface(settingsPanelFill, radius: 8, prominence: .regular))
         .overlay(
@@ -525,7 +526,7 @@ struct NotificationSettingsView: View {
             }
             .frame(maxWidth: .infinity, alignment: .trailing)
         }
-        .padding(.vertical, 8)
+        .padding(.vertical, 10)
         .padding(.horizontal, 8)
         .background(glassSurface(selected ? theme.activeRowBackground : settingsRowFill, radius: 8, prominence: selected ? .regular : .quiet))
         .clipShape(RoundedRectangle(cornerRadius: 8))
