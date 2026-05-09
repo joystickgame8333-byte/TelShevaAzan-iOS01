@@ -43,11 +43,14 @@ struct TelShevaAzanWidgetView: View {
     @Environment(\.widgetFamily) private var family
     @Environment(\.colorScheme) private var colorScheme
     let entry: TelShevaWidgetEntry
+    var presentation: TelShevaWidgetPresentation = .nextPrayer
 
     var body: some View {
         Group {
             if isLockScreenFamily {
                 lockScreenLayout
+            } else if presentation == .schedule {
+                scheduleHomeLayout
             } else {
                 homeScreenLayout
             }
@@ -168,6 +171,25 @@ struct TelShevaAzanWidgetView: View {
                 mediumHomeLayout
             default:
                 smallHomeLayout
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(widgetBackground)
+        .widgetContainerBackground {
+            widgetBackground
+        }
+    }
+
+    private var scheduleHomeLayout: some View {
+        ZStack {
+            widgetBackground
+                .ignoresSafeArea()
+
+            switch family {
+            case .systemLarge:
+                largeScheduleLayout
+            default:
+                mediumScheduleLayout
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -302,6 +324,98 @@ struct TelShevaAzanWidgetView: View {
         .padding(10)
     }
 
+    private var mediumScheduleLayout: some View {
+        HStack(alignment: .top, spacing: 12) {
+            VStack(spacing: 3) {
+                ForEach(Array(entry.times.prefix(6))) { item in
+                    schedulePrayerRow(item, height: 21)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .trailing)
+
+            VStack(alignment: .trailing, spacing: 5) {
+                Text("Ø¬Ø¯ÙˆÙ„ Ø§Ù„ÙŠÙˆÙ…")
+                    .font(.system(size: 15, weight: .black, design: .rounded))
+                    .foregroundColor(accent)
+                    .lineLimit(1)
+
+                Text("ØªÙ„ Ø§Ù„Ø³Ø¨Ø¹")
+                    .font(.system(size: 20, weight: .black, design: .rounded))
+                    .foregroundColor(primaryText)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+
+                remainingChip(fontSize: 11)
+                    .padding(.top, 2)
+
+                Text("\(nextTitle) \(nextTime)")
+                    .font(.system(size: 12, weight: .black, design: .rounded).monospacedDigit())
+                    .foregroundColor(secondaryText.opacity(0.90))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.76)
+
+                Spacer(minLength: 0)
+
+                Text("v\(AppInfo.build)")
+                    .font(.system(size: 9, weight: .bold, design: .rounded).monospacedDigit())
+                    .foregroundColor(secondaryText.opacity(0.72))
+                    .lineLimit(1)
+            }
+            .frame(width: 108, alignment: .trailing)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .multilineTextAlignment(.trailing)
+        .environment(\.layoutDirection, .leftToRight)
+        .padding(10)
+    }
+
+    private var largeScheduleLayout: some View {
+        VStack(alignment: .trailing, spacing: 10) {
+            HStack(alignment: .top, spacing: 10) {
+                remainingChip(fontSize: 13)
+
+                Spacer(minLength: 8)
+
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text("Ø¬Ø¯ÙˆÙ„ ØµÙ„Ø§Ø© Ø§Ù„ÙŠÙˆÙ…")
+                        .font(.system(size: 15, weight: .black, design: .rounded))
+                        .foregroundColor(accent)
+                        .lineLimit(1)
+
+                    Text("Ø£Ø°Ø§Ù† ØªÙ„ Ø§Ù„Ø³Ø¨Ø¹")
+                        .font(.system(size: 24, weight: .black, design: .rounded))
+                        .foregroundColor(primaryText)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.72)
+
+                    Text("\(nextTitle) \(nextTime)")
+                        .font(.system(size: 13, weight: .bold, design: .rounded).monospacedDigit())
+                        .foregroundColor(secondaryText.opacity(0.88))
+                        .lineLimit(1)
+                }
+            }
+
+            VStack(spacing: 6) {
+                ForEach(Array(entry.times.prefix(6))) { item in
+                    schedulePrayerRow(item, height: 34)
+                }
+            }
+
+            Spacer(minLength: 0)
+
+            Text("Ù…ÙˆØ§Ù‚ÙŠØª Ù…Ø­Ù„ÙŠØ© Â· v\(AppInfo.displayVersion)")
+                .font(.system(size: 11, weight: .bold, design: .rounded).monospacedDigit())
+                .foregroundColor(secondaryText.opacity(0.82))
+                .lineLimit(1)
+                .minimumScaleFactor(0.72)
+                .frame(maxWidth: .infinity, alignment: .trailing)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+        .multilineTextAlignment(.trailing)
+        .environment(\.layoutDirection, .leftToRight)
+        .padding(16)
+    }
+
     private func remainingChip(fontSize: CGFloat) -> some View {
         VStack(alignment: .trailing, spacing: 1) {
             Text("باقي على الصلاة")
@@ -354,6 +468,32 @@ struct TelShevaAzanWidgetView: View {
         .frame(height: 18)
         .background(isActive ? activeRowBackground : Color.clear)
         .clipShape(RoundedRectangle(cornerRadius: 7))
+    }
+
+    private func schedulePrayerRow(_ item: PrayerTime, height: CGFloat) -> some View {
+        let isActive = item.key == entry.nextPrayer?.key
+
+        return HStack(spacing: 8) {
+            Text(item.time)
+                .font(.system(size: height > 24 ? 18 : 13, weight: .black, design: .rounded).monospacedDigit())
+                .lineLimit(1)
+
+            Spacer(minLength: 4)
+
+            Text(item.title)
+                .font(.system(size: height > 24 ? 18 : 13, weight: .black, design: .rounded))
+                .lineLimit(1)
+                .minimumScaleFactor(0.72)
+        }
+        .foregroundColor(isActive ? accent : mutedText)
+        .padding(.horizontal, height > 24 ? 12 : 8)
+        .frame(height: height)
+        .background(isActive ? activeRowBackground : chipBackground.opacity(0.42))
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(isActive ? accent.opacity(0.58) : secondaryText.opacity(0.16), lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 8))
     }
 
     @ViewBuilder
@@ -433,7 +573,20 @@ struct TelShevaAzanWidgetView: View {
     }
 }
 
+enum TelShevaWidgetPresentation {
+    case nextPrayer
+    case schedule
+}
+
 @main
+struct TelShevaAzanWidgetBundle: WidgetBundle {
+    var body: some Widget {
+        TelShevaAzanWidget()
+        TelShevaAzanLegacyWidget()
+        TelShevaAzanScheduleWidget()
+    }
+}
+
 struct TelShevaAzanWidget: Widget {
     let kind = "com.omaralasam.telshevaazan.nextPrayer.v2"
 
@@ -455,6 +608,34 @@ struct TelShevaAzanWidget: Widget {
             .description("يعرض الصلاة القادمة ووقت الأذان والباقي عليها في تل السبع.")
             .supportedFamilies([.systemSmall, .systemMedium])
         }
+    }
+}
+
+struct TelShevaAzanLegacyWidget: Widget {
+    let kind = "com.omaralasam.telshevaazan.nextPrayer.v3"
+
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: kind, provider: TelShevaWidgetProvider()) { entry in
+            TelShevaAzanWidgetView(entry: entry)
+                .environment(\.layoutDirection, .rightToLeft)
+        }
+        .configurationDisplayName("Ø§Ù„ØµÙ„Ø§Ø© Ø§Ù„Ù‚Ø§Ø¯Ù…Ø©")
+        .description("ØªÙˆØ§ÙÙ‚ Ù…Ø¹ Ø§Ù„ÙˆØ¯Ø¬Øª Ø§Ù„Ø³Ø§Ø¨Ù‚.")
+        .supportedFamilies([.systemSmall, .systemMedium, .accessoryInline, .accessoryCircular, .accessoryRectangular])
+    }
+}
+
+struct TelShevaAzanScheduleWidget: Widget {
+    let kind = "com.omaralasam.telshevaazan.dailySchedule.v1"
+
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: kind, provider: TelShevaWidgetProvider()) { entry in
+            TelShevaAzanWidgetView(entry: entry, presentation: .schedule)
+                .environment(\.layoutDirection, .rightToLeft)
+        }
+        .configurationDisplayName("Ø¬Ø¯ÙˆÙ„ Ø§Ù„ØµÙ„Ø§Ø©")
+        .description("ÙˆØ¯Ø¬Øª Ø¬Ø¯ÙŠØ¯ ÙŠØ¹Ø±Ø¶ Ù…ÙˆØ§Ù‚ÙŠØª Ø§Ù„ÙŠÙˆÙ… ÙˆØ§Ù„ØµÙ„Ø§Ø© Ø§Ù„Ù‚Ø§Ø¯Ù…Ø©.")
+        .supportedFamilies([.systemMedium, .systemLarge])
     }
 }
 

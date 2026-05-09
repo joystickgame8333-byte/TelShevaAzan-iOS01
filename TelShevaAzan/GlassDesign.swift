@@ -174,21 +174,21 @@ struct ThemeGlassSurface: View {
     private var highlightOpacity: Double {
         switch prominence {
         case .quiet:
-            return theme.isNightTheme ? 0.24 : 0.30
+            return theme.isNightTheme ? 0.20 : 0.24
         case .regular:
-            return theme.isNightTheme ? 0.32 : 0.40
+            return theme.isNightTheme ? 0.28 : 0.34
         case .strong:
-            return theme.isNightTheme ? 0.42 : 0.50
+            return theme.isNightTheme ? 0.36 : 0.42
         }
     }
 
     private var highlightGradient: LinearGradient {
         LinearGradient(
             colors: [
-                Color.white.opacity(theme.isNightTheme ? 0.34 : 0.64),
-                Color.white.opacity(theme.isNightTheme ? 0.06 : 0.18),
-                theme.accent.opacity(theme.isNightTheme ? 0.14 : 0.10),
-                Color.white.opacity(theme.isNightTheme ? 0.03 : 0.14)
+                Color.white.opacity(theme.isNightTheme ? 0.28 : 0.50),
+                Color.white.opacity(theme.isNightTheme ? 0.07 : 0.16),
+                theme.accent.opacity(theme.isNightTheme ? 0.13 : 0.10),
+                Color.white.opacity(theme.isNightTheme ? 0.04 : 0.12)
             ],
             startPoint: .topLeading,
             endPoint: .bottomTrailing

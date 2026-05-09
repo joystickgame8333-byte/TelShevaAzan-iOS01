@@ -474,7 +474,7 @@ struct NotificationSettingsView: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .trailing)
-        .background(glassSurface(theme.panelBackground, radius: 8, prominence: .strong))
+        .background(glassSurface(settingsPanelFill, radius: 8, prominence: .strong))
         .overlay(
             RoundedRectangle(cornerRadius: 8)
                 .stroke(theme.controlBorder)
@@ -493,7 +493,7 @@ struct NotificationSettingsView: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .trailing)
-        .background(glassSurface(theme.controlBackground, radius: 8))
+        .background(glassSurface(settingsPanelFill, radius: 8, prominence: .regular))
         .overlay(
             RoundedRectangle(cornerRadius: 8)
                 .stroke(theme.controlBorder)
@@ -526,6 +526,9 @@ struct NotificationSettingsView: View {
             .frame(maxWidth: .infinity, alignment: .trailing)
         }
         .padding(.vertical, 8)
+        .padding(.horizontal, 8)
+        .background(glassSurface(selected ? theme.activeRowBackground : settingsRowFill, radius: 8, prominence: selected ? .regular : .quiet))
+        .clipShape(RoundedRectangle(cornerRadius: 8))
         .contentShape(Rectangle())
     }
 
@@ -550,6 +553,9 @@ struct NotificationSettingsView: View {
             .frame(maxWidth: .infinity, alignment: .trailing)
         }
         .padding(.vertical, 10)
+        .padding(.horizontal, 8)
+        .background(glassSurface(isOn.wrappedValue ? theme.activeRowBackground : settingsRowFill, radius: 8, prominence: isOn.wrappedValue ? .regular : .quiet))
+        .clipShape(RoundedRectangle(cornerRadius: 8))
     }
 
     private func todayTime(for key: PrayerKey) -> String {
@@ -572,6 +578,14 @@ struct NotificationSettingsView: View {
 
     private var selectedNafahatIntervalTitle: String {
         (NafahatReminderInterval(rawValue: notifications.nafahatIntervalMinutes) ?? .twoHours).title
+    }
+
+    private var settingsPanelFill: Color {
+        theme.isGlassTheme ? theme.panelBackground.opacity(theme.isNightTheme ? 0.92 : 0.86) : theme.panelBackground
+    }
+
+    private var settingsRowFill: Color {
+        theme.isGlassTheme ? theme.rowBackground.opacity(theme.isNightTheme ? 0.70 : 0.58) : Color.clear
     }
 }
 
