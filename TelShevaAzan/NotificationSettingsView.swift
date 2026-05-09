@@ -12,12 +12,7 @@ struct NotificationSettingsView: View {
             let compactHeight = proxy.size.height < 820
 
             ZStack {
-                LinearGradient(
-                    colors: theme.appBackground,
-                    startPoint: .topTrailing,
-                    endPoint: .bottomLeading
-                )
-                .ignoresSafeArea()
+                ThemeBackdrop(theme: theme)
 
                 VStack(alignment: .trailing, spacing: compactHeight ? 9 : 11) {
                     header
@@ -53,7 +48,7 @@ struct NotificationSettingsView: View {
                 Image(systemName: "xmark")
                     .font(.system(size: 16, weight: .black))
                     .frame(width: 38, height: 38)
-                    .background(theme.controlBackground)
+                    .background(glassSurface(theme.controlBackground, radius: 8))
                     .overlay(
                         RoundedRectangle(cornerRadius: 8)
                             .stroke(theme.controlBorder)
@@ -110,7 +105,7 @@ struct NotificationSettingsView: View {
             .foregroundStyle(selectedPage == page ? theme.primaryText : theme.secondaryText.opacity(0.82))
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
-            .background(selectedPage == page ? theme.countdownBackground : theme.controlBackground)
+            .background(glassSurface(selectedPage == page ? theme.countdownBackground : theme.controlBackground, radius: 8, prominence: selectedPage == page ? .strong : .regular))
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
                     .stroke(selectedPage == page ? theme.activeRowBorder : theme.controlBorder)
@@ -202,7 +197,7 @@ struct NotificationSettingsView: View {
                 .frame(maxWidth: .infinity, alignment: .trailing)
                 .padding(.vertical, 11)
                 .padding(.horizontal, 12)
-                .background(theme.countdownBackground)
+                .background(glassSurface(theme.countdownBackground, radius: 8, prominence: .strong))
                 .overlay(
                     RoundedRectangle(cornerRadius: 8)
                         .stroke(theme.activeRowBorder)
@@ -377,7 +372,7 @@ struct NotificationSettingsView: View {
                 .minimumScaleFactor(0.75)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 9)
-                .background(selected ? theme.countdownBackground : theme.rowBackground)
+                .background(glassSurface(selected ? theme.countdownBackground : theme.rowBackground, radius: 8, prominence: selected ? .regular : .quiet))
                 .overlay(
                     RoundedRectangle(cornerRadius: 8)
                         .stroke(selected ? theme.activeRowBorder : theme.rowBorder)
@@ -447,7 +442,7 @@ struct NotificationSettingsView: View {
             .foregroundStyle(theme.primaryText)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 11)
-            .background(theme.countdownBackground)
+            .background(glassSurface(theme.countdownBackground, radius: 8, prominence: .strong))
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
                     .stroke(theme.activeRowBorder)
@@ -479,7 +474,7 @@ struct NotificationSettingsView: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .trailing)
-        .background(theme.panelBackground)
+        .background(glassSurface(theme.panelBackground, radius: 8, prominence: .strong))
         .overlay(
             RoundedRectangle(cornerRadius: 8)
                 .stroke(theme.controlBorder)
@@ -498,7 +493,7 @@ struct NotificationSettingsView: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .trailing)
-        .background(theme.controlBackground)
+        .background(glassSurface(theme.controlBackground, radius: 8))
         .overlay(
             RoundedRectangle(cornerRadius: 8)
                 .stroke(theme.controlBorder)
@@ -560,6 +555,19 @@ struct NotificationSettingsView: View {
     private func todayTime(for key: PrayerKey) -> String {
         let schedule = PrayerEngine.schedule(for: PrayerEngine.defaultDateKey())
         return schedule.times[key] ?? "--:--"
+    }
+
+    private func glassSurface(
+        _ base: Color,
+        radius: CGFloat,
+        prominence: GlassProminence = .regular
+    ) -> some View {
+        ThemeGlassSurface(
+            theme: theme,
+            base: base,
+            cornerRadius: radius,
+            prominence: prominence
+        )
     }
 
     private var selectedNafahatIntervalTitle: String {

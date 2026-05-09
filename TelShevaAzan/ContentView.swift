@@ -307,7 +307,7 @@ struct ContentView: View {
         }
         .padding(.vertical, 8)
         .frame(width: width, alignment: .trailing)
-        .background(glassSurface(activeTheme.panelBackground.opacity(activeTheme.isGlassTheme ? 0.82 : 0.98), radius: 12))
+        .background(glassSurface(activeTheme.panelBackground.opacity(activeTheme.isGlassTheme ? 0.90 : 0.98), radius: 12, prominence: .strong))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
                 .stroke(activeTheme.controlBorder)
@@ -416,7 +416,7 @@ struct ContentView: View {
         }
         .frame(maxWidth: .infinity, alignment: .trailing)
         .padding(compact ? 12 : 14)
-        .background(glassSurface(activeTheme.panelBackground, radius: 8))
+        .background(glassSurface(activeTheme.panelBackground, radius: 8, prominence: .strong))
         .clipShape(RoundedRectangle(cornerRadius: 8))
         .shadow(color: .black.opacity(isNight ? 0.22 : 0.06), radius: 12, y: 6)
     }
@@ -503,7 +503,7 @@ struct ContentView: View {
         .lineLimit(1)
         .padding(.horizontal, 12)
         .frame(height: rowHeight)
-        .background(glassSurface(rowBackground(isActive: item.key == activeKey), radius: 8))
+        .background(glassSurface(rowBackground(isActive: item.key == activeKey), radius: 8, prominence: item.key == activeKey ? .regular : .quiet))
         .overlay(
             RoundedRectangle(cornerRadius: 8)
                 .stroke(rowBorder(isActive: item.key == activeKey))
@@ -549,40 +549,22 @@ struct ContentView: View {
     }
 
     private var background: some View {
-        ZStack {
-            LinearGradient(
-                colors: activeTheme.appBackground,
-                startPoint: .topTrailing,
-                endPoint: .bottomLeading
-            )
-
-            if activeTheme.isGlassTheme {
-                LinearGradient(
-                    colors: [
-                        Color.white.opacity(activeTheme.isNightTheme ? 0.05 : 0.42),
-                        Color.clear,
-                        activeTheme.accent.opacity(activeTheme.isNightTheme ? 0.13 : 0.18)
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-
-                LinearGradient(
-                    colors: [
-                        Color.clear,
-                        activeTheme.primaryText.opacity(activeTheme.isNightTheme ? 0.00 : 0.045),
-                        Color.clear
-                    ],
-                    startPoint: .topTrailing,
-                    endPoint: .bottomLeading
-                )
-            }
-        }
-        .ignoresSafeArea()
+        ThemeBackdrop(theme: activeTheme)
     }
 
-    private func glassSurface(_ base: Color, radius: CGFloat, pressed: Bool = false) -> some View {
-        LiquidGlassSurface(theme: activeTheme, base: base, cornerRadius: radius, pressed: pressed)
+    private func glassSurface(
+        _ base: Color,
+        radius: CGFloat,
+        pressed: Bool = false,
+        prominence: GlassProminence = .regular
+    ) -> some View {
+        ThemeGlassSurface(
+            theme: activeTheme,
+            base: base,
+            cornerRadius: radius,
+            pressed: pressed,
+            prominence: prominence
+        )
     }
 
     private func countdownText(for next: PrayerTime?) -> String {
@@ -643,11 +625,12 @@ private struct CompactButtonStyle: ButtonStyle {
             .padding(.horizontal, 12)
             .padding(.vertical, 9)
             .background(
-                LiquidGlassSurface(
+                ThemeGlassSurface(
                     theme: theme,
                     base: configuration.isPressed ? theme.controlPressedBackground : theme.controlBackground,
                     cornerRadius: 8,
-                    pressed: configuration.isPressed
+                    pressed: configuration.isPressed,
+                    prominence: .regular
                 )
             )
             .overlay(
@@ -655,58 +638,6 @@ private struct CompactButtonStyle: ButtonStyle {
                     .stroke(theme.controlBorder)
             )
             .clipShape(RoundedRectangle(cornerRadius: 8))
-    }
-}
-
-private struct LiquidGlassSurface: View {
-    let theme: PrayerVisualTheme
-    let base: Color
-    let cornerRadius: CGFloat
-    let pressed: Bool
-
-    var body: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                .fill(base)
-
-            if theme.isGlassTheme {
-                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .fill(material)
-                    .opacity(theme.isNightTheme ? 0.20 : 0.42)
-
-                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color.white.opacity(theme.isNightTheme ? 0.30 : 0.72),
-                                Color.white.opacity(theme.isNightTheme ? 0.06 : 0.20),
-                                theme.accent.opacity(theme.isNightTheme ? 0.18 : 0.12)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .opacity(pressed ? 0.28 : 0.44)
-
-                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .strokeBorder(
-                        LinearGradient(
-                            colors: [
-                                Color.white.opacity(theme.isNightTheme ? 0.34 : 0.82),
-                                theme.accent.opacity(theme.isNightTheme ? 0.30 : 0.24),
-                                Color.white.opacity(theme.isNightTheme ? 0.08 : 0.42)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 1
-                    )
-            }
-        }
-    }
-
-    private var material: Material {
-        theme.isNightTheme ? .ultraThinMaterial : .thinMaterial
     }
 }
 

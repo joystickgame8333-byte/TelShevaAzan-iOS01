@@ -23,12 +23,7 @@ struct QiblaView: View {
             let circleSize = min(proxy.size.width - 54, compactHeight ? 250 : 300)
 
             ZStack {
-                LinearGradient(
-                    colors: theme.appBackground,
-                    startPoint: .topTrailing,
-                    endPoint: .bottomLeading
-                )
-                .ignoresSafeArea()
+                ThemeBackdrop(theme: theme)
 
                 VStack(alignment: .trailing, spacing: compactHeight ? 12 : 16) {
                     header
@@ -77,7 +72,7 @@ struct QiblaView: View {
                 Image(systemName: "xmark")
                     .font(.system(size: 16, weight: .black))
                     .frame(width: 38, height: 38)
-                    .background(theme.controlBackground)
+                    .background(glassSurface(theme.controlBackground, radius: 8))
                     .overlay(
                         RoundedRectangle(cornerRadius: 8)
                             .stroke(theme.controlBorder)
@@ -190,7 +185,7 @@ struct QiblaView: View {
         }
         .frame(maxWidth: .infinity, alignment: .trailing)
         .padding(14)
-        .background(theme.panelBackground)
+        .background(glassSurface(theme.panelBackground, radius: 8, prominence: .strong))
         .overlay(
             RoundedRectangle(cornerRadius: 8)
                 .stroke(theme.controlBorder)
@@ -213,7 +208,7 @@ struct QiblaView: View {
         .frame(maxWidth: .infinity, alignment: .trailing)
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
-        .background(theme.controlBackground)
+        .background(glassSurface(theme.controlBackground, radius: 8))
         .overlay(
             RoundedRectangle(cornerRadius: 8)
                 .stroke(theme.controlBorder)
@@ -292,5 +287,17 @@ struct QiblaView: View {
 
     private func bearingText(_ value: Double) -> String {
         "\(String(format: "%.1f", value))°"
+    }
+    private func glassSurface(
+        _ base: Color,
+        radius: CGFloat,
+        prominence: GlassProminence = .regular
+    ) -> some View {
+        ThemeGlassSurface(
+            theme: theme,
+            base: base,
+            cornerRadius: radius,
+            prominence: prominence
+        )
     }
 }

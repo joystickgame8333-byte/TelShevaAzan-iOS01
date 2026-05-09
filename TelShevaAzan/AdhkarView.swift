@@ -25,12 +25,7 @@ struct AdhkarView: View {
             let compactHeight = proxy.size.height < 760
 
             ZStack {
-                LinearGradient(
-                    colors: theme.appBackground,
-                    startPoint: .topTrailing,
-                    endPoint: .bottomLeading
-                )
-                .ignoresSafeArea()
+                ThemeBackdrop(theme: theme)
 
                 VStack(alignment: .trailing, spacing: compactHeight ? 12 : 16) {
                     header
@@ -63,7 +58,7 @@ struct AdhkarView: View {
                 Image(systemName: "xmark")
                     .font(.system(size: 16, weight: .black))
                     .frame(width: 38, height: 38)
-                    .background(theme.controlBackground)
+                    .background(glassSurface(theme.controlBackground, radius: 8))
                     .overlay(
                         RoundedRectangle(cornerRadius: 8)
                             .stroke(theme.controlBorder)
@@ -130,7 +125,7 @@ struct AdhkarView: View {
                 .foregroundStyle(theme.primaryText)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, compact ? 12 : 14)
-                .background(theme.countdownBackground)
+                .background(glassSurface(theme.countdownBackground, radius: 8, prominence: .strong))
                 .overlay(
                     RoundedRectangle(cornerRadius: 8)
                         .stroke(theme.activeRowBorder)
@@ -166,7 +161,7 @@ struct AdhkarView: View {
             }
         }
         .padding(14)
-        .background(theme.panelBackground)
+        .background(glassSurface(theme.panelBackground, radius: 8, prominence: .strong))
         .overlay(
             RoundedRectangle(cornerRadius: 8)
                 .stroke(theme.controlBorder)
@@ -213,7 +208,7 @@ struct AdhkarView: View {
                         .foregroundStyle(index == selectedPhraseIndex ? theme.accent : theme.primaryText)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 9)
-                        .background(index == selectedPhraseIndex ? theme.activeRowBackground : theme.controlBackground)
+                        .background(glassSurface(index == selectedPhraseIndex ? theme.activeRowBackground : theme.controlBackground, radius: 8, prominence: index == selectedPhraseIndex ? .regular : .quiet))
                         .overlay(
                             RoundedRectangle(cornerRadius: 8)
                                 .stroke(index == selectedPhraseIndex ? theme.activeRowBorder : theme.controlBorder)
@@ -252,7 +247,7 @@ struct AdhkarView: View {
                 .padding(.horizontal, 12)
                 .padding(.vertical, compact ? 9 : 11)
                 .frame(maxWidth: .infinity, alignment: .trailing)
-                .background(theme.rowBackground)
+                .background(glassSurface(theme.rowBackground, radius: 8, prominence: .quiet))
                 .overlay(
                     RoundedRectangle(cornerRadius: 8)
                         .stroke(theme.rowBorder)
@@ -270,6 +265,19 @@ struct AdhkarView: View {
     private func resetCounter() {
         counter = 0
         UINotificationFeedbackGenerator().notificationOccurred(.success)
+    }
+
+    private func glassSurface(
+        _ base: Color,
+        radius: CGFloat,
+        prominence: GlassProminence = .regular
+    ) -> some View {
+        ThemeGlassSurface(
+            theme: theme,
+            base: base,
+            cornerRadius: radius,
+            prominence: prominence
+        )
     }
 }
 
@@ -310,7 +318,14 @@ private struct DhikrSmallButtonStyle: ButtonStyle {
             .foregroundStyle(theme.primaryText)
             .padding(.horizontal, 12)
             .padding(.vertical, 9)
-            .background(configuration.isPressed ? theme.controlPressedBackground : theme.controlBackground)
+            .background(
+                ThemeGlassSurface(
+                    theme: theme,
+                    base: configuration.isPressed ? theme.controlPressedBackground : theme.controlBackground,
+                    cornerRadius: 8,
+                    pressed: configuration.isPressed
+                )
+            )
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
                     .stroke(theme.controlBorder)

@@ -11,12 +11,7 @@ struct QuranRadioView: View {
             let compactHeight = proxy.size.height < 720
 
             ZStack {
-                LinearGradient(
-                    colors: theme.appBackground,
-                    startPoint: .topTrailing,
-                    endPoint: .bottomLeading
-                )
-                .ignoresSafeArea()
+                ThemeBackdrop(theme: theme)
 
                 VStack(alignment: .trailing, spacing: compactHeight ? 14 : 18) {
                     header
@@ -49,7 +44,7 @@ struct QuranRadioView: View {
                 Image(systemName: "xmark")
                     .font(.system(size: 16, weight: .black))
                     .frame(width: 38, height: 38)
-                    .background(theme.controlBackground)
+                    .background(glassSurface(theme.controlBackground, radius: 8))
                     .overlay(
                         RoundedRectangle(cornerRadius: 8)
                             .stroke(theme.controlBorder)
@@ -140,7 +135,7 @@ struct QuranRadioView: View {
         }
         .padding(compact ? 16 : 18)
         .frame(maxWidth: .infinity, alignment: .trailing)
-        .background(theme.panelBackground)
+        .background(glassSurface(theme.panelBackground, radius: 8, prominence: .strong))
         .overlay(
             RoundedRectangle(cornerRadius: 8)
                 .stroke(theme.controlBorder)
@@ -173,7 +168,7 @@ struct QuranRadioView: View {
                 .foregroundStyle(theme.accent)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 9)
-                .background(theme.controlBackground)
+                .background(glassSurface(theme.controlBackground, radius: 8))
                 .overlay(
                     RoundedRectangle(cornerRadius: 8)
                         .stroke(theme.controlBorder)
@@ -184,11 +179,24 @@ struct QuranRadioView: View {
         }
         .frame(maxWidth: .infinity, alignment: .trailing)
         .padding(14)
-        .background(theme.controlBackground)
+        .background(glassSurface(theme.controlBackground, radius: 8))
         .overlay(
             RoundedRectangle(cornerRadius: 8)
                 .stroke(theme.controlBorder)
         )
         .clipShape(RoundedRectangle(cornerRadius: 8))
+    }
+
+    private func glassSurface(
+        _ base: Color,
+        radius: CGFloat,
+        prominence: GlassProminence = .regular
+    ) -> some View {
+        ThemeGlassSurface(
+            theme: theme,
+            base: base,
+            cornerRadius: radius,
+            prominence: prominence
+        )
     }
 }
