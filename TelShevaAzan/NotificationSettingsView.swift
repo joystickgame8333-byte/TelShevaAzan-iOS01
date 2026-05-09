@@ -3,14 +3,13 @@ import SwiftUI
 struct NotificationSettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject private var notifications = PrayerNotificationManager.shared
-    @State private var selectedPage: NotificationSettingsPage = .nafahat
+    @State private var selectedPage: NotificationSettingsPage = .adhan
 
     let theme: PrayerVisualTheme
 
     var body: some View {
         GeometryReader { proxy in
             let compactHeight = proxy.size.height < 820
-            let contentMinHeight = max(proxy.size.height - proxy.safeAreaInsets.top - proxy.safeAreaInsets.bottom, 0)
 
             ZStack {
                 LinearGradient(
@@ -20,22 +19,25 @@ struct NotificationSettingsView: View {
                 )
                 .ignoresSafeArea()
 
-                ScrollView(showsIndicators: false) {
-                    VStack(alignment: .trailing, spacing: compactHeight ? 10 : 13) {
-                        header
-                        pageSelector
+                VStack(alignment: .trailing, spacing: compactHeight ? 9 : 11) {
+                    header
+                    pageSelector
 
-                        if selectedPage == .adhan {
-                            adhanSettings
-                        } else {
-                            nafahatSettings
+                    ScrollView(showsIndicators: false) {
+                        VStack(alignment: .trailing, spacing: compactHeight ? 10 : 13) {
+                            if selectedPage == .adhan {
+                                adhanSettings
+                            } else {
+                                nafahatSettings
+                            }
                         }
+                        .padding(.bottom, proxy.safeAreaInsets.bottom + 18)
+                        .frame(maxWidth: .infinity, alignment: .topTrailing)
                     }
-                    .padding(.horizontal, 18)
-                    .padding(.top, compactHeight ? 18 : 28)
-                    .padding(.bottom, 18)
-                    .frame(maxWidth: .infinity, minHeight: contentMinHeight, alignment: .topTrailing)
                 }
+                .padding(.horizontal, 18)
+                .padding(.top, proxy.safeAreaInsets.top + (compactHeight ? 8 : 14))
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
             }
         }
         .foregroundStyle(theme.primaryText)
