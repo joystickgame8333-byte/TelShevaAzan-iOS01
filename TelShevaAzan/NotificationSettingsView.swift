@@ -9,30 +9,19 @@ struct NotificationSettingsView: View {
 
     var body: some View {
         GeometryReader { proxy in
-            let compactHeight = proxy.size.height < 760
+            let compactHeight = proxy.size.height < 720
 
             ZStack {
                 ThemeBackdrop(theme: theme)
 
-                VStack(alignment: .trailing, spacing: compactHeight ? 12 : 16) {
+                VStack(alignment: .trailing, spacing: compactHeight ? 14 : 18) {
                     header
-                    pageSelector
-
-                    ScrollView(showsIndicators: false) {
-                        VStack(alignment: .trailing, spacing: compactHeight ? 14 : 18) {
-                            if selectedPage == .adhan {
-                                adhanSettings
-                            } else {
-                                nafahatSettings
-                            }
-                        }
-                        .padding(.bottom, proxy.safeAreaInsets.bottom + 28)
-                        .frame(maxWidth: .infinity, alignment: .topTrailing)
-                    }
+                    settingsContent(compact: compactHeight, bottomInset: proxy.safeAreaInsets.bottom)
                 }
                 .padding(.horizontal, 18)
-                .padding(.top, proxy.safeAreaInsets.top + (compactHeight ? 12 : 18))
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+                .padding(.top, 14)
+                .padding(.bottom, 18)
+                .frame(width: proxy.size.width, height: proxy.size.height, alignment: .topTrailing)
             }
         }
         .foregroundStyle(theme.primaryText)
@@ -75,6 +64,26 @@ struct NotificationSettingsView: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .topTrailing)
+    }
+
+    private func settingsContent(compact: Bool, bottomInset: CGFloat) -> some View {
+        VStack(alignment: .trailing, spacing: compact ? 12 : 14) {
+            pageSelector
+
+            ScrollView(showsIndicators: false) {
+                VStack(alignment: .trailing, spacing: compact ? 14 : 18) {
+                    if selectedPage == .adhan {
+                        adhanSettings
+                    } else {
+                        nafahatSettings
+                    }
+                }
+                .padding(.bottom, max(bottomInset, CGFloat(10)))
+                .frame(maxWidth: .infinity, alignment: .topTrailing)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
     }
 
     private var pageSelector: some View {
