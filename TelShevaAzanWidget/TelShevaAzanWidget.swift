@@ -824,31 +824,19 @@ struct TelShevaAzanCountdownWidget: Widget {
 struct PrayerLiveActivityWidget: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: PrayerLiveActivityAttributes.self) { context in
-            PrayerLiveActivityLockScreenView(context: context)
+            Text("SALATI LIVE")
         } dynamicIsland: { context in
             DynamicIsland {
-                DynamicIslandExpandedRegion(.leading) {
-                    PrayerIslandExpandedTimerView(context: context)
-                }
-
-                DynamicIslandExpandedRegion(.trailing) {
-                    PrayerIslandRingIcon(context: context, size: 62)
-                }
-
-                DynamicIslandExpandedRegion(.bottom) {
-                    PrayerIslandBottomView(context: context)
+                DynamicIslandExpandedRegion(.center) {
+                    Text("Live Activity Works")
                 }
             } compactLeading: {
-                PrayerIslandCompactTimer(context: context)
+                Text("SAL")
             } compactTrailing: {
-                PrayerIslandRingIcon(context: context, size: 32)
+                Text("1m")
             } minimal: {
-                PrayerIslandRingIcon(context: context, size: 28)
+                Image(systemName: "bell.fill")
             }
-            .keylineTint(PrayerLiveActivityPalette.islandAccent)
-            .contentMargins(.all, 8, for: .expanded)
-            .contentMargins(.all, 3, for: .compactLeading)
-            .contentMargins(.all, 3, for: .compactTrailing)
         }
     }
 }
