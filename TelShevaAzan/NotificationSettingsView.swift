@@ -275,6 +275,15 @@ struct NotificationSettingsView: View {
                         .lineLimit(4)
                         .minimumScaleFactor(0.72)
                         .fixedSize(horizontal: false, vertical: true)
+
+                    Text(liveActivityCenter.debugText)
+                        .font(.caption2.monospaced().weight(.semibold))
+                        .foregroundStyle(theme.secondaryText.opacity(0.72))
+                        .lineLimit(8)
+                        .minimumScaleFactor(0.68)
+                        .multilineTextAlignment(.leading)
+                        .environment(\.layoutDirection, .leftToRight)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 .frame(maxWidth: .infinity, alignment: .trailing)
                 .padding(.horizontal, 8)
