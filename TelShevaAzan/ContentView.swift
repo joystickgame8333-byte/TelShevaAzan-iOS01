@@ -202,88 +202,112 @@ struct ContentView: View {
     }
 
     private var bottomDock: some View {
-        ZStack {
-            HStack(alignment: .center, spacing: 5) {
+        ZStack(alignment: .bottom) {
+            glassSurface(dockBackgroundFill, radius: 22, prominence: .strong)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 22)
+                        .stroke(activeTheme.controlBorder.opacity(activeTheme.isGlassTheme ? 0.86 : 0.66))
+                )
+                .frame(height: 48)
+
+            HStack(alignment: .bottom, spacing: 0) {
                 dockButton(.radio)
                 dockButton(.qibla)
-                Spacer(minLength: 90)
+                Spacer(minLength: 102)
                 dockButton(.notifications)
             }
-            .frame(maxWidth: .infinity, alignment: .center)
+            .padding(.horizontal, 14)
+            .frame(maxWidth: .infinity, alignment: .bottom)
+            .frame(height: 66, alignment: .bottom)
 
             dockButton(.schedule, prominent: true)
+                .frame(maxWidth: .infinity, alignment: .center)
         }
-        .padding(.horizontal, 6)
-        .padding(.vertical, 4)
         .frame(maxWidth: .infinity)
-        .frame(height: 48)
-        .background(glassSurface(dockBackgroundFill, radius: 17, prominence: .strong))
-        .overlay(
-            RoundedRectangle(cornerRadius: 17)
-                .stroke(activeTheme.controlBorder.opacity(activeTheme.isGlassTheme ? 0.92 : 0.72))
-        )
-        .clipShape(RoundedRectangle(cornerRadius: 17))
-        .shadow(color: .black.opacity(activeTheme.isNightTheme ? 0.16 : 0.05), radius: 6, y: 2)
+        .frame(height: 70, alignment: .bottom)
+        .shadow(color: .black.opacity(activeTheme.isNightTheme ? 0.18 : 0.07), radius: 10, y: 3)
         .environment(\.layoutDirection, .leftToRight)
     }
 
     private func dockButton(_ item: HomeDockItem, prominent: Bool = false) -> some View {
         let selected = selectedDockItem == item
-        let cornerRadius: CGFloat = prominent ? 17 : 14
-        let buttonWidth: CGFloat = prominent ? 86 : 56
-        let buttonHeight: CGFloat = prominent ? 40 : 38
-        let symbolSize: CGFloat = prominent ? 19 : 17
-        let textSize: CGFloat = prominent ? 8.6 : 7.9
+        let selectedWidth: CGFloat = prominent ? 104 : 88
+        let idleWidth: CGFloat = prominent ? 78 : 64
+        let selectedHeight: CGFloat = prominent ? 62 : 58
+        let symbolSize: CGFloat = selected ? 20 : 24
+        let textSize: CGFloat = selected ? (prominent ? 12.5 : 10.2) : 10.5
 
         return Button {
             handleDockTap(item)
         } label: {
-            VStack(spacing: 2) {
-                Image(systemName: dockSymbol(for: item))
-                    .font(.system(size: selected ? symbolSize + 1 : symbolSize, weight: .black, design: .rounded))
-                    .scaleEffect(selected ? 1.08 : 1.0)
-                    .rotationEffect(.degrees(selected ? dockRotation(for: item) : 0))
-                    .offset(y: selected ? -2 : 0)
-                    .symbolRenderingMode(.hierarchical)
-
-                Text(item.title)
-                    .font(.system(size: textSize, weight: selected ? .black : .bold, design: .rounded))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.68)
-            }
-            .frame(width: buttonWidth, height: buttonHeight)
-            .foregroundStyle(selected ? Color.white : activeTheme.secondaryText.opacity(0.84))
-            .background(
-                Group {
-                    if selected {
-                        ZStack {
-                            glassSurface(activeTheme.countdownBackground, radius: cornerRadius, prominence: .strong)
-
-                            RoundedRectangle(cornerRadius: cornerRadius)
-                                .fill(
-                                    LinearGradient(
-                                        colors: [
-                                            Color.white.opacity(activeTheme.isNightTheme ? 0.14 : 0.34),
-                                            Color.white.opacity(0.02)
-                                        ],
-                                        startPoint: .topTrailing,
-                                        endPoint: .bottomLeading
-                                    )
-                                )
-                                .blendMode(.screen)
-                        }
+            ZStack(alignment: .bottom) {
+                if selected {
+                    selectedDockBubble(width: selectedWidth, height: selectedHeight)
                         .matchedGeometryEffect(id: "dockSelection", in: dockSelectionNamespace)
-                    } else {
-                        Color.clear
-                    }
                 }
-            )
-            .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
-            .contentShape(RoundedRectangle(cornerRadius: cornerRadius))
+
+                VStack(spacing: selected ? 3 : 2) {
+                    if selected {
+                        Image(systemName: dockSymbol(for: item))
+                            .font(.system(size: symbolSize, weight: .black, design: .rounded))
+                            .foregroundStyle(activeTheme.accent)
+                            .frame(width: 42, height: 42)
+                            .background(selectedDockIconFill)
+                            .clipShape(Circle())
+                            .overlay(
+                                Circle()
+                                    .stroke(Color.white.opacity(activeTheme.isNightTheme ? 0.38 : 0.82), lineWidth: 1)
+                            )
+                            .shadow(color: .black.opacity(activeTheme.isNightTheme ? 0.18 : 0.08), radius: 5, y: 2)
+                            .offset(y: -5)
+                    } else {
+                        Image(systemName: dockSymbol(for: item))
+                            .font(.system(size: symbolSize, weight: .black, design: .rounded))
+                            .foregroundStyle(activeTheme.secondaryText.opacity(0.86))
+                            .symbolRenderingMode(.hierarchical)
+                    }
+
+                    Text(item.title)
+                        .font(.system(size: textSize, weight: selected ? .black : .bold, design: .rounded))
+                        .foregroundStyle(selected ? Color.white : activeTheme.secondaryText.opacity(0.88))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.70)
+                        .offset(y: selected ? -4 : 0)
+                }
+                .frame(width: selected ? selectedWidth : idleWidth, height: selected ? selectedHeight : 44)
+            }
+            .frame(width: selected ? selectedWidth : idleWidth, height: selected ? 68 : 46, alignment: .bottom)
+            .offset(y: selected ? -8 : 0)
+            .contentShape(RoundedRectangle(cornerRadius: selected ? 24 : 12))
         }
         .buttonStyle(DockButtonPressStyle())
         .animation(.spring(response: 0.34, dampingFraction: 0.70), value: selected)
         .accessibilityLabel(item.title)
+    }
+
+    private func selectedDockBubble(width: CGFloat, height: CGFloat) -> some View {
+        RoundedRectangle(cornerRadius: height * 0.42, style: .continuous)
+            .fill(
+                LinearGradient(
+                    colors: [
+                        activeTheme.accent.opacity(activeTheme.isNightTheme ? 0.95 : 0.90),
+                        activeTheme.accent.opacity(activeTheme.isNightTheme ? 0.72 : 0.78)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: height * 0.42, style: .continuous)
+                    .stroke(Color.white.opacity(activeTheme.isNightTheme ? 0.22 : 0.46), lineWidth: 1)
+            )
+            .shadow(color: activeTheme.accent.opacity(activeTheme.isNightTheme ? 0.22 : 0.24), radius: 9, y: 3)
+            .frame(width: width, height: height)
+    }
+
+    private var selectedDockIconFill: some View {
+        Circle()
+            .fill(activeTheme.isNightTheme ? Color.white.opacity(0.94) : Color.white.opacity(0.98))
     }
 
     private var selectedDockItem: HomeDockItem? {
