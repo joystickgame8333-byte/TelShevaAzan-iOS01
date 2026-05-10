@@ -8,7 +8,6 @@ struct ContentView: View {
     @State private var now = Date()
     @State private var selectedDateKey = PrayerEngine.defaultDateKey()
     @State private var followsToday = true
-    @State private var isThemePickerPresented = false
     @State private var selectedTab: HomeDockItem = .schedule
     @State private var tabTransitionEdge: Edge = .leading
     @Namespace private var dockSelectionNamespace
@@ -26,8 +25,8 @@ struct ContentView: View {
             let compactHeight = proxy.size.height < 720
             let sectionSpacing: CGFloat = compactHeight ? 6 : 8
             let rowSpacing: CGFloat = compactHeight ? 6 : 8
-            let dockBottomPadding = max(proxy.safeAreaInsets.bottom, CGFloat(8))
-            let dockReservedHeight = dockBottomPadding + (compactHeight ? 68 : 78)
+            let dockBottomPadding = max(proxy.safeAreaInsets.bottom * 0.12, CGFloat(3))
+            let dockReservedHeight = proxy.safeAreaInsets.bottom + (compactHeight ? 62 : 70)
             let rowHeight = min(CGFloat(58), max(CGFloat(38), (proxy.size.height - dockReservedHeight - 430) / 6))
 
             ZStack {
@@ -76,19 +75,11 @@ struct ContentView: View {
                 )
                 .animation(.easeInOut(duration: 0.30), value: selectedTab)
 
-                bottomDock(bottomInset: dockBottomPadding)
-                    .padding(.horizontal, 22)
+                bottomDock
+                    .padding(.horizontal, 10)
                     .padding(.bottom, dockBottomPadding)
                     .frame(width: proxy.size.width, height: proxy.size.height, alignment: .bottom)
                     .zIndex(6)
-
-                if isThemePickerPresented {
-                    themePickerOverlay(
-                        width: min(proxy.size.width - 32, 330),
-                        topOffset: compactHeight ? 116 : 132,
-                        availableHeight: proxy.size.height
-                    )
-                }
             }
         }
         .onReceive(timer) { value in
@@ -177,58 +168,24 @@ struct ContentView: View {
     }
 
     private var header: some View {
-        HStack(alignment: .bottom, spacing: 12) {
-            themeMenu
+        VStack(alignment: .trailing, spacing: 3) {
+            Text("أذان تل السبع")
+                .font(.system(size: 28, weight: .black, design: .rounded))
+                .lineLimit(1)
+                .minimumScaleFactor(0.72)
+                .frame(maxWidth: .infinity, alignment: .trailing)
 
-            Spacer(minLength: 10)
-
-            VStack(alignment: .trailing, spacing: 3) {
-                Text("أذان تل السبع")
-                    .font(.system(size: 28, weight: .black, design: .rounded))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.72)
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-
-                Text(PrayerEngine.longDateLabel(for: selectedDateKey))
-                    .font(.caption2.weight(.semibold))
-                    .foregroundStyle(activeTheme.secondaryText.opacity(0.82))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.75)
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-            }
+            Text(PrayerEngine.longDateLabel(for: selectedDateKey))
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(activeTheme.secondaryText.opacity(0.82))
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+                .frame(maxWidth: .infinity, alignment: .trailing)
         }
         .frame(maxWidth: .infinity, alignment: .trailing)
     }
 
-    private var themeMenu: some View {
-        Button {
-            withAnimation(.easeInOut(duration: 0.18)) {
-                isThemePickerPresented.toggle()
-            }
-        } label: {
-            HStack(spacing: 6) {
-                Text(activeTheme.modeTitle)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.75)
-
-                Image(systemName: activeTheme.symbol)
-            }
-            .font(.caption2.weight(.black))
-            .foregroundStyle(activeTheme.accent)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 7)
-            .background(glassSurface(activeTheme.controlBackground, radius: 8))
-            .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(activeTheme.controlBorder)
-            )
-            .clipShape(RoundedRectangle(cornerRadius: 8))
-        }
-        .buttonStyle(.plain)
-        .environment(\.layoutDirection, .rightToLeft)
-    }
-
-    private func bottomDock(bottomInset: CGFloat) -> some View {
+    private var bottomDock: some View {
         HStack(alignment: .center, spacing: 5) {
             ForEach(HomeDockItem.allCases) { item in
                 dockButton(item)
@@ -237,14 +194,14 @@ struct ContentView: View {
         .padding(.horizontal, 5)
         .padding(.vertical, 5)
         .frame(maxWidth: .infinity)
-        .frame(height: 58)
-        .background(glassSurface(dockBackgroundFill, radius: 23, prominence: .strong))
+        .frame(height: 54)
+        .background(glassSurface(dockBackgroundFill, radius: 20, prominence: .strong))
         .overlay(
-            RoundedRectangle(cornerRadius: 23)
+            RoundedRectangle(cornerRadius: 20)
                 .stroke(activeTheme.controlBorder.opacity(activeTheme.isGlassTheme ? 0.92 : 0.72))
         )
-        .clipShape(RoundedRectangle(cornerRadius: 23))
-        .shadow(color: .black.opacity(activeTheme.isNightTheme ? 0.24 : 0.08), radius: 11, y: 5)
+        .clipShape(RoundedRectangle(cornerRadius: 20))
+        .shadow(color: .black.opacity(activeTheme.isNightTheme ? 0.18 : 0.06), radius: 7, y: 2)
         .environment(\.layoutDirection, .rightToLeft)
     }
 
@@ -298,14 +255,13 @@ struct ContentView: View {
                             .clipShape(RoundedRectangle(cornerRadius: 20))
 
                 if item == .notifications && notifications.isEnabled {
-                    Text("✓")
-                        .font(.system(size: 8, weight: .black, design: .rounded))
-                        .foregroundStyle(Color.white)
-                        .frame(width: 15, height: 15)
-                        .background(activeTheme.accent)
+                    Circle()
+                        .fill(activeTheme.accent)
+                        .frame(width: 9, height: 9)
                         .clipShape(Circle())
                         .overlay(Circle().stroke(Color.white.opacity(0.84), lineWidth: 1))
-                        .offset(x: -9, y: 4)
+                        .shadow(color: activeTheme.accent.opacity(0.35), radius: 3)
+                        .offset(x: -14, y: 6)
                 }
             }
             .contentShape(RoundedRectangle(cornerRadius: 20))
@@ -321,16 +277,12 @@ struct ContentView: View {
 
     private func handleDockTap(_ item: HomeDockItem) {
         guard selectedTab != item else {
-            withAnimation(.easeInOut(duration: 0.18)) {
-                isThemePickerPresented = false
-            }
             return
         }
 
         tabTransitionEdge = transitionEdge(from: selectedTab, to: item)
         withAnimation(.easeInOut(duration: 0.30)) {
             selectedTab = item
-            isThemePickerPresented = false
         }
     }
 
@@ -366,158 +318,6 @@ struct ContentView: View {
 
     private func dockRotation(for item: HomeDockItem) -> Double {
         0
-    }
-
-    private func themePickerOverlay(width: CGFloat, topOffset: CGFloat, availableHeight: CGFloat) -> some View {
-        ZStack(alignment: .topTrailing) {
-            themePickerScrim
-                .ignoresSafeArea()
-                .onTapGesture {
-                    withAnimation(.easeInOut(duration: 0.18)) {
-                        isThemePickerPresented = false
-                    }
-                }
-
-            themePickerPanel(width: width, maxHeight: max(360, availableHeight - topOffset - 28))
-                .padding(.top, topOffset)
-                .padding(.trailing, 16)
-                .transition(.opacity.combined(with: .scale(scale: 0.98, anchor: .topTrailing)))
-        }
-        .zIndex(10)
-    }
-
-    private func themePickerPanel(width: CGFloat, maxHeight: CGFloat) -> some View {
-        ScrollView(.vertical, showsIndicators: false) {
-            VStack(alignment: .trailing, spacing: 0) {
-                themeSection(
-                    title: "أنماط الليل",
-                    themes: PrayerVisualTheme.nightChoices,
-                    selectedID: selectedNightThemeID
-                ) { theme in
-                    selectTheme(theme)
-                }
-
-                Divider()
-                    .background(activeTheme.controlBorder)
-                    .padding(.vertical, 4)
-
-                themeSection(
-                    title: "أنماط النهار",
-                    themes: PrayerVisualTheme.dayChoices,
-                    selectedID: selectedDayThemeID
-                ) { theme in
-                    selectTheme(theme)
-                }
-
-                Divider()
-                    .background(activeTheme.controlBorder)
-                    .padding(.vertical, 4)
-
-                widgetRefreshButton
-            }
-            .padding(.vertical, 8)
-        }
-        .frame(width: width, alignment: .trailing)
-        .frame(maxHeight: maxHeight)
-        .background(glassSurface(themePickerPanelFill, radius: 12, prominence: .strong))
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(activeTheme.controlBorder)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-        .shadow(color: .black.opacity(activeTheme.isNightTheme ? 0.30 : 0.10), radius: 10, y: 5)
-        .environment(\.layoutDirection, .rightToLeft)
-    }
-
-    private func themeSection(
-        title: String,
-        themes: [PrayerVisualTheme],
-        selectedID: String,
-        select: @escaping (PrayerVisualTheme) -> Void
-    ) -> some View {
-        VStack(alignment: .trailing, spacing: 0) {
-            Text(title)
-                .font(.caption.weight(.bold))
-                .foregroundStyle(activeTheme.secondaryText.opacity(0.74))
-                .frame(maxWidth: .infinity, alignment: .trailing)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 7)
-
-            ForEach(themes) { theme in
-                Button {
-                    select(theme)
-                    WidgetRefreshCenter.refreshAll()
-                    withAnimation(.easeInOut(duration: 0.18)) {
-                        isThemePickerPresented = false
-                    }
-                } label: {
-                    HStack(spacing: 12) {
-                        Image(systemName: selectedID == theme.rawValue ? "checkmark.circle.fill" : theme.symbol)
-                            .font(.system(size: 18, weight: .bold))
-                            .frame(width: 26, alignment: .leading)
-
-                        Spacer(minLength: 16)
-
-                        Text(theme.title)
-                            .font(.headline.weight(.bold))
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.8)
-                            .multilineTextAlignment(.trailing)
-                            .layoutPriority(1)
-                            .environment(\.layoutDirection, .rightToLeft)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .environment(\.layoutDirection, .leftToRight)
-                    .foregroundStyle(selectedID == theme.rawValue ? activeTheme.accent : activeTheme.primaryText)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 9)
-                    .background(themeOptionBackground(isSelected: selectedID == theme.rawValue))
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-            }
-        }
-        .multilineTextAlignment(.trailing)
-    }
-
-    private var widgetRefreshButton: some View {
-        Button {
-            WidgetRefreshCenter.refreshAll()
-            WidgetRefreshCenter.refreshAgainSoon()
-            withAnimation(.easeInOut(duration: 0.18)) {
-                isThemePickerPresented = false
-            }
-        } label: {
-            HStack(spacing: 12) {
-                Image(systemName: "arrow.clockwise.circle.fill")
-                    .font(.system(size: 19, weight: .black))
-                    .frame(width: 26, alignment: .leading)
-
-                Spacer(minLength: 16)
-
-                VStack(alignment: .trailing, spacing: 2) {
-                    Text("تحديث الويجت")
-                        .font(.headline.weight(.black))
-                        .lineLimit(1)
-
-                    Text("بديل سريع عن إعادة تشغيل الهاتف")
-                        .font(.caption2.weight(.semibold))
-                        .foregroundStyle(activeTheme.secondaryText.opacity(0.78))
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.78)
-                }
-                .frame(maxWidth: .infinity, alignment: .trailing)
-                .environment(\.layoutDirection, .rightToLeft)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .environment(\.layoutDirection, .leftToRight)
-            .foregroundStyle(activeTheme.accent)
-            .padding(.horizontal, 14)
-            .padding(.vertical, 10)
-            .background(themeOptionBackground(isSelected: false))
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
     }
 
     private func nextPrayerPanel(next: PrayerTime?, previous: PrayerTime?, compact: Bool) -> some View {
@@ -700,26 +500,6 @@ struct ContentView: View {
         isActive ? activeTheme.activeRowBorder : activeTheme.rowBorder
     }
 
-    private var themePickerScrim: Color {
-        if activeTheme.isNightTheme {
-            return Color.black.opacity(activeTheme.isGlassTheme ? 0.22 : 0.14)
-        }
-
-        return Color.white.opacity(activeTheme.isGlassTheme ? 0.34 : 0.18)
-    }
-
-    private var themePickerPanelFill: Color {
-        if activeTheme.isGlassTheme {
-            if activeTheme.isNightTheme {
-                return Color(red: 0.06, green: 0.08, blue: 0.08).opacity(0.96)
-            }
-
-            return Color(red: 0.94, green: 0.98, blue: 0.98).opacity(0.96)
-        }
-
-        return activeTheme.panelBackground.opacity(0.98)
-    }
-
     private var dockBackgroundFill: Color {
         if activeTheme.isGlassTheme {
             if activeTheme.isNightTheme {
@@ -730,18 +510,6 @@ struct ContentView: View {
         }
 
         return activeTheme.panelBackground.opacity(0.94)
-    }
-
-    private func themeOptionBackground(isSelected: Bool) -> Color {
-        if isSelected {
-            return activeTheme.activeRowBackground
-        }
-
-        if activeTheme.isGlassTheme {
-            return activeTheme.rowBackground.opacity(activeTheme.isNightTheme ? 0.72 : 0.58)
-        }
-
-        return Color.clear
     }
 
     private var background: some View {
@@ -791,20 +559,6 @@ struct ContentView: View {
         guard let nextKey = PrayerEngine.dateKey(from: selectedDateKey, offset: offset) else { return }
         selectedDateKey = nextKey
         followsToday = false
-    }
-
-    private func selectTheme(_ theme: PrayerVisualTheme) {
-        if theme.isNightTheme {
-            selectedNightThemeID = theme.rawValue
-            AppThemeStorage.defaults.set(theme.rawValue, forKey: AppThemeStorage.nightThemeKey)
-        } else {
-            selectedDayThemeID = theme.rawValue
-            AppThemeStorage.defaults.set(theme.rawValue, forKey: AppThemeStorage.dayThemeKey)
-        }
-
-        AppThemeStorage.defaults.synchronize()
-        WidgetRefreshCenter.refreshAll()
-        WidgetRefreshCenter.refreshAgainSoon()
     }
 
     private func applyVisualRefreshThemeOnce() {

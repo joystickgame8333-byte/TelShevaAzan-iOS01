@@ -4,6 +4,8 @@ struct NotificationSettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject private var notifications = PrayerNotificationManager.shared
     @State private var selectedPage: NotificationSettingsPage = .adhan
+    @AppStorage(AppThemeStorage.nightThemeKey, store: AppThemeStorage.defaults) private var selectedNightThemeID = PrayerVisualTheme.defaultNight.rawValue
+    @AppStorage(AppThemeStorage.dayThemeKey, store: AppThemeStorage.defaults) private var selectedDayThemeID = PrayerVisualTheme.defaultDay.rawValue
 
     let theme: PrayerVisualTheme
     var isEmbedded = false
@@ -72,7 +74,7 @@ struct NotificationSettingsView: View {
                     .minimumScaleFactor(0.72)
                     .frame(maxWidth: .infinity, alignment: .trailing)
 
-                Text("الأذان ونَفَحات الذكر في نافذة واحدة")
+                Text("الأذان ونَفَحات الذكر والأنماط في مكان واحد")
                     .font(.caption.weight(.bold))
                     .foregroundStyle(theme.accent)
                     .lineLimit(1)
@@ -91,6 +93,8 @@ struct NotificationSettingsView: View {
                 LazyVStack(alignment: .trailing, spacing: compact ? 14 : 18) {
                     if selectedPage == .adhan {
                         adhanSettings
+                    } else if selectedPage == .appearance {
+                        appearanceSettings
                     } else {
                         nafahatSettings
                     }
@@ -106,6 +110,7 @@ struct NotificationSettingsView: View {
     private var pageSelector: some View {
         HStack(spacing: 8) {
             Spacer(minLength: 0)
+            notificationPageButton(.appearance)
             notificationPageButton(.nafahat)
             notificationPageButton(.adhan)
         }
@@ -158,6 +163,25 @@ struct NotificationSettingsView: View {
             nafahatIntervalPanel
             nafahatTextPanel
             nafahatQuietPanel
+        }
+        .transition(.opacity)
+    }
+
+    private var appearanceSettings: some View {
+        VStack(alignment: .trailing, spacing: 16) {
+            themePalettePanel(
+                title: "أنماط الليل",
+                themes: PrayerVisualTheme.nightChoices,
+                selectedID: selectedNightThemeID
+            )
+
+            themePalettePanel(
+                title: "أنماط النهار",
+                themes: PrayerVisualTheme.dayChoices,
+                selectedID: selectedDayThemeID
+            )
+
+            widgetRefreshPanel
         }
         .transition(.opacity)
     }
@@ -560,34 +584,140 @@ struct NotificationSettingsView: View {
     }
 
     private func prayerToggleRow(_ key: PrayerKey, isOn: Binding<Bool>) -> some View {
-        HStack(spacing: 12) {
-            Toggle("", isOn: isOn)
-                .labelsHidden()
-                .tint(theme.accent)
+        Button {
+            isOn.wrappedValue.toggle()
+        } label: {
+            HStack(spacing: 12) {
+                lightSwitch(isOn: isOn.wrappedValue)
 
-            Spacer(minLength: 12)
+                Spacer(minLength: 12)
 
-            HStack(spacing: 18) {
-                Text(todayTime(for: key))
-                    .font(.headline.monospacedDigit().weight(.black))
-                    .foregroundStyle(theme.secondaryText.opacity(0.82))
-                    .lineLimit(1)
+                HStack(spacing: 18) {
+                    Text(todayTime(for: key))
+                        .font(.headline.monospacedDigit().weight(.black))
+                        .foregroundStyle(theme.secondaryText.opacity(0.82))
+                        .lineLimit(1)
 
-                Text(key.title)
-                    .font(.headline.weight(.bold))
-                    .lineLimit(1)
+                    Text(key.title)
+                        .font(.headline.weight(.bold))
+                        .lineLimit(1)
+                }
+                .frame(maxWidth: .infinity, alignment: .trailing)
             }
-            .frame(maxWidth: .infinity, alignment: .trailing)
+            .padding(.vertical, 10)
+            .padding(.horizontal, 8)
+            .background(glassSurface(isOn.wrappedValue ? theme.activeRowBackground : settingsRowFill, radius: 8, prominence: .quiet))
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .contentShape(RoundedRectangle(cornerRadius: 8))
         }
-        .padding(.vertical, 10)
-        .padding(.horizontal, 8)
-        .background(glassSurface(isOn.wrappedValue ? theme.activeRowBackground : settingsRowFill, radius: 8, prominence: isOn.wrappedValue ? .regular : .quiet))
-        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .buttonStyle(.plain)
+    }
+
+    private func lightSwitch(isOn: Bool) -> some View {
+        Capsule()
+            .fill(isOn ? theme.accent : theme.secondaryText.opacity(theme.isNightTheme ? 0.24 : 0.18))
+            .frame(width: 48, height: 28)
+            .overlay(alignment: isOn ? .trailing : .leading) {
+                Circle()
+                    .fill(Color.white)
+                    .frame(width: 24, height: 24)
+                    .shadow(color: .black.opacity(0.12), radius: 2, y: 1)
+                    .padding(2)
+            }
+            .overlay(
+                Capsule()
+                    .stroke(isOn ? Color.white.opacity(0.30) : theme.controlBorder, lineWidth: 1)
+            )
+            .animation(.easeInOut(duration: 0.16), value: isOn)
+            .accessibilityHidden(true)
     }
 
     private func todayTime(for key: PrayerKey) -> String {
         let schedule = PrayerEngine.schedule(for: PrayerEngine.defaultDateKey())
         return schedule.times[key] ?? "--:--"
+    }
+
+    private func themePalettePanel(title: String, themes: [PrayerVisualTheme], selectedID: String) -> some View {
+        panel(title: title) {
+            LazyVStack(spacing: 0) {
+                ForEach(Array(themes.enumerated()), id: \.element.id) { index, visualTheme in
+                    Button {
+                        selectTheme(visualTheme)
+                    } label: {
+                        optionRow(
+                            title: visualTheme.title,
+                            subtitle: visualThemeSubtitle(for: visualTheme),
+                            symbol: visualTheme.symbol,
+                            selected: selectedID == visualTheme.rawValue
+                        )
+                    }
+                    .buttonStyle(.plain)
+
+                    if index < themes.count - 1 {
+                        Divider()
+                            .background(theme.controlBorder)
+                    }
+                }
+            }
+        }
+    }
+
+    private var widgetRefreshPanel: some View {
+        panel(title: "الويجت") {
+            Button {
+                WidgetRefreshCenter.refreshAll()
+                WidgetRefreshCenter.refreshAgainSoon()
+            } label: {
+                HStack(spacing: 12) {
+                    Image(systemName: "arrow.clockwise.circle.fill")
+                        .font(.system(size: 20, weight: .black))
+                        .foregroundStyle(theme.accent)
+                        .frame(width: 28, alignment: .leading)
+
+                    Spacer(minLength: 12)
+
+                    VStack(alignment: .trailing, spacing: 2) {
+                        Text("تحديث الويجت")
+                            .font(.subheadline.weight(.black))
+                            .lineLimit(1)
+
+                        Text("ينعش الودجت بدون إعادة تشغيل الهاتف")
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(theme.secondaryText.opacity(0.80))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.72)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                }
+                .padding(.vertical, 10)
+                .padding(.horizontal, 8)
+                .background(glassSurface(settingsRowFill, radius: 8, prominence: .quiet))
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    private func selectTheme(_ visualTheme: PrayerVisualTheme) {
+        if visualTheme.isNightTheme {
+            selectedNightThemeID = visualTheme.rawValue
+            AppThemeStorage.defaults.set(visualTheme.rawValue, forKey: AppThemeStorage.nightThemeKey)
+        } else {
+            selectedDayThemeID = visualTheme.rawValue
+            AppThemeStorage.defaults.set(visualTheme.rawValue, forKey: AppThemeStorage.dayThemeKey)
+        }
+
+        AppThemeStorage.defaults.synchronize()
+        WidgetRefreshCenter.refreshAll()
+        WidgetRefreshCenter.refreshAgainSoon()
+    }
+
+    private func visualThemeSubtitle(for visualTheme: PrayerVisualTheme) -> String {
+        if visualTheme == .dayAppleGlass || visualTheme == .nightAppleGlass {
+            return "زجاج هادئ بروح iOS"
+        }
+
+        return visualTheme.isGlassTheme ? "زجاج خفيف ومتناسق" : "نمط كلاسيكي"
     }
 
     private func glassSurface(
@@ -619,6 +749,7 @@ struct NotificationSettingsView: View {
 private enum NotificationSettingsPage: String, CaseIterable, Identifiable {
     case adhan
     case nafahat
+    case appearance
 
     var id: String { rawValue }
 
@@ -628,6 +759,8 @@ private enum NotificationSettingsPage: String, CaseIterable, Identifiable {
             return "الأذان"
         case .nafahat:
             return "نَفَحات"
+        case .appearance:
+            return "الأنماط"
         }
     }
 
@@ -637,6 +770,8 @@ private enum NotificationSettingsPage: String, CaseIterable, Identifiable {
             return "bell.badge.fill"
         case .nafahat:
             return "sparkles"
+        case .appearance:
+            return "paintpalette.fill"
         }
     }
 }
