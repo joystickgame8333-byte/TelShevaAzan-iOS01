@@ -1,4 +1,7 @@
 import Foundation
+#if canImport(ActivityKit)
+import ActivityKit
+#endif
 import SwiftUI
 import WidgetKit
 
@@ -739,6 +742,9 @@ struct TelShevaAzanWidgetBundle: WidgetBundle {
     var body: some Widget {
 #if WIDGET_V3
         TelShevaAzanLegacyWidget()
+        if #available(iOSApplicationExtension 16.1, *) {
+            PrayerLiveActivityWidget()
+        }
 #else
         TelShevaAzanWidget()
         TelShevaAzanScheduleWidget()
@@ -812,6 +818,253 @@ struct TelShevaAzanCountdownWidget: Widget {
         .supportedFamilies([.systemSmall, .systemMedium])
     }
 }
+
+#if WIDGET_V3
+@available(iOSApplicationExtension 16.1, *)
+struct PrayerLiveActivityWidget: Widget {
+    var body: some WidgetConfiguration {
+        ActivityConfiguration(for: PrayerLiveActivityAttributes.self) { context in
+            PrayerLiveActivityLockScreenView(context: context)
+        } dynamicIsland: { context in
+            DynamicIsland {
+                DynamicIslandExpandedRegion(.leading) {
+                    PrayerIslandTimerView(context: context)
+                }
+
+                DynamicIslandExpandedRegion(.trailing) {
+                    PrayerIslandPrayerView(context: context)
+                }
+
+                DynamicIslandExpandedRegion(.bottom) {
+                    PrayerIslandBottomView(context: context)
+                }
+            } compactLeading: {
+                Image(systemName: context.state.phase.systemImage)
+                    .font(.system(size: 13, weight: .black))
+                    .foregroundStyle(.orange)
+            } compactTrailing: {
+                PrayerIslandCompactTimer(context: context)
+            } minimal: {
+                Image(systemName: context.state.phase.systemImage)
+                    .font(.system(size: 12, weight: .black))
+                    .foregroundStyle(.orange)
+            }
+            .keylineTint(.orange)
+        }
+    }
+}
+
+@available(iOSApplicationExtension 16.1, *)
+private struct PrayerLiveActivityLockScreenView: View {
+    @Environment(\.colorScheme) private var colorScheme
+    let context: ActivityViewContext<PrayerLiveActivityAttributes>
+
+    private var palette: PrayerLiveActivityPalette {
+        PrayerLiveActivityPalette(colorScheme: colorScheme)
+    }
+
+    var body: some View {
+        VStack(alignment: .trailing, spacing: 10) {
+            HStack(spacing: 8) {
+                PrayerLiveActivityCountdown(context: context, style: .lockScreen)
+
+                Spacer(minLength: 8)
+
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text(context.state.phase.title)
+                        .font(.caption.weight(.black))
+                        .foregroundStyle(palette.accent)
+
+                    Text(context.attributes.cityName)
+                        .font(.caption2.weight(.bold))
+                        .foregroundStyle(palette.secondary)
+                }
+
+                Image(systemName: context.state.phase.systemImage)
+                    .font(.system(size: 18, weight: .black))
+                    .foregroundStyle(palette.accent)
+                    .frame(width: 34, height: 34)
+                    .background(Circle().fill(palette.chip))
+            }
+
+            HStack(alignment: .lastTextBaseline, spacing: 10) {
+                Text(context.attributes.prayerTime)
+                    .font(.system(size: 30, weight: .black, design: .rounded).monospacedDigit())
+                    .foregroundStyle(palette.accent)
+
+                Spacer(minLength: 10)
+
+                Text(context.attributes.prayerName)
+                    .font(.system(size: 31, weight: .black, design: .rounded))
+                    .foregroundStyle(palette.primary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.70)
+            }
+
+            PrayerIslandBottomView(context: context)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .trailing)
+        .background(
+            LinearGradient(
+                colors: palette.background,
+                startPoint: .topTrailing,
+                endPoint: .bottomLeading
+            )
+        )
+        .activityBackgroundTint(palette.background.first ?? Color.black)
+        .activitySystemActionForegroundColor(palette.accent)
+        .environment(\.layoutDirection, .leftToRight)
+        .multilineTextAlignment(.trailing)
+    }
+}
+
+@available(iOSApplicationExtension 16.1, *)
+private struct PrayerIslandTimerView: View {
+    let context: ActivityViewContext<PrayerLiveActivityAttributes>
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(context.state.phase.shortTitle)
+                .font(.caption2.weight(.black))
+                .foregroundStyle(.secondary)
+
+            PrayerLiveActivityCountdown(context: context, style: .expanded)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+@available(iOSApplicationExtension 16.1, *)
+private struct PrayerIslandPrayerView: View {
+    let context: ActivityViewContext<PrayerLiveActivityAttributes>
+
+    var body: some View {
+        VStack(alignment: .trailing, spacing: 2) {
+            Text(context.attributes.prayerName)
+                .font(.system(size: 20, weight: .black, design: .rounded))
+                .lineLimit(1)
+                .minimumScaleFactor(0.72)
+
+            Text(context.attributes.prayerTime)
+                .font(.caption.monospacedDigit().weight(.black))
+                .foregroundStyle(.orange)
+        }
+        .frame(maxWidth: .infinity, alignment: .trailing)
+        .multilineTextAlignment(.trailing)
+    }
+}
+
+@available(iOSApplicationExtension 16.1, *)
+private struct PrayerIslandBottomView: View {
+    let context: ActivityViewContext<PrayerLiveActivityAttributes>
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: context.attributes.isPreview ? "sparkles" : "clock.badge.checkmark.fill")
+                .font(.system(size: 11, weight: .black))
+                .foregroundStyle(.orange)
+
+            Text(message)
+                .font(.caption2.weight(.bold))
+                .foregroundStyle(.secondary)
+                .lineLimit(2)
+                .minimumScaleFactor(0.74)
+                .frame(maxWidth: .infinity, alignment: .trailing)
+                .multilineTextAlignment(.trailing)
+        }
+        .environment(\.layoutDirection, .leftToRight)
+    }
+
+    private var message: String {
+        switch context.state.phase {
+        case .almostTime:
+            return context.attributes.isPreview ? "معاينة تبدأ قبل الأذان بثلاث دقائق" : "تنبيه هادئ قبل الأذان بثلاث دقائق"
+        case .now:
+            return "حان الآن أذان \(context.attributes.prayerName)"
+        case .adhkar:
+            return "ابدأ أذكار ما بعد الصلاة بهدوء"
+        }
+    }
+}
+
+@available(iOSApplicationExtension 16.1, *)
+private struct PrayerIslandCompactTimer: View {
+    let context: ActivityViewContext<PrayerLiveActivityAttributes>
+
+    var body: some View {
+        PrayerLiveActivityCountdown(context: context, style: .compact)
+    }
+}
+
+@available(iOSApplicationExtension 16.1, *)
+private struct PrayerLiveActivityCountdown: View {
+    enum Style {
+        case compact
+        case expanded
+        case lockScreen
+    }
+
+    let context: ActivityViewContext<PrayerLiveActivityAttributes>
+    let style: Style
+
+    var body: some View {
+        Group {
+            if context.state.phase == .almostTime && Date() < context.attributes.prayerDate {
+                Text(timerInterval: Date()...context.attributes.prayerDate, countsDown: true)
+                    .monospacedDigit()
+            } else {
+                Text(context.state.phase.shortTitle)
+            }
+        }
+        .font(font)
+        .foregroundStyle(foreground)
+        .lineLimit(1)
+        .minimumScaleFactor(0.62)
+    }
+
+    private var font: Font {
+        switch style {
+        case .compact:
+            return .caption2.weight(.black)
+        case .expanded:
+            return .system(size: 20, weight: .black, design: .rounded)
+        case .lockScreen:
+            return .system(size: 18, weight: .black, design: .rounded)
+        }
+    }
+
+    private var foreground: Color {
+        switch style {
+        case .compact:
+            return .white
+        default:
+            return .orange
+        }
+    }
+}
+
+private struct PrayerLiveActivityPalette {
+    let background: [Color]
+    let primary: Color
+    let secondary: Color
+    let accent: Color
+    let chip: Color
+
+    init(colorScheme: ColorScheme) {
+        let isNight = colorScheme == .dark
+        let nightID = AppThemeStorage.defaults.string(forKey: AppThemeStorage.nightThemeKey) ?? PrayerVisualTheme.defaultNight.rawValue
+        let dayID = AppThemeStorage.defaults.string(forKey: AppThemeStorage.dayThemeKey) ?? PrayerVisualTheme.defaultDay.rawValue
+        let theme = PrayerVisualTheme.selected(isNight: isNight, nightID: nightID, dayID: dayID)
+
+        background = theme.widgetBackground
+        primary = theme.primaryText
+        secondary = theme.secondaryText.opacity(0.86)
+        accent = theme.accent
+        chip = theme.chipBackground.opacity(isNight ? 0.84 : 0.72)
+    }
+}
+#endif
 
 private extension View {
     @ViewBuilder
