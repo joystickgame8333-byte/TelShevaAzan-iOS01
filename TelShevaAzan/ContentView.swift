@@ -186,85 +186,84 @@ struct ContentView: View {
     }
 
     private var bottomDock: some View {
-        HStack(alignment: .center, spacing: 5) {
-            ForEach(HomeDockItem.allCases) { item in
-                dockButton(item)
+        ZStack {
+            HStack(alignment: .center, spacing: 5) {
+                dockButton(.radio)
+                dockButton(.qibla)
+                Spacer(minLength: 90)
+                dockButton(.notifications)
             }
+            .frame(maxWidth: .infinity, alignment: .center)
+
+            dockButton(.schedule, prominent: true)
         }
-        .padding(.horizontal, 5)
-        .padding(.vertical, 5)
+        .padding(.horizontal, 6)
+        .padding(.vertical, 4)
         .frame(maxWidth: .infinity)
-        .frame(height: 54)
-        .background(glassSurface(dockBackgroundFill, radius: 20, prominence: .strong))
+        .frame(height: 50)
+        .background(glassSurface(dockBackgroundFill, radius: 18, prominence: .strong))
         .overlay(
-            RoundedRectangle(cornerRadius: 20)
+            RoundedRectangle(cornerRadius: 18)
                 .stroke(activeTheme.controlBorder.opacity(activeTheme.isGlassTheme ? 0.92 : 0.72))
         )
-        .clipShape(RoundedRectangle(cornerRadius: 20))
-        .shadow(color: .black.opacity(activeTheme.isNightTheme ? 0.18 : 0.06), radius: 7, y: 2)
-        .environment(\.layoutDirection, .rightToLeft)
+        .clipShape(RoundedRectangle(cornerRadius: 18))
+        .shadow(color: .black.opacity(activeTheme.isNightTheme ? 0.16 : 0.05), radius: 6, y: 2)
+        .environment(\.layoutDirection, .leftToRight)
     }
 
-    private func dockButton(_ item: HomeDockItem) -> some View {
+    private func dockButton(_ item: HomeDockItem, prominent: Bool = false) -> some View {
         let selected = selectedDockItem == item
+        let cornerRadius: CGFloat = prominent ? 18 : 15
+        let buttonWidth: CGFloat = prominent ? 92 : 60
+        let buttonHeight: CGFloat = prominent ? 42 : 40
+        let symbolSize: CGFloat = prominent ? 19 : 17
+        let textSize: CGFloat = prominent ? 8.8 : 8.1
 
         return Button {
             handleDockTap(item)
         } label: {
-            ZStack(alignment: .topTrailing) {
-                VStack(spacing: 2) {
-                    Image(systemName: dockSymbol(for: item))
-                        .font(.system(size: selected ? 20 : 18, weight: .black, design: .rounded))
-                        .scaleEffect(selected ? 1.08 : 1.0)
-                        .rotationEffect(.degrees(selected ? dockRotation(for: item) : 0))
-                        .offset(y: selected ? -3 : 0)
-                        .symbolRenderingMode(.hierarchical)
+            VStack(spacing: 2) {
+                Image(systemName: dockSymbol(for: item))
+                    .font(.system(size: selected ? symbolSize + 1 : symbolSize, weight: .black, design: .rounded))
+                    .scaleEffect(selected ? 1.08 : 1.0)
+                    .rotationEffect(.degrees(selected ? dockRotation(for: item) : 0))
+                    .offset(y: selected ? -2 : 0)
+                    .symbolRenderingMode(.hierarchical)
 
-                    Text(item.title)
-                        .font(.system(size: 8.5, weight: selected ? .black : .bold, design: .rounded))
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.72)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .foregroundStyle(selected ? activeTheme.accent : activeTheme.secondaryText.opacity(0.84))
-                .background(
-                    Group {
-                        if selected {
-                            ZStack {
-                                glassSurface(activeTheme.countdownBackground, radius: 20, prominence: .strong)
-
-                                RoundedRectangle(cornerRadius: 20)
-                                    .fill(
-                                        LinearGradient(
-                                            colors: [
-                                                Color.white.opacity(activeTheme.isNightTheme ? 0.16 : 0.40),
-                                                Color.white.opacity(0.02)
-                                            ],
-                                            startPoint: .topTrailing,
-                                            endPoint: .bottomLeading
-                                        )
-                                    )
-                                    .blendMode(.screen)
-                            }
-                            .matchedGeometryEffect(id: "dockSelection", in: dockSelectionNamespace)
-                        } else {
-                            Color.clear
-                        }
-                    }
-                )
-                            .clipShape(RoundedRectangle(cornerRadius: 20))
-
-                if item == .notifications && notifications.isEnabled {
-                    Circle()
-                        .fill(activeTheme.accent)
-                        .frame(width: 9, height: 9)
-                        .clipShape(Circle())
-                        .overlay(Circle().stroke(Color.white.opacity(0.84), lineWidth: 1))
-                        .shadow(color: activeTheme.accent.opacity(0.35), radius: 3)
-                        .offset(x: -14, y: 6)
-                }
+                Text(item.title)
+                    .font(.system(size: textSize, weight: selected ? .black : .bold, design: .rounded))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.68)
             }
-            .contentShape(RoundedRectangle(cornerRadius: 20))
+            .frame(width: buttonWidth, height: buttonHeight)
+            .foregroundStyle(selected ? activeTheme.accent : activeTheme.secondaryText.opacity(0.84))
+            .background(
+                Group {
+                    if selected {
+                        ZStack {
+                            glassSurface(activeTheme.countdownBackground, radius: cornerRadius, prominence: .strong)
+
+                            RoundedRectangle(cornerRadius: cornerRadius)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [
+                                            Color.white.opacity(activeTheme.isNightTheme ? 0.14 : 0.34),
+                                            Color.white.opacity(0.02)
+                                        ],
+                                        startPoint: .topTrailing,
+                                        endPoint: .bottomLeading
+                                    )
+                                )
+                                .blendMode(.screen)
+                        }
+                        .matchedGeometryEffect(id: "dockSelection", in: dockSelectionNamespace)
+                    } else {
+                        Color.clear
+                    }
+                }
+            )
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
+            .contentShape(RoundedRectangle(cornerRadius: cornerRadius))
         }
         .buttonStyle(DockButtonPressStyle())
         .animation(.spring(response: 0.34, dampingFraction: 0.70), value: selected)
@@ -585,13 +584,13 @@ private enum HomeDockItem: String, CaseIterable, Identifiable {
 
     var order: Int {
         switch self {
-        case .schedule:
-            return 0
-        case .notifications:
-            return 1
-        case .qibla:
-            return 2
         case .radio:
+            return 0
+        case .qibla:
+            return 1
+        case .schedule:
+            return 2
+        case .notifications:
             return 3
         }
     }

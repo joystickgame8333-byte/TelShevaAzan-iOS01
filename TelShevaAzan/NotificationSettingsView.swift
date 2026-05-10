@@ -4,6 +4,7 @@ struct NotificationSettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject private var notifications = PrayerNotificationManager.shared
     @State private var selectedPage: NotificationSettingsPage = .adhan
+    @State private var isPrayerListExpanded = false
     @AppStorage(AppThemeStorage.nightThemeKey, store: AppThemeStorage.defaults) private var selectedNightThemeID = PrayerVisualTheme.defaultNight.rawValue
     @AppStorage(AppThemeStorage.dayThemeKey, store: AppThemeStorage.defaults) private var selectedDayThemeID = PrayerVisualTheme.defaultDay.rawValue
 
@@ -68,13 +69,13 @@ struct NotificationSettingsView: View {
             Spacer(minLength: 16)
 
             VStack(alignment: .trailing, spacing: 4) {
-                Text("تنبيهات الأذان")
+                Text("التنبيه")
                     .font(.system(size: 31, weight: .black, design: .rounded))
                     .lineLimit(1)
                     .minimumScaleFactor(0.72)
                     .frame(maxWidth: .infinity, alignment: .trailing)
 
-                Text("الأذان ونَفَحات الذكر والأنماط في مكان واحد")
+                Text("الأذان ونَفَحات الذكر والأنماط")
                     .font(.caption.weight(.bold))
                     .foregroundStyle(theme.accent)
                     .lineLimit(1)
@@ -293,23 +294,70 @@ struct NotificationSettingsView: View {
 
     private var prayerPanel: some View {
         panel(title: "الصلوات التي يصدر لها الأذان") {
-            VStack(spacing: 0) {
-                ForEach(Array(PrayerEngine.prayerOrder.enumerated()), id: \.element.id) { index, key in
-                    prayerToggleRow(
-                        key,
-                        isOn: Binding(
-                            get: { notifications.isPrayerEnabled(key) },
-                            set: { notifications.setPrayer(key, enabled: $0) }
-                        )
-                    )
-
-                    if index < PrayerEngine.prayerOrder.count - 1 {
-                        Divider()
-                            .background(theme.controlBorder)
+            VStack(alignment: .trailing, spacing: 0) {
+                Button {
+                    withAnimation(.spring(response: 0.30, dampingFraction: 0.82)) {
+                        isPrayerListExpanded.toggle()
                     }
+                } label: {
+                    HStack(spacing: 12) {
+                        Image(systemName: "chevron.down")
+                            .font(.system(size: 14, weight: .black))
+                            .rotationEffect(.degrees(isPrayerListExpanded ? 0 : 90))
+                            .foregroundStyle(theme.accent)
+                            .frame(width: 32, height: 32)
+                            .background(glassSurface(theme.controlBackground, radius: 8))
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+
+                        Spacer(minLength: 8)
+
+                        VStack(alignment: .trailing, spacing: 3) {
+                            Text(isPrayerListExpanded ? "إخفاء الصلوات" : "عرض الصلوات")
+                                .font(.system(size: 17, weight: .black, design: .rounded))
+                                .foregroundStyle(theme.primaryText)
+
+                            Text("\(enabledPrayerCount) من \(PrayerEngine.prayerOrder.count) مفعّلة")
+                                .font(.caption.weight(.bold))
+                                .foregroundStyle(theme.secondaryText.opacity(0.82))
+                        }
+
+                        Image(systemName: "bell.and.waves.left.and.right.fill")
+                            .font(.system(size: 18, weight: .black))
+                            .foregroundStyle(theme.accent)
+                            .frame(width: 34, height: 34)
+                    }
+                }
+                .buttonStyle(.plain)
+
+                if isPrayerListExpanded {
+                    Divider()
+                        .background(theme.controlBorder)
+                        .padding(.vertical, 8)
+
+                    LazyVStack(spacing: 0) {
+                        ForEach(Array(PrayerEngine.prayerOrder.enumerated()), id: \.element.id) { index, key in
+                            prayerToggleRow(
+                                key,
+                                isOn: Binding(
+                                    get: { notifications.isPrayerEnabled(key) },
+                                    set: { notifications.setPrayer(key, enabled: $0) }
+                                )
+                            )
+
+                            if index < PrayerEngine.prayerOrder.count - 1 {
+                                Divider()
+                                    .background(theme.controlBorder)
+                            }
+                        }
+                    }
+                    .transition(.opacity.combined(with: .move(edge: .top)))
                 }
             }
         }
+    }
+
+    private var enabledPrayerCount: Int {
+        PrayerEngine.prayerOrder.filter { notifications.isPrayerEnabled($0) }.count
     }
 
     private var nafahatIntervalPanel: some View {
