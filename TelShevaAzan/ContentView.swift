@@ -461,15 +461,11 @@ struct ContentView: View {
                 .background(activeTheme.countdownBackground)
                 .clipShape(RoundedRectangle(cornerRadius: 8))
 
-                HStack(spacing: 6) {
-                    liveActivityPreviewChip(next: next, previous: previous, compact: compact)
-
-                    Text(elapsedText(for: previous))
-                        .font(.caption2.weight(.semibold))
-                        .foregroundStyle(activeTheme.secondaryText.opacity(0.82))
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.64)
-                }
+                Text(elapsedText(for: previous))
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(activeTheme.secondaryText.opacity(0.82))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.72)
             }
 
             Spacer(minLength: 0)
@@ -497,33 +493,6 @@ struct ContentView: View {
         .background(glassSurface(activeTheme.panelBackground, radius: 8, prominence: .strong))
         .clipShape(RoundedRectangle(cornerRadius: 8))
         .shadow(color: .black.opacity(isNight ? 0.22 : 0.06), radius: 12, y: 6)
-    }
-
-    private func liveActivityPreviewChip(next: PrayerTime?, previous: PrayerTime?, compact: Bool) -> some View {
-        Button {
-            liveActivityCenter.startPreview(next: next, previous: previous)
-        } label: {
-            HStack(spacing: 4) {
-                Image(systemName: liveActivityCenter.isPreviewActive ? "checkmark.circle.fill" : "sparkles")
-                    .font(.system(size: 9, weight: .black))
-
-                Text(compact ? "الجزيرة" : "معاينة الجزيرة")
-                    .font(.caption2.weight(.black))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.66)
-            }
-            .foregroundStyle(liveActivityCenter.isPreviewActive ? activeTheme.primaryText : activeTheme.accent)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 5)
-            .background(glassSurface(activeTheme.controlBackground, radius: 7, prominence: .quiet))
-            .overlay(
-                RoundedRectangle(cornerRadius: 7)
-                    .stroke(liveActivityCenter.isPreviewActive ? activeTheme.activeRowBorder : activeTheme.controlBorder, lineWidth: 0.8)
-            )
-            .clipShape(RoundedRectangle(cornerRadius: 7))
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("معاينة الجزيرة")
     }
 
     private var dateControls: some View {

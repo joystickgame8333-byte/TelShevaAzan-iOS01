@@ -10,6 +10,8 @@ final class PrayerLiveActivityCenter: ObservableObject {
     static let shared = PrayerLiveActivityCenter()
 
     @Published private(set) var isPreviewActive = false
+    @Published private(set) var statusText = "جاهز لاختبار الجزيرة"
+    @Published private(set) var detailText = "اضغط الاختبار ثم اخرج من التطبيق أو اقفل الشاشة. إذا جهازك فيه Dynamic Island ستظهر فوق، وإذا ما فيه ستظهر في شاشة القفل."
 
     private let previewDuration: TimeInterval = 180
     private let autoLeadTime: TimeInterval = 180
@@ -19,12 +21,28 @@ final class PrayerLiveActivityCenter: ObservableObject {
 
     private init() {}
 
+    func startPreview() {
+        let now = Date()
+        let dateKey = PrayerEngine.defaultDateKey(for: now)
+        startPreview(
+            next: PrayerEngine.nextPrayer(for: dateKey, now: now),
+            previous: PrayerEngine.previousPrayer(for: dateKey, now: now)
+        )
+    }
+
     func startPreview(next: PrayerTime?, previous: PrayerTime?) {
 #if canImport(ActivityKit)
-        guard #available(iOS 16.1, *) else { return }
+        guard #available(iOS 16.1, *) else {
+            statusText = "غير مدعوم على هذا الإصدار"
+            detailText = "Live Activities تحتاج iOS 16.1 أو أحدث."
+            return
+        }
         Task {
             await startPreviewActivity(next: next, previous: previous)
         }
+#else
+        statusText = "غير مدعوم في هذا البناء"
+        detailText = "ActivityKit غير متاح في هذه البيئة."
 #endif
     }
 
@@ -43,7 +61,12 @@ final class PrayerLiveActivityCenter: ObservableObject {
 #if canImport(ActivityKit)
     @available(iOS 16.1, *)
     private func startPreviewActivity(next: PrayerTime?, previous: PrayerTime?) async {
-        guard ActivityAuthorizationInfo().areActivitiesEnabled else { return }
+        guard ActivityAuthorizationInfo().areActivitiesEnabled else {
+            isPreviewActive = false
+            statusText = "Live Activities مقفلة"
+            detailText = "افتح إعدادات الآيفون > أذان تل السبع > فعّل Live Activities، ثم ارجع واضغط اختبار الجزيرة."
+            return
+        }
 
         previewLifecycleTask?.cancel()
         await endActivities(where: { _ in true })
@@ -67,9 +90,13 @@ final class PrayerLiveActivityCenter: ObservableObject {
         do {
             let activity = try requestActivity(attributes: attributes, state: state, staleDate: prayerDate.addingTimeInterval(900))
             isPreviewActive = true
+            statusText = "بدأ اختبار الجزيرة"
+            detailText = "اخرج من التطبيق الآن أو اقفل الشاشة. في Dynamic Island اضغط مطولًا على الجزيرة لرؤية العرض الكبير."
             runPreviewLifecycle(activityID: activity.id, prayerDate: prayerDate)
         } catch {
             isPreviewActive = false
+            statusText = "لم يبدأ اختبار الجزيرة"
+            detailText = "النظام رفض تشغيل Live Activity الآن. تأكد من تفعيل Live Activities للتطبيق ومن أن الجهاز iOS 16.1 أو أحدث."
         }
     }
 
@@ -161,6 +188,8 @@ final class PrayerLiveActivityCenter: ObservableObject {
 
         if activity.attributes.isPreview {
             isPreviewActive = false
+            statusText = "انتهى اختبار الجزيرة"
+            detailText = "تقدر تضغط اختبار الجزيرة مرة ثانية وتشاهدها من شاشة القفل أو Dynamic Island."
         }
     }
 

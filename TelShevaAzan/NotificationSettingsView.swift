@@ -8,6 +8,7 @@ enum NotificationSettingsMode {
 struct NotificationSettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject private var notifications = PrayerNotificationManager.shared
+    @ObservedObject private var liveActivityCenter = PrayerLiveActivityCenter.shared
     @State private var selectedPage: NotificationSettingsPage = .adhan
     @State private var isPrayerListExpanded = false
     @AppStorage(AppThemeStorage.nightThemeKey, store: AppThemeStorage.defaults) private var selectedNightThemeID = PrayerVisualTheme.defaultNight.rawValue
@@ -166,6 +167,7 @@ struct NotificationSettingsView: View {
     private var adhanSettings: some View {
         VStack(alignment: .trailing, spacing: 16) {
             masterPanel
+            liveActivityTestPanel
             soundPanel
             prayerPanel
         }
@@ -218,6 +220,66 @@ struct NotificationSettingsView: View {
                 }
             )
         )
+    }
+
+    private var liveActivityTestPanel: some View {
+        panel(title: "اختبار الجزيرة") {
+            VStack(alignment: .trailing, spacing: 12) {
+                Button {
+                    liveActivityCenter.startPreview()
+                } label: {
+                    HStack(alignment: .center, spacing: 12) {
+                        Image(systemName: liveActivityCenter.isPreviewActive ? "checkmark.circle.fill" : "timer.circle.fill")
+                            .font(.system(size: 24, weight: .black))
+                            .foregroundStyle(theme.accent)
+                            .frame(width: 34, alignment: .leading)
+
+                        Spacer(minLength: 10)
+
+                        VStack(alignment: .trailing, spacing: 3) {
+                            Text(liveActivityCenter.isPreviewActive ? "الاختبار شغال الآن" : "تشغيل اختبار الجزيرة")
+                                .font(.subheadline.weight(.black))
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.72)
+
+                            Text("عداد ٣ دقائق مثل لحظة ما قبل الأذان")
+                                .font(.caption2.weight(.semibold))
+                                .foregroundStyle(theme.secondaryText.opacity(0.82))
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.72)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .trailing)
+                    }
+                    .padding(.vertical, 12)
+                    .padding(.horizontal, 10)
+                    .background(glassSurface(theme.countdownBackground, radius: 8, prominence: .strong))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(theme.activeRowBorder)
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                }
+                .buttonStyle(.plain)
+
+                VStack(alignment: .trailing, spacing: 5) {
+                    Text(liveActivityCenter.statusText)
+                        .font(.caption.weight(.black))
+                        .foregroundStyle(theme.accent)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.76)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    Text(liveActivityCenter.detailText)
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(theme.secondaryText.opacity(0.80))
+                        .lineLimit(4)
+                        .minimumScaleFactor(0.72)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .frame(maxWidth: .infinity, alignment: .trailing)
+                .padding(.horizontal, 8)
+            }
+        }
     }
 
     private var adhkarMasterPanel: some View {
