@@ -202,26 +202,25 @@ struct ContentView: View {
     }
 
     private var bottomDock: some View {
-        ZStack(alignment: .bottom) {
+        let dockWidth: CGFloat = 286
+
+        return ZStack(alignment: .bottom) {
             dockLiquidGlassBase
-                .frame(height: 44)
+                .frame(width: dockWidth, height: 44)
 
-            HStack(alignment: .bottom, spacing: 3) {
-                dockButton(.radio)
-                dockButton(.qibla)
-            }
-            .frame(maxWidth: .infinity, alignment: .bottom)
-            .frame(height: 62, alignment: .bottom)
-            .offset(x: -106)
+            dockButton(.radio)
+                .offset(x: -118)
 
-            dockButton(.notifications)
-                .frame(maxWidth: .infinity, alignment: .center)
-                .offset(x: 88)
+            dockButton(.qibla)
+                .offset(x: -64)
 
             dockButton(.schedule, prominent: true)
-                .frame(maxWidth: .infinity, alignment: .center)
+                .offset(x: 0)
+
+            dockButton(.notifications)
+                .offset(x: 64)
         }
-        .frame(maxWidth: 326)
+        .frame(width: dockWidth)
         .frame(height: 64, alignment: .bottom)
         .shadow(color: .black.opacity(activeTheme.isNightTheme ? 0.16 : 0.06), radius: 8, y: 2)
         .environment(\.layoutDirection, .leftToRight)
@@ -229,11 +228,11 @@ struct ContentView: View {
 
     private func dockButton(_ item: HomeDockItem, prominent: Bool = false) -> some View {
         let selected = selectedDockItem == item
-        let selectedWidth: CGFloat = prominent ? 88 : 80
-        let idleWidth: CGFloat = prominent ? 64 : 52
-        let selectedHeight: CGFloat = prominent ? 54 : 50
-        let symbolSize: CGFloat = selected ? 18 : 21
-        let textSize: CGFloat = selected ? (prominent ? 11.6 : 9.7) : 9.4
+        let selectedWidth: CGFloat = prominent ? 78 : 74
+        let idleWidth: CGFloat = 46
+        let selectedHeight: CGFloat = prominent ? 52 : 50
+        let symbolSize: CGFloat = selected ? 17 : 20
+        let textSize: CGFloat = selected ? (prominent ? 11.0 : 9.4) : 8.8
 
         return Button {
             handleDockTap(item)
@@ -249,7 +248,7 @@ struct ContentView: View {
                         Image(systemName: dockSymbol(for: item))
                             .font(.system(size: symbolSize, weight: .black, design: .rounded))
                             .foregroundStyle(activeTheme.accent)
-                            .frame(width: 38, height: 38)
+                            .frame(width: 36, height: 36)
                             .background(selectedDockIconFill)
                             .clipShape(Circle())
                             .overlay(
@@ -257,7 +256,7 @@ struct ContentView: View {
                                     .stroke(Color.white.opacity(activeTheme.isNightTheme ? 0.38 : 0.82), lineWidth: 1)
                             )
                             .shadow(color: .black.opacity(activeTheme.isNightTheme ? 0.16 : 0.07), radius: 4, y: 1)
-                            .offset(y: -4)
+                            .offset(y: -5)
                     } else {
                         Image(systemName: dockSymbol(for: item))
                             .font(.system(size: symbolSize, weight: .black, design: .rounded))
@@ -269,12 +268,12 @@ struct ContentView: View {
                         .font(.system(size: textSize, weight: selected ? .black : .bold, design: .rounded))
                         .foregroundStyle(selected ? Color.white : activeTheme.secondaryText.opacity(0.88))
                         .lineLimit(1)
-                        .minimumScaleFactor(0.70)
+                        .minimumScaleFactor(0.62)
                         .offset(y: selected ? -3 : 0)
                 }
-                .frame(width: selected ? selectedWidth : idleWidth, height: selected ? selectedHeight : 40)
+                .frame(width: selected ? selectedWidth : idleWidth, height: selected ? selectedHeight : 38)
             }
-            .frame(width: selected ? selectedWidth : idleWidth, height: selected ? 60 : 42, alignment: .bottom)
+            .frame(width: selected ? selectedWidth : idleWidth, height: selected ? 58 : 40, alignment: .bottom)
             .offset(y: selected ? -7 : 0)
             .contentShape(RoundedRectangle(cornerRadius: selected ? 24 : 12))
         }
