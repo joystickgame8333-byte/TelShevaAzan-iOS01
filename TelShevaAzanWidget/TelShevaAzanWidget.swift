@@ -846,6 +846,9 @@ struct PrayerLiveActivityWidget: Widget {
                 PrayerIslandRingIcon(context: context, size: 28)
             }
             .keylineTint(PrayerLiveActivityPalette.islandAccent)
+            .contentMargins(.all, 8, for: .expanded)
+            .contentMargins(.all, 3, for: .compactLeading)
+            .contentMargins(.all, 3, for: .compactTrailing)
         }
     }
 }
@@ -960,8 +963,8 @@ private struct PrayerIslandRingIcon: View {
 
     private var ringProgress: CGFloat {
         guard context.state.phase == .almostTime else { return 1 }
-        let total = max(context.attributes.prayerDate.timeIntervalSince(context.state.updatedAt), 1)
-        let remaining = max(context.attributes.prayerDate.timeIntervalSince(Date()), 0)
+        let total = max(context.state.prayerDate.timeIntervalSince(context.state.updatedAt), 1)
+        let remaining = max(context.state.prayerDate.timeIntervalSince(Date()), 0)
         return CGFloat(min(max(1 - (remaining / total), 0.06), 1))
     }
 
@@ -1018,7 +1021,7 @@ private struct PrayerIslandBottomView: View {
     private var message: String {
         switch context.state.phase {
         case .almostTime:
-            return context.attributes.isPreview ? "اختبار حي لمدة ٣٠ ثانية: عداد ثم أذان ثم نفحة" : "تنبيه هادئ قبل الأذان بثلاث دقائق"
+            return context.attributes.isPreview ? "اختبار حي للعدّاد النظامي داخل الجزيرة" : "تنبيه هادئ قبل الأذان بثلاث دقائق"
         case .now:
             return "حان الآن أذان \(context.attributes.prayerName)"
         case .adhkar:
@@ -1053,8 +1056,8 @@ private struct PrayerLiveActivityCountdown: View {
 
     var body: some View {
         Group {
-            if context.state.phase == .almostTime && Date() < context.attributes.prayerDate {
-                Text(timerInterval: Date()...context.attributes.prayerDate, countsDown: true)
+            if context.state.phase == .almostTime && Date() < context.state.prayerDate {
+                Text(timerInterval: Date()...context.state.prayerDate, countsDown: true)
                     .monospacedDigit()
             } else {
                 Text(context.state.phase.shortTitle)

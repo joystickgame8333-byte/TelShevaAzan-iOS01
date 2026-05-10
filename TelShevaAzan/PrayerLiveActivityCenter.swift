@@ -5,26 +5,18 @@ import Foundation
 import ActivityKit
 #endif
 
-#if canImport(UIKit)
-import UIKit
-#endif
-
 @MainActor
 final class PrayerLiveActivityCenter: ObservableObject {
     static let shared = PrayerLiveActivityCenter()
 
     @Published private(set) var isPreviewActive = false
     @Published private(set) var statusText = "جاهز لاختبار الجزيرة"
-    @Published private(set) var detailText = "اضغط الاختبار ثم اخرج من التطبيق أو اقفل الشاشة. الاختبار قصير وواضح: عداد ٣٠ ثانية، ثم الأذان، ثم نفحة."
+    @Published private(set) var detailText = "اضغط الاختبار ثم اخرج من التطبيق أو اقفل الشاشة. العدّاد يعمل من النظام داخل Live Activity بدون مؤقت خلفي من التطبيق."
 
     private let previewDuration: TimeInterval = 30
     private let autoLeadTime: TimeInterval = 180
     private let keepAfterPrayer: TimeInterval = 600
     private var lastSyncDate = Date.distantPast
-    private var previewLifecycleTask: Task<Void, Never>?
-#if canImport(UIKit)
-    private var previewBackgroundTask: UIBackgroundTaskIdentifier = .invalid
-#endif
 
     private init() {}
 
@@ -75,8 +67,6 @@ final class PrayerLiveActivityCenter: ObservableObject {
             return
         }
 
-        previewLifecycleTask?.cancel()
-        endPreviewBackgroundTask()
         await endActivities(where: { _ in true })
 
         let now = Date()
@@ -93,15 +83,17 @@ final class PrayerLiveActivityCenter: ObservableObject {
             cityName: "تل السبع",
             isPreview: true
         )
-        let state = PrayerLiveActivityAttributes.ContentState(phase: .almostTime, updatedAt: now)
+        let state = PrayerLiveActivityAttributes.ContentState(
+            phase: .almostTime,
+            prayerDate: prayerDate,
+            updatedAt: now
+        )
 
         do {
-            let activity = try requestActivity(attributes: attributes, state: state, staleDate: prayerDate.addingTimeInterval(120))
+            _ = try requestActivity(attributes: attributes, state: state, staleDate: prayerDate.addingTimeInterval(120))
             isPreviewActive = true
-            statusText = "بدأ اختبار الجزيرة ٣٠ ثانية"
-            detailText = "اخرج من التطبيق الآن أو اقفل الشاشة. راقب العدّاد، وبعد نصف دقيقة ستتغير الجزيرة إلى الأذان ثم النفحة."
-            beginPreviewBackgroundTask()
-            runPreviewLifecycle(activityID: activity.id, prayerDate: prayerDate)
+            statusText = "تم تشغيل الجزيرة"
+            detailText = "اخرج من التطبيق أو اقفل الشاشة. العدّاد الظاهر في الجزيرة يعمل من نظام iOS، وليس من مؤقت خلفي داخل التطبيق."
         } catch {
             isPreviewActive = false
             statusText = "لم يبدأ اختبار الجزيرة"
@@ -134,7 +126,11 @@ final class PrayerLiveActivityCenter: ObservableObject {
         }
 
         let phase = phase(for: secondsUntilPrayer)
-        let state = PrayerLiveActivityAttributes.ContentState(phase: phase, updatedAt: now)
+        let state = PrayerLiveActivityAttributes.ContentState(
+            phase: phase,
+            prayerDate: next.date,
+            updatedAt: now
+        )
 
         if let activity = Activity<PrayerLiveActivityAttributes>.activities.first(where: { !$0.attributes.isPreview && $0.attributes.prayerID == prayerID }) {
             await updateActivity(activity, state: state, staleDate: next.date.addingTimeInterval(keepAfterPrayer))
@@ -188,7 +184,11 @@ final class PrayerLiveActivityCenter: ObservableObject {
 
     @available(iOS 16.1, *)
     private func endActivity(_ activity: Activity<PrayerLiveActivityAttributes>, phase: PrayerLiveActivityPhase) async {
-        let state = PrayerLiveActivityAttributes.ContentState(phase: phase, updatedAt: Date())
+        let state = PrayerLiveActivityAttributes.ContentState(
+            phase: phase,
+            prayerDate: activity.attributes.prayerDate,
+            updatedAt: Date()
+        )
         if #available(iOS 16.2, *) {
             await activity.end(ActivityContent(state: state, staleDate: nil), dismissalPolicy: .immediate)
         } else {
@@ -197,7 +197,6 @@ final class PrayerLiveActivityCenter: ObservableObject {
 
         if activity.attributes.isPreview {
             isPreviewActive = false
-            endPreviewBackgroundTask()
             statusText = "انتهى اختبار الجزيرة"
             detailText = "تقدر تضغط اختبار الجزيرة مرة ثانية وتشاهدها من شاشة القفل أو Dynamic Island."
         }
@@ -208,60 +207,6 @@ final class PrayerLiveActivityCenter: ObservableObject {
         for activity in Activity<PrayerLiveActivityAttributes>.activities where shouldEnd(activity) {
             await endActivity(activity, phase: .adhkar)
         }
-    }
-
-    @available(iOS 16.1, *)
-    private func runPreviewLifecycle(activityID: String, prayerDate: Date) {
-        previewLifecycleTask = Task { [weak self] in
-            try? await Task.sleep(nanoseconds: 1_000_000_000)
-            guard !Task.isCancelled else { return }
-            await self?.setPreviewPhase(activityID: activityID, phase: .almostTime, staleDate: prayerDate.addingTimeInterval(120))
-
-            try? await Task.sleep(nanoseconds: 27_000_000_000)
-            guard !Task.isCancelled else { return }
-            await self?.setPreviewPhase(activityID: activityID, phase: .now, staleDate: prayerDate.addingTimeInterval(120))
-
-            try? await Task.sleep(nanoseconds: 4_000_000_000)
-            guard !Task.isCancelled else { return }
-            await self?.setPreviewPhase(activityID: activityID, phase: .adhkar, staleDate: prayerDate.addingTimeInterval(120))
-
-            try? await Task.sleep(nanoseconds: 4_000_000_000)
-            guard !Task.isCancelled else { return }
-            await self?.endPreview(activityID: activityID)
-        }
-    }
-
-    @available(iOS 16.1, *)
-    private func setPreviewPhase(activityID: String, phase: PrayerLiveActivityPhase, staleDate: Date) async {
-        guard let activity = Activity<PrayerLiveActivityAttributes>.activities.first(where: { $0.id == activityID }) else {
-            isPreviewActive = false
-            return
-        }
-
-        let state = PrayerLiveActivityAttributes.ContentState(phase: phase, updatedAt: Date())
-        await updateActivity(activity, state: state, staleDate: staleDate)
-
-        switch phase {
-        case .almostTime:
-            statusText = "بدأ اختبار الجزيرة ٣٠ ثانية"
-        case .now:
-            statusText = "تغيرت الجزيرة إلى الأذان"
-            detailText = "الآن المفروض تشوف حالة الأذان بوضوح في الجزيرة أو شاشة القفل."
-        case .adhkar:
-            statusText = "تغيرت الجزيرة إلى النفحة"
-            detailText = "هذه آخر مرحلة في الاختبار، وبعدها تختفي تلقائيًا."
-        }
-    }
-
-    @available(iOS 16.1, *)
-    private func endPreview(activityID: String) async {
-        guard let activity = Activity<PrayerLiveActivityAttributes>.activities.first(where: { $0.id == activityID }) else {
-            isPreviewActive = false
-            return
-        }
-
-        await endActivity(activity, phase: .adhkar)
-        isPreviewActive = false
     }
 
     private func phase(for secondsUntilPrayer: TimeInterval) -> PrayerLiveActivityPhase {
@@ -278,25 +223,6 @@ final class PrayerLiveActivityCenter: ObservableObject {
 
     private func realPrayerID(for prayer: PrayerTime) -> String {
         "\(prayer.key.rawValue)-\(Int(prayer.date.timeIntervalSince1970))"
-    }
-
-    private func beginPreviewBackgroundTask() {
-#if canImport(UIKit)
-        endPreviewBackgroundTask()
-        previewBackgroundTask = UIApplication.shared.beginBackgroundTask(withName: "PrayerIslandPreview") { [weak self] in
-            Task { @MainActor in
-                self?.endPreviewBackgroundTask()
-            }
-        }
-#endif
-    }
-
-    private func endPreviewBackgroundTask() {
-#if canImport(UIKit)
-        guard previewBackgroundTask != .invalid else { return }
-        UIApplication.shared.endBackgroundTask(previewBackgroundTask)
-        previewBackgroundTask = .invalid
-#endif
     }
 
     private static func timeText(for date: Date) -> String {

@@ -6,6 +6,7 @@ import ActivityKit
 struct PrayerLiveActivityAttributes: ActivityAttributes {
     struct ContentState: Codable, Hashable {
         var phase: PrayerLiveActivityPhase
+        var prayerDate: Date
         var updatedAt: Date
     }
 
