@@ -172,7 +172,9 @@ struct QuranRadioView: View {
             Text("بث مباشر من إذاعة القرآن الكريم من نابلس. يحتاج اتصال إنترنت ويستمر في الخلفية.")
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(theme.secondaryText.opacity(0.82))
-                .lineLimit(3)
+                .lineLimit(4)
+                .minimumScaleFactor(0.78)
+                .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, alignment: .trailing)
                 .multilineTextAlignment(.trailing)
 

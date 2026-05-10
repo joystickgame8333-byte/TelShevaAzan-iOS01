@@ -33,7 +33,7 @@ struct NotificationSettingsView: View {
                 }
                 .padding(.horizontal, 18)
                 .padding(.top, 14)
-                .padding(.bottom, 18 + bottomReservedHeight)
+                .padding(.bottom, 18)
                 .frame(width: proxy.size.width, height: proxy.size.height, alignment: .topTrailing)
             }
         }
@@ -81,7 +81,7 @@ struct NotificationSettingsView: View {
                     .minimumScaleFactor(0.72)
                     .frame(maxWidth: .infinity, alignment: .trailing)
 
-                Text(mode == .adhkarOnly ? "تذكير روحي خفيف خلال اليوم" : "الأذان والأذكار والأنماط")
+                Text(mode == .adhkarOnly ? "تذكير روحي خفيف خلال اليوم" : "الأذان والأنماط")
                     .font(.caption.weight(.bold))
                     .foregroundStyle(theme.accent)
                     .lineLimit(1)
@@ -104,13 +104,11 @@ struct NotificationSettingsView: View {
                         nafahatSettings
                     } else if selectedPage == .adhan {
                         adhanSettings
-                    } else if selectedPage == .appearance {
-                        appearanceSettings
                     } else {
-                        nafahatSettings
+                        appearanceSettings
                     }
                 }
-                .padding(.bottom, max(bottomInset, CGFloat(10)))
+                .padding(.bottom, bottomReservedHeight + max(bottomInset, CGFloat(18)))
                 .frame(maxWidth: .infinity, alignment: .topTrailing)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -122,7 +120,6 @@ struct NotificationSettingsView: View {
         HStack(spacing: 8) {
             Spacer(minLength: 0)
             notificationPageButton(.appearance)
-            notificationPageButton(.adhkar)
             notificationPageButton(.adhan)
         }
         .frame(maxWidth: .infinity, alignment: .topTrailing)
@@ -252,22 +249,31 @@ struct NotificationSettingsView: View {
             } label: {
                 HStack(spacing: 8) {
                     Image(systemName: "sparkles")
+                        .font(.system(size: 18, weight: .black))
+                        .frame(width: 34, alignment: .leading)
 
-                    VStack(alignment: .trailing, spacing: 2) {
+                    Spacer(minLength: 8)
+
+                    VStack(alignment: .trailing, spacing: 4) {
                         Text("جرّب تذكير أذكار الآن")
                             .font(.subheadline.weight(.black))
-                            .lineLimit(1)
+                            .lineLimit(2)
+                            .minimumScaleFactor(0.84)
+                            .fixedSize(horizontal: false, vertical: true)
 
                         Text("يوصل تذكير روحي تجريبي بعد ثانيتين")
                             .font(.caption2.weight(.semibold))
                             .foregroundStyle(theme.secondaryText.opacity(0.82))
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.75)
+                            .lineLimit(2)
+                            .minimumScaleFactor(0.78)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
+                    .frame(maxWidth: .infinity, alignment: .trailing)
                 }
                 .frame(maxWidth: .infinity, alignment: .trailing)
-                .padding(.vertical, 11)
+                .padding(.vertical, 14)
                 .padding(.horizontal, 12)
+                .frame(minHeight: 78, alignment: .center)
                 .background(glassSurface(theme.countdownBackground, radius: 8, prominence: .strong))
                 .overlay(
                     RoundedRectangle(cornerRadius: 8)
@@ -605,7 +611,7 @@ struct NotificationSettingsView: View {
     }
 
     private func toggleSummaryPanel(title: String, subtitle: String, isOn: Binding<Bool>) -> some View {
-        HStack(spacing: 12) {
+        HStack(alignment: .center, spacing: 12) {
             Toggle("", isOn: isOn)
                 .labelsHidden()
                 .tint(theme.accent)
@@ -615,14 +621,18 @@ struct NotificationSettingsView: View {
             VStack(alignment: .trailing, spacing: 2) {
                 Text(title)
                     .font(.subheadline.weight(.black))
-                    .lineLimit(1)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.84)
+                    .fixedSize(horizontal: false, vertical: true)
 
                 Text(subtitle)
                     .font(.caption2.weight(.semibold))
                     .foregroundStyle(theme.secondaryText.opacity(0.82))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.70)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.78)
+                    .fixedSize(horizontal: false, vertical: true)
             }
+            .frame(maxWidth: .infinity, alignment: .trailing)
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .trailing)
@@ -654,7 +664,7 @@ struct NotificationSettingsView: View {
     }
 
     private func optionRow(title: String, subtitle: String, symbol: String, selected: Bool) -> some View {
-        HStack(spacing: 12) {
+        HStack(alignment: .center, spacing: 12) {
             Image(systemName: selected ? "checkmark.circle.fill" : symbol)
                 .font(.system(size: 18, weight: .bold))
                 .foregroundStyle(selected ? theme.accent : theme.secondaryText.opacity(0.88))
@@ -666,19 +676,22 @@ struct NotificationSettingsView: View {
                 Text(title)
                     .font(.subheadline.weight(.bold))
                     .foregroundStyle(selected ? theme.accent : theme.primaryText)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.82)
+                    .fixedSize(horizontal: false, vertical: true)
 
                 Text(subtitle)
                     .font(.caption2.weight(.semibold))
                     .foregroundStyle(theme.secondaryText.opacity(0.80))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.70)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.76)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             .frame(maxWidth: .infinity, alignment: .trailing)
         }
-        .padding(.vertical, 10)
+        .padding(.vertical, 11)
         .padding(.horizontal, 8)
+        .frame(minHeight: 64, alignment: .center)
         .background(lightRowSurface(selected ? theme.activeRowBackground : settingsRowFill, radius: 8, selected: selected))
         .clipShape(RoundedRectangle(cornerRadius: 8))
         .contentShape(Rectangle())
@@ -856,7 +869,6 @@ struct NotificationSettingsView: View {
 
 private enum NotificationSettingsPage: String, CaseIterable, Identifiable {
     case adhan
-    case adhkar
     case appearance
 
     var id: String { rawValue }
@@ -865,8 +877,6 @@ private enum NotificationSettingsPage: String, CaseIterable, Identifiable {
         switch self {
         case .adhan:
             return "الأذان"
-        case .adhkar:
-            return "أذكار"
         case .appearance:
             return "الأنماط"
         }
@@ -876,8 +886,6 @@ private enum NotificationSettingsPage: String, CaseIterable, Identifiable {
         switch self {
         case .adhan:
             return "bell.badge.fill"
-        case .adhkar:
-            return "sparkles"
         case .appearance:
             return "paintpalette.fill"
         }

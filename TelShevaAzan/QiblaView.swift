@@ -179,26 +179,32 @@ struct QiblaView: View {
 
     private var accuracyPanel: some View {
         VStack(alignment: .trailing, spacing: 7) {
-            HStack(spacing: 8) {
+            HStack(alignment: .top, spacing: 8) {
                 Image(systemName: accuracySymbol)
                     .foregroundStyle(theme.accent)
+                    .padding(.top, 2)
 
                 Text(compass.statusMessage)
                     .font(.headline.weight(.bold))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.72)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.78)
+                    .fixedSize(horizontal: false, vertical: true)
             }
+            .frame(maxWidth: .infinity, alignment: .trailing)
 
             Text("الدقة: \(accuracyText) · \(compass.usesTrueNorth ? "الشمال الحقيقي" : "الشمال المغناطيسي")")
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(theme.secondaryText.opacity(0.82))
-                .lineLimit(1)
-                .minimumScaleFactor(0.68)
+                .lineLimit(2)
+                .minimumScaleFactor(0.72)
+                .fixedSize(horizontal: false, vertical: true)
 
             Text("لأفضل نتيجة أبعد الهاتف عن السماعات والمغناطيس وامسكه بشكل أفقي.")
                 .font(.caption2.weight(.semibold))
                 .foregroundStyle(theme.secondaryText.opacity(0.72))
-                .lineLimit(2)
+                .lineLimit(3)
+                .minimumScaleFactor(0.76)
+                .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .trailing)
         .padding(14)
