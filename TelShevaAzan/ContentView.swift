@@ -10,6 +10,7 @@ struct ContentView: View {
     @State private var followsToday = true
     @State private var isThemePickerPresented = false
     @State private var selectedTab: HomeDockItem = .schedule
+    @State private var tabTransitionEdge: Edge = .leading
     @Namespace private var dockSelectionNamespace
     @StateObject private var notifications = PrayerNotificationManager.shared
 
@@ -66,8 +67,14 @@ struct ContentView: View {
                         )
                     }
                 }
-                .transition(.opacity.combined(with: .move(edge: .trailing)))
-                .animation(.easeInOut(duration: 0.18), value: selectedTab)
+                .id(selectedTab)
+                .transition(
+                    .asymmetric(
+                        insertion: .opacity.combined(with: .move(edge: tabTransitionEdge)),
+                        removal: .opacity.combined(with: .move(edge: oppositeTabTransitionEdge))
+                    )
+                )
+                .animation(.easeInOut(duration: 0.30), value: selectedTab)
 
                 bottomDock(bottomInset: dockBottomPadding)
                     .padding(.horizontal, 22)
@@ -313,10 +320,35 @@ struct ContentView: View {
     }
 
     private func handleDockTap(_ item: HomeDockItem) {
-        withAnimation(.spring(response: 0.34, dampingFraction: 0.70)) {
+        guard selectedTab != item else {
+            withAnimation(.easeInOut(duration: 0.18)) {
+                isThemePickerPresented = false
+            }
+            return
+        }
+
+        tabTransitionEdge = transitionEdge(from: selectedTab, to: item)
+        withAnimation(.easeInOut(duration: 0.30)) {
             selectedTab = item
             isThemePickerPresented = false
         }
+    }
+
+    private var oppositeTabTransitionEdge: Edge {
+        switch tabTransitionEdge {
+        case .leading:
+            return .trailing
+        case .trailing:
+            return .leading
+        case .top:
+            return .bottom
+        case .bottom:
+            return .top
+        }
+    }
+
+    private func transitionEdge(from oldItem: HomeDockItem, to newItem: HomeDockItem) -> Edge {
+        newItem.order > oldItem.order ? .leading : .trailing
     }
 
     private func dockSymbol(for item: HomeDockItem) -> String {
@@ -333,16 +365,7 @@ struct ContentView: View {
     }
 
     private func dockRotation(for item: HomeDockItem) -> Double {
-        switch item {
-        case .schedule:
-            return -5
-        case .radio:
-            return -4
-        case .qibla:
-            return 8
-        case .notifications:
-            return -7
-        }
+        0
     }
 
     private func themePickerOverlay(width: CGFloat, topOffset: CGFloat, availableHeight: CGFloat) -> some View {
@@ -805,6 +828,19 @@ private enum HomeDockItem: String, CaseIterable, Identifiable {
     case radio
 
     var id: String { rawValue }
+
+    var order: Int {
+        switch self {
+        case .schedule:
+            return 0
+        case .notifications:
+            return 1
+        case .qibla:
+            return 2
+        case .radio:
+            return 3
+        }
+    }
 
     var title: String {
         switch self {

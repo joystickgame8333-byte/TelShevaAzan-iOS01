@@ -362,6 +362,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
     private let previewNotificationIdentifier = "tel-sheva-prayer-preview"
     private let maxPendingNotifications = 60
     private let defaults = UserDefaults.standard
+    private var pendingRescheduleWork: DispatchWorkItem?
 
     private var selectedSound: PrayerNotificationSound {
         PrayerNotificationSound(rawValue: selectedSoundID) ?? .bundledAdhan
@@ -625,7 +626,14 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
             return
         }
 
-        scheduleUpcomingPrayerNotifications()
+        pendingRescheduleWork?.cancel()
+        statusText = "جاري تحديث التنبيهات..."
+
+        let work = DispatchWorkItem { [weak self] in
+            self?.scheduleUpcomingPrayerNotifications()
+        }
+        pendingRescheduleWork = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35, execute: work)
     }
 
     private func persistPrayerSelection() {

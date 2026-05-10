@@ -25,7 +25,9 @@ struct QiblaView: View {
             let circleSize = min(proxy.size.width - 54, compactHeight ? 250 : 300)
 
             ZStack {
-                ThemeBackdrop(theme: theme)
+                if !isEmbedded {
+                    ThemeBackdrop(theme: theme)
+                }
 
                 VStack(alignment: .trailing, spacing: compactHeight ? 12 : 16) {
                     header

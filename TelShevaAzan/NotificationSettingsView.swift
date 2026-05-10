@@ -14,7 +14,9 @@ struct NotificationSettingsView: View {
             let compactHeight = proxy.size.height < 720
 
             ZStack {
-                ThemeBackdrop(theme: theme)
+                if !isEmbedded {
+                    ThemeBackdrop(theme: theme)
+                }
 
                 VStack(alignment: .trailing, spacing: compactHeight ? 14 : 18) {
                     header
@@ -86,7 +88,7 @@ struct NotificationSettingsView: View {
             pageSelector
 
             ScrollView(showsIndicators: false) {
-                VStack(alignment: .trailing, spacing: compact ? 14 : 18) {
+                LazyVStack(alignment: .trailing, spacing: compact ? 14 : 18) {
                     if selectedPage == .adhan {
                         adhanSettings
                     } else {

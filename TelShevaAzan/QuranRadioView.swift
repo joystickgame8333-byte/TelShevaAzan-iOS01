@@ -13,7 +13,9 @@ struct QuranRadioView: View {
             let compactHeight = proxy.size.height < 720
 
             ZStack {
-                ThemeBackdrop(theme: theme)
+                if !isEmbedded {
+                    ThemeBackdrop(theme: theme)
+                }
 
                 VStack(alignment: .trailing, spacing: compactHeight ? 14 : 18) {
                     header
