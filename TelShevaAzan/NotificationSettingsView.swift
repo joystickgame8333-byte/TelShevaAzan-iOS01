@@ -1,5 +1,10 @@
 import SwiftUI
 
+enum NotificationSettingsMode {
+    case full
+    case adhkarOnly
+}
+
 struct NotificationSettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject private var notifications = PrayerNotificationManager.shared
@@ -9,6 +14,7 @@ struct NotificationSettingsView: View {
     @AppStorage(AppThemeStorage.dayThemeKey, store: AppThemeStorage.defaults) private var selectedDayThemeID = PrayerVisualTheme.defaultDay.rawValue
 
     let theme: PrayerVisualTheme
+    var mode: NotificationSettingsMode = .full
     var isEmbedded = false
     var bottomReservedHeight: CGFloat = 0
 
@@ -54,7 +60,7 @@ struct NotificationSettingsView: View {
                 }
                 .buttonStyle(.plain)
             } else {
-                Image(systemName: "bell.badge.fill")
+                Image(systemName: mode == .adhkarOnly ? "sparkles" : "bell.badge.fill")
                     .font(.system(size: 17, weight: .black))
                     .foregroundStyle(theme.accent)
                     .frame(width: 38, height: 38)
@@ -69,13 +75,13 @@ struct NotificationSettingsView: View {
             Spacer(minLength: 16)
 
             VStack(alignment: .trailing, spacing: 4) {
-                Text("التنبيه")
+                Text(mode == .adhkarOnly ? "أذكار" : "التنبيه")
                     .font(.system(size: 31, weight: .black, design: .rounded))
                     .lineLimit(1)
                     .minimumScaleFactor(0.72)
                     .frame(maxWidth: .infinity, alignment: .trailing)
 
-                Text("الأذان ونَفَحات الذكر والأنماط")
+                Text(mode == .adhkarOnly ? "تذكير روحي خفيف خلال اليوم" : "الأذان والأذكار والأنماط")
                     .font(.caption.weight(.bold))
                     .foregroundStyle(theme.accent)
                     .lineLimit(1)
@@ -88,11 +94,15 @@ struct NotificationSettingsView: View {
 
     private func settingsContent(compact: Bool, bottomInset: CGFloat) -> some View {
         VStack(alignment: .trailing, spacing: compact ? 12 : 14) {
-            pageSelector
+            if mode == .full {
+                pageSelector
+            }
 
             ScrollView(showsIndicators: false) {
                 LazyVStack(alignment: .trailing, spacing: compact ? 14 : 18) {
-                    if selectedPage == .adhan {
+                    if mode == .adhkarOnly {
+                        nafahatSettings
+                    } else if selectedPage == .adhan {
                         adhanSettings
                     } else if selectedPage == .appearance {
                         appearanceSettings
@@ -112,7 +122,7 @@ struct NotificationSettingsView: View {
         HStack(spacing: 8) {
             Spacer(minLength: 0)
             notificationPageButton(.appearance)
-            notificationPageButton(.nafahat)
+            notificationPageButton(.adhkar)
             notificationPageButton(.adhan)
         }
         .frame(maxWidth: .infinity, alignment: .topTrailing)
@@ -168,6 +178,7 @@ struct NotificationSettingsView: View {
     private var nafahatSettings: some View {
         VStack(alignment: .trailing, spacing: 16) {
             nafahatMasterPanel
+            adhkarSoundPanel
             nafahatPreviewPanel
             nafahatIntervalPanel
             nafahatTextPanel
@@ -225,8 +236,8 @@ struct NotificationSettingsView: View {
 
     private var nafahatMasterPanel: some View {
         toggleSummaryPanel(
-            title: "تشغيل نَفَحات",
-            subtitle: notifications.isNafahatEnabled ? "تذكير خفيف \(selectedNafahatIntervalTitle)" : "نَفَحات الذكر متوقفة",
+            title: "تشغيل الأذكار",
+            subtitle: notifications.isNafahatEnabled ? "تذكير روحي خفيف \(selectedNafahatIntervalTitle)" : "تذكير الأذكار متوقف",
             isOn: Binding(
                 get: { notifications.isNafahatEnabled },
                 set: { notifications.setNafahatEnabled($0) }
@@ -240,14 +251,14 @@ struct NotificationSettingsView: View {
                 notifications.sendNafahatPreviewNotification()
             } label: {
                 HStack(spacing: 8) {
-                    Image(systemName: "bell.badge.fill")
+                    Image(systemName: "sparkles")
 
                     VStack(alignment: .trailing, spacing: 2) {
-                        Text("جرّب نَفَحة الآن")
+                        Text("جرّب تذكير أذكار الآن")
                             .font(.subheadline.weight(.black))
                             .lineLimit(1)
 
-                        Text("يوصل تذكير تجريبي بعد ثانيتين")
+                        Text("يوصل تذكير روحي تجريبي بعد ثانيتين")
                             .font(.caption2.weight(.semibold))
                             .foregroundStyle(theme.secondaryText.opacity(0.82))
                             .lineLimit(1)
@@ -274,6 +285,7 @@ struct NotificationSettingsView: View {
                 ForEach(Array(PrayerNotificationSound.allCases.enumerated()), id: \.element.id) { index, sound in
                     Button {
                         notifications.selectSound(sound)
+                        notifications.sendPreviewNotification()
                     } label: {
                         optionRow(
                             title: sound.title,
@@ -296,6 +308,32 @@ struct NotificationSettingsView: View {
 
                 previewButton
                     .padding(.top, 10)
+            }
+        }
+    }
+
+    private var adhkarSoundPanel: some View {
+        panel(title: "صوت الأذكار") {
+            VStack(spacing: 0) {
+                ForEach(Array(AdhkarNotificationSound.allCases.enumerated()), id: \.element.id) { index, sound in
+                    Button {
+                        notifications.selectAdhkarSound(sound)
+                        notifications.sendNafahatPreviewNotification()
+                    } label: {
+                        optionRow(
+                            title: sound.title,
+                            subtitle: sound.subtitle,
+                            symbol: sound.systemImage,
+                            selected: notifications.selectedAdhkarSoundID == sound.rawValue
+                        )
+                    }
+                    .buttonStyle(.plain)
+
+                    if index < AdhkarNotificationSound.allCases.count - 1 {
+                        Divider()
+                            .background(theme.controlBorder)
+                    }
+                }
             }
         }
     }
@@ -373,7 +411,7 @@ struct NotificationSettingsView: View {
     }
 
     private var nafahatIntervalPanel: some View {
-        panel(title: "وقت النَفَحات") {
+        panel(title: "وقت الأذكار") {
             VStack(alignment: .trailing, spacing: 10) {
                 Text("اختر كل كم وقت يصلك ذكر خفيف")
                     .font(.caption2.weight(.semibold))
@@ -818,7 +856,7 @@ struct NotificationSettingsView: View {
 
 private enum NotificationSettingsPage: String, CaseIterable, Identifiable {
     case adhan
-    case nafahat
+    case adhkar
     case appearance
 
     var id: String { rawValue }
@@ -827,8 +865,8 @@ private enum NotificationSettingsPage: String, CaseIterable, Identifiable {
         switch self {
         case .adhan:
             return "الأذان"
-        case .nafahat:
-            return "نَفَحات"
+        case .adhkar:
+            return "أذكار"
         case .appearance:
             return "الأنماط"
         }
@@ -838,7 +876,7 @@ private enum NotificationSettingsPage: String, CaseIterable, Identifiable {
         switch self {
         case .adhan:
             return "bell.badge.fill"
-        case .nafahat:
+        case .adhkar:
             return "sparkles"
         case .appearance:
             return "paintpalette.fill"

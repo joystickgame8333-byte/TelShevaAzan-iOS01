@@ -4,6 +4,7 @@ import UserNotifications
 
 enum PrayerNotificationSound: String, CaseIterable, Identifiable {
     case bundledAdhan
+    case softDhikr
     case system
 
     var id: String { rawValue }
@@ -11,7 +12,9 @@ enum PrayerNotificationSound: String, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .bundledAdhan:
-            return "مقطع الأذان الحالي"
+            return "الأذان الحالي"
+        case .softDhikr:
+            return "نفحة روحانية"
         case .system:
             return "صوت الآيفون"
         }
@@ -21,6 +24,8 @@ enum PrayerNotificationSound: String, CaseIterable, Identifiable {
         switch self {
         case .bundledAdhan:
             return "المقطع الذي أرسلته يعمل مع إشعارات الصلاة"
+        case .softDhikr:
+            return "صوت هادئ لمن يريد تنبيهًا أخف"
         case .system:
             return "تنبيه قصير من النظام بدون أذان"
         }
@@ -29,6 +34,49 @@ enum PrayerNotificationSound: String, CaseIterable, Identifiable {
     var systemImage: String {
         switch self {
         case .bundledAdhan:
+            return "waveform.circle.fill"
+        case .softDhikr:
+            return "sparkles"
+        case .system:
+            return "iphone.gen3.radiowaves.left.and.right"
+        }
+    }
+}
+
+enum AdhkarNotificationSound: String, CaseIterable, Identifiable {
+    case spiritual
+    case adhanTone
+    case system
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .spiritual:
+            return "نفحة روحانية"
+        case .adhanTone:
+            return "نغمة الأذان"
+        case .system:
+            return "صوت الآيفون"
+        }
+    }
+
+    var subtitle: String {
+        switch self {
+        case .spiritual:
+            return "الصوت الهادئ المناسب للأذكار"
+        case .adhanTone:
+            return "استخدم مقطع الأذان كتذكير أقوى"
+        case .system:
+            return "تنبيه قصير وخفيف من النظام"
+        }
+    }
+
+    var systemImage: String {
+        switch self {
+        case .spiritual:
+            return "sparkles"
+        case .adhanTone:
             return "waveform.circle.fill"
         case .system:
             return "iphone.gen3.radiowaves.left.and.right"
@@ -218,7 +266,7 @@ enum NafahatReminderText: String, CaseIterable, Identifiable {
             return [
                 NafahatReminderMessage(title: "صلِّ على النبي", body: "اللهم صل وسلم وبارك على نبينا محمد"),
                 NafahatReminderMessage(title: "صلاة وسلام", body: "اللهم صل على محمد وعلى آل محمد"),
-                NafahatReminderMessage(title: "نَفَحة صلاة", body: "صلِّ على النبي بقلب حاضر"),
+                NafahatReminderMessage(title: "ذكر الصلاة", body: "صلِّ على النبي بقلب حاضر"),
                 NafahatReminderMessage(title: "محبة النبي", body: "اللهم اجعل صلاتنا عليه نورًا وطمأنينة")
             ]
         case .istighfar:
@@ -296,7 +344,7 @@ enum NafahatQuietWindow: String, CaseIterable, Identifiable {
     var subtitle: String {
         switch self {
         case .none:
-            return "تعمل النفحات طوال اليوم"
+            return "تعمل الأذكار طوال اليوم"
         case .lateNight:
             return "تتوقف من 11 ليلًا إلى 6 صباحًا"
         case .midnight:
@@ -337,6 +385,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
     private static let adhkarDelayMinutesKey = "prayer_notifications_adhkar_delay_minutes"
     private static let adhkarPrayerIDsKey = "prayer_notifications_adhkar_prayers"
     private static let selectedAdhkarStyleIDKey = "prayer_notifications_adhkar_style"
+    private static let selectedAdhkarSoundIDKey = "prayer_notifications_adhkar_sound"
     private static let nafahatEnabledKey = "prayer_notifications_nafahat_enabled"
     private static let nafahatIntervalMinutesKey = "prayer_notifications_nafahat_interval_minutes"
     private static let selectedNafahatTextIDKey = "prayer_notifications_nafahat_text"
@@ -352,6 +401,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
     @Published private(set) var adhkarDelayMinutes: Int
     @Published private(set) var enabledAdhkarPrayerIDs: Set<String>
     @Published private(set) var selectedAdhkarStyleID: String
+    @Published private(set) var selectedAdhkarSoundID: String
     @Published private(set) var isNafahatEnabled: Bool
     @Published private(set) var nafahatIntervalMinutes: Int
     @Published private(set) var selectedNafahatTextID: String
@@ -370,6 +420,10 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
 
     private var selectedAdhkarStyle: AdhkarReminderStyle {
         AdhkarReminderStyle(rawValue: selectedAdhkarStyleID) ?? .tasbih
+    }
+
+    private var selectedAdhkarSound: AdhkarNotificationSound {
+        AdhkarNotificationSound(rawValue: selectedAdhkarSoundID) ?? .spiritual
     }
 
     private var selectedNafahatInterval: NafahatReminderInterval {
@@ -407,6 +461,8 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
 
         let savedAdhkarStyleID = UserDefaults.standard.string(forKey: Self.selectedAdhkarStyleIDKey)
         selectedAdhkarStyleID = savedAdhkarStyleID ?? AdhkarReminderStyle.tasbih.rawValue
+        let savedAdhkarSoundID = UserDefaults.standard.string(forKey: Self.selectedAdhkarSoundIDKey)
+        selectedAdhkarSoundID = savedAdhkarSoundID ?? AdhkarNotificationSound.spiritual.rawValue
         isNafahatEnabled = UserDefaults.standard.bool(forKey: Self.nafahatEnabledKey)
         let savedNafahatInterval = UserDefaults.standard.integer(forKey: Self.nafahatIntervalMinutesKey)
         nafahatIntervalMinutes = savedNafahatInterval == 0 ? NafahatReminderInterval.twoHours.rawValue : savedNafahatInterval
@@ -509,6 +565,12 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
     func selectAdhkarStyle(_ style: AdhkarReminderStyle) {
         selectedAdhkarStyleID = style.rawValue
         defaults.set(style.rawValue, forKey: Self.selectedAdhkarStyleIDKey)
+        rescheduleIfEnabled()
+    }
+
+    func selectAdhkarSound(_ sound: AdhkarNotificationSound) {
+        selectedAdhkarSoundID = sound.rawValue
+        defaults.set(sound.rawValue, forKey: Self.selectedAdhkarSoundIDKey)
         rescheduleIfEnabled()
     }
 
@@ -652,7 +714,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
             }
 
             DispatchQueue.main.async {
-                if self.enabledPrayerIDs.isEmpty && (!self.isAdhkarReminderEnabled || self.enabledAdhkarPrayerIDs.isEmpty) && !self.isNafahatEnabled {
+                if self.enabledPrayerIDs.isEmpty && !self.isNafahatEnabled {
                     self.statusText = "اختر صلاة واحدة على الأقل للتنبيه"
                 } else {
                     self.statusText = events.isEmpty ? "لا توجد صلوات قادمة في الجدول" : "التنبيهات مفعلة للصلوات المختارة"
@@ -675,13 +737,6 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
 
                 if enabledPrayerIDs.contains(key.rawValue), date > now {
                     result.append(ScheduledPrayerNotification(kind: .adhan, prayer: prayer, date: date))
-                }
-
-                if isAdhkarReminderEnabled, enabledAdhkarPrayerIDs.contains(key.rawValue) {
-                    let reminderDate = date.addingTimeInterval(TimeInterval(adhkarDelayMinutes * 60))
-                    if reminderDate > now {
-                        result.append(ScheduledPrayerNotification(kind: .adhkar, prayer: prayer, date: reminderDate))
-                    }
                 }
 
                 return result
@@ -725,7 +780,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
         let content = UNMutableNotificationContent()
         content.title = "أذكار بعد صلاة \(prayer.title)"
         content.body = selectedAdhkarStyle.notificationBody
-        content.sound = .default
+        content.sound = adhkarNotificationSound
 
         var components = PrayerEngine.calendar.dateComponents([.year, .month, .day, .hour, .minute], from: date)
         components.timeZone = PrayerEngine.timeZone
@@ -739,7 +794,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
         let content = UNMutableNotificationContent()
         content.title = message.title
         content.body = message.body
-        content.sound = nafahatNotificationSound
+        content.sound = adhkarNotificationSound
 
         var components = PrayerEngine.calendar.dateComponents([.year, .month, .day, .hour, .minute], from: date)
         components.timeZone = PrayerEngine.timeZone
@@ -779,7 +834,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
     private func nafahatMessage(for index: Int, date: Date = Date()) -> NafahatReminderMessage {
         let messages = selectedNafahatText.messages
         guard !messages.isEmpty else {
-            return NafahatReminderMessage(title: "نَفَحة ذكر", body: "اذكر الله ذكرًا خفيفًا")
+            return NafahatReminderMessage(title: "ذكر خفيف", body: "اذكر الله ذكرًا خفيفًا")
         }
 
         if selectedNafahatText == .mixed {
@@ -839,9 +894,9 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
         let content = UNMutableNotificationContent()
         content.title = message.title
         content.body = message.body
-        content.sound = nafahatNotificationSound
+        content.sound = adhkarNotificationSound
 
-        let identifier = previewNotificationIdentifier + "-nafahat"
+        let identifier = previewNotificationIdentifier + "-adhkar"
         center.removePendingNotificationRequests(withIdentifiers: [identifier])
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 2, repeats: false)
         let request = UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
@@ -849,7 +904,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
         center.add(request) { [weak self] error in
             DispatchQueue.main.async {
                 guard let self else { return }
-                self.statusText = error == nil ? "ستصلك نَفَحة تجريبية بعد ثانيتين" : "تعذر إرسال اختبار النَفَحة"
+                self.statusText = error == nil ? "ستصلك أذكار تجريبية بعد ثانيتين" : "تعذر إرسال اختبار الأذكار"
             }
         }
     }
@@ -859,21 +914,25 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
         case .system:
             return .default
         case .bundledAdhan:
-            for fileName in ["adhan.caf", "adhan.wav", "adhan.aiff"] {
-                let parts = fileName.split(separator: ".", maxSplits: 1).map(String.init)
-                guard parts.count == 2 else { continue }
-
-                if Bundle.main.url(forResource: parts[0], withExtension: parts[1]) != nil {
-                    return UNNotificationSound(named: UNNotificationSoundName(fileName))
-                }
-            }
-
-            return .default
+            return bundledNotificationSound(["adhan.caf", "adhan.wav", "adhan.aiff"])
+        case .softDhikr:
+            return bundledNotificationSound(["nafahat.wav", "nafahat.caf", "nafahat.aiff"])
         }
     }
 
-    private var nafahatNotificationSound: UNNotificationSound {
-        for fileName in ["nafahat.wav", "nafahat.caf", "nafahat.aiff"] {
+    private var adhkarNotificationSound: UNNotificationSound {
+        switch selectedAdhkarSound {
+        case .system:
+            return .default
+        case .spiritual:
+            return bundledNotificationSound(["nafahat.wav", "nafahat.caf", "nafahat.aiff"])
+        case .adhanTone:
+            return bundledNotificationSound(["adhan.caf", "adhan.wav", "adhan.aiff"])
+        }
+    }
+
+    private func bundledNotificationSound(_ fileNames: [String]) -> UNNotificationSound {
+        for fileName in fileNames {
             let parts = fileName.split(separator: ".", maxSplits: 1).map(String.init)
             guard parts.count == 2 else { continue }
 
@@ -905,8 +964,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
             DispatchQueue.main.async {
                 guard let self else { return }
                 if self.isEnabled && (settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional) {
-                    let hasAdhkarSelection = self.isAdhkarReminderEnabled && !self.enabledAdhkarPrayerIDs.isEmpty
-                    self.statusText = self.enabledPrayerIDs.isEmpty && !hasAdhkarSelection && !self.isNafahatEnabled ? "اختر صلاة واحدة على الأقل للتنبيه" : "التنبيهات مفعلة"
+                    self.statusText = self.enabledPrayerIDs.isEmpty && !self.isNafahatEnabled ? "اختر صلاة واحدة على الأقل للتنبيه" : "التنبيهات مفعلة"
                 } else if settings.authorizationStatus == .denied {
                     self.statusText = "اسمح بالإشعارات من إعدادات الآيفون"
                 } else {
