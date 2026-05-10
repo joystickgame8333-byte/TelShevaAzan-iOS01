@@ -21,7 +21,7 @@ struct ContentView: View {
             let compactHeight = proxy.size.height < 720
             let sectionSpacing: CGFloat = compactHeight ? 6 : 8
             let rowSpacing: CGFloat = compactHeight ? 6 : 8
-            let dockBottomPadding = max(proxy.safeAreaInsets.bottom * 0.12, CGFloat(3))
+            let dockBottomPadding = max(proxy.safeAreaInsets.bottom * 0.22, CGFloat(6))
             let dockReservedHeight = proxy.safeAreaInsets.bottom + (compactHeight ? 62 : 70)
             let rowHeight = min(CGFloat(58), max(CGFloat(38), (proxy.size.height - dockReservedHeight - 430) / 6))
 
@@ -203,11 +203,7 @@ struct ContentView: View {
 
     private var bottomDock: some View {
         ZStack(alignment: .bottom) {
-            glassSurface(dockBackgroundFill, radius: 22, prominence: .strong)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 22)
-                        .stroke(activeTheme.controlBorder.opacity(activeTheme.isGlassTheme ? 0.86 : 0.66))
-                )
+            dockLiquidGlassBase
                 .frame(height: 44)
 
             HStack(alignment: .bottom, spacing: 3) {
@@ -216,16 +212,16 @@ struct ContentView: View {
             }
             .frame(maxWidth: .infinity, alignment: .bottom)
             .frame(height: 62, alignment: .bottom)
-            .offset(x: -76)
+            .offset(x: -106)
 
             dockButton(.notifications)
                 .frame(maxWidth: .infinity, alignment: .center)
-                .offset(x: 84)
+                .offset(x: 88)
 
             dockButton(.schedule, prominent: true)
                 .frame(maxWidth: .infinity, alignment: .center)
         }
-        .frame(maxWidth: .infinity)
+        .frame(maxWidth: 326)
         .frame(height: 64, alignment: .bottom)
         .shadow(color: .black.opacity(activeTheme.isNightTheme ? 0.16 : 0.06), radius: 8, y: 2)
         .environment(\.layoutDirection, .leftToRight)
@@ -233,9 +229,9 @@ struct ContentView: View {
 
     private func dockButton(_ item: HomeDockItem, prominent: Bool = false) -> some View {
         let selected = selectedDockItem == item
-        let selectedWidth: CGFloat = prominent ? 94 : 82
+        let selectedWidth: CGFloat = prominent ? 88 : 80
         let idleWidth: CGFloat = prominent ? 64 : 52
-        let selectedHeight: CGFloat = prominent ? 56 : 52
+        let selectedHeight: CGFloat = prominent ? 54 : 50
         let symbolSize: CGFloat = selected ? 18 : 21
         let textSize: CGFloat = selected ? (prominent ? 11.6 : 9.7) : 9.4
 
@@ -278,7 +274,7 @@ struct ContentView: View {
                 }
                 .frame(width: selected ? selectedWidth : idleWidth, height: selected ? selectedHeight : 40)
             }
-            .frame(width: selected ? selectedWidth : idleWidth, height: selected ? 62 : 42, alignment: .bottom)
+            .frame(width: selected ? selectedWidth : idleWidth, height: selected ? 60 : 42, alignment: .bottom)
             .offset(y: selected ? -7 : 0)
             .contentShape(RoundedRectangle(cornerRadius: selected ? 24 : 12))
         }
@@ -310,6 +306,39 @@ struct ContentView: View {
     private var selectedDockIconFill: some View {
         Circle()
             .fill(activeTheme.isNightTheme ? Color.white.opacity(0.94) : Color.white.opacity(0.98))
+    }
+
+    private var dockLiquidGlassBase: some View {
+        RoundedRectangle(cornerRadius: 22, style: .continuous)
+            .fill(.ultraThinMaterial)
+            .overlay(
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    .fill(dockGlassTint)
+            )
+            .overlay(
+                LinearGradient(
+                    colors: [
+                        Color.white.opacity(activeTheme.isNightTheme ? 0.12 : 0.46),
+                        Color.white.opacity(activeTheme.isNightTheme ? 0.04 : 0.16),
+                        activeTheme.accent.opacity(activeTheme.isNightTheme ? 0.04 : 0.05)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    .stroke(Color.white.opacity(activeTheme.isNightTheme ? 0.18 : 0.58), lineWidth: 0.9)
+            )
+    }
+
+    private var dockGlassTint: Color {
+        if activeTheme.isNightTheme {
+            return Color.black.opacity(activeTheme.isGlassTheme ? 0.22 : 0.32)
+        }
+
+        return Color.white.opacity(activeTheme.isGlassTheme ? 0.34 : 0.58)
     }
 
     private var selectedDockItem: HomeDockItem? {
