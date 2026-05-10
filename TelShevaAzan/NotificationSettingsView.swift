@@ -242,7 +242,7 @@ struct NotificationSettingsView: View {
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.72)
 
-                            Text("عداد ٣ دقائق مثل لحظة ما قبل الأذان")
+                            Text("اختبار سريع ٣٠ ثانية للجزيرة")
                                 .font(.caption2.weight(.semibold))
                                 .foregroundStyle(theme.secondaryText.opacity(0.82))
                                 .lineLimit(1)

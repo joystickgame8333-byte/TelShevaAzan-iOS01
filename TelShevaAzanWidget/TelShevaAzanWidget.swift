@@ -921,7 +921,7 @@ private struct PrayerIslandExpandedTimerView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
+        VStack(alignment: .leading, spacing: 0) {
             PrayerLiveActivityCountdown(context: context, style: .expanded)
 
             Text(expandedSubtitle)
@@ -936,6 +936,9 @@ private struct PrayerIslandExpandedTimerView: View {
     private var expandedSubtitle: String {
         switch context.state.phase {
         case .almostTime:
+            if context.attributes.isPreview {
+                return "اختبار الجزيرة السريع"
+            }
             return "حتى أذان \(context.attributes.prayerName)"
         case .now:
             return "أذان \(context.attributes.prayerName)"
@@ -1015,7 +1018,7 @@ private struct PrayerIslandBottomView: View {
     private var message: String {
         switch context.state.phase {
         case .almostTime:
-            return context.attributes.isPreview ? "معاينة تبدأ قبل الأذان بثلاث دقائق" : "تنبيه هادئ قبل الأذان بثلاث دقائق"
+            return context.attributes.isPreview ? "اختبار حي لمدة ٣٠ ثانية: عداد ثم أذان ثم نفحة" : "تنبيه هادئ قبل الأذان بثلاث دقائق"
         case .now:
             return "حان الآن أذان \(context.attributes.prayerName)"
         case .adhkar:
@@ -1037,6 +1040,8 @@ private struct PrayerIslandCompactTimer: View {
 
 @available(iOSApplicationExtension 16.1, *)
 private struct PrayerLiveActivityCountdown: View {
+    @Environment(\.colorScheme) private var colorScheme
+
     enum Style {
         case compact
         case expanded
@@ -1064,16 +1069,16 @@ private struct PrayerLiveActivityCountdown: View {
     private var font: Font {
         switch style {
         case .compact:
-            return .caption2.weight(.black)
+            return .system(size: 17, weight: .black, design: .rounded)
         case .expanded:
-            return .system(size: 20, weight: .black, design: .rounded)
+            return .system(size: 43, weight: .black, design: .rounded)
         case .lockScreen:
-            return .system(size: 18, weight: .black, design: .rounded)
+            return .system(size: 29, weight: .black, design: .rounded)
         }
     }
 
     private var foreground: Color {
-        let palette = PrayerLiveActivityPalette(colorScheme: .dark)
+        let palette = PrayerLiveActivityPalette(colorScheme: colorScheme)
         switch style {
         case .compact:
             return palette.accent
