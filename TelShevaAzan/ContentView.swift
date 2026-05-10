@@ -17,10 +17,6 @@ struct ContentView: View {
     private let visualRefreshKey = "v0_6_26_apple_glass_applied"
 
     var body: some View {
-        let schedule = PrayerEngine.schedule(for: selectedDateKey)
-        let next = PrayerEngine.nextPrayer(for: selectedDateKey, now: now)
-        let previous = PrayerEngine.previousPrayer(for: selectedDateKey, now: now)
-
         GeometryReader { proxy in
             let compactHeight = proxy.size.height < 720
             let sectionSpacing: CGFloat = compactHeight ? 6 : 8
@@ -35,10 +31,7 @@ struct ContentView: View {
                 Group {
                     switch selectedTab {
                     case .schedule:
-                        prayerScheduleContent(
-                            schedule: schedule,
-                            next: next,
-                            previous: previous,
+                        prayerScheduleTabContent(
                             compactHeight: compactHeight,
                             sectionSpacing: sectionSpacing,
                             rowSpacing: rowSpacing,
@@ -83,10 +76,8 @@ struct ContentView: View {
             }
         }
         .onReceive(timer) { value in
-            now = value
-            if followsToday {
-                selectedDateKey = PrayerEngine.defaultDateKey(for: value)
-            }
+            guard selectedTab == .schedule else { return }
+            updateScheduleClock(value)
         }
         .onChange(of: selectedNightThemeID) { _ in
             WidgetRefreshCenter.refreshAll()
@@ -111,6 +102,31 @@ struct ContentView: View {
                 selectedTab = .notifications
             }
         }
+    }
+
+    private func prayerScheduleTabContent(
+        compactHeight: Bool,
+        sectionSpacing: CGFloat,
+        rowSpacing: CGFloat,
+        rowHeight: CGFloat,
+        dockReservedHeight: CGFloat,
+        size: CGSize
+    ) -> some View {
+        let schedule = PrayerEngine.schedule(for: selectedDateKey)
+        let next = PrayerEngine.nextPrayer(for: selectedDateKey, now: now)
+        let previous = PrayerEngine.previousPrayer(for: selectedDateKey, now: now)
+
+        return prayerScheduleContent(
+            schedule: schedule,
+            next: next,
+            previous: previous,
+            compactHeight: compactHeight,
+            sectionSpacing: sectionSpacing,
+            rowSpacing: rowSpacing,
+            rowHeight: rowHeight,
+            dockReservedHeight: dockReservedHeight,
+            size: size
+        )
     }
 
     private func prayerScheduleContent(
@@ -200,24 +216,24 @@ struct ContentView: View {
         .padding(.horizontal, 6)
         .padding(.vertical, 4)
         .frame(maxWidth: .infinity)
-        .frame(height: 50)
-        .background(glassSurface(dockBackgroundFill, radius: 18, prominence: .strong))
+        .frame(height: 48)
+        .background(glassSurface(dockBackgroundFill, radius: 17, prominence: .strong))
         .overlay(
-            RoundedRectangle(cornerRadius: 18)
+            RoundedRectangle(cornerRadius: 17)
                 .stroke(activeTheme.controlBorder.opacity(activeTheme.isGlassTheme ? 0.92 : 0.72))
         )
-        .clipShape(RoundedRectangle(cornerRadius: 18))
+        .clipShape(RoundedRectangle(cornerRadius: 17))
         .shadow(color: .black.opacity(activeTheme.isNightTheme ? 0.16 : 0.05), radius: 6, y: 2)
         .environment(\.layoutDirection, .leftToRight)
     }
 
     private func dockButton(_ item: HomeDockItem, prominent: Bool = false) -> some View {
         let selected = selectedDockItem == item
-        let cornerRadius: CGFloat = prominent ? 18 : 15
-        let buttonWidth: CGFloat = prominent ? 92 : 60
-        let buttonHeight: CGFloat = prominent ? 42 : 40
+        let cornerRadius: CGFloat = prominent ? 17 : 14
+        let buttonWidth: CGFloat = prominent ? 86 : 56
+        let buttonHeight: CGFloat = prominent ? 40 : 38
         let symbolSize: CGFloat = prominent ? 19 : 17
-        let textSize: CGFloat = prominent ? 8.8 : 8.1
+        let textSize: CGFloat = prominent ? 8.6 : 7.9
 
         return Button {
             handleDockTap(item)
@@ -236,7 +252,7 @@ struct ContentView: View {
                     .minimumScaleFactor(0.68)
             }
             .frame(width: buttonWidth, height: buttonHeight)
-            .foregroundStyle(selected ? activeTheme.accent : activeTheme.secondaryText.opacity(0.84))
+            .foregroundStyle(selected ? Color.white : activeTheme.secondaryText.opacity(0.84))
             .background(
                 Group {
                     if selected {
@@ -280,8 +296,19 @@ struct ContentView: View {
         }
 
         tabTransitionEdge = transitionEdge(from: selectedTab, to: item)
+        if item == .schedule {
+            updateScheduleClock(Date())
+        }
+
         withAnimation(.easeInOut(duration: 0.30)) {
             selectedTab = item
+        }
+    }
+
+    private func updateScheduleClock(_ value: Date) {
+        now = value
+        if followsToday {
+            selectedDateKey = PrayerEngine.defaultDateKey(for: value)
         }
     }
 

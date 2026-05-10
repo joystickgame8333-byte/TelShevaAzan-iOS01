@@ -60,6 +60,14 @@ enum PrayerEngine {
         calendar.timeZone = Self.timeZone
         return calendar
     }()
+    private static let posixLocale = Locale(identifier: "en_US_POSIX")
+    private static let longArabicDateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "ar")
+        formatter.timeZone = Self.timeZone
+        formatter.dateStyle = .full
+        return formatter
+    }()
 
     static let prayerOrder: [PrayerKey] = [.fajr, .dhuhr, .asr, .maghrib, .isha]
     static let displayOrder: [PrayerKey] = [.fajr, .sunrise, .dhuhr, .asr, .maghrib, .isha]
@@ -182,28 +190,34 @@ enum PrayerEngine {
 
     static func longDateLabel(for dateKey: String) -> String {
         guard let date = Self.date(from: dateKey, time: "12:00") else { return dateKey }
-
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "ar")
-        formatter.timeZone = Self.timeZone
-        formatter.dateStyle = .full
-        return formatter.string(from: date)
+        return Self.longArabicDateFormatter.string(from: date)
     }
 
     static func date(from dateKey: String, time: String) -> Date? {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.timeZone = Self.timeZone
-        formatter.dateFormat = "yyyy-MM-dd HH:mm"
-        return formatter.date(from: "\(dateKey) \(time)")
+        let dateParts = dateKey.split(separator: "-").compactMap { Int($0) }
+        let timeParts = time.split(separator: ":").compactMap { Int($0) }
+        guard dateParts.count == 3, timeParts.count == 2 else { return nil }
+
+        var components = DateComponents()
+        components.calendar = Self.calendar
+        components.timeZone = Self.timeZone
+        components.year = dateParts[0]
+        components.month = dateParts[1]
+        components.day = dateParts[2]
+        components.hour = timeParts[0]
+        components.minute = timeParts[1]
+        return Self.calendar.date(from: components)
     }
 
     private static func dateKey(for date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.timeZone = Self.timeZone
-        formatter.dateFormat = "yyyy-MM-dd"
-        return formatter.string(from: date)
+        let components = Self.calendar.dateComponents([.year, .month, .day], from: date)
+        return String(
+            format: "%04d-%02d-%02d",
+            locale: Self.posixLocale,
+            components.year ?? 0,
+            components.month ?? 0,
+            components.day ?? 0
+        )
     }
 
     private static func addMinutes(_ minutes: Int, to time: String) -> String {

@@ -138,7 +138,15 @@ struct NotificationSettingsView: View {
             .foregroundStyle(selectedPage == page ? theme.primaryText : theme.secondaryText.opacity(0.82))
             .padding(.horizontal, 14)
             .padding(.vertical, 9)
-            .background(glassSurface(selectedPage == page ? theme.countdownBackground : theme.controlBackground, radius: 8, prominence: selectedPage == page ? .strong : .regular))
+            .background(
+                Group {
+                    if selectedPage == page {
+                        glassSurface(theme.countdownBackground, radius: 8, prominence: .strong)
+                    } else {
+                        lightRowSurface(theme.controlBackground, radius: 8)
+                    }
+                }
+            )
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
                     .stroke(selectedPage == page ? theme.activeRowBorder : theme.controlBorder)
@@ -293,7 +301,9 @@ struct NotificationSettingsView: View {
     }
 
     private var prayerPanel: some View {
-        panel(title: "الصلوات التي يصدر لها الأذان") {
+        let todayTimes = PrayerEngine.schedule(for: PrayerEngine.defaultDateKey()).times
+
+        return panel(title: "الصلوات التي يصدر لها الأذان") {
             VStack(alignment: .trailing, spacing: 0) {
                 Button {
                     withAnimation(.spring(response: 0.30, dampingFraction: 0.82)) {
@@ -306,14 +316,14 @@ struct NotificationSettingsView: View {
                             .rotationEffect(.degrees(isPrayerListExpanded ? 0 : 90))
                             .foregroundStyle(theme.accent)
                             .frame(width: 32, height: 32)
-                            .background(glassSurface(theme.controlBackground, radius: 8))
+                            .background(lightRowSurface(theme.controlBackground, radius: 8))
                             .clipShape(RoundedRectangle(cornerRadius: 8))
 
                         Spacer(minLength: 8)
 
                         VStack(alignment: .trailing, spacing: 3) {
                             Text(isPrayerListExpanded ? "إخفاء الصلوات" : "عرض الصلوات")
-                                .font(.system(size: 17, weight: .black, design: .rounded))
+                                .font(.system(size: 16, weight: .black, design: .rounded))
                                 .foregroundStyle(theme.primaryText)
 
                             Text("\(enabledPrayerCount) من \(PrayerEngine.prayerOrder.count) مفعّلة")
@@ -322,10 +332,11 @@ struct NotificationSettingsView: View {
                         }
 
                         Image(systemName: "bell.and.waves.left.and.right.fill")
-                            .font(.system(size: 18, weight: .black))
+                            .font(.system(size: 17, weight: .black))
                             .foregroundStyle(theme.accent)
                             .frame(width: 34, height: 34)
                     }
+                    .padding(.vertical, 4)
                 }
                 .buttonStyle(.plain)
 
@@ -338,6 +349,7 @@ struct NotificationSettingsView: View {
                         ForEach(Array(PrayerEngine.prayerOrder.enumerated()), id: \.element.id) { index, key in
                             prayerToggleRow(
                                 key,
+                                time: todayTimes[key] ?? "--:--",
                                 isOn: Binding(
                                     get: { notifications.isPrayerEnabled(key) },
                                     set: { notifications.setPrayer(key, enabled: $0) }
@@ -471,7 +483,7 @@ struct NotificationSettingsView: View {
                 .minimumScaleFactor(0.75)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 9)
-                .background(glassSurface(selected ? theme.countdownBackground : theme.rowBackground, radius: 8, prominence: selected ? .regular : .quiet))
+                .background(lightRowSurface(selected ? theme.countdownBackground : theme.rowBackground, radius: 8, selected: selected))
                 .overlay(
                     RoundedRectangle(cornerRadius: 8)
                         .stroke(selected ? theme.activeRowBorder : theme.rowBorder)
@@ -507,11 +519,14 @@ struct NotificationSettingsView: View {
     }
 
     private var adhkarPrayerPanel: some View {
-        panel(title: "الصلوات التي يظهر بعدها التذكير") {
+        let todayTimes = PrayerEngine.schedule(for: PrayerEngine.defaultDateKey()).times
+
+        return panel(title: "الصلوات التي يظهر بعدها التذكير") {
             VStack(spacing: 0) {
                 ForEach(Array(PrayerEngine.prayerOrder.enumerated()), id: \.element.id) { index, key in
                     prayerToggleRow(
                         key,
+                        time: todayTimes[key] ?? "--:--",
                         isOn: Binding(
                             get: { notifications.isAdhkarPrayerEnabled(key) },
                             set: { notifications.setAdhkarPrayer(key, enabled: $0) }
@@ -626,12 +641,12 @@ struct NotificationSettingsView: View {
         }
         .padding(.vertical, 10)
         .padding(.horizontal, 8)
-        .background(glassSurface(selected ? theme.activeRowBackground : settingsRowFill, radius: 8, prominence: selected ? .regular : .quiet))
+        .background(lightRowSurface(selected ? theme.activeRowBackground : settingsRowFill, radius: 8, selected: selected))
         .clipShape(RoundedRectangle(cornerRadius: 8))
         .contentShape(Rectangle())
     }
 
-    private func prayerToggleRow(_ key: PrayerKey, isOn: Binding<Bool>) -> some View {
+    private func prayerToggleRow(_ key: PrayerKey, time: String, isOn: Binding<Bool>) -> some View {
         Button {
             isOn.wrappedValue.toggle()
         } label: {
@@ -641,7 +656,7 @@ struct NotificationSettingsView: View {
                 Spacer(minLength: 12)
 
                 HStack(spacing: 18) {
-                    Text(todayTime(for: key))
+                    Text(time)
                         .font(.headline.monospacedDigit().weight(.black))
                         .foregroundStyle(theme.secondaryText.opacity(0.82))
                         .lineLimit(1)
@@ -654,7 +669,7 @@ struct NotificationSettingsView: View {
             }
             .padding(.vertical, 10)
             .padding(.horizontal, 8)
-            .background(glassSurface(isOn.wrappedValue ? theme.activeRowBackground : settingsRowFill, radius: 8, prominence: .quiet))
+            .background(lightRowSurface(isOn.wrappedValue ? theme.activeRowBackground : settingsRowFill, radius: 8, selected: isOn.wrappedValue))
             .clipShape(RoundedRectangle(cornerRadius: 8))
             .contentShape(RoundedRectangle(cornerRadius: 8))
         }
@@ -678,11 +693,6 @@ struct NotificationSettingsView: View {
             )
             .animation(.easeInOut(duration: 0.16), value: isOn)
             .accessibilityHidden(true)
-    }
-
-    private func todayTime(for key: PrayerKey) -> String {
-        let schedule = PrayerEngine.schedule(for: PrayerEngine.defaultDateKey())
-        return schedule.times[key] ?? "--:--"
     }
 
     private func themePalettePanel(title: String, themes: [PrayerVisualTheme], selectedID: String) -> some View {
@@ -739,7 +749,7 @@ struct NotificationSettingsView: View {
                 }
                 .padding(.vertical, 10)
                 .padding(.horizontal, 8)
-                .background(glassSurface(settingsRowFill, radius: 8, prominence: .quiet))
+                .background(lightRowSurface(settingsRowFill, radius: 8))
                 .clipShape(RoundedRectangle(cornerRadius: 8))
             }
             .buttonStyle(.plain)
@@ -779,6 +789,18 @@ struct NotificationSettingsView: View {
             cornerRadius: radius,
             prominence: prominence
         )
+    }
+
+    private func lightRowSurface(_ base: Color, radius: CGFloat, selected: Bool = false) -> some View {
+        RoundedRectangle(cornerRadius: radius, style: .continuous)
+            .fill(base)
+            .overlay(
+                RoundedRectangle(cornerRadius: radius, style: .continuous)
+                    .stroke(
+                        selected ? theme.activeRowBorder.opacity(theme.isGlassTheme ? 0.72 : 1.0) : theme.rowBorder.opacity(theme.isGlassTheme ? 0.82 : 1.0),
+                        lineWidth: 0.8
+                    )
+            )
     }
 
     private var selectedNafahatIntervalTitle: String {
