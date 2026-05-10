@@ -51,6 +51,12 @@ struct ContentView: View {
                             isEmbedded: true,
                             bottomReservedHeight: dockReservedHeight
                         )
+                    case .adhkar:
+                        AdhkarView(
+                            theme: activeTheme,
+                            isEmbedded: true,
+                            bottomReservedHeight: dockReservedHeight
+                        )
                     case .radio:
                         QuranRadioView(
                             theme: activeTheme,
@@ -202,7 +208,7 @@ struct ContentView: View {
     }
 
     private var bottomDock: some View {
-        let dockWidth: CGFloat = 268
+        let dockWidth: CGFloat = 302
         let slotWidth = dockWidth / CGFloat(dockItems.count)
 
         return ZStack(alignment: .bottom) {
@@ -214,20 +220,17 @@ struct ContentView: View {
                     dockSlotButton(item, slotWidth: slotWidth)
                 }
             }
-            .frame(width: dockWidth, height: 44, alignment: .bottom)
-
-            selectedDockBubbleButton(selectedTab)
-                .offset(x: dockOffset(for: selectedTab, slotWidth: slotWidth), y: -7)
+            .frame(width: dockWidth, height: 66, alignment: .bottom)
         }
         .frame(width: dockWidth)
         .frame(height: 66, alignment: .bottom)
         .shadow(color: .black.opacity(activeTheme.isNightTheme ? 0.16 : 0.06), radius: 8, y: 2)
         .environment(\.layoutDirection, .leftToRight)
-        .animation(.spring(response: 0.34, dampingFraction: 0.76), value: selectedTab)
+        .animation(.spring(response: 0.38, dampingFraction: 0.72), value: selectedTab)
     }
 
     private var dockItems: [HomeDockItem] {
-        [.radio, .qibla, .schedule, .notifications]
+        [.radio, .qibla, .schedule, .adhkar, .notifications]
     }
 
     private func dockSlotButton(_ item: HomeDockItem, slotWidth: CGFloat) -> some View {
@@ -236,74 +239,55 @@ struct ContentView: View {
         return Button {
             handleDockTap(item)
         } label: {
-            ZStack {
+            ZStack(alignment: .bottom) {
                 if selected {
-                    Color.clear
+                    selectedDockBubble(width: 78, height: 52)
+                        .matchedGeometryEffect(id: "dockSelection", in: dockSelectionNamespace)
+
+                    VStack(spacing: 3) {
+                        Image(systemName: dockSymbol(for: item))
+                            .font(.system(size: 17, weight: .black, design: .rounded))
+                            .foregroundStyle(activeTheme.accent)
+                            .frame(width: 36, height: 36)
+                            .background(selectedDockIconFill)
+                            .clipShape(Circle())
+                            .overlay(
+                                Circle()
+                                    .stroke(Color.white.opacity(activeTheme.isNightTheme ? 0.38 : 0.82), lineWidth: 1)
+                            )
+                            .shadow(color: .black.opacity(activeTheme.isNightTheme ? 0.16 : 0.07), radius: 4, y: 1)
+                            .offset(y: -5)
+
+                        Text(item.title)
+                            .font(.system(size: 10.4, weight: .black, design: .rounded))
+                            .foregroundStyle(Color.white)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.66)
+                            .offset(y: -3)
+                    }
+                    .frame(width: 78, height: 52)
                 } else {
                     VStack(spacing: 2) {
                         Image(systemName: dockSymbol(for: item))
-                            .font(.system(size: 20, weight: .black, design: .rounded))
+                            .font(.system(size: 18, weight: .black, design: .rounded))
                             .foregroundStyle(activeTheme.secondaryText.opacity(0.86))
                             .symbolRenderingMode(.hierarchical)
 
                         Text(item.title)
-                            .font(.system(size: 8.8, weight: .bold, design: .rounded))
+                            .font(.system(size: 8.2, weight: .bold, design: .rounded))
                             .foregroundStyle(activeTheme.secondaryText.opacity(0.88))
                             .lineLimit(1)
-                            .minimumScaleFactor(0.62)
+                            .minimumScaleFactor(0.58)
                     }
                     .frame(width: slotWidth, height: 38)
                 }
             }
-            .frame(width: slotWidth, height: 42, alignment: .bottom)
+            .frame(width: slotWidth, height: selected ? 58 : 42, alignment: .bottom)
+            .offset(y: selected ? -7 : 0)
             .contentShape(Rectangle())
         }
         .buttonStyle(DockButtonPressStyle())
         .accessibilityLabel(item.title)
-    }
-
-    private func selectedDockBubbleButton(_ item: HomeDockItem) -> some View {
-        Button {
-            handleDockTap(item)
-        } label: {
-            ZStack(alignment: .bottom) {
-                selectedDockBubble(width: 80, height: 52)
-                    .matchedGeometryEffect(id: "dockSelection", in: dockSelectionNamespace)
-
-                VStack(spacing: 3) {
-                    Image(systemName: dockSymbol(for: item))
-                        .font(.system(size: 17, weight: .black, design: .rounded))
-                        .foregroundStyle(activeTheme.accent)
-                        .frame(width: 36, height: 36)
-                        .background(selectedDockIconFill)
-                        .clipShape(Circle())
-                        .overlay(
-                            Circle()
-                                .stroke(Color.white.opacity(activeTheme.isNightTheme ? 0.38 : 0.82), lineWidth: 1)
-                        )
-                        .shadow(color: .black.opacity(activeTheme.isNightTheme ? 0.16 : 0.07), radius: 4, y: 1)
-                        .offset(y: -5)
-
-                    Text(item.title)
-                        .font(.system(size: 10.6, weight: .black, design: .rounded))
-                        .foregroundStyle(Color.white)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.68)
-                        .offset(y: -3)
-                }
-                .frame(width: 80, height: 52)
-            }
-            .frame(width: 80, height: 58, alignment: .bottom)
-            .contentShape(RoundedRectangle(cornerRadius: 24))
-        }
-        .buttonStyle(DockButtonPressStyle())
-        .accessibilityLabel(item.title)
-    }
-
-    private func dockOffset(for item: HomeDockItem, slotWidth: CGFloat) -> CGFloat {
-        guard let index = dockItems.firstIndex(of: item) else { return 0 }
-        let midpoint = CGFloat(dockItems.count - 1) / 2
-        return (CGFloat(index) - midpoint) * slotWidth
     }
 
     private func selectedDockBubble(width: CGFloat, height: CGFloat) -> some View {
@@ -415,6 +399,8 @@ struct ContentView: View {
             return "radio.fill"
         case .qibla:
             return "location.north.fill"
+        case .adhkar:
+            return "sparkles"
         case .notifications:
             return notifications.isEnabled ? "bell.badge.fill" : "bell.fill"
         }
@@ -681,6 +667,7 @@ struct ContentView: View {
 
 private enum HomeDockItem: String, CaseIterable, Identifiable {
     case schedule
+    case adhkar
     case notifications
     case qibla
     case radio
@@ -695,8 +682,10 @@ private enum HomeDockItem: String, CaseIterable, Identifiable {
             return 1
         case .schedule:
             return 2
-        case .notifications:
+        case .adhkar:
             return 3
+        case .notifications:
+            return 4
         }
     }
 
@@ -704,6 +693,8 @@ private enum HomeDockItem: String, CaseIterable, Identifiable {
         switch self {
         case .schedule:
             return "مواقيت"
+        case .adhkar:
+            return "أذكار"
         case .radio:
             return "الراديو"
         case .qibla:
