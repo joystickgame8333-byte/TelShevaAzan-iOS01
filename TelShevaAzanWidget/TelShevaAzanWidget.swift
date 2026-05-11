@@ -831,9 +831,9 @@ struct PrayerLiveActivityWidget: Widget {
                     SalatiIslandExpandedCenter(context: context)
                 }
             } compactLeading: {
-                SalatiIslandCompactLeading()
+                SalatiIslandCompactLeading(context: context)
             } compactTrailing: {
-                SalatiIslandCompactTrailing()
+                SalatiIslandCompactTrailing(context: context)
             } minimal: {
                 SalatiIslandMinimal(context: context)
             }
@@ -913,18 +913,26 @@ private struct SalatiIslandExpandedCenter: View {
 
 @available(iOSApplicationExtension 16.1, *)
 private struct SalatiIslandCompactLeading: View {
+    let context: ActivityViewContext<PrayerLiveActivityAttributes>
+
     var body: some View {
-        Image(systemName: "bell.fill")
+        Text(salatiRemainingText(for: context.attributes.prayerName))
             .font(.caption2.weight(.black))
-            .foregroundStyle(SalatiLiveActivityStyle.gold)
+            .foregroundStyle(.white)
+            .lineLimit(1)
+            .minimumScaleFactor(0.62)
+            .environment(\.layoutDirection, .rightToLeft)
     }
 }
 
 @available(iOSApplicationExtension 16.1, *)
 private struct SalatiIslandCompactTrailing: View {
+    let context: ActivityViewContext<PrayerLiveActivityAttributes>
+
     var body: some View {
-        Color.clear
-            .frame(width: 1, height: 1)
+        SalatiCountdownText(context: context, size: 12)
+            .lineLimit(1)
+            .minimumScaleFactor(0.72)
     }
 }
 
@@ -963,6 +971,14 @@ private struct SalatiCountdownText: View {
 
 private enum SalatiLiveActivityStyle {
     static let gold = Color(red: 0.98, green: 0.76, blue: 0.30)
+}
+
+private func salatiRemainingText(for prayerName: String) -> String {
+    if prayerName.hasPrefix("ال") {
+        return "متبقي لل\(prayerName.dropFirst(2))"
+    }
+
+    return "متبقي لـ\(prayerName)"
 }
 
 #endif
