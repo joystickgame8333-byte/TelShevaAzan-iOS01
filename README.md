@@ -1,6 +1,6 @@
 # TelShevaAzan iOS Prototype
 
-Current app version: `0.4.54 (80)`
+Current app version: `0.6.41 (132)`
 
 مشروع iPhone أولي لتطبيق أذان تل السبع.
 
@@ -24,10 +24,19 @@ Current app version: `0.4.54 (80)`
 2. Xcode
 3. Apple Developer account أو توقيع محلي للتجربة
 
-افتح:
+للتعديل المحلي افتح المشروع بعد توليده من `project.yml`. ملف `TelShevaAzan.xcodeproj` الموجود في الريبو قد يكون قديماً إذا لم يتم توليده من جديد.
+
+على GitHub Actions يتم حذف المشروع القديم وتوليده تلقائياً عبر XcodeGen قبل البناء، لذلك مصدر الحقيقة للنسخة والتارغتات هو:
 
 ```text
-TelShevaAzan.xcodeproj
+project.yml
+```
+
+إذا كنت على Mac وتريد فتحه يدوياً:
+
+```text
+xcodegen generate
+open TelShevaAzan.xcodeproj
 ```
 
 ثم من Xcode:

@@ -85,6 +85,13 @@ final class PrayerLiveActivityCenter: ObservableObject {
             debugText = ""
             return
         }
+        guard isWidgetExtensionBundled else {
+            isPreviewActive = false
+            statusText = "الجزيرة غير مدمجة في هذا البناء"
+            detailText = "هذا يحدث إذا تم فتح مشروع قديم أو تثبيت IPA لا يحتوي على TelShevaAzanWidgetExtensionV3. ابنِ النسخة من GitHub Actions بعد توليد المشروع من project.yml."
+            debugText = "Missing PlugIns/TelShevaAzanWidgetExtensionV3.appex"
+            return
+        }
 
         let now = Date()
         await cleanupExpiredLiveActivities(now: now, includeStalePreviews: true)
@@ -119,13 +126,14 @@ final class PrayerLiveActivityCenter: ObservableObject {
             isPreviewActive = false
             statusText = "لم يبدأ اختبار الجزيرة"
             detailText = "النظام رفض تشغيل Live Activity الآن. تأكد من تفعيل Live Activities للتطبيق ومن أن الجهاز iOS 16.1 أو أحدث."
-            debugText = ""
+            debugText = String(describing: error)
         }
     }
 
     @available(iOS 16.1, *)
     private func syncActivity(now: Date) async {
         guard ActivityAuthorizationInfo().areActivitiesEnabled else { return }
+        guard isWidgetExtensionBundled else { return }
         await cleanupExpiredLiveActivities(now: now, includeStalePreviews: true)
         guard !isPreviewActive else { return }
         await endActivities(where: { $0.attributes.isPreview })
