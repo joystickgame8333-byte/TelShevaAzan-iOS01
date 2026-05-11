@@ -16,8 +16,10 @@ final class PrayerLiveActivityCenter: ObservableObject {
 
     private let previewDuration: TimeInterval = 30
     private let autoLeadTime: TimeInterval = 180
-    private let keepAfterPrayer: TimeInterval = 600
+    private let keepAfterPrayer: TimeInterval = 120
+    private let expiredCleanupGrace: TimeInterval = 60
     private var lastSyncDate = Date.distantPast
+    private var lastCleanupDate = Date.distantPast
 
     private init() {}
 
@@ -51,11 +53,24 @@ final class PrayerLiveActivityCenter: ObservableObject {
     func syncWithPrayerWindow(now: Date = Date()) {
 #if canImport(ActivityKit)
         guard #available(iOS 16.1, *) else { return }
+        cleanupExpiredLiveActivities(now: now)
         guard now.timeIntervalSince(lastSyncDate) >= 20 else { return }
         lastSyncDate = now
 
         Task {
             await syncActivity(now: now)
+        }
+#endif
+    }
+
+    func cleanupExpiredLiveActivities(now: Date = Date()) {
+#if canImport(ActivityKit)
+        guard #available(iOS 16.1, *) else { return }
+        guard now.timeIntervalSince(lastCleanupDate) >= 2 else { return }
+        lastCleanupDate = now
+
+        Task {
+            await cleanupExpiredLiveActivities(now: now, includeStalePreviews: true)
         }
 #endif
     }
@@ -76,9 +91,10 @@ final class PrayerLiveActivityCenter: ObservableObject {
             return
         }
 
+        let now = Date()
+        await cleanupExpiredLiveActivities(now: now, includeStalePreviews: true)
         await endActivities(where: { _ in true })
 
-        let now = Date()
         let prayerDate = now.addingTimeInterval(previewDuration)
         let prayerName = next?.title ?? "المغرب"
         let previousName = previous?.title ?? "الصلاة السابقة"
@@ -127,7 +143,10 @@ final class PrayerLiveActivityCenter: ObservableObject {
     @available(iOS 16.1, *)
     private func syncActivity(now: Date) async {
         guard ActivityAuthorizationInfo().areActivitiesEnabled else { return }
+        await cleanupExpiredLiveActivities(now: now, includeStalePreviews: true)
         guard !isPreviewActive else { return }
+        await endActivities(where: { $0.attributes.isPreview })
+
         let dateKey = PrayerEngine.defaultDateKey(for: now)
         guard let next = PrayerEngine.nextPrayer(for: dateKey, now: now) else { return }
 
@@ -176,6 +195,30 @@ final class PrayerLiveActivityCenter: ObservableObject {
         } catch {
             return
         }
+    }
+
+    @available(iOS 16.1, *)
+    private func cleanupExpiredLiveActivities(now: Date, includeStalePreviews: Bool) async {
+        let cleanupDate = now.addingTimeInterval(-expiredCleanupGrace)
+
+        for activity in Activity<PrayerLiveActivityAttributes>.activities {
+            let prayerDate = activityPrayerDate(for: activity)
+            let expiredLongEnough = prayerDate <= cleanupDate
+            let oldPreview = includeStalePreviews && activity.attributes.isPreview && prayerDate <= cleanupDate
+
+            if expiredLongEnough || oldPreview {
+                await endActivity(activity, phase: .adhkar)
+            }
+        }
+    }
+
+    @available(iOS 16.1, *)
+    private func activityPrayerDate(for activity: Activity<PrayerLiveActivityAttributes>) -> Date {
+        if #available(iOS 16.2, *) {
+            return activity.content.state.prayerDate
+        }
+
+        return activity.attributes.prayerDate
     }
 
     @available(iOS 16.1, *)

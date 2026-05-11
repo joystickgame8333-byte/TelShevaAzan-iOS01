@@ -824,13 +824,11 @@ struct TelShevaAzanCountdownWidget: Widget {
 struct PrayerLiveActivityWidget: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: PrayerLiveActivityAttributes.self) { context in
-            VStack(alignment: .trailing, spacing: 12) {
-                HStack(spacing: 8) {
-                    Image(systemName: "bell.fill")
-                        .font(.title3.weight(.bold))
-                        .foregroundStyle(Color.accentColor)
+            let isCountingDown = Date() < context.state.prayerDate
 
-                    VStack(alignment: .trailing, spacing: 2) {
+            VStack(alignment: .trailing, spacing: 10) {
+                HStack(alignment: .center, spacing: 10) {
+                    VStack(alignment: .trailing, spacing: 3) {
                         Text("صلاتي")
                             .font(.headline.weight(.black))
                             .foregroundStyle(.primary)
@@ -839,59 +837,52 @@ struct PrayerLiveActivityWidget: Widget {
                             .font(.caption.weight(.semibold))
                             .foregroundStyle(.secondary)
                     }
+
+                    Image(systemName: "bell.fill")
+                        .font(.title3.weight(.bold))
+                        .foregroundStyle(Color.accentColor)
                 }
 
                 Divider()
 
-                HStack(alignment: .lastTextBaseline, spacing: 12) {
-                    Text(context.attributes.prayerTime)
-                        .font(.title2.weight(.black).monospacedDigit())
-                        .foregroundStyle(Color.accentColor)
-
-                    Spacer(minLength: 8)
-
-                    VStack(alignment: .trailing, spacing: 4) {
-                        Text("الصلاة القادمة")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(.secondary)
-
-                        Text(context.attributes.prayerName)
-                            .font(.title2.weight(.black))
-                            .foregroundStyle(.primary)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.7)
-                    }
-                }
-
-                VStack(alignment: .trailing, spacing: 4) {
-                    switch context.state.phase {
-                    case .almostTime:
-                        Text("الأذان بعد")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(.secondary)
-                    case .now:
-                        Text("حان الآن أذان \(context.attributes.prayerName)")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(.secondary)
-                    case .adhkar:
-                        Text("بعد الأذان")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(.secondary)
-                    }
-
-                    if context.state.phase == .almostTime && Date() < context.state.prayerDate {
+                HStack(alignment: .lastTextBaseline, spacing: 6) {
+                    if isCountingDown {
                         Text(timerInterval: Date()...context.state.prayerDate, countsDown: true)
                             .font(.system(size: 30, weight: .black, design: .rounded).monospacedDigit())
                             .foregroundStyle(Color.accentColor)
                     } else {
-                        Text(context.state.phase == .now ? "الآن" : "الإقامة لاحقًا")
-                            .font(.system(size: 26, weight: .black, design: .rounded))
+                        Text("حان الآن")
+                            .font(.system(size: 28, weight: .black, design: .rounded))
                             .foregroundStyle(Color.accentColor)
                     }
+
+                    Text(isCountingDown ? "بعد" : "أذان")
+                        .font(.title3.weight(.black))
+                        .foregroundStyle(.primary)
+
+                    Text(context.attributes.prayerName)
+                        .font(.title2.weight(.black))
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.72)
+                }
+
+                HStack(spacing: 4) {
+                    Text(context.attributes.prayerTime)
+                        .font(.caption.weight(.black).monospacedDigit())
+                        .foregroundStyle(.secondary)
+
+                    Text("وقت الأذان")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
                 }
             }
             .padding(16)
+            .environment(\.layoutDirection, .rightToLeft)
+            .multilineTextAlignment(.trailing)
         } dynamicIsland: { context in
+            let isCountingDown = Date() < context.state.prayerDate
+
             DynamicIsland {
                 DynamicIslandExpandedRegion(.center) {
                     VStack(spacing: 2) {
@@ -907,26 +898,33 @@ struct PrayerLiveActivityWidget: Widget {
 
                 DynamicIslandExpandedRegion(.bottom) {
                     VStack(alignment: .center, spacing: 6) {
-                        Text("الصلاة القادمة: \(context.attributes.prayerName)")
-                            .font(.subheadline.weight(.black))
-                            .foregroundStyle(.primary)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.72)
-
-                        Text(context.state.phase == .now ? "حان الآن الأذان" : "الأذان بعد")
+                        Text("الصلاة القادمة")
                             .font(.caption.weight(.semibold))
                             .foregroundStyle(.secondary)
 
-                        if context.state.phase == .almostTime && Date() < context.state.prayerDate {
-                            Text(timerInterval: Date()...context.state.prayerDate, countsDown: true)
-                                .font(.title2.weight(.black).monospacedDigit())
-                                .foregroundStyle(Color.accentColor)
-                        } else {
-                            Text(context.state.phase == .now ? "الآن" : "الإقامة لاحقًا")
-                                .font(.title3.weight(.black))
-                                .foregroundStyle(Color.accentColor)
+                        HStack(alignment: .lastTextBaseline, spacing: 5) {
+                            if isCountingDown {
+                                Text(timerInterval: Date()...context.state.prayerDate, countsDown: true)
+                                    .font(.title2.weight(.black).monospacedDigit())
+                                    .foregroundStyle(Color.accentColor)
+                            } else {
+                                Text("حان الآن")
+                                    .font(.title3.weight(.black))
+                                    .foregroundStyle(Color.accentColor)
+                            }
+
+                            Text(context.attributes.prayerName)
+                                .font(.subheadline.weight(.black))
+                                .foregroundStyle(.primary)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.72)
                         }
+
+                        Text("وقت الأذان \(context.attributes.prayerTime)")
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(.secondary)
                     }
+                    .environment(\.layoutDirection, .rightToLeft)
                 }
             } compactLeading: {
                 Text(context.attributes.prayerName)
@@ -934,7 +932,7 @@ struct PrayerLiveActivityWidget: Widget {
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
             } compactTrailing: {
-                if Date() < context.state.prayerDate {
+                if isCountingDown {
                     Text(timerInterval: Date()...context.state.prayerDate, countsDown: true)
                         .font(.caption2.weight(.black).monospacedDigit())
                 } else {
