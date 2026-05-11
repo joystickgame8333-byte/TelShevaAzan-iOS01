@@ -824,102 +824,21 @@ struct TelShevaAzanCountdownWidget: Widget {
 struct PrayerLiveActivityWidget: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: PrayerLiveActivityAttributes.self) { context in
-            let isPrayerDue = Date() >= context.state.prayerDate
-
-            VStack(alignment: .center, spacing: 10) {
-                HStack(spacing: 7) {
-                    Image(systemName: "bell.fill")
-                        .font(.subheadline.weight(.black))
-                        .foregroundStyle(Color.accentColor)
-
-                    Text("صلاتي")
-                        .font(.headline.weight(.black))
-                        .foregroundStyle(.primary)
-                }
-
-                if isPrayerDue {
-                    Text("حان الآن أذان \(context.attributes.prayerName)")
-                        .font(.system(size: 25, weight: .black, design: .rounded))
-                        .foregroundStyle(.primary)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.64)
-                        .multilineTextAlignment(.center)
-                } else {
-                    HStack(alignment: .lastTextBaseline, spacing: 6) {
-                        Group {
-                            Text(context.attributes.prayerName)
-
-                            Text("بعد")
-                        }
-                        .font(.system(size: 22, weight: .black, design: .rounded))
-                        .foregroundStyle(.primary)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.70)
-
-                        Text(timerInterval: Date()...context.state.prayerDate, countsDown: true)
-                            .font(.system(size: 32, weight: .black, design: .rounded).monospacedDigit())
-                            .foregroundStyle(Color.accentColor)
-                    }
-                }
-
-                HStack(spacing: 5) {
-                    Text(context.attributes.cityName)
-
-                    Text("•")
-
-                    Text("وقت الأذان")
-
-                    Text(context.attributes.prayerTime)
-                }
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.secondary)
-                .lineLimit(1)
-                .minimumScaleFactor(0.78)
-            }
-            .padding(16)
-            .environment(\.layoutDirection, .rightToLeft)
-            .multilineTextAlignment(.center)
-            .activityBackgroundTint(Color(red: 0.05, green: 0.08, blue: 0.10))
-            .activitySystemActionForegroundColor(Color.accentColor)
+            SalatiLiveActivityCard(context: context)
         } dynamicIsland: { context in
             let isPrayerDue = Date() >= context.state.prayerDate
 
             return DynamicIsland {
-                DynamicIslandExpandedRegion(.center) {
-                    VStack(spacing: 3) {
-                        Text("صلاتي")
-                            .font(.caption2.weight(.black))
-                            .foregroundStyle(.secondary)
+                DynamicIslandExpandedRegion(.leading) {
+                    SalatiIslandMark()
+                }
 
-                        if isPrayerDue {
-                            Text("حان الآن أذان \(context.attributes.prayerName)")
-                                .font(.subheadline.weight(.black))
-                                .foregroundStyle(.primary)
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.70)
-                        } else {
-                            HStack(alignment: .lastTextBaseline, spacing: 5) {
-                                Text(context.attributes.prayerName)
-                                    .font(.subheadline.weight(.black))
-                                    .foregroundStyle(.primary)
+                DynamicIslandExpandedRegion(.trailing) {
+                    SalatiIslandTimer(context: context)
+                }
 
-                                Text("بعد")
-                                    .font(.caption.weight(.black))
-                                    .foregroundStyle(.secondary)
-
-                                Text(timerInterval: Date()...context.state.prayerDate, countsDown: true)
-                                    .font(.title3.weight(.black).monospacedDigit())
-                                    .foregroundStyle(Color.accentColor)
-                            }
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.70)
-                        }
-
-                        Text("\(context.attributes.cityName) • \(context.attributes.prayerTime)")
-                            .font(.caption2.weight(.semibold))
-                            .foregroundStyle(.secondary)
-                    }
-                    .environment(\.layoutDirection, .rightToLeft)
+                DynamicIslandExpandedRegion(.bottom) {
+                    SalatiIslandLine(context: context)
                 }
             } compactLeading: {
                 if isPrayerDue {
@@ -947,6 +866,155 @@ struct PrayerLiveActivityWidget: Widget {
             }
         }
     }
+}
+
+@available(iOSApplicationExtension 16.1, *)
+private struct SalatiLiveActivityCard: View {
+    let context: ActivityViewContext<PrayerLiveActivityAttributes>
+
+    private var isPrayerDue: Bool {
+        Date() >= context.state.prayerDate
+    }
+
+    var body: some View {
+        VStack(spacing: 14) {
+            HStack(spacing: 8) {
+                Text("صلاتي")
+                    .font(.caption.weight(.black))
+                    .foregroundStyle(SalatiLiveActivityStyle.gold)
+
+                Image(systemName: isPrayerDue ? "bell.badge.fill" : "bell.fill")
+                    .font(.caption.weight(.black))
+                    .foregroundStyle(SalatiLiveActivityStyle.gold)
+            }
+
+            if isPrayerDue {
+                Text("حان الآن أذان \(context.attributes.prayerName)")
+                    .font(.system(size: 25, weight: .black, design: .rounded))
+                    .foregroundStyle(.white)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.62)
+            } else {
+                HStack(alignment: .lastTextBaseline, spacing: 7) {
+                    Text(context.attributes.prayerName)
+                        .foregroundStyle(.white)
+
+                    Text("بعد")
+                        .foregroundStyle(.white.opacity(0.92))
+
+                    Text(timerInterval: Date()...context.state.prayerDate, countsDown: true)
+                        .monospacedDigit()
+                        .foregroundStyle(SalatiLiveActivityStyle.gold)
+                }
+                .font(.system(size: 28, weight: .black, design: .rounded))
+                .lineLimit(1)
+                .minimumScaleFactor(0.62)
+            }
+
+            HStack(spacing: 6) {
+                Text(context.attributes.cityName)
+                Text("•")
+                Text("وقت الأذان")
+                Text(context.attributes.prayerTime)
+                    .monospacedDigit()
+            }
+            .font(.caption.weight(.bold))
+            .foregroundStyle(.white.opacity(0.72))
+            .lineLimit(1)
+            .minimumScaleFactor(0.78)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 18)
+        .padding(.horizontal, 16)
+        .background(
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            Color(red: 0.04, green: 0.09, blue: 0.11),
+                            Color(red: 0.10, green: 0.13, blue: 0.12),
+                            Color(red: 0.17, green: 0.13, blue: 0.05)
+                        ],
+                        startPoint: .topTrailing,
+                        endPoint: .bottomLeading
+                    )
+                )
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .strokeBorder(SalatiLiveActivityStyle.gold.opacity(0.32), lineWidth: 1)
+        )
+        .environment(\.layoutDirection, .rightToLeft)
+        .multilineTextAlignment(.center)
+        .activityBackgroundTint(Color(red: 0.04, green: 0.08, blue: 0.10))
+        .activitySystemActionForegroundColor(SalatiLiveActivityStyle.gold)
+    }
+}
+
+@available(iOSApplicationExtension 16.1, *)
+private struct SalatiIslandMark: View {
+    var body: some View {
+        HStack(spacing: 4) {
+            Image(systemName: "bell.fill")
+                .font(.caption.weight(.black))
+                .foregroundStyle(SalatiLiveActivityStyle.gold)
+
+            Text("صلاتي")
+                .font(.caption2.weight(.black))
+                .foregroundStyle(.white.opacity(0.92))
+        }
+    }
+}
+
+@available(iOSApplicationExtension 16.1, *)
+private struct SalatiIslandTimer: View {
+    let context: ActivityViewContext<PrayerLiveActivityAttributes>
+
+    private var isPrayerDue: Bool {
+        Date() >= context.state.prayerDate
+    }
+
+    var body: some View {
+        if isPrayerDue {
+            Text("الآن")
+                .font(.headline.weight(.black))
+                .foregroundStyle(SalatiLiveActivityStyle.gold)
+        } else {
+            Text(timerInterval: Date()...context.state.prayerDate, countsDown: true)
+                .font(.headline.weight(.black).monospacedDigit())
+                .foregroundStyle(SalatiLiveActivityStyle.gold)
+        }
+    }
+}
+
+@available(iOSApplicationExtension 16.1, *)
+private struct SalatiIslandLine: View {
+    let context: ActivityViewContext<PrayerLiveActivityAttributes>
+
+    private var isPrayerDue: Bool {
+        Date() >= context.state.prayerDate
+    }
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Text(isPrayerDue ? "حان الآن أذان \(context.attributes.prayerName)" : "\(context.attributes.prayerName) بعد")
+                .font(.subheadline.weight(.black))
+                .foregroundStyle(.white)
+                .lineLimit(1)
+                .minimumScaleFactor(0.68)
+
+            if !isPrayerDue {
+                Text(timerInterval: Date()...context.state.prayerDate, countsDown: true)
+                    .font(.subheadline.weight(.black).monospacedDigit())
+                    .foregroundStyle(SalatiLiveActivityStyle.gold)
+            }
+        }
+        .environment(\.layoutDirection, .rightToLeft)
+    }
+}
+
+private enum SalatiLiveActivityStyle {
+    static let gold = Color(red: 0.98, green: 0.76, blue: 0.30)
 }
 
 #endif
