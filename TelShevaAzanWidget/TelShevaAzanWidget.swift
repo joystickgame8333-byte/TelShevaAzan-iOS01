@@ -824,16 +824,123 @@ struct TelShevaAzanCountdownWidget: Widget {
 struct PrayerLiveActivityWidget: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: PrayerLiveActivityAttributes.self) { context in
-            Text("SALATI LIVE")
+            VStack(alignment: .trailing, spacing: 12) {
+                HStack(spacing: 8) {
+                    Image(systemName: "bell.fill")
+                        .font(.title3.weight(.bold))
+                        .foregroundStyle(.accentColor)
+
+                    VStack(alignment: .trailing, spacing: 2) {
+                        Text("صلاتي")
+                            .font(.headline.weight(.black))
+                            .foregroundStyle(.primary)
+
+                        Text(context.attributes.cityName)
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                Divider()
+
+                HStack(alignment: .lastTextBaseline, spacing: 12) {
+                    Text(context.attributes.prayerTime)
+                        .font(.title2.weight(.black).monospacedDigit())
+                        .foregroundStyle(.accentColor)
+
+                    Spacer(minLength: 8)
+
+                    VStack(alignment: .trailing, spacing: 4) {
+                        Text("الصلاة القادمة")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
+
+                        Text(context.attributes.prayerName)
+                            .font(.title2.weight(.black))
+                            .foregroundStyle(.primary)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
+                    }
+                }
+
+                VStack(alignment: .trailing, spacing: 4) {
+                    switch context.state.phase {
+                    case .almostTime:
+                        Text("الأذان بعد")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                    case .now:
+                        Text("حان الآن أذان \(context.attributes.prayerName)")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                    case .adhkar:
+                        Text("بعد الأذان")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                    }
+
+                    if context.state.phase == .almostTime && Date() < context.state.prayerDate {
+                        Text(timerInterval: Date()...context.state.prayerDate, countsDown: true)
+                            .font(.system(size: 30, weight: .black, design: .rounded).monospacedDigit())
+                            .foregroundStyle(.accentColor)
+                    } else {
+                        Text(context.state.phase == .now ? "الآن" : "الإقامة لاحقًا")
+                            .font(.system(size: 26, weight: .black, design: .rounded))
+                            .foregroundStyle(.accentColor)
+                    }
+                }
+            }
+            .padding(16)
         } dynamicIsland: { context in
             DynamicIsland {
                 DynamicIslandExpandedRegion(.center) {
-                    Text("Live Activity Works")
+                    VStack(spacing: 2) {
+                        Text("صلاتي")
+                            .font(.caption.weight(.black))
+                            .foregroundStyle(.primary)
+
+                        Text(context.attributes.cityName)
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                DynamicIslandExpandedRegion(.bottom) {
+                    VStack(alignment: .center, spacing: 6) {
+                        Text("الصلاة القادمة: \(context.attributes.prayerName)")
+                            .font(.subheadline.weight(.black))
+                            .foregroundStyle(.primary)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.72)
+
+                        Text(context.state.phase == .now ? "حان الآن الأذان" : "الأذان بعد")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
+
+                        if context.state.phase == .almostTime && Date() < context.state.prayerDate {
+                            Text(timerInterval: Date()...context.state.prayerDate, countsDown: true)
+                                .font(.title2.weight(.black).monospacedDigit())
+                                .foregroundStyle(.accentColor)
+                        } else {
+                            Text(context.state.phase == .now ? "الآن" : "الإقامة لاحقًا")
+                                .font(.title3.weight(.black))
+                                .foregroundStyle(.accentColor)
+                        }
+                    }
                 }
             } compactLeading: {
-                Text("SAL")
+                Text(context.attributes.prayerName)
+                    .font(.caption2.weight(.black))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
             } compactTrailing: {
-                Text("1m")
+                if Date() < context.state.prayerDate {
+                    Text(timerInterval: Date()...context.state.prayerDate, countsDown: true)
+                        .font(.caption2.weight(.black).monospacedDigit())
+                } else {
+                    Text("الآن")
+                        .font(.caption2.weight(.black))
+                }
             } minimal: {
                 Image(systemName: "bell.fill")
             }
@@ -841,270 +948,6 @@ struct PrayerLiveActivityWidget: Widget {
     }
 }
 
-@available(iOSApplicationExtension 16.1, *)
-private struct PrayerLiveActivityLockScreenView: View {
-    @Environment(\.colorScheme) private var colorScheme
-    let context: ActivityViewContext<PrayerLiveActivityAttributes>
-
-    private var palette: PrayerLiveActivityPalette {
-        PrayerLiveActivityPalette(colorScheme: colorScheme)
-    }
-
-    var body: some View {
-        VStack(alignment: .trailing, spacing: 10) {
-            HStack(spacing: 8) {
-                PrayerLiveActivityCountdown(context: context, style: .lockScreen)
-
-                Spacer(minLength: 8)
-
-                VStack(alignment: .trailing, spacing: 2) {
-                    Text(context.state.phase.title)
-                        .font(.caption.weight(.black))
-                        .foregroundStyle(palette.accent)
-
-                    Text(context.attributes.cityName)
-                        .font(.caption2.weight(.bold))
-                        .foregroundStyle(palette.secondary)
-                }
-
-                PrayerIslandRingIcon(context: context, size: 42)
-            }
-
-            HStack(alignment: .lastTextBaseline, spacing: 10) {
-                Text(context.attributes.prayerTime)
-                    .font(.system(size: 30, weight: .black, design: .rounded).monospacedDigit())
-                    .foregroundStyle(palette.accent)
-
-                Spacer(minLength: 10)
-
-                Text(context.attributes.prayerName)
-                    .font(.system(size: 31, weight: .black, design: .rounded))
-                    .foregroundStyle(palette.primary)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.70)
-            }
-
-            PrayerIslandBottomView(context: context)
-        }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .trailing)
-        .background(
-            LinearGradient(
-                colors: palette.background,
-                startPoint: .topTrailing,
-                endPoint: .bottomLeading
-            )
-        )
-        .activityBackgroundTint(palette.background.first ?? Color.black)
-        .activitySystemActionForegroundColor(palette.accent)
-        .environment(\.layoutDirection, .leftToRight)
-        .multilineTextAlignment(.trailing)
-    }
-}
-
-@available(iOSApplicationExtension 16.1, *)
-private struct PrayerIslandExpandedTimerView: View {
-    @Environment(\.colorScheme) private var colorScheme
-    let context: ActivityViewContext<PrayerLiveActivityAttributes>
-
-    private var palette: PrayerLiveActivityPalette {
-        PrayerLiveActivityPalette(colorScheme: colorScheme)
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            PrayerLiveActivityCountdown(context: context, style: .expanded)
-
-            Text(expandedSubtitle)
-                .font(.system(size: 13, weight: .black, design: .rounded))
-                .foregroundStyle(palette.accent)
-                .lineLimit(1)
-                .minimumScaleFactor(0.68)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    private var expandedSubtitle: String {
-        switch context.state.phase {
-        case .almostTime:
-            if context.attributes.isPreview {
-                return "اختبار الجزيرة السريع"
-            }
-            return "حتى أذان \(context.attributes.prayerName)"
-        case .now:
-            return "أذان \(context.attributes.prayerName)"
-        case .adhkar:
-            return "أذكار بعد الصلاة"
-        }
-    }
-}
-
-@available(iOSApplicationExtension 16.1, *)
-private struct PrayerIslandRingIcon: View {
-    @Environment(\.colorScheme) private var colorScheme
-    let context: ActivityViewContext<PrayerLiveActivityAttributes>
-    let size: CGFloat
-
-    private var palette: PrayerLiveActivityPalette {
-        PrayerLiveActivityPalette(colorScheme: colorScheme)
-    }
-
-    private var ringProgress: CGFloat {
-        guard context.state.phase == .almostTime else { return 1 }
-        let total = max(context.state.prayerDate.timeIntervalSince(context.state.updatedAt), 1)
-        let remaining = max(context.state.prayerDate.timeIntervalSince(Date()), 0)
-        return CGFloat(min(max(1 - (remaining / total), 0.06), 1))
-    }
-
-    var body: some View {
-        ZStack {
-            Circle()
-                .fill(palette.chip)
-
-            Circle()
-                .stroke(palette.accent.opacity(0.24), lineWidth: max(size * 0.10, 3))
-
-            Circle()
-                .trim(from: 0, to: ringProgress)
-                .stroke(
-                    palette.accent,
-                    style: StrokeStyle(lineWidth: max(size * 0.10, 3), lineCap: .round)
-                )
-                .rotationEffect(.degrees(-90))
-
-            Image(systemName: context.state.phase.systemImage)
-                .font(.system(size: size * 0.36, weight: .black))
-                .foregroundStyle(palette.accent)
-        }
-        .frame(width: size, height: size)
-    }
-}
-
-@available(iOSApplicationExtension 16.1, *)
-private struct PrayerIslandBottomView: View {
-    @Environment(\.colorScheme) private var colorScheme
-    let context: ActivityViewContext<PrayerLiveActivityAttributes>
-
-    private var palette: PrayerLiveActivityPalette {
-        PrayerLiveActivityPalette(colorScheme: colorScheme)
-    }
-
-    var body: some View {
-        HStack(spacing: 8) {
-            Image(systemName: context.attributes.isPreview ? "sparkles" : "clock.badge.checkmark.fill")
-                .font(.system(size: 11, weight: .black))
-                .foregroundStyle(palette.accent)
-
-            Text(message)
-                .font(.caption2.weight(.bold))
-                .foregroundStyle(.secondary)
-                .lineLimit(2)
-                .minimumScaleFactor(0.74)
-                .frame(maxWidth: .infinity, alignment: .trailing)
-                .multilineTextAlignment(.trailing)
-        }
-        .environment(\.layoutDirection, .leftToRight)
-    }
-
-    private var message: String {
-        switch context.state.phase {
-        case .almostTime:
-            return context.attributes.isPreview ? "اختبار حي للعدّاد النظامي داخل الجزيرة" : "تنبيه هادئ قبل الأذان بثلاث دقائق"
-        case .now:
-            return "حان الآن أذان \(context.attributes.prayerName)"
-        case .adhkar:
-            return "ابدأ أذكار ما بعد الصلاة بهدوء"
-        }
-    }
-}
-
-@available(iOSApplicationExtension 16.1, *)
-private struct PrayerIslandCompactTimer: View {
-    @Environment(\.colorScheme) private var colorScheme
-    let context: ActivityViewContext<PrayerLiveActivityAttributes>
-
-    var body: some View {
-        PrayerLiveActivityCountdown(context: context, style: .compact)
-            .foregroundStyle(PrayerLiveActivityPalette(colorScheme: colorScheme).accent)
-    }
-}
-
-@available(iOSApplicationExtension 16.1, *)
-private struct PrayerLiveActivityCountdown: View {
-    @Environment(\.colorScheme) private var colorScheme
-
-    enum Style {
-        case compact
-        case expanded
-        case lockScreen
-    }
-
-    let context: ActivityViewContext<PrayerLiveActivityAttributes>
-    let style: Style
-
-    var body: some View {
-        Group {
-            if context.state.phase == .almostTime && Date() < context.state.prayerDate {
-                Text(timerInterval: Date()...context.state.prayerDate, countsDown: true)
-                    .monospacedDigit()
-            } else {
-                Text(context.state.phase.shortTitle)
-            }
-        }
-        .font(font)
-        .foregroundStyle(foreground)
-        .lineLimit(1)
-        .minimumScaleFactor(0.62)
-    }
-
-    private var font: Font {
-        switch style {
-        case .compact:
-            return .system(size: 17, weight: .black, design: .rounded)
-        case .expanded:
-            return .system(size: 43, weight: .black, design: .rounded)
-        case .lockScreen:
-            return .system(size: 29, weight: .black, design: .rounded)
-        }
-    }
-
-    private var foreground: Color {
-        let palette = PrayerLiveActivityPalette(colorScheme: colorScheme)
-        switch style {
-        case .compact:
-            return palette.accent
-        default:
-            return palette.accent
-        }
-    }
-}
-
-private struct PrayerLiveActivityPalette {
-    let background: [Color]
-    let primary: Color
-    let secondary: Color
-    let accent: Color
-    let chip: Color
-
-    init(colorScheme: ColorScheme) {
-        let isNight = colorScheme == .dark
-        let nightID = AppThemeStorage.defaults.string(forKey: AppThemeStorage.nightThemeKey) ?? PrayerVisualTheme.defaultNight.rawValue
-        let dayID = AppThemeStorage.defaults.string(forKey: AppThemeStorage.dayThemeKey) ?? PrayerVisualTheme.defaultDay.rawValue
-        let theme = PrayerVisualTheme.selected(isNight: isNight, nightID: nightID, dayID: dayID)
-
-        background = theme.widgetBackground
-        primary = theme.primaryText
-        secondary = theme.secondaryText.opacity(0.86)
-        accent = theme.accent
-        chip = theme.chipBackground.opacity(isNight ? 0.84 : 0.72)
-    }
-
-    static var islandAccent: Color {
-        let nightID = AppThemeStorage.defaults.string(forKey: AppThemeStorage.nightThemeKey) ?? PrayerVisualTheme.defaultNight.rawValue
-        let dayID = AppThemeStorage.defaults.string(forKey: AppThemeStorage.dayThemeKey) ?? PrayerVisualTheme.defaultDay.rawValue
-        return PrayerVisualTheme.selected(isNight: true, nightID: nightID, dayID: dayID).accent
-    }
-}
 #endif
 
 private extension View {
