@@ -827,20 +827,8 @@ struct PrayerLiveActivityWidget: Widget {
             SalatiLiveActivityCard(context: context)
         } dynamicIsland: { context in
             DynamicIsland {
-                DynamicIslandExpandedRegion(.leading) {
-                    SalatiIslandExpandedLeading(context: context)
-                }
-
                 DynamicIslandExpandedRegion(.center) {
                     SalatiIslandExpandedCenter(context: context)
-                }
-
-                DynamicIslandExpandedRegion(.trailing) {
-                    SalatiIslandExpandedTrailing(context: context)
-                }
-
-                DynamicIslandExpandedRegion(.bottom) {
-                    SalatiIslandExpandedBottom(context: context)
                 }
             } compactLeading: {
                 SalatiIslandCompactLeading(context: context)
@@ -849,7 +837,6 @@ struct PrayerLiveActivityWidget: Widget {
             } minimal: {
                 SalatiIslandMinimal(context: context)
             }
-            .keylineTint(SalatiLiveActivityStyle.gold)
         }
     }
 }
@@ -863,83 +850,37 @@ private struct SalatiLiveActivityCard: View {
     }
 
     var body: some View {
-        VStack(alignment: .trailing, spacing: 14) {
-            HStack(alignment: .center, spacing: 10) {
-                SalatiLiveBadge(
-                    title: isPrayerDue ? "الأذان الآن" : "اقترب الأذان",
-                    systemImage: isPrayerDue ? "bell.badge.fill" : "bell.and.waves.left.and.right.fill"
-                )
+        VStack(spacing: 8) {
+            Image(systemName: isPrayerDue ? "bell.badge.fill" : "bell.fill")
+                .font(.system(size: 20, weight: .black))
+                .foregroundStyle(SalatiLiveActivityStyle.gold)
 
-                Spacer(minLength: 8)
+            Text(isPrayerDue ? "حان أذان \(context.attributes.prayerName)" : "باقي على صلاة \(context.attributes.prayerName)")
+                .font(.system(size: 22, weight: .black, design: .rounded))
+                .foregroundStyle(.white)
+                .lineLimit(1)
+                .minimumScaleFactor(0.62)
 
-                VStack(alignment: .trailing, spacing: 2) {
-                    Text(context.attributes.cityName)
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(.white.opacity(0.72))
-
-                    Text("أذان تل السبع")
-                        .font(.headline.weight(.black))
-                        .foregroundStyle(.white)
-                }
+            if isPrayerDue {
+                Text("الآن")
+                    .font(.system(size: 34, weight: .black, design: .rounded))
+                    .foregroundStyle(SalatiLiveActivityStyle.gold)
+                    .lineLimit(1)
+            } else {
+                SalatiCountdownText(context: context, size: 38)
             }
-
-            HStack(alignment: .lastTextBaseline, spacing: 10) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("وقت الأذان")
-                        .font(.caption2.weight(.bold))
-                        .foregroundStyle(.white.opacity(0.64))
-
-                    Text(context.attributes.prayerTime)
-                        .font(.system(size: 28, weight: .black, design: .rounded).monospacedDigit())
-                        .foregroundStyle(.white)
-                }
-
-                Spacer(minLength: 12)
-
-                VStack(alignment: .trailing, spacing: 2) {
-                    Text(context.attributes.prayerName)
-                        .font(.system(size: 30, weight: .black, design: .rounded))
-                        .foregroundStyle(SalatiLiveActivityStyle.gold)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.62)
-
-                    if isPrayerDue {
-                        Text("حان الآن")
-                            .font(.subheadline.weight(.black))
-                            .foregroundStyle(.white.opacity(0.88))
-                    } else {
-                        HStack(alignment: .lastTextBaseline, spacing: 5) {
-                            Text("بعد")
-                                .font(.subheadline.weight(.bold))
-                                .foregroundStyle(.white.opacity(0.72))
-
-                            SalatiCountdownText(context: context, size: 22)
-                        }
-                    }
-                }
-            }
-
-            SalatiProgressLine(context: context)
-
-            ViewThatFits(in: .horizontal) {
-                Text(isPrayerDue ? "افتح التطبيق للأذكار والتنبيهات" : "يبقى ظاهرًا حتى يحين الأذان، والعدّاد يعمل من النظام")
-                Text(isPrayerDue ? "الأذكار والتنبيهات من التطبيق" : "عدّاد نظامي حتى الأذان")
-            }
-            .font(.caption.weight(.bold))
-            .foregroundStyle(.white.opacity(0.66))
-            .frame(maxWidth: .infinity, alignment: .trailing)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 16)
-        .padding(.horizontal, 16)
+        .padding(.vertical, 18)
+        .padding(.horizontal, 18)
         .background(
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
                 .fill(
                     LinearGradient(
                         colors: [
                             Color(red: 0.04, green: 0.09, blue: 0.11),
-                            Color(red: 0.10, green: 0.13, blue: 0.12),
-                            Color(red: 0.17, green: 0.13, blue: 0.05)
+                            Color(red: 0.07, green: 0.12, blue: 0.12),
+                            Color(red: 0.11, green: 0.10, blue: 0.06)
                         ],
                         startPoint: .topTrailing,
                         endPoint: .bottomLeading
@@ -947,35 +888,13 @@ private struct SalatiLiveActivityCard: View {
                 )
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .strokeBorder(SalatiLiveActivityStyle.gold.opacity(0.32), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .strokeBorder(SalatiLiveActivityStyle.gold.opacity(0.18), lineWidth: 1)
         )
         .environment(\.layoutDirection, .rightToLeft)
-        .multilineTextAlignment(.trailing)
+        .multilineTextAlignment(.center)
         .activityBackgroundTint(Color(red: 0.04, green: 0.08, blue: 0.10))
         .activitySystemActionForegroundColor(SalatiLiveActivityStyle.gold)
-    }
-}
-
-@available(iOSApplicationExtension 16.1, *)
-private struct SalatiIslandExpandedLeading: View {
-    let context: ActivityViewContext<PrayerLiveActivityAttributes>
-
-    private var isPrayerDue: Bool {
-        context.state.phase != .almostTime || Date() >= context.state.prayerDate
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 3) {
-            Image(systemName: isPrayerDue ? "bell.badge.fill" : "bell.and.waves.left.and.right.fill")
-                .font(.title3.weight(.black))
-                .foregroundStyle(SalatiLiveActivityStyle.gold)
-
-            Text(isPrayerDue ? "الآن" : "قريب")
-                .font(.caption2.weight(.black))
-                .foregroundStyle(.white.opacity(0.86))
-        }
-        .accessibilityLabel(isPrayerDue ? "حان الأذان" : "اقترب الأذان")
     }
 }
 
@@ -988,81 +907,24 @@ private struct SalatiIslandExpandedCenter: View {
     }
 
     var body: some View {
-        VStack(spacing: 3) {
-            Text(context.attributes.prayerName)
-                .font(.system(size: 16, weight: .black, design: .rounded))
-                .foregroundStyle(.white)
+        VStack(spacing: 2) {
+            Text(isPrayerDue ? "حان أذان \(context.attributes.prayerName)" : "باقي على صلاة \(context.attributes.prayerName)")
+                .font(.caption.weight(.black))
+                .foregroundStyle(isPrayerDue ? SalatiLiveActivityStyle.gold : .white)
                 .lineLimit(1)
-                .minimumScaleFactor(0.72)
+                .minimumScaleFactor(0.64)
 
-            ViewThatFits(in: .horizontal) {
-                if isPrayerDue {
-                    Text("حان الأذان")
-                        .foregroundStyle(SalatiLiveActivityStyle.gold)
-                } else {
-                    HStack(alignment: .lastTextBaseline, spacing: 4) {
-                        Text("بعد")
-                            .foregroundStyle(.white.opacity(0.68))
-                        SalatiCountdownText(context: context, size: 16)
-                    }
-                }
-
-                Text(isPrayerDue ? "الآن" : context.attributes.prayerTime)
+            if isPrayerDue {
+                Text("الآن")
+                    .font(.caption2.weight(.black))
                     .foregroundStyle(SalatiLiveActivityStyle.gold)
+            } else {
+                SalatiCountdownText(context: context, size: 16)
             }
-            .font(.caption.weight(.black))
         }
         .lineLimit(1)
-        .minimumScaleFactor(0.72)
+        .minimumScaleFactor(0.7)
         .multilineTextAlignment(.center)
-        .environment(\.layoutDirection, .rightToLeft)
-    }
-}
-
-@available(iOSApplicationExtension 16.1, *)
-private struct SalatiIslandExpandedTrailing: View {
-    let context: ActivityViewContext<PrayerLiveActivityAttributes>
-
-    var body: some View {
-        VStack(alignment: .trailing, spacing: 3) {
-            Text(context.attributes.prayerTime)
-                .font(.system(size: 17, weight: .black, design: .rounded).monospacedDigit())
-                .foregroundStyle(SalatiLiveActivityStyle.gold)
-                .lineLimit(1)
-
-            Text(context.attributes.cityName)
-                .font(.caption2.weight(.bold))
-                .foregroundStyle(.white.opacity(0.72))
-                .lineLimit(1)
-                .minimumScaleFactor(0.68)
-        }
-        .multilineTextAlignment(.trailing)
-    }
-}
-
-@available(iOSApplicationExtension 16.1, *)
-private struct SalatiIslandExpandedBottom: View {
-    let context: ActivityViewContext<PrayerLiveActivityAttributes>
-
-    private var isPrayerDue: Bool {
-        context.state.phase != .almostTime || Date() >= context.state.prayerDate
-    }
-
-    var body: some View {
-        VStack(alignment: .trailing, spacing: 6) {
-            SalatiProgressLine(context: context)
-
-            HStack(spacing: 6) {
-                Text(context.attributes.cityName)
-                Text("•")
-                Text(isPrayerDue ? "افتح التطبيق للأذكار" : "عدّاد الأذان يعمل مباشرة من iOS")
-            }
-            .font(.caption2.weight(.bold))
-            .foregroundStyle(.white.opacity(0.62))
-            .lineLimit(1)
-            .minimumScaleFactor(0.72)
-            .frame(maxWidth: .infinity, alignment: .trailing)
-        }
         .environment(\.layoutDirection, .rightToLeft)
     }
 }
@@ -1077,15 +939,15 @@ private struct SalatiIslandCompactLeading: View {
 
     var body: some View {
         HStack(spacing: 3) {
-            Image(systemName: isPrayerDue ? "bell.badge.fill" : "bell.fill")
-                .font(.caption2.weight(.black))
-                .foregroundStyle(SalatiLiveActivityStyle.gold)
-
             Text(isPrayerDue ? "الآن" : context.attributes.prayerName)
                 .font(.caption2.weight(.black))
-                .foregroundStyle(.white)
+                .foregroundStyle(isPrayerDue ? SalatiLiveActivityStyle.gold : .white)
                 .lineLimit(1)
-                .minimumScaleFactor(0.62)
+                .minimumScaleFactor(0.68)
+
+            Image(systemName: "bell.fill")
+                .font(.caption2.weight(.black))
+                .foregroundStyle(SalatiLiveActivityStyle.gold)
         }
         .environment(\.layoutDirection, .rightToLeft)
     }
@@ -1102,7 +964,7 @@ private struct SalatiIslandCompactTrailing: View {
     var body: some View {
         Group {
             if isPrayerDue {
-                Text("حان")
+                Text("الآن")
                     .font(.caption2.weight(.black))
                     .foregroundStyle(SalatiLiveActivityStyle.gold)
             } else {
@@ -1130,30 +992,6 @@ private struct SalatiIslandMinimal: View {
 }
 
 @available(iOSApplicationExtension 16.1, *)
-private struct SalatiLiveBadge: View {
-    let title: String
-    let systemImage: String
-
-    var body: some View {
-        HStack(spacing: 5) {
-            Text(title)
-                .font(.caption2.weight(.black))
-
-            Image(systemName: systemImage)
-                .font(.caption2.weight(.black))
-        }
-        .foregroundStyle(SalatiLiveActivityStyle.gold)
-        .padding(.horizontal, 9)
-        .padding(.vertical, 6)
-        .background(SalatiLiveActivityStyle.gold.opacity(0.13), in: Capsule())
-        .overlay(
-            Capsule()
-                .strokeBorder(SalatiLiveActivityStyle.gold.opacity(0.26), lineWidth: 1)
-        )
-    }
-}
-
-@available(iOSApplicationExtension 16.1, *)
 private struct SalatiCountdownText: View {
     let context: ActivityViewContext<PrayerLiveActivityAttributes>
     let size: CGFloat
@@ -1168,36 +1006,6 @@ private struct SalatiCountdownText: View {
                 .font(.system(size: size, weight: .black, design: .rounded))
                 .foregroundStyle(SalatiLiveActivityStyle.gold)
         }
-    }
-}
-
-@available(iOSApplicationExtension 16.1, *)
-private struct SalatiProgressLine: View {
-    let context: ActivityViewContext<PrayerLiveActivityAttributes>
-
-    private var progress: CGFloat {
-        guard let previousDate = context.attributes.previousPrayerDate else {
-            return Date() >= context.state.prayerDate ? 1 : 0.08
-        }
-
-        let total = max(context.state.prayerDate.timeIntervalSince(previousDate), 1)
-        let elapsed = Date().timeIntervalSince(previousDate)
-        return min(max(CGFloat(elapsed / total), 0.08), 1)
-    }
-
-    var body: some View {
-        GeometryReader { proxy in
-            ZStack(alignment: .trailing) {
-                Capsule()
-                    .fill(.white.opacity(0.14))
-
-                Capsule()
-                    .fill(SalatiLiveActivityStyle.gold)
-                    .frame(width: max(10, proxy.size.width * progress))
-                    .shadow(color: SalatiLiveActivityStyle.gold.opacity(0.24), radius: 5, x: 0, y: 0)
-            }
-        }
-        .frame(height: 5)
     }
 }
 

@@ -15,9 +15,8 @@ final class PrayerLiveActivityCenter: ObservableObject {
     @Published private(set) var debugText = ""
 
     private let previewDuration: TimeInterval = 30
-    private let autoLeadTime: TimeInterval = 180
-    private let keepAfterPrayer: TimeInterval = 30
-    private let expiredCleanupGrace: TimeInterval = 5
+    private let autoLeadTime: TimeInterval = 120
+    private let expiredCleanupGrace: TimeInterval = 0
     private var lastSyncDate = Date.distantPast
     private var lastCleanupDate = Date.distantPast
 
@@ -54,7 +53,7 @@ final class PrayerLiveActivityCenter: ObservableObject {
 #if canImport(ActivityKit)
         guard #available(iOS 16.1, *) else { return }
         cleanupExpiredLiveActivities(now: now)
-        guard now.timeIntervalSince(lastSyncDate) >= 20 else { return }
+        guard now.timeIntervalSince(lastSyncDate) >= 2 else { return }
         lastSyncDate = now
 
         Task {
@@ -117,11 +116,15 @@ final class PrayerLiveActivityCenter: ObservableObject {
         )
 
         do {
-            _ = try requestActivity(attributes: attributes, state: state, staleDate: prayerDate.addingTimeInterval(120))
+            let activity = try requestActivity(attributes: attributes, state: state, staleDate: prayerDate)
             isPreviewActive = true
             statusText = "تم تشغيل الجزيرة"
             detailText = "اخرج من التطبيق أو اقفل الشاشة. العدّاد الظاهر في الجزيرة يعمل من نظام iOS، وليس من مؤقت خلفي داخل التطبيق."
             debugText = ""
+            Task {
+                try? await Task.sleep(nanoseconds: UInt64(previewDuration * 1_000_000_000))
+                await endActivity(activity, phase: .now)
+            }
         } catch {
             isPreviewActive = false
             statusText = "لم يبدأ اختبار الجزيرة"
@@ -153,7 +156,7 @@ final class PrayerLiveActivityCenter: ObservableObject {
             return
         }
 
-        guard secondsUntilPrayer >= -keepAfterPrayer else {
+        if secondsUntilPrayer <= 0 {
             await endActivities(where: { !$0.attributes.isPreview })
             return
         }
@@ -166,7 +169,7 @@ final class PrayerLiveActivityCenter: ObservableObject {
         )
 
         if let activity = Activity<PrayerLiveActivityAttributes>.activities.first(where: { !$0.attributes.isPreview && $0.attributes.prayerID == prayerID }) {
-            await updateActivity(activity, state: state, staleDate: next.date.addingTimeInterval(keepAfterPrayer))
+            await updateActivity(activity, state: state, staleDate: next.date)
             return
         }
 
@@ -182,7 +185,7 @@ final class PrayerLiveActivityCenter: ObservableObject {
         )
 
         do {
-            _ = try requestActivity(attributes: attributes, state: state, staleDate: next.date.addingTimeInterval(keepAfterPrayer))
+            _ = try requestActivity(attributes: attributes, state: state, staleDate: next.date)
         } catch {
             return
         }
