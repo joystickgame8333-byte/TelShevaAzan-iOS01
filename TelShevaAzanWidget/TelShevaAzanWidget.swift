@@ -826,46 +826,46 @@ struct PrayerLiveActivityWidget: Widget {
         ActivityConfiguration(for: PrayerLiveActivityAttributes.self) { context in
             let isCountingDown = Date() < context.state.prayerDate
 
-            VStack(alignment: .trailing, spacing: 10) {
-                HStack(alignment: .center, spacing: 10) {
-                    VStack(alignment: .trailing, spacing: 3) {
-                        Text("صلاتي")
-                            .font(.headline.weight(.black))
-                            .foregroundStyle(.primary)
-
-                        Text(context.attributes.cityName)
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(.secondary)
-                    }
+            VStack(alignment: .trailing, spacing: 12) {
+                HStack(spacing: 10) {
+                    Text("صلاتي")
+                        .font(.headline.weight(.black))
+                        .foregroundStyle(.primary)
 
                     Image(systemName: "bell.fill")
-                        .font(.title3.weight(.bold))
+                        .font(.headline.weight(.black))
                         .foregroundStyle(Color.accentColor)
                 }
 
-                Divider()
+                VStack(alignment: .trailing, spacing: 4) {
+                    HStack(alignment: .lastTextBaseline, spacing: 6) {
+                        if isCountingDown {
+                            Text(timerInterval: Date()...context.state.prayerDate, countsDown: true)
+                                .font(.system(size: 32, weight: .black, design: .rounded).monospacedDigit())
+                                .foregroundStyle(Color.accentColor)
+                        } else {
+                            Text("حان الآن")
+                                .font(.system(size: 28, weight: .black, design: .rounded))
+                                .foregroundStyle(Color.accentColor)
+                        }
 
-                HStack(alignment: .lastTextBaseline, spacing: 6) {
-                    if isCountingDown {
-                        Text(timerInterval: Date()...context.state.prayerDate, countsDown: true)
-                            .font(.system(size: 30, weight: .black, design: .rounded).monospacedDigit())
-                            .foregroundStyle(Color.accentColor)
-                    } else {
-                        Text("حان الآن")
-                            .font(.system(size: 28, weight: .black, design: .rounded))
-                            .foregroundStyle(Color.accentColor)
+                        Text(isCountingDown ? "بعد" : "أذان")
+                            .font(.title3.weight(.black))
+                            .foregroundStyle(.primary)
+
+                        Text(context.attributes.prayerName)
+                            .font(.title2.weight(.black))
+                            .foregroundStyle(.primary)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.72)
                     }
 
-                    Text(isCountingDown ? "بعد" : "أذان")
-                        .font(.title3.weight(.black))
-                        .foregroundStyle(.primary)
-
-                    Text(context.attributes.prayerName)
-                        .font(.title2.weight(.black))
-                        .foregroundStyle(.primary)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.72)
+                    Text(isCountingDown ? "الأذان بعد" : "حان الآن أذان \(context.attributes.prayerName)")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
                 }
+
+                Divider()
 
                 HStack(spacing: 4) {
                     Text(context.attributes.prayerTime)
@@ -873,6 +873,14 @@ struct PrayerLiveActivityWidget: Widget {
                         .foregroundStyle(.secondary)
 
                     Text("وقت الأذان")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+
+                    Text("•")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+
+                    Text(context.attributes.cityName)
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(.secondary)
                 }
@@ -885,7 +893,7 @@ struct PrayerLiveActivityWidget: Widget {
 
             return DynamicIsland {
                 DynamicIslandExpandedRegion(.center) {
-                    VStack(spacing: 2) {
+                    VStack(spacing: 3) {
                         Text("صلاتي")
                             .font(.caption.weight(.black))
                             .foregroundStyle(.primary)
@@ -897,8 +905,8 @@ struct PrayerLiveActivityWidget: Widget {
                 }
 
                 DynamicIslandExpandedRegion(.bottom) {
-                    VStack(alignment: .center, spacing: 6) {
-                        Text("الصلاة القادمة")
+                    VStack(alignment: .center, spacing: 7) {
+                        Text(isCountingDown ? "الصلاة القادمة" : "وقت الأذان")
                             .font(.caption.weight(.semibold))
                             .foregroundStyle(.secondary)
 
@@ -943,6 +951,7 @@ struct PrayerLiveActivityWidget: Widget {
                 Image(systemName: "bell.fill")
             }
         }
+        .keylineTint(Color.accentColor)
     }
 }
 

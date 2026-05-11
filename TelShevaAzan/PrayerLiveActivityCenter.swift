@@ -12,7 +12,7 @@ final class PrayerLiveActivityCenter: ObservableObject {
     @Published private(set) var isPreviewActive = false
     @Published private(set) var statusText = "جاهز لاختبار الجزيرة"
     @Published private(set) var detailText = "اضغط الاختبار ثم اخرج من التطبيق أو اقفل الشاشة. العدّاد يعمل من النظام داخل Live Activity بدون مؤقت خلفي من التطبيق."
-    @Published private(set) var debugText = "Live Activity debug: لم يبدأ الاختبار بعد"
+    @Published private(set) var debugText = ""
 
     private let previewDuration: TimeInterval = 30
     private let autoLeadTime: TimeInterval = 180
@@ -37,7 +37,7 @@ final class PrayerLiveActivityCenter: ObservableObject {
         guard #available(iOS 16.1, *) else {
             statusText = "غير مدعوم على هذا الإصدار"
             detailText = "Live Activities تحتاج iOS 16.1 أو أحدث."
-            debugText = "Activity.request: not attempted\nError: iOS 16.1 required"
+            debugText = ""
             return
         }
         Task {
@@ -46,7 +46,7 @@ final class PrayerLiveActivityCenter: ObservableObject {
 #else
         statusText = "غير مدعوم في هذا البناء"
         detailText = "ActivityKit غير متاح في هذه البيئة."
-        debugText = "Activity.request: not available\nError: ActivityKit unavailable"
+        debugText = ""
 #endif
     }
 
@@ -82,12 +82,7 @@ final class PrayerLiveActivityCenter: ObservableObject {
             isPreviewActive = false
             statusText = "Live Activities مقفلة"
             detailText = "افتح إعدادات الآيفون > أذان تل السبع > فعّل Live Activities، ثم ارجع واضغط اختبار الجزيرة."
-            debugText = """
-            Activity.request: not attempted
-            Widget extension bundled: \(isWidgetExtensionBundled ? "yes" : "no")
-            Active activities count: \(Activity<PrayerLiveActivityAttributes>.activities.count)
-            Error: Live Activities disabled
-            """
+            debugText = ""
             return
         }
 
@@ -115,28 +110,16 @@ final class PrayerLiveActivityCenter: ObservableObject {
         )
 
         do {
-            let activity = try requestActivity(attributes: attributes, state: state, staleDate: prayerDate.addingTimeInterval(120))
+            _ = try requestActivity(attributes: attributes, state: state, staleDate: prayerDate.addingTimeInterval(120))
             isPreviewActive = true
             statusText = "تم تشغيل الجزيرة"
             detailText = "اخرج من التطبيق أو اقفل الشاشة. العدّاد الظاهر في الجزيرة يعمل من نظام iOS، وليس من مؤقت خلفي داخل التطبيق."
-            debugText = """
-            Live Activity requested successfully
-            Activity ID: \(activity.id)
-            Active activities count: \(Activity<PrayerLiveActivityAttributes>.activities.count)
-            Widget extension bundled: \(isWidgetExtensionBundled ? "yes" : "no")
-            Error: none
-            """
+            debugText = ""
         } catch {
             isPreviewActive = false
             statusText = "لم يبدأ اختبار الجزيرة"
             detailText = "النظام رفض تشغيل Live Activity الآن. تأكد من تفعيل Live Activities للتطبيق ومن أن الجهاز iOS 16.1 أو أحدث."
-            debugText = """
-            Activity.request: failed
-            Activity ID: -
-            Active activities count: \(Activity<PrayerLiveActivityAttributes>.activities.count)
-            Widget extension bundled: \(isWidgetExtensionBundled ? "yes" : "no")
-            Error: \(String(describing: error))
-            """
+            debugText = ""
         }
     }
 
