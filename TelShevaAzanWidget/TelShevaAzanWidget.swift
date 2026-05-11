@@ -831,7 +831,7 @@ struct PrayerLiveActivityWidget: Widget {
                     SalatiIslandExpandedCenter(context: context)
                 }
             } compactLeading: {
-                SalatiIslandCompactLeading()
+                SalatiIslandCompactLeading(context: context)
             } compactTrailing: {
                 SalatiIslandCompactTrailing(context: context)
             } minimal: {
@@ -913,10 +913,17 @@ private struct SalatiIslandExpandedCenter: View {
 
 @available(iOSApplicationExtension 16.1, *)
 private struct SalatiIslandCompactLeading: View {
+    let context: ActivityViewContext<PrayerLiveActivityAttributes>
+
     var body: some View {
-        Image(systemName: "bell.fill")
-            .font(.caption2.weight(.black))
-            .foregroundStyle(SalatiLiveActivityStyle.gold)
+        Text(context.attributes.prayerName)
+            .font(.system(size: 11, weight: .black, design: .rounded))
+            .foregroundStyle(.white)
+            .lineLimit(1)
+            .minimumScaleFactor(0.62)
+            .allowsTightening(true)
+            .frame(width: 38, height: 18, alignment: .trailing)
+            .environment(\.layoutDirection, .rightToLeft)
     }
 }
 
@@ -925,9 +932,11 @@ private struct SalatiIslandCompactTrailing: View {
     let context: ActivityViewContext<PrayerLiveActivityAttributes>
 
     var body: some View {
-        SalatiCountdownText(context: context, size: 12)
+        SalatiCountdownText(context: context, size: 11)
             .lineLimit(1)
             .minimumScaleFactor(0.72)
+            .allowsTightening(true)
+            .frame(width: 36, height: 18, alignment: .leading)
     }
 }
 
