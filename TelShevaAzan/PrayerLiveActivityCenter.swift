@@ -117,14 +117,11 @@ final class PrayerLiveActivityCenter: ObservableObject {
 
         do {
             let activity = try requestActivity(attributes: attributes, state: state, staleDate: prayerDate)
+            keepAlive(activity, until: prayerDate)
             isPreviewActive = true
             statusText = "تم تشغيل الجزيرة"
             detailText = "اخرج من التطبيق أو اقفل الشاشة. العدّاد الظاهر في الجزيرة يعمل من نظام iOS، وليس من مؤقت خلفي داخل التطبيق."
             debugText = ""
-            Task {
-                try? await Task.sleep(nanoseconds: UInt64(previewDuration * 1_000_000_000))
-                await endActivity(activity, phase: .now)
-            }
         } catch {
             isPreviewActive = false
             statusText = "لم يبدأ اختبار الجزيرة"
@@ -170,6 +167,7 @@ final class PrayerLiveActivityCenter: ObservableObject {
 
         if let activity = Activity<PrayerLiveActivityAttributes>.activities.first(where: { !$0.attributes.isPreview && $0.attributes.prayerID == prayerID }) {
             await updateActivity(activity, state: state, staleDate: next.date)
+            keepAlive(activity, until: next.date)
             return
         }
 
@@ -185,7 +183,8 @@ final class PrayerLiveActivityCenter: ObservableObject {
         )
 
         do {
-            _ = try requestActivity(attributes: attributes, state: state, staleDate: next.date)
+            let activity = try requestActivity(attributes: attributes, state: state, staleDate: next.date)
+            keepAlive(activity, until: next.date)
         } catch {
             return
         }
@@ -263,10 +262,20 @@ final class PrayerLiveActivityCenter: ObservableObject {
     }
 
     @available(iOS 16.1, *)
+    private func keepAlive(_ activity: Activity<PrayerLiveActivityAttributes>, until endDate: Date) {
+        PrayerLiveActivityKeepAlive.shared.start(until: endDate) { [weak self] in
+            Task { @MainActor in
+                await self?.endActivity(activity, phase: .now)
+            }
+        }
+    }
+
+    @available(iOS 16.1, *)
     private func endActivities(where shouldEnd: (Activity<PrayerLiveActivityAttributes>) -> Bool) async {
         for activity in Activity<PrayerLiveActivityAttributes>.activities where shouldEnd(activity) {
             await endActivity(activity, phase: .adhkar)
         }
+        PrayerLiveActivityKeepAlive.shared.stop()
     }
 
     private func phase(for secondsUntilPrayer: TimeInterval) -> PrayerLiveActivityPhase {

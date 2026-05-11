@@ -831,9 +831,9 @@ struct PrayerLiveActivityWidget: Widget {
                     SalatiIslandExpandedCenter(context: context)
                 }
             } compactLeading: {
-                SalatiIslandCompactLeading(context: context)
+                SalatiIslandCompactLeading()
             } compactTrailing: {
-                SalatiIslandCompactTrailing(context: context)
+                SalatiIslandCompactTrailing()
             } minimal: {
                 SalatiIslandMinimal(context: context)
             }
@@ -846,54 +846,36 @@ private struct SalatiLiveActivityCard: View {
     let context: ActivityViewContext<PrayerLiveActivityAttributes>
 
     private var isPrayerDue: Bool {
-        context.state.phase != .almostTime || Date() >= context.state.prayerDate
+        context.isStale || context.state.phase != .almostTime || Date() >= context.state.prayerDate
     }
 
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 5) {
             Image(systemName: isPrayerDue ? "bell.badge.fill" : "bell.fill")
-                .font(.system(size: 20, weight: .black))
+                .font(.system(size: 14, weight: .black))
                 .foregroundStyle(SalatiLiveActivityStyle.gold)
 
             Text(isPrayerDue ? "حان أذان \(context.attributes.prayerName)" : "باقي على صلاة \(context.attributes.prayerName)")
-                .font(.system(size: 22, weight: .black, design: .rounded))
+                .font(.system(size: 17, weight: .black, design: .rounded))
                 .foregroundStyle(.white)
                 .lineLimit(1)
-                .minimumScaleFactor(0.62)
+                .minimumScaleFactor(0.7)
 
             if isPrayerDue {
                 Text("الآن")
-                    .font(.system(size: 34, weight: .black, design: .rounded))
+                    .font(.system(size: 26, weight: .black, design: .rounded))
                     .foregroundStyle(SalatiLiveActivityStyle.gold)
                     .lineLimit(1)
             } else {
-                SalatiCountdownText(context: context, size: 38)
+                SalatiCountdownText(context: context, size: 28)
             }
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 18)
-        .padding(.horizontal, 18)
-        .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            Color(red: 0.04, green: 0.09, blue: 0.11),
-                            Color(red: 0.07, green: 0.12, blue: 0.12),
-                            Color(red: 0.11, green: 0.10, blue: 0.06)
-                        ],
-                        startPoint: .topTrailing,
-                        endPoint: .bottomLeading
-                    )
-                )
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .strokeBorder(SalatiLiveActivityStyle.gold.opacity(0.18), lineWidth: 1)
-        )
+        .padding(.vertical, 10)
+        .padding(.horizontal, 12)
         .environment(\.layoutDirection, .rightToLeft)
         .multilineTextAlignment(.center)
-        .activityBackgroundTint(Color(red: 0.04, green: 0.08, blue: 0.10))
+        .activityBackgroundTint(Color(red: 0.04, green: 0.07, blue: 0.07))
         .activitySystemActionForegroundColor(SalatiLiveActivityStyle.gold)
     }
 }
@@ -903,12 +885,12 @@ private struct SalatiIslandExpandedCenter: View {
     let context: ActivityViewContext<PrayerLiveActivityAttributes>
 
     private var isPrayerDue: Bool {
-        context.state.phase != .almostTime || Date() >= context.state.prayerDate
+        context.isStale || context.state.phase != .almostTime || Date() >= context.state.prayerDate
     }
 
     var body: some View {
-        VStack(spacing: 2) {
-            Text(isPrayerDue ? "حان أذان \(context.attributes.prayerName)" : "باقي على صلاة \(context.attributes.prayerName)")
+        VStack(spacing: 1) {
+            Text(isPrayerDue ? "حان الأذان" : "باقي على \(context.attributes.prayerName)")
                 .font(.caption.weight(.black))
                 .foregroundStyle(isPrayerDue ? SalatiLiveActivityStyle.gold : .white)
                 .lineLimit(1)
@@ -931,48 +913,18 @@ private struct SalatiIslandExpandedCenter: View {
 
 @available(iOSApplicationExtension 16.1, *)
 private struct SalatiIslandCompactLeading: View {
-    let context: ActivityViewContext<PrayerLiveActivityAttributes>
-
-    private var isPrayerDue: Bool {
-        context.state.phase != .almostTime || Date() >= context.state.prayerDate
-    }
-
     var body: some View {
-        HStack(spacing: 3) {
-            Text(isPrayerDue ? "الآن" : context.attributes.prayerName)
-                .font(.caption2.weight(.black))
-                .foregroundStyle(isPrayerDue ? SalatiLiveActivityStyle.gold : .white)
-                .lineLimit(1)
-                .minimumScaleFactor(0.68)
-
-            Image(systemName: "bell.fill")
-                .font(.caption2.weight(.black))
-                .foregroundStyle(SalatiLiveActivityStyle.gold)
-        }
-        .environment(\.layoutDirection, .rightToLeft)
+        Image(systemName: "bell.fill")
+            .font(.caption2.weight(.black))
+            .foregroundStyle(SalatiLiveActivityStyle.gold)
     }
 }
 
 @available(iOSApplicationExtension 16.1, *)
 private struct SalatiIslandCompactTrailing: View {
-    let context: ActivityViewContext<PrayerLiveActivityAttributes>
-
-    private var isPrayerDue: Bool {
-        context.state.phase != .almostTime || Date() >= context.state.prayerDate
-    }
-
     var body: some View {
-        Group {
-            if isPrayerDue {
-                Text("الآن")
-                    .font(.caption2.weight(.black))
-                    .foregroundStyle(SalatiLiveActivityStyle.gold)
-            } else {
-                SalatiCountdownText(context: context, size: 12)
-            }
-        }
-        .lineLimit(1)
-        .minimumScaleFactor(0.64)
+        Color.clear
+            .frame(width: 1, height: 1)
     }
 }
 
@@ -981,7 +933,7 @@ private struct SalatiIslandMinimal: View {
     let context: ActivityViewContext<PrayerLiveActivityAttributes>
 
     private var isPrayerDue: Bool {
-        context.state.phase != .almostTime || Date() >= context.state.prayerDate
+        context.isStale || context.state.phase != .almostTime || Date() >= context.state.prayerDate
     }
 
     var body: some View {
