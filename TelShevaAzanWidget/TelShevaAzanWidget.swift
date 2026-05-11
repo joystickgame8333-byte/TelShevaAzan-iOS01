@@ -951,7 +951,6 @@ struct PrayerLiveActivityWidget: Widget {
                 Image(systemName: "bell.fill")
             }
         }
-        .keylineTint(Color.accentColor)
     }
 }
 
