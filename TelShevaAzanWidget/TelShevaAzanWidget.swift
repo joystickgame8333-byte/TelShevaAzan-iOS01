@@ -829,16 +829,8 @@ struct PrayerLiveActivityWidget: Widget {
             let isPrayerDue = Date() >= context.state.prayerDate
 
             return DynamicIsland {
-                DynamicIslandExpandedRegion(.leading) {
-                    SalatiIslandMark()
-                }
-
-                DynamicIslandExpandedRegion(.trailing) {
-                    SalatiIslandTimer(context: context)
-                }
-
-                DynamicIslandExpandedRegion(.bottom) {
-                    SalatiIslandLine(context: context)
+                DynamicIslandExpandedRegion(.center) {
+                    SalatiIslandCompactCenter(context: context)
                 }
             } compactLeading: {
                 if isPrayerDue {
@@ -952,22 +944,7 @@ private struct SalatiLiveActivityCard: View {
 }
 
 @available(iOSApplicationExtension 16.1, *)
-private struct SalatiIslandMark: View {
-    var body: some View {
-        HStack(spacing: 4) {
-            Image(systemName: "bell.fill")
-                .font(.caption.weight(.black))
-                .foregroundStyle(SalatiLiveActivityStyle.gold)
-
-            Text("صلاتي")
-                .font(.caption2.weight(.black))
-                .foregroundStyle(.white.opacity(0.92))
-        }
-    }
-}
-
-@available(iOSApplicationExtension 16.1, *)
-private struct SalatiIslandTimer: View {
+private struct SalatiIslandCompactCenter: View {
     let context: ActivityViewContext<PrayerLiveActivityAttributes>
 
     private var isPrayerDue: Bool {
@@ -975,40 +952,31 @@ private struct SalatiIslandTimer: View {
     }
 
     var body: some View {
-        if isPrayerDue {
-            Text("الآن")
-                .font(.headline.weight(.black))
-                .foregroundStyle(SalatiLiveActivityStyle.gold)
-        } else {
-            Text(timerInterval: Date()...context.state.prayerDate, countsDown: true)
-                .font(.headline.weight(.black).monospacedDigit())
-                .foregroundStyle(SalatiLiveActivityStyle.gold)
-        }
-    }
-}
+        VStack(spacing: 2) {
+            HStack(alignment: .lastTextBaseline, spacing: 5) {
+                Text(isPrayerDue ? "الآن" : context.attributes.prayerName)
+                    .font(.caption.weight(.black))
+                    .foregroundStyle(.white)
 
-@available(iOSApplicationExtension 16.1, *)
-private struct SalatiIslandLine: View {
-    let context: ActivityViewContext<PrayerLiveActivityAttributes>
+                if !isPrayerDue {
+                    Text("بعد")
+                        .font(.caption2.weight(.bold))
+                        .foregroundStyle(.white.opacity(0.74))
+                }
+            }
 
-    private var isPrayerDue: Bool {
-        Date() >= context.state.prayerDate
-    }
-
-    var body: some View {
-        HStack(spacing: 6) {
-            Text(isPrayerDue ? "حان الآن أذان \(context.attributes.prayerName)" : "\(context.attributes.prayerName) بعد")
-                .font(.subheadline.weight(.black))
-                .foregroundStyle(.white)
-                .lineLimit(1)
-                .minimumScaleFactor(0.68)
-
-            if !isPrayerDue {
+            if isPrayerDue {
+                Text("حان الأذان")
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(SalatiLiveActivityStyle.gold)
+            } else {
                 Text(timerInterval: Date()...context.state.prayerDate, countsDown: true)
                     .font(.subheadline.weight(.black).monospacedDigit())
                     .foregroundStyle(SalatiLiveActivityStyle.gold)
             }
         }
+        .lineLimit(1)
+        .minimumScaleFactor(0.72)
         .environment(\.layoutDirection, .rightToLeft)
     }
 }
