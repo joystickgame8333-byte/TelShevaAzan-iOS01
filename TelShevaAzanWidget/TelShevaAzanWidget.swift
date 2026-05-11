@@ -824,9 +824,9 @@ struct TelShevaAzanCountdownWidget: Widget {
 struct PrayerLiveActivityWidget: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: PrayerLiveActivityAttributes.self) { context in
-            let isCountingDown = Date() < context.state.prayerDate
+            let isPrayerDue = Date() >= context.state.prayerDate
 
-            VStack(alignment: .trailing, spacing: 12) {
+            VStack(alignment: .trailing, spacing: 10) {
                 HStack(spacing: 10) {
                     Text("صلاتي")
                         .font(.headline.weight(.black))
@@ -838,41 +838,35 @@ struct PrayerLiveActivityWidget: Widget {
                 }
 
                 VStack(alignment: .trailing, spacing: 4) {
-                    HStack(alignment: .lastTextBaseline, spacing: 6) {
-                        if isCountingDown {
-                            Text(timerInterval: Date()...context.state.prayerDate, countsDown: true)
-                                .font(.system(size: 32, weight: .black, design: .rounded).monospacedDigit())
-                                .foregroundStyle(Color.accentColor)
-                        } else {
-                            Text("حان الآن")
-                                .font(.system(size: 28, weight: .black, design: .rounded))
-                                .foregroundStyle(Color.accentColor)
-                        }
-
-                        Text(isCountingDown ? "بعد" : "أذان")
+                    if isPrayerDue {
+                        Text("حان الآن أذان \(context.attributes.prayerName)")
                             .font(.title3.weight(.black))
-                            .foregroundStyle(.primary)
-
-                        Text(context.attributes.prayerName)
-                            .font(.title2.weight(.black))
                             .foregroundStyle(.primary)
                             .lineLimit(1)
                             .minimumScaleFactor(0.72)
-                    }
+                    } else {
+                        HStack(alignment: .lastTextBaseline, spacing: 6) {
+                            Text(context.attributes.prayerName)
+                                .font(.title2.weight(.black))
+                                .foregroundStyle(.primary)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.72)
 
-                    Text(isCountingDown ? "الأذان بعد" : "حان الآن أذان \(context.attributes.prayerName)")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(.secondary)
+                            Text("بعد")
+                                .font(.title3.weight(.black))
+                                .foregroundStyle(.primary)
+
+                            Text(timerInterval: Date()...context.state.prayerDate, countsDown: true)
+                                .font(.system(size: 32, weight: .black, design: .rounded).monospacedDigit())
+                                .foregroundStyle(Color.accentColor)
+                        }
+                    }
                 }
 
                 Divider()
 
                 HStack(spacing: 4) {
-                    Text(context.attributes.prayerTime)
-                        .font(.caption.weight(.black).monospacedDigit())
-                        .foregroundStyle(.secondary)
-
-                    Text("وقت الأذان")
+                    Text(context.attributes.cityName)
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(.secondary)
 
@@ -880,8 +874,12 @@ struct PrayerLiveActivityWidget: Widget {
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(.secondary)
 
-                    Text(context.attributes.cityName)
+                    Text("وقت الأذان")
                         .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+
+                    Text(context.attributes.prayerTime)
+                        .font(.caption.weight(.black).monospacedDigit())
                         .foregroundStyle(.secondary)
                 }
             }
@@ -889,7 +887,7 @@ struct PrayerLiveActivityWidget: Widget {
             .environment(\.layoutDirection, .rightToLeft)
             .multilineTextAlignment(.trailing)
         } dynamicIsland: { context in
-            let isCountingDown = Date() < context.state.prayerDate
+            let isPrayerDue = Date() >= context.state.prayerDate
 
             return DynamicIsland {
                 DynamicIslandExpandedRegion(.center) {
@@ -905,27 +903,27 @@ struct PrayerLiveActivityWidget: Widget {
                 }
 
                 DynamicIslandExpandedRegion(.bottom) {
-                    VStack(alignment: .center, spacing: 7) {
-                        Text(isCountingDown ? "الصلاة القادمة" : "وقت الأذان")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(.secondary)
-
-                        HStack(alignment: .lastTextBaseline, spacing: 5) {
-                            if isCountingDown {
-                                Text(timerInterval: Date()...context.state.prayerDate, countsDown: true)
-                                    .font(.title2.weight(.black).monospacedDigit())
-                                    .foregroundStyle(Color.accentColor)
-                            } else {
-                                Text("حان الآن")
-                                    .font(.title3.weight(.black))
-                                    .foregroundStyle(Color.accentColor)
-                            }
-
-                            Text(context.attributes.prayerName)
+                    VStack(alignment: .center, spacing: 6) {
+                        if isPrayerDue {
+                            Text("حان الآن أذان \(context.attributes.prayerName)")
+                                .font(.headline.weight(.black))
+                                .foregroundStyle(.primary)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.72)
+                        } else {
+                            Text("الصلاة القادمة: \(context.attributes.prayerName)")
                                 .font(.subheadline.weight(.black))
                                 .foregroundStyle(.primary)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.72)
+
+                            Text("الأذان بعد")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(.secondary)
+
+                            Text(timerInterval: Date()...context.state.prayerDate, countsDown: true)
+                                .font(.title2.weight(.black).monospacedDigit())
+                                .foregroundStyle(Color.accentColor)
                         }
 
                         Text("وقت الأذان \(context.attributes.prayerTime)")
@@ -935,17 +933,17 @@ struct PrayerLiveActivityWidget: Widget {
                     .environment(\.layoutDirection, .rightToLeft)
                 }
             } compactLeading: {
-                Text(context.attributes.prayerName)
+                Text(isPrayerDue ? "الآن" : context.attributes.prayerName)
                     .font(.caption2.weight(.black))
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
             } compactTrailing: {
-                if isCountingDown {
-                    Text(timerInterval: Date()...context.state.prayerDate, countsDown: true)
-                        .font(.caption2.weight(.black).monospacedDigit())
-                } else {
+                if isPrayerDue {
                     Text("الآن")
                         .font(.caption2.weight(.black))
+                } else {
+                    Text(timerInterval: Date()...context.state.prayerDate, countsDown: true)
+                        .font(.caption2.weight(.black).monospacedDigit())
                 }
             } minimal: {
                 Image(systemName: "bell.fill")
