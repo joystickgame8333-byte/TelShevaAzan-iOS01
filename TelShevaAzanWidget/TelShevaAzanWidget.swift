@@ -828,7 +828,7 @@ struct PrayerLiveActivityWidget: Widget {
                 HStack(spacing: 8) {
                     Image(systemName: "bell.fill")
                         .font(.title3.weight(.bold))
-                        .foregroundStyle(.accentColor)
+                        .foregroundStyle(Color.accentColor)
 
                     VStack(alignment: .trailing, spacing: 2) {
                         Text("صلاتي")
@@ -846,7 +846,7 @@ struct PrayerLiveActivityWidget: Widget {
                 HStack(alignment: .lastTextBaseline, spacing: 12) {
                     Text(context.attributes.prayerTime)
                         .font(.title2.weight(.black).monospacedDigit())
-                        .foregroundStyle(.accentColor)
+                        .foregroundStyle(Color.accentColor)
 
                     Spacer(minLength: 8)
 
@@ -882,11 +882,11 @@ struct PrayerLiveActivityWidget: Widget {
                     if context.state.phase == .almostTime && Date() < context.state.prayerDate {
                         Text(timerInterval: Date()...context.state.prayerDate, countsDown: true)
                             .font(.system(size: 30, weight: .black, design: .rounded).monospacedDigit())
-                            .foregroundStyle(.accentColor)
+                            .foregroundStyle(Color.accentColor)
                     } else {
                         Text(context.state.phase == .now ? "الآن" : "الإقامة لاحقًا")
                             .font(.system(size: 26, weight: .black, design: .rounded))
-                            .foregroundStyle(.accentColor)
+                            .foregroundStyle(Color.accentColor)
                     }
                 }
             }
@@ -920,11 +920,11 @@ struct PrayerLiveActivityWidget: Widget {
                         if context.state.phase == .almostTime && Date() < context.state.prayerDate {
                             Text(timerInterval: Date()...context.state.prayerDate, countsDown: true)
                                 .font(.title2.weight(.black).monospacedDigit())
-                                .foregroundStyle(.accentColor)
+                                .foregroundStyle(Color.accentColor)
                         } else {
                             Text(context.state.phase == .now ? "الآن" : "الإقامة لاحقًا")
                                 .font(.title3.weight(.black))
-                                .foregroundStyle(.accentColor)
+                                .foregroundStyle(Color.accentColor)
                         }
                     }
                 }
