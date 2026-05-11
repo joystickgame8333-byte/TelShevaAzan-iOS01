@@ -883,7 +883,7 @@ struct PrayerLiveActivityWidget: Widget {
         } dynamicIsland: { context in
             let isCountingDown = Date() < context.state.prayerDate
 
-            DynamicIsland {
+            return DynamicIsland {
                 DynamicIslandExpandedRegion(.center) {
                     VStack(spacing: 2) {
                         Text("صلاتي")
