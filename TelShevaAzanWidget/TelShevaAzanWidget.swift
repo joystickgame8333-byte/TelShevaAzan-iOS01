@@ -826,124 +826,106 @@ struct PrayerLiveActivityWidget: Widget {
         ActivityConfiguration(for: PrayerLiveActivityAttributes.self) { context in
             let isPrayerDue = Date() >= context.state.prayerDate
 
-            VStack(alignment: .trailing, spacing: 12) {
-                HStack(alignment: .center, spacing: 10) {
-                    VStack(alignment: .trailing, spacing: 2) {
-                        Text("صلاتي")
-                            .font(.headline.weight(.black))
-                            .foregroundStyle(.primary)
-
-                        Text(context.attributes.cityName)
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(.secondary)
-                    }
-
+            VStack(alignment: .center, spacing: 10) {
+                HStack(spacing: 7) {
                     Image(systemName: "bell.fill")
-                        .font(.system(size: 18, weight: .black))
+                        .font(.subheadline.weight(.black))
                         .foregroundStyle(Color.accentColor)
+
+                    Text("صلاتي")
+                        .font(.headline.weight(.black))
+                        .foregroundStyle(.primary)
                 }
 
-                VStack(alignment: .trailing, spacing: 6) {
-                    if isPrayerDue {
-                        Text("حان الآن أذان \(context.attributes.prayerName)")
-                            .font(.system(size: 24, weight: .black, design: .rounded))
-                            .foregroundStyle(.primary)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.68)
-                    } else {
-                        HStack(alignment: .lastTextBaseline, spacing: 6) {
+                if isPrayerDue {
+                    Text("حان الآن أذان \(context.attributes.prayerName)")
+                        .font(.system(size: 25, weight: .black, design: .rounded))
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.64)
+                        .multilineTextAlignment(.center)
+                } else {
+                    HStack(alignment: .lastTextBaseline, spacing: 6) {
+                        Group {
                             Text(context.attributes.prayerName)
-                                .font(.system(size: 23, weight: .black, design: .rounded))
-                                .foregroundStyle(.primary)
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.70)
 
                             Text("بعد")
-                                .font(.system(size: 20, weight: .black, design: .rounded))
-                                .foregroundStyle(.primary)
-
-                            Text(timerInterval: Date()...context.state.prayerDate, countsDown: true)
-                                .font(.system(size: 31, weight: .black, design: .rounded).monospacedDigit())
-                                .foregroundStyle(Color.accentColor)
                         }
+                        .font(.system(size: 22, weight: .black, design: .rounded))
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.70)
+
+                        Text(timerInterval: Date()...context.state.prayerDate, countsDown: true)
+                            .font(.system(size: 32, weight: .black, design: .rounded).monospacedDigit())
+                            .foregroundStyle(Color.accentColor)
                     }
                 }
 
                 HStack(spacing: 5) {
                     Text(context.attributes.cityName)
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(.secondary)
 
                     Text("•")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(.secondary)
 
                     Text("وقت الأذان")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(.secondary)
 
                     Text(context.attributes.prayerTime)
-                        .font(.caption.weight(.black).monospacedDigit())
-                        .foregroundStyle(.secondary)
                 }
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.78)
             }
             .padding(16)
             .environment(\.layoutDirection, .rightToLeft)
-            .multilineTextAlignment(.trailing)
+            .multilineTextAlignment(.center)
             .activityBackgroundTint(Color(red: 0.05, green: 0.08, blue: 0.10))
             .activitySystemActionForegroundColor(Color.accentColor)
         } dynamicIsland: { context in
             let isPrayerDue = Date() >= context.state.prayerDate
 
             return DynamicIsland {
-                DynamicIslandExpandedRegion(.leading) {
-                    HStack(spacing: 5) {
-                        Image(systemName: "bell.fill")
-                            .font(.caption.weight(.black))
-                            .foregroundStyle(Color.accentColor)
-
+                DynamicIslandExpandedRegion(.center) {
+                    VStack(spacing: 3) {
                         Text("صلاتي")
-                            .font(.caption.weight(.black))
-                            .foregroundStyle(.primary)
-                    }
-                }
-
-                DynamicIslandExpandedRegion(.trailing) {
-                    if isPrayerDue {
-                        Text("الآن")
-                            .font(.headline.weight(.black))
-                            .foregroundStyle(Color.accentColor)
-                    } else {
-                        Text(timerInterval: Date()...context.state.prayerDate, countsDown: true)
-                            .font(.headline.weight(.black).monospacedDigit())
-                            .foregroundStyle(Color.accentColor)
-                    }
-                }
-
-                DynamicIslandExpandedRegion(.bottom) {
-                    VStack(alignment: .center, spacing: 4) {
-                        Text(isPrayerDue ? "حان الآن أذان \(context.attributes.prayerName)" : "الصلاة القادمة: \(context.attributes.prayerName)")
-                            .font(.subheadline.weight(.black))
-                            .foregroundStyle(.primary)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.72)
-
-                        Text("\(context.attributes.cityName) • وقت الأذان \(context.attributes.prayerTime)")
-                            .font(.caption2.weight(.semibold))
+                            .font(.caption2.weight(.black))
                             .foregroundStyle(.secondary)
 
-                        if !isPrayerDue {
-                            Text("الأذان بعد")
-                                .font(.caption2.weight(.bold))
-                                .foregroundStyle(.secondary)
+                        if isPrayerDue {
+                            Text("حان الآن أذان \(context.attributes.prayerName)")
+                                .font(.subheadline.weight(.black))
+                                .foregroundStyle(.primary)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.70)
+                        } else {
+                            HStack(alignment: .lastTextBaseline, spacing: 5) {
+                                Text(context.attributes.prayerName)
+                                    .font(.subheadline.weight(.black))
+                                    .foregroundStyle(.primary)
+
+                                Text("بعد")
+                                    .font(.caption.weight(.black))
+                                    .foregroundStyle(.secondary)
+
+                                Text(timerInterval: Date()...context.state.prayerDate, countsDown: true)
+                                    .font(.title3.weight(.black).monospacedDigit())
+                                    .foregroundStyle(Color.accentColor)
+                            }
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.70)
                         }
+
+                        Text("\(context.attributes.cityName) • \(context.attributes.prayerTime)")
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(.secondary)
                     }
                     .environment(\.layoutDirection, .rightToLeft)
                 }
             } compactLeading: {
                 if isPrayerDue {
-                    Text("الآن")
+                    Image(systemName: "bell.fill")
                         .font(.caption2.weight(.black))
+                        .foregroundStyle(Color.accentColor)
                 } else {
                     Text(context.attributes.prayerName)
                         .font(.caption2.weight(.black))
@@ -952,12 +934,13 @@ struct PrayerLiveActivityWidget: Widget {
                 }
             } compactTrailing: {
                 if isPrayerDue {
-                    Image(systemName: "bell.fill")
-                        .font(.caption2.weight(.semibold))
+                    Text("الآن")
+                        .font(.caption2.weight(.black))
                         .foregroundStyle(Color.accentColor)
                 } else {
                     Text(timerInterval: Date()...context.state.prayerDate, countsDown: true)
                         .font(.caption2.weight(.black).monospacedDigit())
+                        .foregroundStyle(Color.accentColor)
                 }
             } minimal: {
                 Image(systemName: "bell.fill")
