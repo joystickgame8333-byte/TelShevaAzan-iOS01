@@ -16,7 +16,7 @@ final class PrayerLiveActivityKeepAlive {
 
         do {
             let session = AVAudioSession.sharedInstance()
-            try session.setCategory(.playback, options: [.mixWithOthers])
+            try session.setCategory(.playback, mode: .default, options: [.mixWithOthers])
             try session.setActive(true)
 
             let player = try AVAudioPlayer(data: Self.silentWAV(durationSeconds: 1))
@@ -80,7 +80,7 @@ final class PrayerLiveActivityKeepAlive {
 private extension Data {
     mutating func appendLittleEndian<T: FixedWidthInteger>(_ value: T) {
         var littleEndianValue = value.littleEndian
-        withUnsafeBytes(of: &littleEndianValue) { buffer in
+        Swift.withUnsafeBytes(of: &littleEndianValue) { buffer in
             append(contentsOf: buffer)
         }
     }

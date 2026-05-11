@@ -846,7 +846,7 @@ private struct SalatiLiveActivityCard: View {
     let context: ActivityViewContext<PrayerLiveActivityAttributes>
 
     private var isPrayerDue: Bool {
-        context.isStale || context.state.phase != .almostTime || Date() >= context.state.prayerDate
+        context.state.phase != .almostTime || Date() >= context.state.prayerDate
     }
 
     var body: some View {
@@ -885,7 +885,7 @@ private struct SalatiIslandExpandedCenter: View {
     let context: ActivityViewContext<PrayerLiveActivityAttributes>
 
     private var isPrayerDue: Bool {
-        context.isStale || context.state.phase != .almostTime || Date() >= context.state.prayerDate
+        context.state.phase != .almostTime || Date() >= context.state.prayerDate
     }
 
     var body: some View {
@@ -933,7 +933,7 @@ private struct SalatiIslandMinimal: View {
     let context: ActivityViewContext<PrayerLiveActivityAttributes>
 
     private var isPrayerDue: Bool {
-        context.isStale || context.state.phase != .almostTime || Date() >= context.state.prayerDate
+        context.state.phase != .almostTime || Date() >= context.state.prayerDate
     }
 
     var body: some View {
