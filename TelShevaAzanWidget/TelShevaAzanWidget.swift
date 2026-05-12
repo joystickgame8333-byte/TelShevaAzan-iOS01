@@ -886,26 +886,139 @@ private struct SalatiIslandExpandedCenter: View {
         context.state.phase != .almostTime || Date() >= context.state.prayerDate
     }
 
-    var body: some View {
-        VStack(spacing: 1) {
-            Text(isPrayerDue ? "حان الأذان" : "باقي على \(context.attributes.prayerName)")
-                .font(.caption.weight(.black))
-                .foregroundStyle(isPrayerDue ? SalatiLiveActivityStyle.gold : .white)
-                .lineLimit(1)
-                .minimumScaleFactor(0.64)
+    private var mode: SalatiPrayerBadgeMode {
+        salatiBadgeMode(for: context)
+    }
 
-            if isPrayerDue {
-                Text("الآن")
-                    .font(.caption2.weight(.black))
-                    .foregroundStyle(SalatiLiveActivityStyle.gold)
-            } else {
-                SalatiCountdownText(context: context, size: 16, mode: salatiBadgeMode(for: context))
-            }
+    private var prayerKey: PrayerKey {
+        PrayerKey.allCases.first { $0.title == context.attributes.prayerName } ?? .fajr
+    }
+
+    private var iqamaDelayText: String {
+        prayerKey == .maghrib ? "05:00" : "10:00"
+    }
+
+    private var progressFill: CGFloat {
+        if isPrayerDue {
+            return 1
         }
-        .lineLimit(1)
-        .minimumScaleFactor(0.7)
-        .multilineTextAlignment(.center)
+
+        let remaining = max(0, context.state.prayerDate.timeIntervalSince(Date()))
+        let fill = (120 - min(remaining, 120)) / 120
+        return min(max(CGFloat(fill), 0.10), 1)
+    }
+
+    var body: some View {
+        VStack(spacing: 7) {
+            HStack(spacing: 12) {
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text(context.attributes.prayerName)
+                        .font(.caption2.weight(.bold))
+                        .foregroundStyle(.white.opacity(0.62))
+
+                    Text(isPrayerDue ? "حان الأذان" : "قبلة قبل الصلاة")
+                        .font(.system(size: 16, weight: .black, design: .rounded))
+                        .foregroundStyle(.white)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.72)
+
+                    Text("الأذان \(context.attributes.prayerTime)")
+                        .font(.caption2.weight(.semibold).monospacedDigit())
+                        .foregroundStyle(.white.opacity(0.72))
+                        .lineLimit(1)
+                }
+
+                SalatiQiblaCompassBadge(size: 48, mode: mode)
+            }
+
+            GeometryReader { proxy in
+                ZStack(alignment: .trailing) {
+                    Capsule()
+                        .fill(.white.opacity(0.14))
+
+                    Capsule()
+                        .fill(SalatiLiveActivityStyle.gold)
+                        .frame(width: proxy.size.width * progressFill)
+                        .shadow(color: SalatiLiveActivityStyle.gold.opacity(mode == .normal ? 0.18 : 0.48), radius: 5)
+                }
+            }
+            .frame(height: 5)
+
+            HStack(spacing: 8) {
+                Text("الإقامة بعد الأذان")
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(.white.opacity(0.68))
+                    .lineLimit(1)
+
+                Text(iqamaDelayText)
+                    .font(.caption.weight(.black).monospacedDigit())
+                    .foregroundStyle(SalatiLiveActivityStyle.gold)
+                    .lineLimit(1)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(.horizontal, 2)
+        .minimumScaleFactor(0.74)
+        .multilineTextAlignment(.trailing)
         .environment(\.layoutDirection, .rightToLeft)
+    }
+}
+
+@available(iOSApplicationExtension 16.1, *)
+private struct SalatiQiblaCompassBadge: View {
+    let size: CGFloat
+    let mode: SalatiPrayerBadgeMode
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .fill(
+                    RadialGradient(
+                        colors: [
+                            SalatiLiveActivityStyle.gold.opacity(mode == .normal ? 0.24 : 0.38),
+                            Color(red: 0.05, green: 0.05, blue: 0.05)
+                        ],
+                        center: .topLeading,
+                        startRadius: 2,
+                        endRadius: size * 0.58
+                    )
+                )
+
+            Circle()
+                .stroke(.white.opacity(0.14), lineWidth: max(size * 0.08, 3))
+
+            Circle()
+                .trim(from: 0.05, to: 0.25)
+                .stroke(
+                    SalatiLiveActivityStyle.gold,
+                    style: StrokeStyle(lineWidth: max(size * 0.08, 3), lineCap: .round)
+                )
+                .rotationEffect(.degrees(-50))
+                .shadow(color: SalatiLiveActivityStyle.gold.opacity(mode == .normal ? 0.18 : 0.44), radius: size * 0.16)
+
+            Capsule()
+                .fill(
+                    LinearGradient(
+                        colors: [SalatiLiveActivityStyle.gold, Color(red: 1.0, green: 0.86, blue: 0.48)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+                .frame(width: max(size * 0.14, 5), height: size * 0.52)
+                .offset(y: -size * 0.06)
+                .rotationEffect(.degrees(-34))
+                .shadow(color: SalatiLiveActivityStyle.gold.opacity(0.30), radius: size * 0.14)
+
+            Circle()
+                .fill(.white.opacity(0.86))
+                .frame(width: size * 0.11, height: size * 0.11)
+        }
+        .frame(width: size, height: size)
+        .overlay(
+            Circle()
+                .stroke(SalatiLiveActivityStyle.gold.opacity(mode == .normal ? 0.18 : 0.38), lineWidth: 1)
+        )
+        .shadow(color: .black.opacity(0.28), radius: size * 0.14, y: size * 0.06)
     }
 }
 
