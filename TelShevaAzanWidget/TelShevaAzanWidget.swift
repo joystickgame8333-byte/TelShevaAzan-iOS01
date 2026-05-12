@@ -851,9 +851,7 @@ private struct SalatiLiveActivityCard: View {
 
     var body: some View {
         VStack(spacing: 5) {
-            Image(systemName: isPrayerDue ? "bell.badge.fill" : "bell.fill")
-                .font(.system(size: 14, weight: .black))
-                .foregroundStyle(SalatiLiveActivityStyle.gold)
+            SalatiPrayerBadge(prayerName: context.attributes.prayerName, size: 30)
 
             Text(isPrayerDue ? "حان أذان \(context.attributes.prayerName)" : "باقي على صلاة \(context.attributes.prayerName)")
                 .font(.system(size: 17, weight: .black, design: .rounded))
@@ -916,14 +914,8 @@ private struct SalatiIslandCompactLeading: View {
     let context: ActivityViewContext<PrayerLiveActivityAttributes>
 
     var body: some View {
-        Text(context.attributes.prayerName)
-            .font(.system(size: 11, weight: .black, design: .rounded))
-            .foregroundStyle(.white)
-            .lineLimit(1)
-            .minimumScaleFactor(0.62)
-            .allowsTightening(true)
-            .frame(width: 38, height: 18, alignment: .trailing)
-            .environment(\.layoutDirection, .rightToLeft)
+        SalatiPrayerBadge(prayerName: context.attributes.prayerName, size: 22)
+            .frame(width: 24, height: 24)
     }
 }
 
@@ -949,9 +941,151 @@ private struct SalatiIslandMinimal: View {
     }
 
     var body: some View {
-        Image(systemName: isPrayerDue ? "bell.badge.fill" : "bell.fill")
-            .foregroundStyle(SalatiLiveActivityStyle.gold)
+        SalatiPrayerBadge(prayerName: context.attributes.prayerName, size: 18)
             .accessibilityLabel(isPrayerDue ? "حان الأذان" : "اقترب الأذان")
+    }
+}
+
+@available(iOSApplicationExtension 16.1, *)
+private struct SalatiPrayerBadge: View {
+    let prayerName: String
+    let size: CGFloat
+
+    private var prayerKey: PrayerKey {
+        PrayerKey.allCases.first { $0.title == prayerName } ?? .fajr
+    }
+
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: size * 0.36, style: .continuous)
+                .fill(backgroundGradient)
+
+            badgeSymbol
+        }
+        .frame(width: size, height: size)
+        .clipShape(RoundedRectangle(cornerRadius: size * 0.36, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: size * 0.36, style: .continuous)
+                .stroke(.white.opacity(0.16), lineWidth: max(size * 0.035, 0.6))
+        )
+        .shadow(color: .black.opacity(0.24), radius: size * 0.16, y: size * 0.08)
+    }
+
+    private var backgroundGradient: LinearGradient {
+        switch prayerKey {
+        case .fajr:
+            return LinearGradient(
+                colors: [Color(red: 0.16, green: 0.20, blue: 0.38), Color(red: 0.04, green: 0.08, blue: 0.16)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        case .dhuhr, .sunrise:
+            return LinearGradient(
+                colors: [Color(red: 0.13, green: 0.46, blue: 0.86), Color(red: 0.34, green: 0.76, blue: 1.0)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        case .asr:
+            return LinearGradient(
+                colors: [Color(red: 0.15, green: 0.23, blue: 0.34), Color(red: 0.07, green: 0.12, blue: 0.20)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        case .maghrib:
+            return LinearGradient(
+                colors: [Color(red: 0.33, green: 0.20, blue: 0.36), Color(red: 0.67, green: 0.36, blue: 0.30), Color(red: 0.13, green: 0.10, blue: 0.18)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        case .isha:
+            return LinearGradient(
+                colors: [Color(red: 0.07, green: 0.11, blue: 0.24), Color(red: 0.03, green: 0.07, blue: 0.14)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        }
+    }
+
+    @ViewBuilder
+    private var badgeSymbol: some View {
+        switch prayerKey {
+        case .fajr:
+            crescent(cutout: Color(red: 0.10, green: 0.14, blue: 0.29), scale: 0.68, x: 0.10, y: -0.12)
+            Capsule()
+                .fill(SalatiLiveActivityStyle.gold)
+                .frame(width: size * 0.68, height: max(size * 0.10, 2))
+                .offset(x: size * 0.06, y: size * 0.28)
+        case .dhuhr, .sunrise:
+            Circle()
+                .fill(Color(red: 1.0, green: 0.88, blue: 0.42))
+                .frame(width: size * 0.40, height: size * 0.40)
+                .shadow(color: Color(red: 1.0, green: 0.78, blue: 0.28).opacity(0.55), radius: size * 0.20)
+                .offset(x: size * 0.23, y: -size * 0.24)
+
+            Circle()
+                .fill(.white.opacity(0.12))
+                .frame(width: size * 1.12, height: size * 0.70)
+                .offset(x: -size * 0.20, y: size * 0.42)
+        case .asr:
+            Circle()
+                .fill(Color(red: 1.0, green: 0.78, blue: 0.32))
+                .frame(width: size * 0.38, height: size * 0.38)
+                .shadow(color: Color(red: 1.0, green: 0.75, blue: 0.25).opacity(0.45), radius: size * 0.17)
+                .offset(x: size * 0.12, y: -size * 0.02)
+
+            Capsule()
+                .fill(.white.opacity(0.28))
+                .frame(width: size * 0.58, height: size * 0.26)
+                .offset(x: -size * 0.04, y: size * 0.22)
+
+            Capsule()
+                .fill(.white.opacity(0.18))
+                .frame(width: size * 0.34, height: size * 0.16)
+                .offset(x: -size * 0.22, y: size * 0.28)
+        case .maghrib:
+            Circle()
+                .fill(
+                    LinearGradient(
+                        colors: [Color(red: 1.0, green: 0.84, blue: 0.44), Color(red: 1.0, green: 0.54, blue: 0.32)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+                .frame(width: size * 0.68, height: size * 0.68)
+                .shadow(color: Color(red: 1.0, green: 0.55, blue: 0.30).opacity(0.45), radius: size * 0.18)
+                .offset(x: size * 0.04, y: size * 0.20)
+
+            Capsule()
+                .fill(.white.opacity(0.82))
+                .frame(width: size * 0.74, height: max(size * 0.09, 2))
+                .offset(y: size * 0.18)
+        case .isha:
+            crescent(cutout: Color(red: 0.06, green: 0.10, blue: 0.22), scale: 0.58, x: 0.12, y: -0.02)
+            star(sizeMultiplier: 0.13, x: -0.28, y: -0.22)
+            star(sizeMultiplier: 0.10, x: -0.06, y: 0.26)
+            star(sizeMultiplier: 0.08, x: -0.32, y: 0.18)
+        }
+    }
+
+    private func crescent(cutout: Color, scale: CGFloat, x: CGFloat, y: CGFloat) -> some View {
+        ZStack {
+            Circle()
+                .fill(Color(red: 0.94, green: 0.97, blue: 1.0))
+                .frame(width: size * scale, height: size * scale)
+
+            Circle()
+                .fill(cutout)
+                .frame(width: size * scale * 0.88, height: size * scale * 0.88)
+                .offset(x: -size * scale * 0.26)
+        }
+        .offset(x: size * x, y: size * y)
+    }
+
+    private func star(sizeMultiplier: CGFloat, x: CGFloat, y: CGFloat) -> some View {
+        Circle()
+            .fill(SalatiLiveActivityStyle.gold)
+            .frame(width: max(size * sizeMultiplier, 2), height: max(size * sizeMultiplier, 2))
+            .offset(x: size * x, y: size * y)
     }
 }
 

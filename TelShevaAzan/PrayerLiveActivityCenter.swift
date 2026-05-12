@@ -31,6 +31,27 @@ final class PrayerLiveActivityCenter: ObservableObject {
         )
     }
 
+    func startPreview(prayerKey: PrayerKey) {
+        let now = Date()
+        let prayerDate = now.addingTimeInterval(previewDuration)
+        let previousDate = now.addingTimeInterval(-3600)
+        let previousKey = Self.previousPreviewPrayerKey(for: prayerKey)
+        let next = PrayerTime(
+            key: prayerKey,
+            title: prayerKey.title,
+            time: Self.previewTimeText(for: prayerDate),
+            date: prayerDate
+        )
+        let previous = PrayerTime(
+            key: previousKey,
+            title: previousKey.title,
+            time: Self.previewTimeText(for: previousDate),
+            date: previousDate
+        )
+
+        startPreview(next: next, previous: previous)
+    }
+
     func startPreview(next: PrayerTime?, previous: PrayerTime?) {
 #if canImport(ActivityKit)
         guard #available(iOS 16.1, *) else {
@@ -72,6 +93,31 @@ final class PrayerLiveActivityCenter: ObservableObject {
             await cleanupExpiredLiveActivities(now: now, includeStalePreviews: true)
         }
 #endif
+    }
+
+    private static func previousPreviewPrayerKey(for key: PrayerKey) -> PrayerKey {
+        switch key {
+        case .fajr:
+            return .isha
+        case .dhuhr:
+            return .fajr
+        case .asr:
+            return .dhuhr
+        case .maghrib:
+            return .asr
+        case .isha:
+            return .maghrib
+        case .sunrise:
+            return .fajr
+        }
+    }
+
+    private static func previewTimeText(for date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = PrayerEngine.timeZone
+        formatter.dateFormat = "HH:mm"
+        return formatter.string(from: date)
     }
 
 #if canImport(ActivityKit)

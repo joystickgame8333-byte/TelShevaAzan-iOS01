@@ -261,6 +261,8 @@ struct NotificationSettingsView: View {
                 }
                 .buttonStyle(.plain)
 
+                liveActivityPrayerTestGrid
+
                 VStack(alignment: .trailing, spacing: 5) {
                     Text(liveActivityCenter.statusText)
                         .font(.caption.weight(.black))
@@ -288,6 +290,67 @@ struct NotificationSettingsView: View {
                 .frame(maxWidth: .infinity, alignment: .trailing)
                 .padding(.horizontal, 8)
             }
+        }
+    }
+
+    private var liveActivityPrayerTestGrid: some View {
+        VStack(alignment: .trailing, spacing: 8) {
+            Text("فحص كل الصلوات")
+                .font(.caption.weight(.black))
+                .foregroundStyle(theme.secondaryText.opacity(0.88))
+                .frame(maxWidth: .infinity, alignment: .trailing)
+
+            LazyVGrid(
+                columns: Array(repeating: GridItem(.flexible(), spacing: 7), count: 3),
+                alignment: .trailing,
+                spacing: 7
+            ) {
+                ForEach(PrayerEngine.prayerOrder, id: \.self) { prayerKey in
+                    Button {
+                        liveActivityCenter.startPreview(prayerKey: prayerKey)
+                    } label: {
+                        HStack(spacing: 5) {
+                            Text(prayerKey.title)
+                                .font(.caption.weight(.black))
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.72)
+
+                            Image(systemName: testIconName(for: prayerKey))
+                                .font(.caption.weight(.black))
+                                .foregroundStyle(theme.accent)
+                        }
+                        .environment(\.layoutDirection, .rightToLeft)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 9)
+                        .padding(.horizontal, 6)
+                        .background(lightRowSurface(theme.controlBackground, radius: 8))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(theme.controlBorder)
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .trailing)
+    }
+
+    private func testIconName(for key: PrayerKey) -> String {
+        switch key {
+        case .fajr:
+            return "moon.stars.fill"
+        case .dhuhr:
+            return "sun.max.fill"
+        case .asr:
+            return "cloud.sun.fill"
+        case .maghrib:
+            return "sunset.fill"
+        case .isha:
+            return "moon.fill"
+        case .sunrise:
+            return "sunrise.fill"
         }
     }
 
