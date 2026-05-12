@@ -27,6 +27,10 @@ targets:
         CFBundlePackageType: APPL
         CFBundleShortVersionString: "0.6.41"
         CFBundleVersion: "132"
+        CFBundleURLTypes:
+          - CFBundleURLName: com.omaralasam.telshevaazan
+            CFBundleURLSchemes:
+              - telshevaazan
         CFBundleIcons:
           CFBundlePrimaryIcon:
             CFBundleIconFiles:

@@ -114,6 +114,21 @@ struct ContentView: View {
                 selectedTab = .notifications
             }
         }
+        .onOpenURL { url in
+            handleDeepLink(url)
+        }
+    }
+
+    private func handleDeepLink(_ url: URL) {
+        guard url.scheme == "telshevaazan" else { return }
+
+        let destination = url.host ?? url.path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        if destination == "qibla" {
+            tabTransitionEdge = transitionEdge(from: selectedTab, to: .qibla)
+            withAnimation(.easeInOut(duration: 0.24)) {
+                selectedTab = .qibla
+            }
+        }
     }
 
     private func prayerScheduleTabContent(

@@ -837,6 +837,7 @@ struct PrayerLiveActivityWidget: Widget {
             } minimal: {
                 SalatiIslandMinimal(context: context)
             }
+            .widgetURL(URL(string: "telshevaazan://qibla"))
         }
     }
 }
@@ -911,12 +912,16 @@ private struct SalatiIslandExpandedCenter: View {
     var body: some View {
         VStack(spacing: 7) {
             HStack(spacing: 12) {
+                SalatiQiblaCompassBadge(size: 48, mode: mode)
+
+                Spacer(minLength: 8)
+
                 VStack(alignment: .trailing, spacing: 2) {
                     Text(context.attributes.prayerName)
                         .font(.caption2.weight(.bold))
                         .foregroundStyle(.white.opacity(0.62))
 
-                    Text(isPrayerDue ? "حان الأذان" : "قبلة قبل الصلاة")
+                    Text(isPrayerDue ? "حان الأذان" : "افتح القبلة")
                         .font(.system(size: 16, weight: .black, design: .rounded))
                         .foregroundStyle(.white)
                         .lineLimit(1)
@@ -927,12 +932,14 @@ private struct SalatiIslandExpandedCenter: View {
                         .foregroundStyle(.white.opacity(0.72))
                         .lineLimit(1)
                 }
-
-                SalatiQiblaCompassBadge(size: 48, mode: mode)
+                .frame(maxWidth: .infinity, alignment: .trailing)
+                .multilineTextAlignment(.trailing)
+                .environment(\.layoutDirection, .rightToLeft)
             }
+            .environment(\.layoutDirection, .leftToRight)
 
             GeometryReader { proxy in
-                ZStack(alignment: .trailing) {
+                ZStack(alignment: .leading) {
                     Capsule()
                         .fill(.white.opacity(0.14))
 
@@ -945,22 +952,27 @@ private struct SalatiIslandExpandedCenter: View {
             .frame(height: 5)
 
             HStack(spacing: 8) {
-                Text("الإقامة بعد الأذان")
-                    .font(.caption2.weight(.bold))
-                    .foregroundStyle(.white.opacity(0.68))
-                    .lineLimit(1)
-
                 Text(iqamaDelayText)
                     .font(.caption.weight(.black).monospacedDigit())
                     .foregroundStyle(SalatiLiveActivityStyle.gold)
                     .lineLimit(1)
+
+                Spacer(minLength: 8)
+
+                Text("الإقامة بعد الأذان")
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(.white.opacity(0.68))
+                    .lineLimit(1)
+                    .multilineTextAlignment(.trailing)
+                    .environment(\.layoutDirection, .rightToLeft)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(maxWidth: .infinity)
+            .environment(\.layoutDirection, .leftToRight)
         }
         .padding(.horizontal, 2)
         .minimumScaleFactor(0.74)
         .multilineTextAlignment(.trailing)
-        .environment(\.layoutDirection, .rightToLeft)
+        .environment(\.layoutDirection, .leftToRight)
     }
 }
 
