@@ -5,13 +5,16 @@ final class PrayerLiveActivityKeepAlive {
     static let shared = PrayerLiveActivityKeepAlive()
 
     private var player: AVAudioPlayer?
+    private var warningTimer: DispatchSourceTimer?
     private var endTimer: DispatchSourceTimer?
+    private var onWarning: (() -> Void)?
     private var onEnd: (() -> Void)?
 
     private init() {}
 
-    func start(until endDate: Date, onEnd: @escaping () -> Void) {
+    func start(until endDate: Date, onWarning: (() -> Void)? = nil, onEnd: @escaping () -> Void) {
         stop()
+        self.onWarning = onWarning
         self.onEnd = onEnd
 
         do {
@@ -28,6 +31,25 @@ final class PrayerLiveActivityKeepAlive {
             self.player = nil
         }
 
+        if let onWarning {
+            let warningDelay = endDate.addingTimeInterval(-10).timeIntervalSinceNow
+            if warningDelay > 0 {
+                let timer = DispatchSource.makeTimerSource(queue: .main)
+                timer.schedule(deadline: .now() + warningDelay)
+                timer.setEventHandler { [weak self] in
+                    self?.onWarning?()
+                    self?.warningTimer?.cancel()
+                    self?.warningTimer = nil
+                    self?.onWarning = nil
+                }
+                timer.resume()
+                warningTimer = timer
+            } else {
+                onWarning()
+                self.onWarning = nil
+            }
+        }
+
         let timer = DispatchSource.makeTimerSource(queue: .main)
         timer.schedule(deadline: .now() + max(0, endDate.timeIntervalSinceNow))
         timer.setEventHandler { [weak self] in
@@ -39,8 +61,11 @@ final class PrayerLiveActivityKeepAlive {
     }
 
     func stop() {
+        warningTimer?.cancel()
+        warningTimer = nil
         endTimer?.cancel()
         endTimer = nil
+        onWarning = nil
         onEnd = nil
 
         player?.stop()

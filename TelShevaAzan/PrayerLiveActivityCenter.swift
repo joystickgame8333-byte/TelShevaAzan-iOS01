@@ -309,11 +309,24 @@ final class PrayerLiveActivityCenter: ObservableObject {
 
     @available(iOS 16.1, *)
     private func keepAlive(_ activity: Activity<PrayerLiveActivityAttributes>, until endDate: Date) {
-        PrayerLiveActivityKeepAlive.shared.start(until: endDate) { [weak self] in
-            Task { @MainActor in
-                await self?.endActivity(activity, phase: .now)
+        PrayerLiveActivityKeepAlive.shared.start(
+            until: endDate,
+            onWarning: { [weak self] in
+                Task { @MainActor in
+                    let state = PrayerLiveActivityAttributes.ContentState(
+                        phase: .almostTime,
+                        prayerDate: endDate,
+                        updatedAt: Date()
+                    )
+                    await self?.updateActivity(activity, state: state, staleDate: endDate)
+                }
+            },
+            onEnd: { [weak self] in
+                Task { @MainActor in
+                    await self?.endActivity(activity, phase: .now)
+                }
             }
-        }
+        )
     }
 
     @available(iOS 16.1, *)
