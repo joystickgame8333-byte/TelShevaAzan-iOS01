@@ -892,8 +892,12 @@ private struct SalatiPrayerHadithPanel: View {
         presentation == .lockScreen ? 11 : 8.5
     }
 
+    private var showsSourceLine: Bool {
+        presentation == .lockScreen
+    }
+
     private var spacing: CGFloat {
-        presentation == .lockScreen ? 9 : 6
+        presentation == .lockScreen ? 9 : 7
     }
 
     private var iqamaTime: String {
@@ -918,7 +922,7 @@ private struct SalatiPrayerHadithPanel: View {
             Text(info.hadith)
                 .font(.system(size: hadithSize, weight: .black, design: .rounded))
                 .foregroundStyle(.white.opacity(0.94))
-                .lineLimit(presentation == .lockScreen ? 2 : 2)
+                .lineLimit(presentation == .lockScreen ? 2 : 1)
                 .minimumScaleFactor(0.70)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: .infinity)
@@ -929,21 +933,23 @@ private struct SalatiPrayerHadithPanel: View {
                         .fill(.white.opacity(0.075))
                 )
 
-            HStack(spacing: 6) {
-                Text(info.source)
-                    .foregroundStyle(SalatiLiveActivityStyle.gold)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.68)
+            if showsSourceLine {
+                HStack(spacing: 6) {
+                    Text(info.source)
+                        .foregroundStyle(SalatiLiveActivityStyle.gold)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.68)
 
-                Spacer(minLength: 4)
+                    Spacer(minLength: 4)
 
-                Text(info.narrator)
-                    .foregroundStyle(.white.opacity(0.58))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.62)
+                    Text(info.narrator)
+                        .foregroundStyle(.white.opacity(0.58))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.62)
+                }
+                .font(.system(size: sourceSize, weight: .bold, design: .rounded))
+                .environment(\.layoutDirection, .rightToLeft)
             }
-            .font(.system(size: sourceSize, weight: .bold, design: .rounded))
-            .environment(\.layoutDirection, .rightToLeft)
         }
         .padding(.vertical, presentation == .lockScreen ? 12 : 2)
         .padding(.horizontal, presentation == .lockScreen ? 14 : 2)
