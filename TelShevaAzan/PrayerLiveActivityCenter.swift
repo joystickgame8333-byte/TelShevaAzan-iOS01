@@ -16,8 +16,8 @@ final class PrayerLiveActivityCenter: ObservableObject {
 
     private let previewDuration: TimeInterval = 30
     private let autoLeadTime: TimeInterval = 120
-    private let expiredCleanupGrace: TimeInterval = 2
-    private let nowDisplayDuration: TimeInterval = 2
+    private let nowDisplayDuration: TimeInterval = 4
+    private let expiredCleanupGrace: TimeInterval = 4
     private var lastSyncDate = Date.distantPast
     private var lastCleanupDate = Date.distantPast
 
@@ -332,7 +332,7 @@ final class PrayerLiveActivityCenter: ObservableObject {
                         prayerDate: now,
                         updatedAt: now
                     )
-                    await self.updateActivity(activity, state: state, staleDate: now.addingTimeInterval(nowDisplayDuration))
+                    await self.updateActivity(activity, state: state, staleDate: now.addingTimeInterval(self.nowDisplayDuration))
                 }
             },
             onEnd: { [weak self] in
