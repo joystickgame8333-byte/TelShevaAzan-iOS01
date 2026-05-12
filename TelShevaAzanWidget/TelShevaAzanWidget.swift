@@ -837,7 +837,6 @@ struct PrayerLiveActivityWidget: Widget {
             } minimal: {
                 SalatiIslandMinimal(context: context)
             }
-            .widgetURL(URL(string: "telshevaazan://qibla"))
         }
     }
 }
@@ -846,34 +845,8 @@ struct PrayerLiveActivityWidget: Widget {
 private struct SalatiLiveActivityCard: View {
     let context: ActivityViewContext<PrayerLiveActivityAttributes>
 
-    private var isPrayerDue: Bool {
-        context.state.phase != .almostTime || Date() >= context.state.prayerDate
-    }
-
     var body: some View {
-        VStack(spacing: 5) {
-            SalatiPrayerBadge(prayerName: context.attributes.prayerName, size: 30, mode: salatiBadgeMode(for: context))
-
-            Text(isPrayerDue ? "حان أذان \(context.attributes.prayerName)" : "باقي على صلاة \(context.attributes.prayerName)")
-                .font(.system(size: 17, weight: .black, design: .rounded))
-                .foregroundStyle(.white)
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
-
-            if isPrayerDue {
-                Text("الآن")
-                    .font(.system(size: 26, weight: .black, design: .rounded))
-                    .foregroundStyle(SalatiLiveActivityStyle.gold)
-                    .lineLimit(1)
-            } else {
-                SalatiCountdownText(context: context, size: 28, mode: salatiBadgeMode(for: context))
-            }
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 10)
-        .padding(.horizontal, 12)
-        .environment(\.layoutDirection, .rightToLeft)
-        .multilineTextAlignment(.center)
+        SalatiPrayerHadithPanel(context: context, presentation: .lockScreen)
         .activityBackgroundTint(Color(red: 0.04, green: 0.07, blue: 0.07))
         .activitySystemActionForegroundColor(SalatiLiveActivityStyle.gold)
     }
@@ -883,97 +856,196 @@ private struct SalatiLiveActivityCard: View {
 private struct SalatiIslandExpandedCenter: View {
     let context: ActivityViewContext<PrayerLiveActivityAttributes>
 
-    private var isPrayerDue: Bool {
-        context.state.phase != .almostTime || Date() >= context.state.prayerDate
+    var body: some View {
+        SalatiPrayerHadithPanel(context: context, presentation: .dynamicIsland)
     }
+}
 
-    private var mode: SalatiPrayerBadgeMode {
-        salatiBadgeMode(for: context)
-    }
+@available(iOSApplicationExtension 16.1, *)
+private enum SalatiPrayerHadithPresentation: Equatable {
+    case lockScreen
+    case dynamicIsland
+}
+
+@available(iOSApplicationExtension 16.1, *)
+private struct SalatiPrayerHadithPanel: View {
+    let context: ActivityViewContext<PrayerLiveActivityAttributes>
+    let presentation: SalatiPrayerHadithPresentation
 
     private var prayerKey: PrayerKey {
         PrayerKey.allCases.first { $0.title == context.attributes.prayerName } ?? .fajr
     }
 
-    private var iqamaDelayText: String {
-        prayerKey == .maghrib ? "05:00" : "10:00"
+    private var info: SalatiPrayerHadithInfo {
+        SalatiPrayerHadithInfo.info(for: prayerKey)
     }
 
-    private var progressFill: CGFloat {
-        if isPrayerDue {
-            return 1
-        }
+    private var titleSize: CGFloat {
+        presentation == .lockScreen ? 23 : 18
+    }
 
-        let remaining = max(0, context.state.prayerDate.timeIntervalSince(Date()))
-        let fill = (120 - min(remaining, 120)) / 120
-        return min(max(CGFloat(fill), 0.10), 1)
+    private var hadithSize: CGFloat {
+        presentation == .lockScreen ? 15 : 11
+    }
+
+    private var sourceSize: CGFloat {
+        presentation == .lockScreen ? 11 : 8.5
+    }
+
+    private var spacing: CGFloat {
+        presentation == .lockScreen ? 9 : 6
+    }
+
+    private var iqamaTime: String {
+        salatiTimeText(for: context.attributes.prayerDate.addingTimeInterval(TimeInterval(info.iqamaDelayMinutes * 60)))
     }
 
     var body: some View {
-        VStack(spacing: 7) {
-            HStack(spacing: 12) {
-                SalatiQiblaCompassBadge(size: 48, mode: mode)
-
-                Spacer(minLength: 8)
-
-                VStack(alignment: .trailing, spacing: 2) {
-                    Text(context.attributes.prayerName)
-                        .font(.caption2.weight(.bold))
-                        .foregroundStyle(.white.opacity(0.62))
-
-                    Text(isPrayerDue ? "حان الأذان" : "افتح القبلة")
-                        .font(.system(size: 16, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.72)
-
-                    Text("الأذان \(context.attributes.prayerTime)")
-                        .font(.caption2.weight(.semibold).monospacedDigit())
-                        .foregroundStyle(.white.opacity(0.72))
-                        .lineLimit(1)
-                }
-                .frame(maxWidth: .infinity, alignment: .trailing)
-                .multilineTextAlignment(.trailing)
-                .environment(\.layoutDirection, .rightToLeft)
-            }
-            .environment(\.layoutDirection, .leftToRight)
-
-            GeometryReader { proxy in
-                ZStack(alignment: .leading) {
-                    Capsule()
-                        .fill(.white.opacity(0.14))
-
-                    Capsule()
-                        .fill(SalatiLiveActivityStyle.gold)
-                        .frame(width: proxy.size.width * progressFill)
-                        .shadow(color: SalatiLiveActivityStyle.gold.opacity(mode == .normal ? 0.18 : 0.48), radius: 5)
-                }
-            }
-            .frame(height: 5)
+        VStack(spacing: spacing) {
+            Text("صلاة \(context.attributes.prayerName)")
+                .font(.system(size: titleSize, weight: .black, design: .rounded))
+                .foregroundStyle(.white)
+                .lineLimit(1)
+                .minimumScaleFactor(0.76)
+                .frame(maxWidth: .infinity, alignment: .center)
 
             HStack(spacing: 8) {
-                Text(iqamaDelayText)
-                    .font(.caption.weight(.black).monospacedDigit())
+                SalatiPrayerTimeBox(label: "الأذان", value: context.attributes.prayerTime, highlighted: false, presentation: presentation)
+                SalatiPrayerTimeBox(label: "الإقامة", value: iqamaTime, highlighted: true, presentation: presentation)
+            }
+            .environment(\.layoutDirection, .rightToLeft)
+
+            Text(info.hadith)
+                .font(.system(size: hadithSize, weight: .black, design: .rounded))
+                .foregroundStyle(.white.opacity(0.94))
+                .lineLimit(presentation == .lockScreen ? 2 : 2)
+                .minimumScaleFactor(0.70)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, presentation == .lockScreen ? 7 : 5)
+                .padding(.horizontal, presentation == .lockScreen ? 10 : 7)
+                .background(
+                    RoundedRectangle(cornerRadius: presentation == .lockScreen ? 16 : 12, style: .continuous)
+                        .fill(.white.opacity(0.075))
+                )
+
+            HStack(spacing: 6) {
+                Text(info.source)
                     .foregroundStyle(SalatiLiveActivityStyle.gold)
                     .lineLimit(1)
+                    .minimumScaleFactor(0.68)
 
-                Spacer(minLength: 8)
+                Spacer(minLength: 4)
 
-                Text("الإقامة بعد الأذان")
-                    .font(.caption2.weight(.bold))
-                    .foregroundStyle(.white.opacity(0.68))
+                Text(info.narrator)
+                    .foregroundStyle(.white.opacity(0.58))
                     .lineLimit(1)
-                    .multilineTextAlignment(.trailing)
-                    .environment(\.layoutDirection, .rightToLeft)
+                    .minimumScaleFactor(0.62)
             }
-            .frame(maxWidth: .infinity)
-            .environment(\.layoutDirection, .leftToRight)
+            .font(.system(size: sourceSize, weight: .bold, design: .rounded))
+            .environment(\.layoutDirection, .rightToLeft)
         }
-        .padding(.horizontal, 2)
-        .minimumScaleFactor(0.74)
-        .multilineTextAlignment(.trailing)
-        .environment(\.layoutDirection, .leftToRight)
+        .padding(.vertical, presentation == .lockScreen ? 12 : 2)
+        .padding(.horizontal, presentation == .lockScreen ? 14 : 2)
+        .frame(maxWidth: .infinity)
+        .multilineTextAlignment(.center)
+        .environment(\.layoutDirection, .rightToLeft)
     }
+}
+
+@available(iOSApplicationExtension 16.1, *)
+private struct SalatiPrayerTimeBox: View {
+    let label: String
+    let value: String
+    let highlighted: Bool
+    let presentation: SalatiPrayerHadithPresentation
+
+    private var valueSize: CGFloat {
+        presentation == .lockScreen ? 18 : 13
+    }
+
+    private var labelSize: CGFloat {
+        presentation == .lockScreen ? 11 : 8.5
+    }
+
+    var body: some View {
+        VStack(spacing: 2) {
+            Text(label)
+                .font(.system(size: labelSize, weight: .bold, design: .rounded))
+                .foregroundStyle(.white.opacity(0.58))
+                .lineLimit(1)
+
+            Text(value)
+                .font(.system(size: valueSize, weight: .black, design: .rounded).monospacedDigit())
+                .foregroundStyle(highlighted ? SalatiLiveActivityStyle.gold : .white)
+                .lineLimit(1)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, presentation == .lockScreen ? 8 : 5)
+        .background(
+            RoundedRectangle(cornerRadius: presentation == .lockScreen ? 16 : 12, style: .continuous)
+                .fill(highlighted ? SalatiLiveActivityStyle.gold.opacity(0.15) : .white.opacity(0.075))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: presentation == .lockScreen ? 16 : 12, style: .continuous)
+                .stroke(highlighted ? SalatiLiveActivityStyle.gold.opacity(0.22) : .white.opacity(0.055), lineWidth: 1)
+        )
+    }
+}
+
+private struct SalatiPrayerHadithInfo {
+    let iqamaDelayMinutes: Int
+    let hadith: String
+    let source: String
+    let narrator: String
+
+    static func info(for prayerKey: PrayerKey) -> SalatiPrayerHadithInfo {
+        switch prayerKey {
+        case .fajr:
+            return SalatiPrayerHadithInfo(
+                iqamaDelayMinutes: 10,
+                hadith: "بشر المشائين في الظلم إلى المساجد بالنور التام",
+                source: "صحيح الترمذي",
+                narrator: "الراوي: بريدة بن الحصيب"
+            )
+        case .dhuhr, .sunrise:
+            return SalatiPrayerHadithInfo(
+                iqamaDelayMinutes: 10,
+                hadith: "أحب الأعمال إلى الله الصلاة على وقتها",
+                source: "البخاري ومسلم",
+                narrator: "الراوي: عبدالله بن مسعود"
+            )
+        case .asr:
+            return SalatiPrayerHadithInfo(
+                iqamaDelayMinutes: 10,
+                hadith: "من صلى البردين دخل الجنة",
+                source: "البخاري ومسلم",
+                narrator: "الراوي: أبو موسى الأشعري"
+            )
+        case .maghrib:
+            return SalatiPrayerHadithInfo(
+                iqamaDelayMinutes: 5,
+                hadith: "الصلوات الخمس كفارة لما بينهن",
+                source: "صحيح مسلم",
+                narrator: "الراوي: أبو هريرة"
+            )
+        case .isha:
+            return SalatiPrayerHadithInfo(
+                iqamaDelayMinutes: 10,
+                hadith: "من صلى العشاء في جماعة فكأنما قام نصف الليل",
+                source: "صحيح مسلم",
+                narrator: "الراوي: عثمان بن عفان"
+            )
+        }
+    }
+}
+
+private func salatiTimeText(for date: Date) -> String {
+    let formatter = DateFormatter()
+    formatter.locale = Locale(identifier: "en_US_POSIX")
+    formatter.timeZone = PrayerEngine.timeZone
+    formatter.dateFormat = "HH:mm"
+    return formatter.string(from: date)
 }
 
 @available(iOSApplicationExtension 16.1, *)
