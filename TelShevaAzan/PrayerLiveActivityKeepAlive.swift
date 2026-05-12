@@ -6,15 +6,24 @@ final class PrayerLiveActivityKeepAlive {
 
     private var player: AVAudioPlayer?
     private var warningTimer: DispatchSourceTimer?
+    private var nowTimer: DispatchSourceTimer?
     private var endTimer: DispatchSourceTimer?
     private var onWarning: (() -> Void)?
+    private var onNow: (() -> Void)?
     private var onEnd: (() -> Void)?
 
     private init() {}
 
-    func start(until endDate: Date, onWarning: (() -> Void)? = nil, onEnd: @escaping () -> Void) {
+    func start(
+        until endDate: Date,
+        nowDisplayDuration: TimeInterval = 0,
+        onWarning: (() -> Void)? = nil,
+        onNow: (() -> Void)? = nil,
+        onEnd: @escaping () -> Void
+    ) {
         stop()
         self.onWarning = onWarning
+        self.onNow = onNow
         self.onEnd = onEnd
 
         do {
@@ -50,8 +59,27 @@ final class PrayerLiveActivityKeepAlive {
             }
         }
 
+        if let onNow {
+            let nowDelay = endDate.timeIntervalSinceNow
+            if nowDelay > 0 {
+                let timer = DispatchSource.makeTimerSource(queue: .main)
+                timer.schedule(deadline: .now() + nowDelay)
+                timer.setEventHandler { [weak self] in
+                    self?.onNow?()
+                    self?.nowTimer?.cancel()
+                    self?.nowTimer = nil
+                    self?.onNow = nil
+                }
+                timer.resume()
+                nowTimer = timer
+            } else {
+                onNow()
+                self.onNow = nil
+            }
+        }
+
         let timer = DispatchSource.makeTimerSource(queue: .main)
-        timer.schedule(deadline: .now() + max(0, endDate.timeIntervalSinceNow))
+        timer.schedule(deadline: .now() + max(0, endDate.addingTimeInterval(nowDisplayDuration).timeIntervalSinceNow))
         timer.setEventHandler { [weak self] in
             self?.onEnd?()
             self?.stop()
@@ -63,9 +91,12 @@ final class PrayerLiveActivityKeepAlive {
     func stop() {
         warningTimer?.cancel()
         warningTimer = nil
+        nowTimer?.cancel()
+        nowTimer = nil
         endTimer?.cancel()
         endTimer = nil
         onWarning = nil
+        onNow = nil
         onEnd = nil
 
         player?.stop()

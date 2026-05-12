@@ -1199,7 +1199,12 @@ private struct SalatiCountdownText: View {
     var mode: SalatiPrayerBadgeMode = .normal
 
     var body: some View {
-        if Date() < context.state.prayerDate {
+        if mode == .now {
+            Text("الآن")
+                .font(.system(size: size, weight: .black, design: .rounded))
+                .foregroundStyle(countdownColor)
+                .shadow(color: countdownColor.opacity(0.62), radius: size * 0.34)
+        } else if Date() < context.state.prayerDate {
             Text(timerInterval: Date()...context.state.prayerDate, countsDown: true)
                 .font(.system(size: size, weight: .black, design: .rounded).monospacedDigit())
                 .foregroundStyle(countdownColor)

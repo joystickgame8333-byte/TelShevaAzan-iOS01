@@ -16,7 +16,8 @@ final class PrayerLiveActivityCenter: ObservableObject {
 
     private let previewDuration: TimeInterval = 30
     private let autoLeadTime: TimeInterval = 120
-    private let expiredCleanupGrace: TimeInterval = 0
+    private let expiredCleanupGrace: TimeInterval = 2
+    private let nowDisplayDuration: TimeInterval = 2
     private var lastSyncDate = Date.distantPast
     private var lastCleanupDate = Date.distantPast
 
@@ -311,6 +312,7 @@ final class PrayerLiveActivityCenter: ObservableObject {
     private func keepAlive(_ activity: Activity<PrayerLiveActivityAttributes>, until endDate: Date) {
         PrayerLiveActivityKeepAlive.shared.start(
             until: endDate,
+            nowDisplayDuration: nowDisplayDuration,
             onWarning: { [weak self] in
                 Task { @MainActor in
                     let state = PrayerLiveActivityAttributes.ContentState(
@@ -319,6 +321,18 @@ final class PrayerLiveActivityCenter: ObservableObject {
                         updatedAt: Date()
                     )
                     await self?.updateActivity(activity, state: state, staleDate: endDate)
+                }
+            },
+            onNow: { [weak self] in
+                Task { @MainActor in
+                    guard let self else { return }
+                    let now = Date()
+                    let state = PrayerLiveActivityAttributes.ContentState(
+                        phase: .now,
+                        prayerDate: now,
+                        updatedAt: now
+                    )
+                    await self.updateActivity(activity, state: state, staleDate: now.addingTimeInterval(nowDisplayDuration))
                 }
             },
             onEnd: { [weak self] in
