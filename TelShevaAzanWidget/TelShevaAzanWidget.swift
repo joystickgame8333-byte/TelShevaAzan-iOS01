@@ -857,7 +857,97 @@ private struct SalatiIslandExpandedCenter: View {
     let context: ActivityViewContext<PrayerLiveActivityAttributes>
 
     var body: some View {
-        SalatiPrayerHadithPanel(context: context, presentation: .dynamicIsland)
+        SalatiAppleTimerIslandPanel(context: context)
+    }
+}
+
+@available(iOSApplicationExtension 16.1, *)
+private struct SalatiAppleTimerIslandPanel: View {
+    let context: ActivityViewContext<PrayerLiveActivityAttributes>
+
+    private var prayerKey: PrayerKey {
+        PrayerKey.allCases.first { $0.title == context.attributes.prayerName } ?? .fajr
+    }
+
+    private var info: SalatiPrayerHadithInfo {
+        SalatiPrayerHadithInfo.info(for: prayerKey)
+    }
+
+    private var mode: SalatiPrayerBadgeMode {
+        salatiBadgeMode(for: context)
+    }
+
+    private var iqamaTime: String {
+        salatiTimeText(for: context.attributes.prayerDate.addingTimeInterval(TimeInterval(info.iqamaDelayMinutes * 60)))
+    }
+
+    var body: some View {
+        VStack(spacing: 7) {
+            HStack(spacing: 8) {
+                SalatiPrayerBadge(prayerName: context.attributes.prayerName, size: 26, mode: mode)
+
+                VStack(alignment: .trailing, spacing: 1) {
+                    Text("صلاة \(context.attributes.prayerName)")
+                        .font(.system(size: 14, weight: .black, design: .rounded))
+                        .foregroundStyle(.white)
+                        .lineLimit(1)
+
+                    Text(mode == .now ? "حان الأذان" : "باقي للأذان")
+                        .font(.caption2.weight(.bold))
+                        .foregroundStyle(.white.opacity(0.58))
+                        .lineLimit(1)
+                }
+                .frame(maxWidth: .infinity, alignment: .trailing)
+            }
+            .environment(\.layoutDirection, .leftToRight)
+
+            SalatiCountdownText(context: context, size: 32, mode: mode)
+                .lineLimit(1)
+                .minimumScaleFactor(0.78)
+                .allowsTightening(true)
+                .frame(maxWidth: .infinity, alignment: .center)
+
+            HStack(spacing: 8) {
+                SalatiTimerTimePill(label: "الإقامة", value: iqamaTime, highlighted: true)
+                SalatiTimerTimePill(label: "الأذان", value: context.attributes.prayerTime, highlighted: false)
+            }
+            .environment(\.layoutDirection, .rightToLeft)
+        }
+        .padding(.horizontal, 2)
+        .frame(maxWidth: .infinity)
+        .multilineTextAlignment(.center)
+        .environment(\.layoutDirection, .rightToLeft)
+    }
+}
+
+@available(iOSApplicationExtension 16.1, *)
+private struct SalatiTimerTimePill: View {
+    let label: String
+    let value: String
+    let highlighted: Bool
+
+    var body: some View {
+        HStack(spacing: 4) {
+            Text(label)
+                .font(.system(size: 8, weight: .bold, design: .rounded))
+                .foregroundStyle(.white.opacity(0.55))
+                .lineLimit(1)
+
+            Text(value)
+                .font(.system(size: 11, weight: .black, design: .rounded).monospacedDigit())
+                .foregroundStyle(highlighted ? SalatiLiveActivityStyle.gold : .white)
+                .lineLimit(1)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 5)
+        .background(
+            Capsule()
+                .fill(highlighted ? SalatiLiveActivityStyle.gold.opacity(0.14) : .white.opacity(0.075))
+        )
+        .overlay(
+            Capsule()
+                .stroke(highlighted ? SalatiLiveActivityStyle.gold.opacity(0.20) : .white.opacity(0.055), lineWidth: 1)
+        )
     }
 }
 
