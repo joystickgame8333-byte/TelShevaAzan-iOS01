@@ -363,36 +363,60 @@ struct ContentView: View {
     }
 
     private var dockLiquidGlassBase: some View {
-        RoundedRectangle(cornerRadius: 22, style: .continuous)
-            .fill(.ultraThinMaterial)
-            .overlay(
+        Group {
+            if activeTheme.isGlassTheme {
                 RoundedRectangle(cornerRadius: 22, style: .continuous)
                     .fill(dockGlassTint)
-            )
-            .overlay(
-                LinearGradient(
-                    colors: [
-                        Color.white.opacity(activeTheme.isNightTheme ? 0.12 : 0.46),
-                        Color.white.opacity(activeTheme.isNightTheme ? 0.04 : 0.16),
-                        activeTheme.accent.opacity(activeTheme.isNightTheme ? 0.04 : 0.05)
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-            )
-            .overlay(
+                    .overlay(
+                        LinearGradient(
+                            colors: [
+                                Color.white.opacity(activeTheme.isNightTheme ? 0.10 : 0.32),
+                                Color.white.opacity(activeTheme.isNightTheme ? 0.03 : 0.12),
+                                activeTheme.accent.opacity(activeTheme.isNightTheme ? 0.035 : 0.045)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 22, style: .continuous)
+                            .stroke(Color.white.opacity(activeTheme.isNightTheme ? 0.16 : 0.44), lineWidth: 0.8)
+                    )
+            } else {
                 RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .stroke(Color.white.opacity(activeTheme.isNightTheme ? 0.18 : 0.58), lineWidth: 0.9)
-            )
+                    .fill(.ultraThinMaterial)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 22, style: .continuous)
+                            .fill(dockGlassTint)
+                    )
+                    .overlay(
+                        LinearGradient(
+                            colors: [
+                                Color.white.opacity(activeTheme.isNightTheme ? 0.12 : 0.46),
+                                Color.white.opacity(activeTheme.isNightTheme ? 0.04 : 0.16),
+                                activeTheme.accent.opacity(activeTheme.isNightTheme ? 0.04 : 0.05)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 22, style: .continuous)
+                            .stroke(Color.white.opacity(activeTheme.isNightTheme ? 0.18 : 0.58), lineWidth: 0.9)
+                    )
+            }
+        }
+        .compositingGroup()
     }
 
     private var dockGlassTint: Color {
         if activeTheme.isNightTheme {
-            return Color.black.opacity(activeTheme.isGlassTheme ? 0.22 : 0.32)
+            return Color.black.opacity(activeTheme.isGlassTheme ? 0.38 : 0.32)
         }
 
-        return Color.white.opacity(activeTheme.isGlassTheme ? 0.34 : 0.58)
+        return Color.white.opacity(activeTheme.isGlassTheme ? 0.72 : 0.58)
     }
 
     private var selectedDockItem: HomeDockItem? {
