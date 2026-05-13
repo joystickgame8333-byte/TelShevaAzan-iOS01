@@ -16,6 +16,7 @@ final class PrayerLiveActivityKeepAlive {
 
     func start(
         until endDate: Date,
+        nowDate: Date? = nil,
         nowDisplayDuration: TimeInterval = 0,
         onWarning: (() -> Void)? = nil,
         onNow: (() -> Void)? = nil,
@@ -40,8 +41,10 @@ final class PrayerLiveActivityKeepAlive {
             self.player = nil
         }
 
+        let transitionDate = nowDate ?? endDate
+
         if let onWarning {
-            let warningDelay = endDate.addingTimeInterval(-10).timeIntervalSinceNow
+            let warningDelay = transitionDate.addingTimeInterval(-10).timeIntervalSinceNow
             if warningDelay > 0 {
                 let timer = DispatchSource.makeTimerSource(queue: .main)
                 timer.schedule(deadline: .now() + warningDelay)
@@ -60,7 +63,7 @@ final class PrayerLiveActivityKeepAlive {
         }
 
         if let onNow {
-            let nowDelay = endDate.timeIntervalSinceNow
+            let nowDelay = transitionDate.timeIntervalSinceNow
             if nowDelay > 0 {
                 let timer = DispatchSource.makeTimerSource(queue: .main)
                 timer.schedule(deadline: .now() + nowDelay)

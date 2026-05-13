@@ -865,14 +865,24 @@ private struct SalatiIslandExpandedCenter: View {
 private struct SalatiAppleTimerIslandPanel: View {
     let context: ActivityViewContext<PrayerLiveActivityAttributes>
 
-    private var iqamaDate: Date {
-        salatiIqamaDate(for: context)
+    private var targetDate: Date {
+        salatiCountdownTargetDate(for: context)
+    }
+
+    private var stageTitle: String {
+        Date() < context.attributes.prayerDate && context.state.phase == .almostTime
+            ? "باقي على الأذان"
+            : "باقي على الإقامة"
+    }
+
+    private var mode: SalatiPrayerBadgeMode {
+        salatiBadgeMode(for: context, targetDate: targetDate)
     }
 
     var body: some View {
-        HStack(spacing: 14) {
+        HStack(spacing: 12) {
             VStack(alignment: .trailing, spacing: 3) {
-                Text("باقي على الإقامة")
+                Text(stageTitle)
                     .font(.system(size: 15, weight: .black, design: .rounded))
                     .foregroundStyle(.white)
                     .lineLimit(1)
@@ -888,34 +898,14 @@ private struct SalatiAppleTimerIslandPanel: View {
             }
             .frame(maxWidth: .infinity, alignment: .trailing)
 
-            SalatiTargetCountdownText(targetDate: iqamaDate, size: 36)
+            SalatiTargetCountdownText(targetDate: targetDate, size: 34, mode: mode)
                 .lineLimit(1)
-                .minimumScaleFactor(0.70)
+                .minimumScaleFactor(0.68)
                 .allowsTightening(true)
-                .frame(minWidth: 104, alignment: .leading)
+                .frame(width: 102, alignment: .leading)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 14)
-        .frame(maxWidth: .infinity, minHeight: 68)
-        .background(
-            Capsule()
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            Color(red: 1.0, green: 0.62, blue: 0.04).opacity(0.16),
-                            .black,
-                            .black
-                        ],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                )
-        )
-        .overlay(
-            Capsule()
-                .stroke(.white.opacity(0.10), lineWidth: 1)
-        )
-        .shadow(color: Color(red: 1.0, green: 0.62, blue: 0.04).opacity(0.16), radius: 10)
+        .padding(.horizontal, 5)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .multilineTextAlignment(.trailing)
         .environment(\.layoutDirection, .rightToLeft)
     }
@@ -1208,7 +1198,7 @@ private struct SalatiIslandCompactLeading: View {
     let context: ActivityViewContext<PrayerLiveActivityAttributes>
 
     var body: some View {
-        SalatiPrayerBadge(prayerName: context.attributes.prayerName, size: 22, mode: salatiBadgeMode(for: context, targetDate: salatiIqamaDate(for: context)))
+        SalatiPrayerBadge(prayerName: context.attributes.prayerName, size: 22, mode: salatiBadgeMode(for: context, targetDate: salatiCountdownTargetDate(for: context)))
             .frame(width: 24, height: 24)
     }
 }
@@ -1217,8 +1207,12 @@ private struct SalatiIslandCompactLeading: View {
 private struct SalatiIslandCompactTrailing: View {
     let context: ActivityViewContext<PrayerLiveActivityAttributes>
 
+    private var targetDate: Date {
+        salatiCountdownTargetDate(for: context)
+    }
+
     var body: some View {
-        SalatiTargetCountdownText(targetDate: salatiIqamaDate(for: context), size: 11, mode: salatiBadgeMode(for: context, targetDate: salatiIqamaDate(for: context)))
+        SalatiTargetCountdownText(targetDate: targetDate, size: 11, mode: salatiBadgeMode(for: context, targetDate: targetDate))
             .lineLimit(1)
             .minimumScaleFactor(0.72)
             .allowsTightening(true)
@@ -1231,11 +1225,11 @@ private struct SalatiIslandMinimal: View {
     let context: ActivityViewContext<PrayerLiveActivityAttributes>
 
     private var isPrayerDue: Bool {
-        context.state.phase != .almostTime || Date() >= salatiIqamaDate(for: context)
+        Date() >= salatiCountdownTargetDate(for: context)
     }
 
     var body: some View {
-        SalatiPrayerBadge(prayerName: context.attributes.prayerName, size: 18, mode: salatiBadgeMode(for: context, targetDate: salatiIqamaDate(for: context)))
+        SalatiPrayerBadge(prayerName: context.attributes.prayerName, size: 18, mode: salatiBadgeMode(for: context, targetDate: salatiCountdownTargetDate(for: context)))
             .accessibilityLabel(isPrayerDue ? "حانت الإقامة" : "باقي على الإقامة")
     }
 }
@@ -1250,13 +1244,24 @@ private enum SalatiPrayerBadgeMode {
 @available(iOSApplicationExtension 16.1, *)
 private func salatiBadgeMode(for context: ActivityViewContext<PrayerLiveActivityAttributes>, targetDate: Date? = nil) -> SalatiPrayerBadgeMode {
     let now = Date()
-    let targetDate = targetDate ?? context.state.prayerDate
 
-    if context.state.phase != .almostTime || now >= targetDate {
+    if let targetDate {
+        if now >= targetDate {
+            return .now
+        }
+
+        if targetDate.timeIntervalSince(now) <= 10 {
+            return .warning
+        }
+
+        return .normal
+    }
+
+    if context.state.phase != .almostTime || now >= context.state.prayerDate {
         return .now
     }
 
-    if targetDate.timeIntervalSince(now) <= 10 {
+    if context.state.prayerDate.timeIntervalSince(now) <= 10 {
         return .warning
     }
 
@@ -1274,6 +1279,15 @@ private func salatiIqamaDate(for context: ActivityViewContext<PrayerLiveActivity
     let delay = SalatiPrayerHadithInfo.info(for: prayerKey).iqamaDelayMinutes
 
     return context.attributes.prayerDate.addingTimeInterval(TimeInterval(delay * 60))
+}
+
+@available(iOSApplicationExtension 16.1, *)
+private func salatiCountdownTargetDate(for context: ActivityViewContext<PrayerLiveActivityAttributes>) -> Date {
+    if context.state.phase == .almostTime && Date() < context.attributes.prayerDate {
+        return context.attributes.prayerDate
+    }
+
+    return salatiIqamaDate(for: context)
 }
 
 @available(iOSApplicationExtension 16.1, *)

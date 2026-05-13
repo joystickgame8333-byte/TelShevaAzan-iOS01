@@ -313,12 +313,13 @@ final class PrayerLiveActivityCenter: ObservableObject {
     private func keepAlive(_ activity: Activity<PrayerLiveActivityAttributes>, until endDate: Date) {
         PrayerLiveActivityKeepAlive.shared.start(
             until: endDate,
+            nowDate: activity.attributes.prayerDate,
             nowDisplayDuration: nowDisplayDuration,
             onWarning: { [weak self] in
                 Task { @MainActor in
                     let state = PrayerLiveActivityAttributes.ContentState(
                         phase: .almostTime,
-                        prayerDate: endDate,
+                        prayerDate: activity.attributes.prayerDate,
                         updatedAt: Date()
                     )
                     await self?.updateActivity(activity, state: state, staleDate: endDate)
@@ -330,10 +331,10 @@ final class PrayerLiveActivityCenter: ObservableObject {
                     let now = Date()
                     let state = PrayerLiveActivityAttributes.ContentState(
                         phase: .now,
-                        prayerDate: now,
+                        prayerDate: activity.attributes.prayerDate,
                         updatedAt: now
                     )
-                    await self.updateActivity(activity, state: state, staleDate: now.addingTimeInterval(self.nowDisplayDuration))
+                    await self.updateActivity(activity, state: state, staleDate: endDate)
                 }
             },
             onEnd: { [weak self] in
