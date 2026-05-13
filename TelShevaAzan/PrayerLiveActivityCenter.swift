@@ -16,7 +16,7 @@ final class PrayerLiveActivityCenter: ObservableObject {
 
     private let previewDuration: TimeInterval = 30
     private let autoLeadTime: TimeInterval = 120
-    private let nowDisplayDuration: TimeInterval = 4
+    private let nowDisplayDuration: TimeInterval = 1
     private let expiredCleanupGrace: TimeInterval = 4
     private var lastSyncDate = Date.distantPast
     private var lastCleanupDate = Date.distantPast
@@ -144,6 +144,8 @@ final class PrayerLiveActivityCenter: ObservableObject {
         await endActivities(where: { _ in true })
 
         let prayerDate = now.addingTimeInterval(previewDuration)
+        let prayerKey = next?.key ?? .maghrib
+        let activityEndDate = Self.iqamaDate(for: prayerDate, prayerKey: prayerKey)
         let prayerName = next?.title ?? "المغرب"
         let previousName = previous?.title ?? "الصلاة السابقة"
         let attributes = PrayerLiveActivityAttributes(
@@ -163,8 +165,8 @@ final class PrayerLiveActivityCenter: ObservableObject {
         )
 
         do {
-            let activity = try requestActivity(attributes: attributes, state: state, staleDate: prayerDate)
-            keepAlive(activity, until: prayerDate)
+            let activity = try requestActivity(attributes: attributes, state: state, staleDate: activityEndDate)
+            keepAlive(activity, until: activityEndDate)
             isPreviewActive = true
             statusText = "تم تشغيل الجزيرة"
             detailText = "اخرج من التطبيق أو اقفل الشاشة. العدّاد الظاهر في الجزيرة يعمل من نظام iOS، وليس من مؤقت خلفي داخل التطبيق."
@@ -193,7 +195,9 @@ final class PrayerLiveActivityCenter: ObservableObject {
         let prayerID = realPrayerID(for: next)
 
         for activity in Activity<PrayerLiveActivityAttributes>.activities where !activity.attributes.isPreview && activity.attributes.prayerID != prayerID {
-            await endActivity(activity, phase: .adhkar)
+            if now >= activityEndDate(for: activity) {
+                await endActivity(activity, phase: .adhkar)
+            }
         }
 
         if secondsUntilPrayer > autoLeadTime {
@@ -201,10 +205,10 @@ final class PrayerLiveActivityCenter: ObservableObject {
         }
 
         if secondsUntilPrayer <= 0 {
-            await endActivities(where: { !$0.attributes.isPreview })
             return
         }
 
+        let activityEndDate = Self.iqamaDate(for: next.date, prayerKey: next.key)
         let phase = phase(for: secondsUntilPrayer)
         let state = PrayerLiveActivityAttributes.ContentState(
             phase: phase,
@@ -213,8 +217,8 @@ final class PrayerLiveActivityCenter: ObservableObject {
         )
 
         if let activity = Activity<PrayerLiveActivityAttributes>.activities.first(where: { !$0.attributes.isPreview && $0.attributes.prayerID == prayerID }) {
-            await updateActivity(activity, state: state, staleDate: next.date)
-            keepAlive(activity, until: next.date)
+            await updateActivity(activity, state: state, staleDate: activityEndDate)
+            keepAlive(activity, until: activityEndDate)
             return
         }
 
@@ -230,8 +234,8 @@ final class PrayerLiveActivityCenter: ObservableObject {
         )
 
         do {
-            let activity = try requestActivity(attributes: attributes, state: state, staleDate: next.date)
-            keepAlive(activity, until: next.date)
+            let activity = try requestActivity(attributes: attributes, state: state, staleDate: activityEndDate)
+            keepAlive(activity, until: activityEndDate)
         } catch {
             return
         }
@@ -242,9 +246,9 @@ final class PrayerLiveActivityCenter: ObservableObject {
         let cleanupDate = now.addingTimeInterval(-expiredCleanupGrace)
 
         for activity in Activity<PrayerLiveActivityAttributes>.activities {
-            let prayerDate = activityPrayerDate(for: activity)
-            let expiredLongEnough = prayerDate <= cleanupDate
-            let oldPreview = includeStalePreviews && activity.attributes.isPreview && prayerDate <= cleanupDate
+            let endDate = activityEndDate(for: activity)
+            let expiredLongEnough = endDate <= cleanupDate
+            let oldPreview = includeStalePreviews && activity.attributes.isPreview && endDate <= cleanupDate
 
             if expiredLongEnough || oldPreview {
                 await endActivity(activity, phase: .adhkar)
@@ -253,12 +257,9 @@ final class PrayerLiveActivityCenter: ObservableObject {
     }
 
     @available(iOS 16.1, *)
-    private func activityPrayerDate(for activity: Activity<PrayerLiveActivityAttributes>) -> Date {
-        if #available(iOS 16.2, *) {
-            return activity.content.state.prayerDate
-        }
-
-        return activity.attributes.prayerDate
+    private func activityEndDate(for activity: Activity<PrayerLiveActivityAttributes>) -> Date {
+        let prayerKey = Self.prayerKey(for: activity.attributes)
+        return Self.iqamaDate(for: activity.attributes.prayerDate, prayerKey: prayerKey)
     }
 
     @available(iOS 16.1, *)
@@ -345,10 +346,16 @@ final class PrayerLiveActivityCenter: ObservableObject {
 
     @available(iOS 16.1, *)
     private func endActivities(where shouldEnd: (Activity<PrayerLiveActivityAttributes>) -> Bool) async {
+        var endedAnyActivity = false
+
         for activity in Activity<PrayerLiveActivityAttributes>.activities where shouldEnd(activity) {
+            endedAnyActivity = true
             await endActivity(activity, phase: .adhkar)
         }
-        PrayerLiveActivityKeepAlive.shared.stop()
+
+        if endedAnyActivity {
+            PrayerLiveActivityKeepAlive.shared.stop()
+        }
     }
 
     private func phase(for secondsUntilPrayer: TimeInterval) -> PrayerLiveActivityPhase {
@@ -365,6 +372,23 @@ final class PrayerLiveActivityCenter: ObservableObject {
 
     private func realPrayerID(for prayer: PrayerTime) -> String {
         "\(prayer.key.rawValue)-\(Int(prayer.date.timeIntervalSince1970))"
+    }
+
+    private static func prayerKey(for attributes: PrayerLiveActivityAttributes) -> PrayerKey {
+        if let rawValue = attributes.prayerID.split(separator: "-").first,
+           let key = PrayerKey(rawValue: String(rawValue)) {
+            return key
+        }
+
+        return PrayerKey.allCases.first { $0.title == attributes.prayerName } ?? .fajr
+    }
+
+    private static func iqamaDelayMinutes(for prayerKey: PrayerKey) -> Int {
+        prayerKey == .maghrib ? 5 : 10
+    }
+
+    private static func iqamaDate(for prayerDate: Date, prayerKey: PrayerKey) -> Date {
+        prayerDate.addingTimeInterval(TimeInterval(iqamaDelayMinutes(for: prayerKey) * 60))
     }
 
     private var isWidgetExtensionBundled: Bool {
