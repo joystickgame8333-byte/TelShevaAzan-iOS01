@@ -929,11 +929,22 @@ private struct SalatiLightLockScreenPanel: View {
                         shadowRadius: 2
                     )
 
-                    Text("الأذان \(context.attributes.prayerTime) · الإقامة \(iqamaTime)")
-                        .font(.system(size: 13, weight: .bold, design: .rounded).monospacedDigit())
-                        .foregroundStyle(style.secondaryText)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.78)
+                    HStack(spacing: 8) {
+                        SalatiLockScreenTimePill(
+                            label: "الأذان",
+                            value: context.attributes.prayerTime,
+                            highlighted: false,
+                            style: style
+                        )
+
+                        SalatiLockScreenTimePill(
+                            label: "الإقامة",
+                            value: iqamaTime,
+                            highlighted: true,
+                            style: style
+                        )
+                    }
+                    .environment(\.layoutDirection, .rightToLeft)
                 }
                 .frame(maxWidth: .infinity, alignment: .center)
             }
@@ -943,6 +954,38 @@ private struct SalatiLightLockScreenPanel: View {
         .frame(maxWidth: .infinity)
         .multilineTextAlignment(.center)
         .environment(\.layoutDirection, .rightToLeft)
+    }
+}
+
+@available(iOSApplicationExtension 16.1, *)
+private struct SalatiLockScreenTimePill: View {
+    let label: String
+    let value: String
+    let highlighted: Bool
+    let style: SalatiLiveActivityThemeStyle
+
+    var body: some View {
+        VStack(spacing: 2) {
+            Text(label)
+                .font(.system(size: 10, weight: .bold, design: .rounded))
+                .foregroundStyle(style.mutedText)
+                .lineLimit(1)
+
+            Text(value)
+                .font(.system(size: 15, weight: .black, design: .rounded).monospacedDigit())
+                .foregroundStyle(highlighted ? style.accent : style.secondaryText)
+                .lineLimit(1)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 6)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(highlighted ? style.timePillActiveFill : style.timePillFill)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(highlighted ? style.timePillActiveBorder : style.timePillBorder, lineWidth: 1)
+        )
     }
 }
 
@@ -959,36 +1002,39 @@ private struct SalatiLightExpandedIslandPanel: View {
         Group {
             if salatiShouldShowIslandContent(for: context) {
                 ZStack {
-                    RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    RoundedRectangle(cornerRadius: 25, style: .continuous)
                         .fill(style.islandPanelFill)
                         .overlay(
-                            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                            RoundedRectangle(cornerRadius: 25, style: .continuous)
                                 .stroke(style.islandBorder, lineWidth: 1)
                         )
 
-                    VStack(spacing: 6) {
-                        Text("باقي للأذان")
-                            .font(.system(size: 18, weight: .black, design: .rounded))
-                            .foregroundStyle(style.islandPrimaryText)
-                            .lineLimit(1)
-
+                    HStack(spacing: 10) {
                         SalatiLightCountdownText(
                             targetDate: targetDate,
-                            size: 36,
+                            size: 28,
                             color: style.accent,
                             shadowColor: style.accentShadow,
-                            shadowRadius: 2
+                            shadowRadius: 1
                         )
+                        .frame(minWidth: 78, alignment: .leading)
 
-                        Text("صلاة \(context.attributes.prayerName)")
-                            .font(.system(size: 12, weight: .bold, design: .rounded))
-                            .foregroundStyle(style.islandSecondaryText)
+                        Spacer(minLength: 8)
+
+                        Text("باقي للأذان لصلاة \(context.attributes.prayerName)")
+                            .font(.system(size: 15, weight: .black, design: .rounded))
+                            .foregroundStyle(style.islandText)
                             .lineLimit(1)
+                            .minimumScaleFactor(0.68)
+                            .allowsTightening(true)
+                            .frame(maxWidth: .infinity, alignment: .trailing)
+                            .environment(\.layoutDirection, .rightToLeft)
                     }
-                    .padding(.vertical, 8)
-                    .padding(.horizontal, 12)
+                    .padding(.vertical, 7)
+                    .padding(.horizontal, 14)
+                    .environment(\.layoutDirection, .leftToRight)
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                .frame(maxWidth: .infinity, minHeight: 48, maxHeight: 54, alignment: .center)
             } else {
                 EmptyView()
             }
@@ -1801,8 +1847,13 @@ private struct SalatiLiveActivityThemeStyle {
     let mutedText: Color
     let islandPrimaryText: Color
     let islandSecondaryText: Color
+    let islandText: Color
     let islandPanelFill: Color
     let islandBorder: Color
+    let timePillFill: Color
+    let timePillActiveFill: Color
+    let timePillBorder: Color
+    let timePillActiveBorder: Color
 
     static func make(for theme: PrayerVisualTheme) -> SalatiLiveActivityThemeStyle {
         let palette = theme.palette
@@ -1818,8 +1869,13 @@ private struct SalatiLiveActivityThemeStyle {
             mutedText: palette.mutedText.opacity(isNight ? 0.76 : 0.66),
             islandPrimaryText: .white,
             islandSecondaryText: .white.opacity(0.66),
-            islandPanelFill: palette.accent.opacity(isNight ? 0.13 : 0.18),
-            islandBorder: palette.accent.opacity(isNight ? 0.30 : 0.38)
+            islandText: isNight ? .white : palette.primaryText,
+            islandPanelFill: isNight ? Color(red: 0.02, green: 0.08, blue: 0.16).opacity(0.96) : Color.white.opacity(0.94),
+            islandBorder: isNight ? palette.accent.opacity(0.42) : palette.accent.opacity(0.28),
+            timePillFill: isNight ? Color.white.opacity(0.06) : Color.white.opacity(0.54),
+            timePillActiveFill: palette.accent.opacity(isNight ? 0.14 : 0.12),
+            timePillBorder: isNight ? Color.white.opacity(0.09) : palette.accent.opacity(0.14),
+            timePillActiveBorder: palette.accent.opacity(isNight ? 0.30 : 0.24)
         )
     }
 }
