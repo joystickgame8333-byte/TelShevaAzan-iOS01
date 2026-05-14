@@ -84,6 +84,99 @@ enum AdhkarNotificationSound: String, CaseIterable, Identifiable {
     }
 }
 
+enum FajrAlarmIntensity: String, CaseIterable, Identifiable {
+    case gentle
+    case strong
+    case wakeUp
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .gentle:
+            return "هادئ"
+        case .strong:
+            return "قوي"
+        case .wakeUp:
+            return "إيقاظ"
+        }
+    }
+
+    var subtitle: String {
+        switch self {
+        case .gentle:
+            return "تنبيه واحد عند الفجر"
+        case .strong:
+            return "الفجر ثم تذكيران بعده"
+        case .wakeUp:
+            return "تكرار قريب مثل المنبه حتى تنتبه"
+        }
+    }
+
+    var systemImage: String {
+        switch self {
+        case .gentle:
+            return "bell.fill"
+        case .strong:
+            return "bell.and.waves.left.and.right.fill"
+        case .wakeUp:
+            return "alarm.fill"
+        }
+    }
+
+    var repeatOffsetsMinutes: [Int] {
+        switch self {
+        case .gentle:
+            return [0]
+        case .strong:
+            return [0, 2, 5]
+        case .wakeUp:
+            return [0, 1, 3, 5, 8]
+        }
+    }
+}
+
+enum FajrAlarmSound: String, CaseIterable, Identifiable {
+    case adhan
+    case nafahat
+    case system
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .adhan:
+            return "الأذان"
+        case .nafahat:
+            return "نفحة قوية"
+        case .system:
+            return "منبه الآيفون"
+        }
+    }
+
+    var subtitle: String {
+        switch self {
+        case .adhan:
+            return "أفضل خيار للإيقاظ بصوت الأذان"
+        case .nafahat:
+            return "صوت أخف لو الأذان قوي عليك"
+        case .system:
+            return "صوت النظام السريع"
+        }
+    }
+
+    var systemImage: String {
+        switch self {
+        case .adhan:
+            return "waveform.circle.fill"
+        case .nafahat:
+            return "sparkles"
+        case .system:
+            return "iphone.gen3.radiowaves.left.and.right"
+        }
+    }
+}
+
 enum AdhkarReminderStyle: String, CaseIterable, Identifiable {
     case tasbih
     case istighfar
@@ -390,6 +483,14 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
     private static let nafahatIntervalMinutesKey = "prayer_notifications_nafahat_interval_minutes"
     private static let selectedNafahatTextIDKey = "prayer_notifications_nafahat_text"
     private static let selectedNafahatQuietWindowIDKey = "prayer_notifications_nafahat_quiet_window"
+    private static let fajrAlarmEnabledKey = "prayer_notifications_fajr_alarm_enabled"
+    private static let selectedFajrAlarmIntensityIDKey = "prayer_notifications_fajr_alarm_intensity"
+    private static let selectedFajrAlarmSoundIDKey = "prayer_notifications_fajr_alarm_sound"
+    private static let fajrAlarmWakeBeforeMinutesKey = "prayer_notifications_fajr_alarm_wake_before"
+    private static let fajrAlarmSnoozeMinutesKey = "prayer_notifications_fajr_alarm_snooze"
+    private static let fajrAlarmCategoryID = "tel-sheva-fajr-alarm-category"
+    private static let fajrAlarmAwakeActionID = "tel-sheva-fajr-alarm-awake"
+    private static let fajrAlarmSnoozeActionID = "tel-sheva-fajr-alarm-snooze"
 
     static let shared = PrayerNotificationManager()
 
@@ -406,6 +507,11 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
     @Published private(set) var nafahatIntervalMinutes: Int
     @Published private(set) var selectedNafahatTextID: String
     @Published private(set) var selectedNafahatQuietWindowID: String
+    @Published private(set) var isFajrAlarmEnabled: Bool
+    @Published private(set) var selectedFajrAlarmIntensityID: String
+    @Published private(set) var selectedFajrAlarmSoundID: String
+    @Published private(set) var fajrAlarmWakeBeforeMinutes: Int
+    @Published private(set) var fajrAlarmSnoozeMinutes: Int
 
     private let center = UNUserNotificationCenter.current()
     private let notificationPrefix = "tel-sheva-prayer-"
@@ -436,6 +542,14 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
 
     private var selectedNafahatQuietWindow: NafahatQuietWindow {
         NafahatQuietWindow(rawValue: selectedNafahatQuietWindowID) ?? .lateNight
+    }
+
+    private var selectedFajrAlarmIntensity: FajrAlarmIntensity {
+        FajrAlarmIntensity(rawValue: selectedFajrAlarmIntensityID) ?? .wakeUp
+    }
+
+    private var selectedFajrAlarmSound: FajrAlarmSound {
+        FajrAlarmSound(rawValue: selectedFajrAlarmSoundID) ?? .adhan
     }
 
     private override init() {
@@ -470,14 +584,45 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
         selectedNafahatTextID = savedNafahatTextID ?? NafahatReminderText.mixed.rawValue
         let savedNafahatQuietID = UserDefaults.standard.string(forKey: Self.selectedNafahatQuietWindowIDKey)
         selectedNafahatQuietWindowID = savedNafahatQuietID ?? NafahatQuietWindow.lateNight.rawValue
+        isFajrAlarmEnabled = UserDefaults.standard.bool(forKey: Self.fajrAlarmEnabledKey)
+        let savedFajrIntensityID = UserDefaults.standard.string(forKey: Self.selectedFajrAlarmIntensityIDKey)
+        selectedFajrAlarmIntensityID = savedFajrIntensityID ?? FajrAlarmIntensity.wakeUp.rawValue
+        let savedFajrSoundID = UserDefaults.standard.string(forKey: Self.selectedFajrAlarmSoundIDKey)
+        selectedFajrAlarmSoundID = savedFajrSoundID ?? FajrAlarmSound.adhan.rawValue
+        let savedWakeBefore = UserDefaults.standard.object(forKey: Self.fajrAlarmWakeBeforeMinutesKey) as? Int
+        fajrAlarmWakeBeforeMinutes = savedWakeBefore ?? 0
+        let savedSnooze = UserDefaults.standard.object(forKey: Self.fajrAlarmSnoozeMinutesKey) as? Int
+        fajrAlarmSnoozeMinutes = savedSnooze ?? 5
 
         super.init()
         center.delegate = self
+        registerNotificationCategories()
         refreshStatus()
     }
 
+    private func registerNotificationCategories() {
+        let awakeAction = UNNotificationAction(
+            identifier: Self.fajrAlarmAwakeActionID,
+            title: "صحيت",
+            options: []
+        )
+        let snoozeAction = UNNotificationAction(
+            identifier: Self.fajrAlarmSnoozeActionID,
+            title: "غفوة \(fajrAlarmSnoozeMinutes) د",
+            options: []
+        )
+        let fajrCategory = UNNotificationCategory(
+            identifier: Self.fajrAlarmCategoryID,
+            actions: [awakeAction, snoozeAction],
+            intentIdentifiers: [],
+            options: [.customDismissAction]
+        )
+
+        center.setNotificationCategories([fajrCategory])
+    }
+
     func enable() {
-        center.requestAuthorization(options: [.alert, .sound]) { [weak self] granted, _ in
+        center.requestAuthorization(options: [.alert, .sound, .timeSensitive]) { [weak self] granted, _ in
             DispatchQueue.main.async {
                 guard let self else { return }
 
@@ -618,6 +763,42 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
         rescheduleIfEnabled()
     }
 
+    func setFajrAlarmEnabled(_ enabled: Bool) {
+        isFajrAlarmEnabled = enabled
+        defaults.set(enabled, forKey: Self.fajrAlarmEnabledKey)
+
+        if enabled && !isEnabled {
+            enable()
+        } else {
+            rescheduleIfEnabled()
+        }
+    }
+
+    func selectFajrAlarmIntensity(_ intensity: FajrAlarmIntensity) {
+        selectedFajrAlarmIntensityID = intensity.rawValue
+        defaults.set(intensity.rawValue, forKey: Self.selectedFajrAlarmIntensityIDKey)
+        rescheduleIfEnabled()
+    }
+
+    func selectFajrAlarmSound(_ sound: FajrAlarmSound) {
+        selectedFajrAlarmSoundID = sound.rawValue
+        defaults.set(sound.rawValue, forKey: Self.selectedFajrAlarmSoundIDKey)
+        rescheduleIfEnabled()
+    }
+
+    func setFajrAlarmWakeBeforeMinutes(_ minutes: Int) {
+        fajrAlarmWakeBeforeMinutes = minutes
+        defaults.set(minutes, forKey: Self.fajrAlarmWakeBeforeMinutesKey)
+        rescheduleIfEnabled()
+    }
+
+    func setFajrAlarmSnoozeMinutes(_ minutes: Int) {
+        fajrAlarmSnoozeMinutes = minutes
+        defaults.set(minutes, forKey: Self.fajrAlarmSnoozeMinutesKey)
+        registerNotificationCategories()
+        rescheduleIfEnabled()
+    }
+
     func sendPreviewNotification() {
         center.getNotificationSettings { [weak self] settings in
             guard let self else { return }
@@ -626,7 +807,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
             case .authorized, .provisional:
                 self.schedulePreviewNotification()
             case .notDetermined:
-                self.center.requestAuthorization(options: [.alert, .sound]) { [weak self] granted, _ in
+                self.center.requestAuthorization(options: [.alert, .sound, .timeSensitive]) { [weak self] granted, _ in
                     guard let self else { return }
                     DispatchQueue.main.async {
                         guard granted else {
@@ -660,7 +841,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
             case .authorized, .provisional:
                 self.scheduleNafahatPreviewNotification()
             case .notDetermined:
-                self.center.requestAuthorization(options: [.alert, .sound]) { [weak self] granted, _ in
+                self.center.requestAuthorization(options: [.alert, .sound, .timeSensitive]) { [weak self] granted, _ in
                     guard let self else { return }
                     DispatchQueue.main.async {
                         guard granted else {
@@ -671,6 +852,36 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
                         self.isEnabled = true
                         self.defaults.set(true, forKey: Self.enabledKey)
                         self.scheduleNafahatPreviewNotification()
+                        self.scheduleUpcomingPrayerNotifications()
+                    }
+                }
+            default:
+                DispatchQueue.main.async {
+                    self.statusText = "اسمح بالإشعارات من إعدادات الآيفون"
+                }
+            }
+        }
+    }
+
+    func sendFajrAlarmTestNotification() {
+        center.getNotificationSettings { [weak self] settings in
+            guard let self else { return }
+
+            switch settings.authorizationStatus {
+            case .authorized, .provisional:
+                self.scheduleFajrAlarmPreviewNotification()
+            case .notDetermined:
+                self.center.requestAuthorization(options: [.alert, .sound, .timeSensitive]) { [weak self] granted, _ in
+                    guard let self else { return }
+                    DispatchQueue.main.async {
+                        guard granted else {
+                            self.statusText = "اسمح بالإشعارات من إعدادات الآيفون"
+                            return
+                        }
+
+                        self.isEnabled = true
+                        self.defaults.set(true, forKey: Self.enabledKey)
+                        self.scheduleFajrAlarmPreviewNotification()
                         self.scheduleUpcomingPrayerNotifications()
                     }
                 }
@@ -714,7 +925,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
             }
 
             DispatchQueue.main.async {
-                if self.enabledPrayerIDs.isEmpty && !self.isNafahatEnabled {
+                if self.enabledPrayerIDs.isEmpty && !self.isNafahatEnabled && !self.isFajrAlarmEnabled {
                     self.statusText = "اختر صلاة واحدة على الأقل للتنبيه"
                 } else {
                     self.statusText = events.isEmpty ? "لا توجد صلوات قادمة في الجدول" : "التنبيهات مفعلة للصلوات المختارة"
@@ -744,6 +955,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
         }
 
         events.append(contentsOf: upcomingNafahatEvents(now: now))
+        events.append(contentsOf: upcomingFajrAlarmEvents(now: now))
 
         return events
             .sorted { $0.date < $1.date }
@@ -759,6 +971,8 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
             return adhkarRequest(for: event.prayer, date: event.date)
         case .nafahat:
             return nafahatRequest(for: event.nafahatMessage ?? nafahatMessage(for: 0, date: event.date), date: event.date)
+        case .fajrAlarm:
+            return fajrAlarmRequest(for: event.prayer, date: event.date, isWakeBefore: event.isWakeBefore)
         }
     }
 
@@ -773,6 +987,26 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
 
         let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
         let identifier = notificationPrefix + PrayerEngine.calendarIdentifier(for: date) + "-adhan-" + prayer.key.rawValue
+        return UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
+    }
+
+    private func fajrAlarmRequest(for prayer: PrayerTime, date: Date, isWakeBefore: Bool) -> UNNotificationRequest {
+        let content = UNMutableNotificationContent()
+        content.title = isWakeBefore ? "اقترب وقت الفجر" : "منبه الفجر"
+        content.body = isWakeBefore
+            ? "باقي \(fajrAlarmWakeBeforeMinutes) دقيقة على صلاة الفجر"
+            : "حان وقت صلاة الفجر • اضغط صحيت أو غفوة"
+        content.sound = fajrAlarmNotificationSound
+        content.categoryIdentifier = Self.fajrAlarmCategoryID
+        content.threadIdentifier = "tel-sheva-fajr-alarm"
+        content.interruptionLevel = .timeSensitive
+        content.userInfo = ["fajrDateKey": PrayerEngine.defaultDateKey(for: prayer.date)]
+
+        var components = PrayerEngine.calendar.dateComponents([.year, .month, .day, .hour, .minute], from: date)
+        components.timeZone = PrayerEngine.timeZone
+
+        let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
+        let identifier = notificationPrefix + PrayerEngine.calendarIdentifier(for: date) + "-fajr-alarm-" + (isWakeBefore ? "before" : prayer.key.rawValue)
         return UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
     }
 
@@ -829,6 +1063,50 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
         }
 
         return events
+    }
+
+    private func upcomingFajrAlarmEvents(now: Date) -> [ScheduledPrayerNotification] {
+        guard isFajrAlarmEnabled else { return [] }
+
+        return PrayerEngine.availableDateKeys.flatMap { dateKey -> [ScheduledPrayerNotification] in
+            guard let time = PrayerEngine.schedule(for: dateKey).times[.fajr],
+                  let fajrDate = PrayerEngine.date(from: dateKey, time: time) else {
+                return []
+            }
+
+            let prayer = PrayerTime(key: .fajr, title: PrayerKey.fajr.title, time: time, date: fajrDate)
+            var result: [ScheduledPrayerNotification] = []
+
+            if fajrAlarmWakeBeforeMinutes > 0 {
+                let beforeDate = fajrDate.addingTimeInterval(TimeInterval(-fajrAlarmWakeBeforeMinutes * 60))
+                if beforeDate > now {
+                    result.append(
+                        ScheduledPrayerNotification(
+                            kind: .fajrAlarm,
+                            prayer: prayer,
+                            date: beforeDate,
+                            isWakeBefore: true
+                        )
+                    )
+                }
+            }
+
+            for offset in selectedFajrAlarmIntensity.repeatOffsetsMinutes {
+                let alarmDate = fajrDate.addingTimeInterval(TimeInterval(offset * 60))
+                if alarmDate > now {
+                    result.append(
+                        ScheduledPrayerNotification(
+                            kind: .fajrAlarm,
+                            prayer: prayer,
+                            date: alarmDate,
+                            isWakeBefore: false
+                        )
+                    )
+                }
+            }
+
+            return result
+        }
     }
 
     private func nafahatMessage(for index: Int, date: Date = Date()) -> NafahatReminderMessage {
@@ -909,6 +1187,52 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
         }
     }
 
+    private func scheduleFajrAlarmPreviewNotification() {
+        let content = UNMutableNotificationContent()
+        content.title = "اختبار منبه الفجر"
+        content.body = "هذا نفس صوت وإجراءات منبه الفجر • صحيت أو غفوة"
+        content.sound = fajrAlarmNotificationSound
+        content.categoryIdentifier = Self.fajrAlarmCategoryID
+        content.threadIdentifier = "tel-sheva-fajr-alarm"
+        content.interruptionLevel = .timeSensitive
+
+        let identifier = previewNotificationIdentifier + "-fajr-alarm"
+        center.removePendingNotificationRequests(withIdentifiers: [identifier])
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 2, repeats: false)
+        let request = UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
+
+        center.add(request) { [weak self] error in
+            DispatchQueue.main.async {
+                guard let self else { return }
+                self.statusText = error == nil ? "منبه الفجر التجريبي بعد ثانيتين" : "تعذر إرسال اختبار منبه الفجر"
+            }
+        }
+    }
+
+    private func scheduleFajrAlarmSnoozeNotification(dateKey: String?) {
+        let content = UNMutableNotificationContent()
+        content.title = "غفوة منبه الفجر"
+        content.body = "عاد التنبيه بعد \(fajrAlarmSnoozeMinutes) دقائق"
+        content.sound = fajrAlarmNotificationSound
+        content.categoryIdentifier = Self.fajrAlarmCategoryID
+        content.threadIdentifier = "tel-sheva-fajr-alarm"
+        content.interruptionLevel = .timeSensitive
+        if let dateKey {
+            content.userInfo = ["fajrDateKey": dateKey]
+        }
+
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: TimeInterval(max(fajrAlarmSnoozeMinutes, 1) * 60), repeats: false)
+        let identifier = notificationPrefix + "fajr-alarm-snooze-" + PrayerEngine.calendarIdentifier(for: Date())
+        let request = UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
+
+        center.add(request) { [weak self] error in
+            DispatchQueue.main.async {
+                guard let self else { return }
+                self.statusText = error == nil ? "تم ضبط غفوة الفجر \(self.fajrAlarmSnoozeMinutes) دقائق" : "تعذر ضبط الغفوة"
+            }
+        }
+    }
+
     private var notificationSound: UNNotificationSound {
         switch selectedSound {
         case .system:
@@ -916,6 +1240,17 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
         case .bundledAdhan:
             return bundledNotificationSound(["adhan.caf", "adhan.wav", "adhan.aiff"])
         case .softDhikr:
+            return bundledNotificationSound(["nafahat.wav", "nafahat.caf", "nafahat.aiff"])
+        }
+    }
+
+    private var fajrAlarmNotificationSound: UNNotificationSound {
+        switch selectedFajrAlarmSound {
+        case .system:
+            return .default
+        case .adhan:
+            return bundledNotificationSound(["adhan.caf", "adhan.wav", "adhan.aiff"])
+        case .nafahat:
             return bundledNotificationSound(["nafahat.wav", "nafahat.caf", "nafahat.aiff"])
         }
     }
@@ -959,12 +1294,35 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
         }
     }
 
+    private func removePendingFajrAlarmNotifications(for dateKey: String?) {
+        center.getPendingNotificationRequests { [weak self] requests in
+            guard let self else { return }
+
+            let identifiers = requests
+                .filter { request in
+                    guard request.identifier.hasPrefix(self.notificationPrefix),
+                          request.identifier.contains("fajr-alarm") else {
+                        return false
+                    }
+
+                    if let dateKey {
+                        return (request.content.userInfo["fajrDateKey"] as? String) == dateKey
+                            || request.identifier.contains("snooze")
+                    }
+
+                    return request.identifier.contains("snooze") || request.identifier.contains("preview")
+                }
+                .map(\.identifier)
+            self.center.removePendingNotificationRequests(withIdentifiers: identifiers)
+        }
+    }
+
     private func refreshStatus() {
         center.getNotificationSettings { [weak self] settings in
             DispatchQueue.main.async {
                 guard let self else { return }
                 if self.isEnabled && (settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional) {
-                    self.statusText = self.enabledPrayerIDs.isEmpty && !self.isNafahatEnabled ? "اختر صلاة واحدة على الأقل للتنبيه" : "التنبيهات مفعلة"
+                    self.statusText = self.enabledPrayerIDs.isEmpty && !self.isNafahatEnabled && !self.isFajrAlarmEnabled ? "اختر صلاة واحدة على الأقل للتنبيه" : "التنبيهات مفعلة"
                 } else if settings.authorizationStatus == .denied {
                     self.statusText = "اسمح بالإشعارات من إعدادات الآيفون"
                 } else {
@@ -979,6 +1337,24 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
     }
 
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse) async {
+        if response.notification.request.content.categoryIdentifier == Self.fajrAlarmCategoryID {
+            let fajrDateKey = response.notification.request.content.userInfo["fajrDateKey"] as? String
+
+            switch response.actionIdentifier {
+            case Self.fajrAlarmAwakeActionID:
+                removePendingFajrAlarmNotifications(for: fajrDateKey)
+                await MainActor.run {
+                    statusText = "تم إيقاف منبه الفجر"
+                }
+                return
+            case Self.fajrAlarmSnoozeActionID:
+                scheduleFajrAlarmSnoozeNotification(dateKey: fajrDateKey)
+                return
+            default:
+                break
+            }
+        }
+
         await MainActor.run {
             NotificationCenter.default.post(name: Self.openSettingsNotification, object: nil)
         }
@@ -990,12 +1366,14 @@ private struct ScheduledPrayerNotification {
         case adhan
         case adhkar
         case nafahat
+        case fajrAlarm
     }
 
     let kind: Kind
     let prayer: PrayerTime
     let date: Date
     var nafahatMessage: NafahatReminderMessage? = nil
+    var isWakeBefore = false
 }
 
 extension PrayerEngine {

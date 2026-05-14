@@ -105,6 +105,8 @@ struct NotificationSettingsView: View {
                         nafahatSettings
                     } else if selectedPage == .adhan {
                         adhanSettings
+                    } else if selectedPage == .fajrAlarm {
+                        fajrAlarmSettings
                     } else {
                         appearanceSettings
                     }
@@ -121,6 +123,7 @@ struct NotificationSettingsView: View {
         HStack(spacing: 8) {
             Spacer(minLength: 0)
             notificationPageButton(.appearance)
+            notificationPageButton(.fajrAlarm)
             notificationPageButton(.adhan)
         }
         .frame(maxWidth: .infinity, alignment: .topTrailing)
@@ -170,6 +173,18 @@ struct NotificationSettingsView: View {
             liveActivityTestPanel
             soundPanel
             prayerPanel
+        }
+        .transition(.opacity)
+    }
+
+    private var fajrAlarmSettings: some View {
+        VStack(alignment: .trailing, spacing: 16) {
+            fajrAlarmMasterPanel
+            fajrAlarmIntensityPanel
+            fajrAlarmTimingPanel
+            fajrAlarmSnoozePanel
+            fajrAlarmSoundPanel
+            fajrAlarmTestPanel
         }
         .transition(.opacity)
     }
@@ -419,6 +434,166 @@ struct NotificationSettingsView: View {
         }
     }
 
+    private var fajrAlarmMasterPanel: some View {
+        toggleSummaryPanel(
+            title: "منبه الفجر",
+            subtitle: notifications.isFajrAlarmEnabled ? "يعمل عند صلاة الفجر بإعدادات مستقلة" : "منبه الفجر متوقف",
+            isOn: Binding(
+                get: { notifications.isFajrAlarmEnabled },
+                set: { notifications.setFajrAlarmEnabled($0) }
+            )
+        )
+    }
+
+    private var fajrAlarmIntensityPanel: some View {
+        panel(title: "قوة المنبه") {
+            VStack(spacing: 0) {
+                ForEach(Array(FajrAlarmIntensity.allCases.enumerated()), id: \.element.id) { index, intensity in
+                    Button {
+                        notifications.selectFajrAlarmIntensity(intensity)
+                    } label: {
+                        optionRow(
+                            title: intensity.title,
+                            subtitle: intensity.subtitle,
+                            symbol: intensity.systemImage,
+                            selected: notifications.selectedFajrAlarmIntensityID == intensity.rawValue
+                        )
+                    }
+                    .buttonStyle(.plain)
+
+                    if index < FajrAlarmIntensity.allCases.count - 1 {
+                        Divider()
+                            .background(theme.controlBorder)
+                    }
+                }
+            }
+        }
+    }
+
+    private var fajrAlarmTimingPanel: some View {
+        panel(title: "موعد التنبيه") {
+            VStack(alignment: .trailing, spacing: 10) {
+                Text("اختار هل يبدأ مع الأذان أو قبله")
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(theme.secondaryText.opacity(0.82))
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+
+                HStack(spacing: 8) {
+                    fajrChoiceButton(
+                        title: "قبل 15 د",
+                        selected: notifications.fajrAlarmWakeBeforeMinutes == 15
+                    ) {
+                        notifications.setFajrAlarmWakeBeforeMinutes(15)
+                    }
+
+                    fajrChoiceButton(
+                        title: "قبل 10 د",
+                        selected: notifications.fajrAlarmWakeBeforeMinutes == 10
+                    ) {
+                        notifications.setFajrAlarmWakeBeforeMinutes(10)
+                    }
+
+                    fajrChoiceButton(
+                        title: "قبل 5 د",
+                        selected: notifications.fajrAlarmWakeBeforeMinutes == 5
+                    ) {
+                        notifications.setFajrAlarmWakeBeforeMinutes(5)
+                    }
+
+                    fajrChoiceButton(
+                        title: "مع الأذان",
+                        selected: notifications.fajrAlarmWakeBeforeMinutes == 0
+                    ) {
+                        notifications.setFajrAlarmWakeBeforeMinutes(0)
+                    }
+                }
+            }
+        }
+    }
+
+    private var fajrAlarmSnoozePanel: some View {
+        panel(title: "الغفوة") {
+            HStack(spacing: 8) {
+                ForEach([10, 5, 3], id: \.self) { minutes in
+                    fajrChoiceButton(
+                        title: "\(minutes) دقائق",
+                        selected: notifications.fajrAlarmSnoozeMinutes == minutes
+                    ) {
+                        notifications.setFajrAlarmSnoozeMinutes(minutes)
+                    }
+                }
+            }
+        }
+    }
+
+    private var fajrAlarmSoundPanel: some View {
+        panel(title: "صوت منبه الفجر") {
+            VStack(spacing: 0) {
+                ForEach(Array(FajrAlarmSound.allCases.enumerated()), id: \.element.id) { index, sound in
+                    Button {
+                        notifications.selectFajrAlarmSound(sound)
+                        notifications.sendFajrAlarmTestNotification()
+                    } label: {
+                        optionRow(
+                            title: sound.title,
+                            subtitle: sound.subtitle,
+                            symbol: sound.systemImage,
+                            selected: notifications.selectedFajrAlarmSoundID == sound.rawValue
+                        )
+                    }
+                    .buttonStyle(.plain)
+
+                    if index < FajrAlarmSound.allCases.count - 1 {
+                        Divider()
+                            .background(theme.controlBorder)
+                    }
+                }
+            }
+        }
+    }
+
+    private var fajrAlarmTestPanel: some View {
+        panel(title: "اختبار منبه الفجر") {
+            Button {
+                notifications.sendFajrAlarmTestNotification()
+            } label: {
+                HStack(spacing: 10) {
+                    Image(systemName: "alarm.fill")
+                        .font(.system(size: 22, weight: .black))
+                        .foregroundStyle(theme.accent)
+                        .frame(width: 34, alignment: .leading)
+
+                    Spacer(minLength: 10)
+
+                    VStack(alignment: .trailing, spacing: 4) {
+                        Text("جرّب منبه الفجر الآن")
+                            .font(.subheadline.weight(.black))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.80)
+
+                        Text("يصلك اختبار بعد ثانيتين مع صحيت وغفوة")
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(theme.secondaryText.opacity(0.82))
+                            .lineLimit(2)
+                            .minimumScaleFactor(0.76)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                }
+                .frame(maxWidth: .infinity, alignment: .trailing)
+                .padding(.vertical, 14)
+                .padding(.horizontal, 12)
+                .frame(minHeight: 78, alignment: .center)
+                .background(glassSurface(theme.countdownBackground, radius: 8, prominence: .strong))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(theme.activeRowBorder)
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
     private var soundPanel: some View {
         panel(title: "صوت الأذان") {
             VStack(spacing: 0) {
@@ -647,6 +822,25 @@ struct NotificationSettingsView: View {
                 }
             }
         }
+    }
+
+    private func fajrChoiceButton(title: String, selected: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(.caption.weight(.black))
+                .foregroundStyle(selected ? theme.primaryText : theme.secondaryText.opacity(0.84))
+                .lineLimit(1)
+                .minimumScaleFactor(0.72)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 9)
+                .background(lightRowSurface(selected ? theme.countdownBackground : theme.rowBackground, radius: 8, selected: selected))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(selected ? theme.activeRowBorder : theme.rowBorder)
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+        }
+        .buttonStyle(.plain)
     }
 
     private func delayButton(_ minutes: Int) -> some View {
@@ -1003,6 +1197,7 @@ struct NotificationSettingsView: View {
 
 private enum NotificationSettingsPage: String, CaseIterable, Identifiable {
     case adhan
+    case fajrAlarm
     case appearance
 
     var id: String { rawValue }
@@ -1011,6 +1206,8 @@ private enum NotificationSettingsPage: String, CaseIterable, Identifiable {
         switch self {
         case .adhan:
             return "الأذان"
+        case .fajrAlarm:
+            return "منبه الفجر"
         case .appearance:
             return "الأنماط"
         }
@@ -1020,6 +1217,8 @@ private enum NotificationSettingsPage: String, CaseIterable, Identifiable {
         switch self {
         case .adhan:
             return "bell.badge.fill"
+        case .fajrAlarm:
+            return "alarm.fill"
         case .appearance:
             return "paintpalette.fill"
         }
