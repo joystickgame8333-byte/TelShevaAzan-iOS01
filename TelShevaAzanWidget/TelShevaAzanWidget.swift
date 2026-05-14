@@ -882,36 +882,30 @@ private struct SalatiAppleTimerIslandPanel: View {
             SalatiPrayerBadge(prayerName: context.attributes.prayerName, size: 34, mode: mode)
                 .frame(width: 36, height: 36)
 
-            VStack(alignment: .trailing, spacing: 3) {
-                Text("إقامة صلاة \(context.attributes.prayerName)")
+            Spacer(minLength: 4)
+
+            VStack(alignment: .trailing, spacing: 2) {
+                Text("تقام صلاة \(context.attributes.prayerName) على")
                     .font(.system(size: 15, weight: .black, design: .rounded))
                     .foregroundStyle(.white)
                     .lineLimit(1)
-                    .minimumScaleFactor(0.74)
+                    .minimumScaleFactor(0.66)
                     .allowsTightening(true)
 
-                Text("وقت الإقامة")
-                    .font(.system(size: 12, weight: .bold, design: .rounded))
-                    .foregroundStyle(.white.opacity(0.62))
+                Text(iqamaTime)
+                    .font(.system(size: 34, weight: .black, design: .rounded).monospacedDigit())
+                    .foregroundStyle(SalatiLiveActivityStyle.gold)
+                    .shadow(color: SalatiLiveActivityStyle.gold.opacity(mode == .normal ? 0.10 : 0.48), radius: mode == .normal ? 2 : 9)
                     .lineLimit(1)
-                    .minimumScaleFactor(0.74)
+                    .minimumScaleFactor(0.72)
                     .allowsTightening(true)
             }
             .frame(maxWidth: .infinity, alignment: .trailing)
-
-            Text(iqamaTime)
-                .font(.system(size: 34, weight: .black, design: .rounded).monospacedDigit())
-                .foregroundStyle(SalatiLiveActivityStyle.gold)
-                .shadow(color: SalatiLiveActivityStyle.gold.opacity(mode == .normal ? 0.10 : 0.48), radius: mode == .normal ? 2 : 9)
-                .lineLimit(1)
-                .minimumScaleFactor(0.68)
-                .allowsTightening(true)
-                .frame(width: 92, alignment: .leading)
         }
         .padding(.horizontal, 5)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .multilineTextAlignment(.trailing)
-        .environment(\.layoutDirection, .rightToLeft)
+        .environment(\.layoutDirection, .leftToRight)
     }
 }
 
@@ -1202,7 +1196,7 @@ private struct SalatiIslandCompactLeading: View {
     let context: ActivityViewContext<PrayerLiveActivityAttributes>
 
     var body: some View {
-        SalatiPrayerBadge(prayerName: context.attributes.prayerName, size: 22, mode: salatiBadgeMode(for: context, targetDate: salatiIqamaDate(for: context)))
+        SalatiPrayerBadge(prayerName: context.attributes.prayerName, size: 22, mode: salatiBadgeMode(for: context, targetDate: context.attributes.prayerDate))
             .frame(width: 24, height: 24)
     }
 }
@@ -1211,23 +1205,20 @@ private struct SalatiIslandCompactLeading: View {
 private struct SalatiIslandCompactTrailing: View {
     let context: ActivityViewContext<PrayerLiveActivityAttributes>
 
-    private var iqamaDate: Date {
-        salatiIqamaDate(for: context)
+    private var prayerDate: Date {
+        context.attributes.prayerDate
     }
 
     private var mode: SalatiPrayerBadgeMode {
-        salatiBadgeMode(for: context, targetDate: iqamaDate)
+        salatiBadgeMode(for: context, targetDate: prayerDate)
     }
 
     var body: some View {
-        Text(salatiTimeText(for: iqamaDate))
-            .font(.system(size: 11, weight: .black, design: .rounded).monospacedDigit())
-            .foregroundStyle(mode == .normal ? Color(red: 1.0, green: 0.62, blue: 0.04) : Color(red: 1.0, green: 0.78, blue: 0.28))
-            .shadow(color: SalatiLiveActivityStyle.gold.opacity(mode == .normal ? 0 : 0.46), radius: 4)
+        SalatiCompactPrayerCountdownText(targetDate: prayerDate, size: 11, mode: mode)
             .lineLimit(1)
-            .minimumScaleFactor(0.64)
+            .minimumScaleFactor(0.72)
             .allowsTightening(true)
-            .frame(width: 42, height: 18, alignment: .leading)
+            .frame(width: 36, height: 18, alignment: .leading)
     }
 }
 
@@ -1236,12 +1227,12 @@ private struct SalatiIslandMinimal: View {
     let context: ActivityViewContext<PrayerLiveActivityAttributes>
 
     private var isPrayerDue: Bool {
-        Date() >= salatiIqamaDate(for: context)
+        Date() >= context.attributes.prayerDate
     }
 
     var body: some View {
-        SalatiPrayerBadge(prayerName: context.attributes.prayerName, size: 18, mode: salatiBadgeMode(for: context, targetDate: salatiIqamaDate(for: context)))
-            .accessibilityLabel(isPrayerDue ? "حانت الإقامة" : "باقي على الإقامة")
+        SalatiPrayerBadge(prayerName: context.attributes.prayerName, size: 18, mode: salatiBadgeMode(for: context, targetDate: context.attributes.prayerDate))
+            .accessibilityLabel(isPrayerDue ? "حان الأذان" : "باقي على الأذان")
     }
 }
 
@@ -1513,6 +1504,38 @@ private struct SalatiPrayerBadge: View {
             .fill(SalatiLiveActivityStyle.gold)
             .frame(width: max(size * sizeMultiplier, 2), height: max(size * sizeMultiplier, 2))
             .offset(x: size * x, y: size * y)
+    }
+}
+
+@available(iOSApplicationExtension 16.1, *)
+private struct SalatiCompactPrayerCountdownText: View {
+    let targetDate: Date
+    let size: CGFloat
+    var mode: SalatiPrayerBadgeMode = .normal
+
+    var body: some View {
+        if mode == .now || Date() >= targetDate {
+            Text("الآن")
+                .font(.system(size: size, weight: .black, design: .rounded))
+                .foregroundStyle(countdownColor)
+                .shadow(color: countdownColor.opacity(0.62), radius: size * 0.34)
+        } else {
+            Text(timerInterval: Date()...targetDate, countsDown: true)
+                .font(.system(size: size, weight: .black, design: .rounded).monospacedDigit())
+                .foregroundStyle(countdownColor)
+                .shadow(color: countdownColor.opacity(mode == .normal ? 0 : 0.62), radius: size * 0.34)
+        }
+    }
+
+    private var countdownColor: Color {
+        switch mode {
+        case .normal:
+            return Color(red: 1.0, green: 0.62, blue: 0.04)
+        case .warning:
+            return Color(red: 1.0, green: 0.78, blue: 0.28)
+        case .now:
+            return Color(red: 1.0, green: 0.90, blue: 0.58)
+        }
     }
 }
 
