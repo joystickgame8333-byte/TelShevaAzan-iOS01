@@ -167,69 +167,59 @@ struct ContentView: View {
         dockReservedHeight: CGFloat,
         size: CGSize
     ) -> some View {
-        ScrollView(showsIndicators: false) {
-            VStack(alignment: .trailing, spacing: compactHeight ? 12 : 16) {
-                quranVerse
+        VStack(alignment: .trailing, spacing: sectionSpacing) {
+            quranVerse
 
-                header
+            header
 
-                nextPrayerPanel(next: next, previous: previous, compact: compactHeight)
+            nextPrayerPanel(next: next, previous: previous, compact: compactHeight)
 
-                dateControls
+            dateControls
 
-                VStack(spacing: compactHeight ? 8 : 10) {
-                    ForEach(schedule.displayTimes) { item in
-                        prayerRow(item, activeKey: next?.key, rowHeight: max(rowHeight, compactHeight ? 58 : 66))
-                    }
+            VStack(spacing: rowSpacing) {
+                ForEach(schedule.displayTimes) { item in
+                    prayerRow(item, activeKey: next?.key, rowHeight: rowHeight)
                 }
-
-                footerNote
             }
-            .padding(.horizontal, 18)
-            .padding(.top, compactHeight ? 10 : 14)
-            .padding(.bottom, dockReservedHeight + 16)
+
+            footerNote
         }
+        .padding(.horizontal, 16)
+        .padding(.top, compactHeight ? 12 : 18)
+        .padding(.bottom, dockReservedHeight)
         .frame(width: size.width, height: size.height, alignment: .topTrailing)
-        .foregroundStyle(glassLightPrimaryText)
-        .environment(\.layoutDirection, .rightToLeft)
+        .foregroundStyle(activeTheme.primaryText)
+        .environment(\.layoutDirection, .leftToRight)
         .multilineTextAlignment(.trailing)
     }
 
     private var quranVerse: some View {
-        GlassLightCard(cornerRadius: 26) {
-            HStack(alignment: .center, spacing: 14) {
-                Text("النساء ١٠٣")
-                    .font(.system(size: 15, weight: .semibold, design: .rounded))
-                    .foregroundStyle(glassLightSecondaryText)
-                    .lineLimit(1)
+        VStack(alignment: .trailing, spacing: 0) {
+            Text("إِنَّ ٱلصَّلَوٰةَ كَانَتْ عَلَى ٱلْمُؤْمِنِينَ كِتَـٰبًا مَّوْقُوتًا")
+                .font(.custom("AmiriQuran-Regular", size: 25))
+                .foregroundStyle(activeTheme.accent)
+                .lineLimit(2)
+                .minimumScaleFactor(0.64)
 
-                Spacer(minLength: 6)
-
-                Text("إِنَّ ٱلصَّلَوٰةَ كَانَتْ عَلَى ٱلْمُؤْمِنِينَ كِتَـٰبًا مَّوْقُوتًا")
-                    .font(.custom("AmiriQuran-Regular", size: 25))
-                    .foregroundStyle(glassLightBlue)
-                    .multilineTextAlignment(.trailing)
-                    .lineLimit(2)
-                    .minimumScaleFactor(0.64)
-            }
-            .padding(.horizontal, 18)
-            .padding(.vertical, 20)
+            Text("النساء ١٠٣")
+                .font(.caption.weight(.bold))
+                .foregroundStyle(activeTheme.secondaryText.opacity(0.74))
+                .lineLimit(1)
         }
         .frame(maxWidth: .infinity, alignment: .trailing)
     }
 
     private var header: some View {
-        VStack(alignment: .trailing, spacing: 4) {
+        VStack(alignment: .trailing, spacing: 3) {
             Text("أذان تل السبع")
-                .font(.system(size: 36, weight: .black, design: .rounded))
-                .foregroundStyle(glassLightPrimaryText)
+                .font(.system(size: 28, weight: .black, design: .rounded))
                 .lineLimit(1)
                 .minimumScaleFactor(0.72)
                 .frame(maxWidth: .infinity, alignment: .trailing)
 
             Text(PrayerEngine.longDateLabel(for: selectedDateKey))
-                .font(.system(size: 18, weight: .semibold, design: .rounded))
-                .foregroundStyle(glassLightSecondaryText)
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(activeTheme.secondaryText.opacity(0.82))
                 .lineLimit(1)
                 .minimumScaleFactor(0.75)
                 .frame(maxWidth: .infinity, alignment: .trailing)
@@ -277,13 +267,13 @@ struct ContentView: View {
                     VStack(spacing: 3) {
                         Image(systemName: dockSymbol(for: item))
                             .font(.system(size: 17, weight: .black, design: .rounded))
-                            .foregroundStyle(selectedDockAccent)
+                            .foregroundStyle(activeTheme.accent)
                             .frame(width: 36, height: 36)
                             .background(selectedDockIconFill)
                             .clipShape(Circle())
                             .overlay(
                                 Circle()
-                                    .stroke(Color.white.opacity(selectedTab == .schedule ? 0.86 : (activeTheme.isNightTheme ? 0.38 : 0.82)), lineWidth: 1)
+                                    .stroke(Color.white.opacity(activeTheme.isNightTheme ? 0.38 : 0.82), lineWidth: 1)
                             )
                             .overlay(alignment: .topTrailing) {
                                 dockStatusBadge(for: item)
@@ -304,7 +294,7 @@ struct ContentView: View {
                     VStack(spacing: 2) {
                         Image(systemName: dockSymbol(for: item))
                             .font(.system(size: 18, weight: .black, design: .rounded))
-                            .foregroundStyle(selectedTab == .schedule ? glassLightSecondaryText.opacity(0.92) : activeTheme.secondaryText.opacity(0.86))
+                            .foregroundStyle(activeTheme.secondaryText.opacity(0.86))
                             .symbolRenderingMode(.hierarchical)
                             .frame(width: 30, height: 22)
                             .overlay(alignment: .topTrailing) {
@@ -314,7 +304,7 @@ struct ContentView: View {
 
                         Text(item.title)
                             .font(.system(size: 8.2, weight: .bold, design: .rounded))
-                            .foregroundStyle(selectedTab == .schedule ? glassLightSecondaryText.opacity(0.92) : activeTheme.secondaryText.opacity(0.88))
+                            .foregroundStyle(activeTheme.secondaryText.opacity(0.88))
                             .lineLimit(1)
                             .minimumScaleFactor(0.58)
                     }
@@ -352,8 +342,8 @@ struct ContentView: View {
             .fill(
                 LinearGradient(
                     colors: [
-                        selectedDockAccent.opacity(selectedTab == .schedule ? 0.94 : (activeTheme.isNightTheme ? 0.95 : 0.90)),
-                        selectedDockAccent.opacity(selectedTab == .schedule ? 0.78 : (activeTheme.isNightTheme ? 0.72 : 0.78))
+                        activeTheme.accent.opacity(activeTheme.isNightTheme ? 0.95 : 0.90),
+                        activeTheme.accent.opacity(activeTheme.isNightTheme ? 0.72 : 0.78)
                     ],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
@@ -361,47 +351,20 @@ struct ContentView: View {
             )
             .overlay(
                 RoundedRectangle(cornerRadius: height * 0.42, style: .continuous)
-                    .stroke(Color.white.opacity(selectedTab == .schedule ? 0.52 : (activeTheme.isNightTheme ? 0.22 : 0.46)), lineWidth: 1)
+                    .stroke(Color.white.opacity(activeTheme.isNightTheme ? 0.22 : 0.46), lineWidth: 1)
             )
-            .shadow(color: selectedDockAccent.opacity(selectedTab == .schedule ? 0.30 : (activeTheme.isNightTheme ? 0.22 : 0.24)), radius: 9, y: 3)
+            .shadow(color: activeTheme.accent.opacity(activeTheme.isNightTheme ? 0.22 : 0.24), radius: 9, y: 3)
             .frame(width: width, height: height)
     }
 
     private var selectedDockIconFill: some View {
         Circle()
-            .fill(selectedTab == .schedule ? Color.white.opacity(0.98) : (activeTheme.isNightTheme ? Color.white.opacity(0.94) : Color.white.opacity(0.98)))
-    }
-
-    private var selectedDockAccent: Color {
-        selectedTab == .schedule ? glassLightBlue : activeTheme.accent
+            .fill(activeTheme.isNightTheme ? Color.white.opacity(0.94) : Color.white.opacity(0.98))
     }
 
     private var dockLiquidGlassBase: some View {
         Group {
-            if selectedTab == .schedule {
-                RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .fill(.ultraThinMaterial)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 22, style: .continuous)
-                            .fill(Color.white.opacity(0.62))
-                    )
-                    .overlay(
-                        LinearGradient(
-                            colors: [
-                                Color.white.opacity(0.62),
-                                Color.white.opacity(0.20),
-                                glassLightBlue.opacity(0.08)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 22, style: .continuous)
-                            .stroke(Color.white.opacity(0.88), lineWidth: 1)
-                    )
-            } else if activeTheme.isGlassTheme {
+            if activeTheme.isGlassTheme {
                 RoundedRectangle(cornerRadius: 22, style: .continuous)
                     .fill(dockGlassTint)
                     .overlay(
@@ -519,59 +482,56 @@ struct ContentView: View {
     }
 
     private func nextPrayerPanel(next: PrayerTime?, previous: PrayerTime?, compact: Bool) -> some View {
-        GlassLightCard(cornerRadius: 28) {
-            VStack(spacing: compact ? 14 : 18) {
-                HStack(alignment: .center, spacing: compact ? 12 : 16) {
-                    VStack(alignment: .trailing, spacing: compact ? 5 : 8) {
-                        Text("الصلاة القادمة")
-                            .font(.system(size: compact ? 16 : 18, weight: .bold, design: .rounded))
-                            .foregroundStyle(glassLightBlue)
-                            .lineLimit(1)
+        HStack(alignment: .center, spacing: 12) {
+            VStack(alignment: .leading, spacing: 5) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("باقي على الصلاة")
+                        .font(.caption2.weight(.black))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.72)
 
-                        Text(next?.title ?? "--")
-                            .font(.system(size: compact ? 40 : 52, weight: .black, design: .rounded))
-                            .foregroundStyle(glassLightPrimaryText)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.70)
-
-                        Text(next?.time ?? "--:--")
-                            .font(.system(size: compact ? 48 : 62, weight: .black, design: .rounded))
-                            .foregroundStyle(glassLightBlue)
-                            .monospacedDigit()
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.70)
-
-                        Text(elapsedText(for: previous))
-                            .font(.system(size: compact ? 14 : 17, weight: .bold, design: .rounded))
-                            .foregroundStyle(glassLightSecondaryText)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.68)
-                    }
-
-                    Spacer(minLength: 8)
-
-                    CountdownGlassBox(
-                        remainingText: countdownText(for: next),
-                        compact: compact
-                    )
+                    Text(countdownText(for: next))
+                        .font(.subheadline.monospacedDigit().weight(.bold))
+                        .lineLimit(1)
                 }
+                .foregroundStyle(.white)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 7)
+                .background(activeTheme.countdownBackground)
+                .clipShape(RoundedRectangle(cornerRadius: 8))
 
-                VStack(spacing: 8) {
-                    RTLProgressBar(progress: prayerProgress(previous: previous, next: next))
-                        .frame(height: 9)
-
-                    HStack {
-                        Text(previous?.title ?? "--")
-                        Spacer()
-                        Text(next?.title ?? "--")
-                    }
-                    .font(.system(size: 15, weight: .bold, design: .rounded))
-                    .foregroundStyle(glassLightSecondaryText)
-                }
+                Text(elapsedText(for: previous))
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(activeTheme.secondaryText.opacity(0.82))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.72)
             }
-            .padding(compact ? 14 : 18)
+
+            Spacer(minLength: 0)
+
+            VStack(alignment: .trailing, spacing: 2) {
+                Text("الصلاة القادمة")
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(activeTheme.accent)
+                    .lineLimit(1)
+
+                Text(next?.title ?? "--")
+                    .font(.system(size: compact ? 29 : 32, weight: .black, design: .rounded))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.72)
+
+                Text(next?.time ?? "--:--")
+                    .font(.system(size: compact ? 35 : 40, weight: .black, design: .rounded))
+                    .foregroundStyle(activeTheme.accent)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.72)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .trailing)
+        .padding(compact ? 12 : 14)
+        .background(glassSurface(activeTheme.panelBackground, radius: 8, prominence: .strong))
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .shadow(color: .black.opacity(isNight ? 0.22 : 0.06), radius: 12, y: 6)
     }
 
     private var dateControls: some View {
@@ -581,19 +541,19 @@ struct ContentView: View {
             Button("اليوم التالي") {
                 moveDay(1)
             }
-            .buttonStyle(GlassLightSmallButtonStyle(icon: "chevron.left"))
+            .buttonStyle(CompactButtonStyle(theme: activeTheme))
             .disabled(!PrayerEngine.canMove(from: selectedDateKey, by: 1))
 
             Button("اليوم") {
                 selectedDateKey = PrayerEngine.defaultDateKey(for: now)
                 followsToday = true
             }
-            .buttonStyle(GlassLightSmallButtonStyle(icon: "calendar"))
+            .buttonStyle(CompactButtonStyle(theme: activeTheme))
 
             Button("اليوم السابق") {
                 moveDay(-1)
             }
-            .buttonStyle(GlassLightSmallButtonStyle(icon: "chevron.right"))
+            .buttonStyle(CompactButtonStyle(theme: activeTheme))
             .disabled(!PrayerEngine.canMove(from: selectedDateKey, by: -1))
         }
         .frame(maxWidth: .infinity, alignment: .trailing)
@@ -602,24 +562,22 @@ struct ContentView: View {
     private var datePickerButton: some View {
         ZStack {
             HStack(spacing: 6) {
-                Image(systemName: "calendar")
-                    .font(.system(size: 14, weight: .bold, design: .rounded))
-                    .foregroundStyle(glassLightBlue)
-
                 Text("اختار تاريخ")
                     .lineLimit(1)
                     .minimumScaleFactor(0.78)
+
+                Image(systemName: "calendar")
             }
-            .font(.system(size: 15, weight: .black, design: .rounded))
-            .foregroundStyle(Color(red: 0.07, green: 0.09, blue: 0.15))
-            .frame(maxWidth: .infinity)
-            .frame(height: 52)
-            .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .font(.caption.weight(.bold))
+            .foregroundStyle(activeTheme.primaryText)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 9)
+            .background(glassSurface(activeTheme.controlBackground, radius: 8))
             .overlay(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .stroke(Color.white.opacity(0.85), lineWidth: 1)
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(activeTheme.controlBorder)
             )
-            .shadow(color: Color.black.opacity(0.04), radius: 10, x: 0, y: 5)
+            .clipShape(RoundedRectangle(cornerRadius: 8))
 
             DatePicker(
                 "",
@@ -631,71 +589,43 @@ struct ContentView: View {
             .datePickerStyle(.compact)
             .opacity(0.02)
         }
-        .frame(maxWidth: .infinity)
+        .fixedSize()
     }
 
     private var footerNote: some View {
         Text("مواقيت محلية \(AppInfo.displayVersion) · تتحدث تلقائيًا")
-            .font(.system(size: 16, weight: .bold, design: .rounded))
-            .foregroundStyle(glassLightBlue)
+            .font(.caption2.weight(.bold))
+            .foregroundStyle(activeTheme.accent)
             .lineLimit(1)
             .minimumScaleFactor(0.75)
         .frame(maxWidth: .infinity, alignment: .trailing)
     }
 
     private func prayerRow(_ item: PrayerTime, activeKey: PrayerKey?, rowHeight: CGFloat) -> some View {
-        let isActive = item.key == activeKey
-
-        return HStack(spacing: 10) {
-            HStack(spacing: 10) {
-                Image(systemName: prayerSymbol(for: item.key))
-                    .font(.system(size: 22, weight: .semibold, design: .rounded))
-                    .foregroundStyle(isActive ? glassLightBlue : glassLightSecondaryText)
-                    .frame(width: 26)
-
-                Text(item.title)
-                    .font(.system(size: 25, weight: .black, design: .rounded))
-                    .foregroundStyle(isActive ? glassLightBlue : glassLightSecondaryText)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.72)
-            }
-
-            Spacer(minLength: 10)
-
+        HStack {
             Text(item.time)
-                .font(.system(size: 30, weight: .black, design: .rounded).monospacedDigit())
-                .foregroundStyle(isActive ? glassLightBlue : glassLightPrimaryText)
-                .lineLimit(1)
-                .minimumScaleFactor(0.72)
+                .font(.headline.monospacedDigit().weight(.bold))
+                .foregroundStyle(item.key == activeKey ? activeTheme.accent : activeTheme.primaryText)
+
+            Spacer()
+
+            Text(item.title)
+                .font(.headline.weight(.bold))
+                .foregroundStyle(item.key == activeKey ? activeTheme.accent : activeTheme.secondaryText.opacity(0.78))
         }
-        .padding(.horizontal, 18)
+        .lineLimit(1)
+        .padding(.horizontal, 12)
         .frame(height: rowHeight)
-        .background(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(isActive ? glassLightBlue.opacity(0.14) : Color.white.opacity(0.42))
-                .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-        )
+        .background(glassSurface(rowBackground(isActive: item.key == activeKey), radius: 8, prominence: item.key == activeKey ? .regular : .quiet))
         .overlay(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .stroke(isActive ? glassLightBlue : Color.white.opacity(0.75), lineWidth: isActive ? 1.6 : 1)
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(rowBorder(isActive: item.key == activeKey))
         )
-        .shadow(color: Color.black.opacity(0.035), radius: 10, x: 0, y: 5)
+        .clipShape(RoundedRectangle(cornerRadius: 8))
     }
 
     private var isNight: Bool {
         colorScheme == .dark
-    }
-
-    private var glassLightBlue: Color {
-        Color.glassAppleBlue
-    }
-
-    private var glassLightPrimaryText: Color {
-        Color(red: 0.03, green: 0.07, blue: 0.12)
-    }
-
-    private var glassLightSecondaryText: Color {
-        Color(red: 0.42, green: 0.47, blue: 0.55)
     }
 
     private var activeTheme: PrayerVisualTheme {
@@ -744,13 +674,7 @@ struct ContentView: View {
     }
 
     private var background: some View {
-        Group {
-            if selectedTab == .schedule {
-                GlassLightSkyBackground()
-            } else {
-                ThemeBackdrop(theme: activeTheme)
-            }
-        }
+        ThemeBackdrop(theme: activeTheme)
     }
 
     private func glassSurface(
@@ -792,31 +716,6 @@ struct ContentView: View {
         return String(format: "%02d:%02d", hours, minutes)
     }
 
-    private func prayerProgress(previous: PrayerTime?, next: PrayerTime?) -> CGFloat {
-        guard let previous, let next else { return 0 }
-        let total = next.date.timeIntervalSince(previous.date)
-        guard total > 0 else { return 0 }
-        let elapsed = now.timeIntervalSince(previous.date)
-        return min(max(CGFloat(elapsed / total), 0), 1)
-    }
-
-    private func prayerSymbol(for key: PrayerKey) -> String {
-        switch key {
-        case .fajr:
-            return "sunrise"
-        case .sunrise:
-            return "sun.max"
-        case .dhuhr:
-            return "sun.max.fill"
-        case .asr:
-            return "cloud.sun"
-        case .maghrib:
-            return "sunset.fill"
-        case .isha:
-            return "moon.stars.fill"
-        }
-    }
-
     private func moveDay(_ offset: Int) {
         guard let nextKey = PrayerEngine.dateKey(from: selectedDateKey, offset: offset) else { return }
         selectedDateKey = nextKey
@@ -835,181 +734,6 @@ struct ContentView: View {
         WidgetRefreshCenter.refreshAll()
         WidgetRefreshCenter.refreshAgainSoon()
     }
-}
-
-private struct GlassLightSkyBackground: View {
-    var body: some View {
-        ZStack {
-            LinearGradient(
-                colors: [
-                    Color(red: 0.97, green: 0.99, blue: 1.00),
-                    Color(red: 0.92, green: 0.97, blue: 1.00),
-                    Color(red: 0.98, green: 0.99, blue: 1.00)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-
-            Circle()
-                .fill(Color.white.opacity(0.75))
-                .frame(width: 280, height: 280)
-                .blur(radius: 45)
-                .offset(x: -140, y: -220)
-
-            Circle()
-                .fill(Color(red: 0.75, green: 0.89, blue: 1.00).opacity(0.45))
-                .frame(width: 360, height: 360)
-                .blur(radius: 70)
-                .offset(x: 160, y: -120)
-
-            Circle()
-                .fill(Color.white.opacity(0.65))
-                .frame(width: 320, height: 320)
-                .blur(radius: 65)
-                .offset(x: -120, y: 280)
-        }
-        .ignoresSafeArea()
-    }
-}
-
-private struct GlassLightCard<Content: View>: View {
-    var cornerRadius: CGFloat = 24
-    let content: Content
-
-    init(cornerRadius: CGFloat = 24, @ViewBuilder content: () -> Content) {
-        self.cornerRadius = cornerRadius
-        self.content = content()
-    }
-
-    var body: some View {
-        content
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .stroke(
-                        LinearGradient(
-                            colors: [
-                                Color.white.opacity(0.95),
-                                Color(red: 0.73, green: 0.85, blue: 1.00).opacity(0.55),
-                                Color.white.opacity(0.55)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 1.2
-                    )
-            )
-            .shadow(color: Color(red: 0.29, green: 0.56, blue: 0.89).opacity(0.12), radius: 18, x: 0, y: 10)
-    }
-}
-
-private struct CountdownGlassBox: View {
-    let remainingText: String
-    let compact: Bool
-
-    var body: some View {
-        VStack(spacing: compact ? 7 : 10) {
-            ZStack {
-                Circle()
-                    .stroke(Color.glassAppleBlue.opacity(0.18), lineWidth: compact ? 7 : 8)
-
-                Circle()
-                    .trim(from: 0, to: 0.72)
-                    .stroke(
-                        Color.glassAppleBlue,
-                        style: StrokeStyle(lineWidth: compact ? 7 : 8, lineCap: .round)
-                    )
-                    .rotationEffect(.degrees(-90))
-
-                Image(systemName: "clock.fill")
-                    .font(.system(size: compact ? 20 : 24, weight: .bold, design: .rounded))
-                    .foregroundStyle(Color.glassAppleBlue)
-            }
-            .frame(width: compact ? 46 : 52, height: compact ? 46 : 52)
-
-            Text("باقي على الصلاة")
-                .font(.system(size: compact ? 13 : 16, weight: .bold, design: .rounded))
-                .foregroundStyle(Color(red: 0.42, green: 0.47, blue: 0.55))
-                .lineLimit(1)
-                .minimumScaleFactor(0.75)
-
-            Text(remainingText)
-                .font(.system(size: compact ? 23 : 29, weight: .black, design: .rounded))
-                .monospacedDigit()
-                .foregroundStyle(Color.glassAppleBlue)
-                .lineLimit(1)
-                .minimumScaleFactor(0.70)
-        }
-        .frame(width: compact ? 130 : 160, height: compact ? 128 : 150)
-        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .stroke(Color.white.opacity(0.75), lineWidth: 1)
-        )
-    }
-}
-
-private struct RTLProgressBar: View {
-    var progress: CGFloat
-
-    private var safeProgress: CGFloat {
-        min(max(progress, 0), 1)
-    }
-
-    var body: some View {
-        GeometryReader { proxy in
-            ZStack(alignment: .trailing) {
-                Capsule()
-                    .fill(Color(red: 0.86, green: 0.92, blue: 0.98).opacity(0.95))
-
-                Capsule()
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color.glassAppleBlue,
-                                Color(red: 0.25, green: 0.64, blue: 1.00)
-                            ],
-                            startPoint: .trailing,
-                            endPoint: .leading
-                        )
-                    )
-                    .frame(width: proxy.size.width * safeProgress)
-            }
-        }
-        .clipShape(Capsule())
-    }
-}
-
-private struct GlassLightSmallButtonStyle: ButtonStyle {
-    let icon: String
-
-    func makeBody(configuration: Configuration) -> some View {
-        HStack(spacing: 7) {
-            Image(systemName: icon)
-                .font(.system(size: 14, weight: .bold, design: .rounded))
-                .foregroundStyle(Color.glassAppleBlue)
-
-            configuration.label
-                .font(.system(size: 15, weight: .black, design: .rounded))
-                .foregroundStyle(Color(red: 0.07, green: 0.09, blue: 0.15))
-                .lineLimit(1)
-                .minimumScaleFactor(0.72)
-        }
-        .frame(maxWidth: .infinity)
-        .frame(height: 52)
-        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .stroke(Color.white.opacity(0.85), lineWidth: 1)
-        )
-        .shadow(color: Color.black.opacity(0.04), radius: 10, x: 0, y: 5)
-        .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
-        .animation(.spring(response: 0.22, dampingFraction: 0.72), value: configuration.isPressed)
-    }
-}
-
-private extension Color {
-    static let glassAppleBlue = Color(red: 0.0, green: 122.0 / 255.0, blue: 1.0)
 }
 
 private enum HomeDockItem: String, CaseIterable, Identifiable {
