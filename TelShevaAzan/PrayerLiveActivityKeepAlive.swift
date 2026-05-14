@@ -44,7 +44,7 @@ final class PrayerLiveActivityKeepAlive {
         let transitionDate = nowDate ?? endDate
 
         if let onWarning {
-            let warningDelay = transitionDate.addingTimeInterval(-10).timeIntervalSinceNow
+            let warningDelay = transitionDate.addingTimeInterval(-60).timeIntervalSinceNow
             if warningDelay > 0 {
                 let timer = DispatchSource.makeTimerSource(queue: .main)
                 timer.schedule(deadline: .now() + warningDelay)

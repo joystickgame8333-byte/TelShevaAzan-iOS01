@@ -874,23 +874,7 @@ private struct SalatiLightLockScreenPanel: View {
     }
 
     private var targetDate: Date {
-        salatiLiveTargetDate(for: context)
-    }
-
-    private var hasReachedPrayer: Bool {
-        salatiHasReachedPrayer(for: context)
-    }
-
-    private var titleText: String {
-        hasReachedPrayer ? "تقام على \(iqamaTime)" : "الأذان \(context.attributes.prayerTime)"
-    }
-
-    private var detailText: String {
-        hasReachedPrayer ? "الأذان \(context.attributes.prayerTime)" : "الإقامة \(iqamaTime)"
-    }
-
-    private var statusText: String {
-        hasReachedPrayer ? "الإقامة" : "صلاة \(context.attributes.prayerName)"
+        context.attributes.prayerDate
     }
 
     var body: some View {
@@ -910,7 +894,7 @@ private struct SalatiLightLockScreenPanel: View {
             RoundedRectangle(cornerRadius: 30, style: .continuous)
                 .stroke(SalatiLiveActivityStyle.gold.opacity(0.22), lineWidth: 1)
 
-            VStack(alignment: .center, spacing: 13) {
+            VStack(alignment: .center, spacing: 12) {
                 HStack(spacing: 10) {
                     Text("صلاة \(context.attributes.prayerName)")
                         .font(.system(size: 13, weight: .black, design: .rounded))
@@ -925,25 +909,19 @@ private struct SalatiLightLockScreenPanel: View {
                         .lineLimit(1)
                 }
 
-                VStack(spacing: 6) {
-                    Text(statusText)
-                        .font(.system(size: 13, weight: .black, design: .rounded))
+                VStack(spacing: 7) {
+                    Text("باقي للأذان")
+                        .font(.system(size: 15, weight: .black, design: .rounded))
                         .foregroundStyle(SalatiLiveActivityStyle.gold)
                         .lineLimit(1)
 
-                    Text(titleText)
-                        .font(.system(size: 34, weight: .black, design: .rounded).monospacedDigit())
-                        .foregroundStyle(.white)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.62)
+                    SalatiLightCountdownText(targetDate: targetDate, size: 44)
 
-                    Text(detailText)
-                        .font(.system(size: 14, weight: .bold, design: .rounded).monospacedDigit())
+                    Text("الأذان \(context.attributes.prayerTime) · الإقامة \(iqamaTime)")
+                        .font(.system(size: 13, weight: .bold, design: .rounded).monospacedDigit())
                         .foregroundStyle(.white.opacity(0.64))
                         .lineLimit(1)
-
-                    SalatiLightCountdownText(targetDate: targetDate, size: 30)
-                        .padding(.top, 2)
+                        .minimumScaleFactor(0.78)
                 }
                 .frame(maxWidth: .infinity, alignment: .center)
             }
@@ -951,7 +929,7 @@ private struct SalatiLightLockScreenPanel: View {
             .padding(.horizontal, 18)
         }
         .frame(maxWidth: .infinity)
-        .multilineTextAlignment(.trailing)
+        .multilineTextAlignment(.center)
         .environment(\.layoutDirection, .rightToLeft)
     }
 }
@@ -961,49 +939,33 @@ private struct SalatiLightExpandedIslandPanel: View {
     let context: ActivityViewContext<PrayerLiveActivityAttributes>
 
     private var targetDate: Date {
-        salatiLiveTargetDate(for: context)
-    }
-
-    private var hasReachedPrayer: Bool {
-        salatiHasReachedPrayer(for: context)
-    }
-
-    private var iqamaTime: String {
-        salatiTimeText(for: salatiIqamaDate(for: context))
-    }
-
-    private var titleText: String {
-        hasReachedPrayer ? "تقام \(context.attributes.prayerName) على \(iqamaTime)" : "باقي على صلاة \(context.attributes.prayerName)"
-    }
-
-    private var detailText: String {
-        hasReachedPrayer ? "الأذان \(context.attributes.prayerTime)" : "الإقامة \(iqamaTime)"
+        context.attributes.prayerDate
     }
 
     var body: some View {
-        HStack(spacing: 14) {
-            VStack(alignment: .trailing, spacing: 5) {
-                Text(titleText)
-                    .font(.system(size: 22, weight: .black, design: .rounded).monospacedDigit())
-                    .foregroundStyle(.white)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.64)
-                    .allowsTightening(true)
+        Group {
+            if salatiShouldShowIslandContent(for: context) {
+                VStack(spacing: 6) {
+                    Text("باقي للأذان")
+                        .font(.system(size: 18, weight: .black, design: .rounded))
+                        .foregroundStyle(.white)
+                        .lineLimit(1)
 
-                Text(detailText)
-                    .font(.system(size: 13, weight: .bold, design: .rounded).monospacedDigit())
-                    .foregroundStyle(.white.opacity(0.62))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.72)
+                    SalatiLightCountdownText(targetDate: targetDate, size: 36)
+
+                    Text("صلاة \(context.attributes.prayerName)")
+                        .font(.system(size: 12, weight: .bold, design: .rounded))
+                        .foregroundStyle(.white.opacity(0.62))
+                        .lineLimit(1)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+            } else {
+                EmptyView()
             }
-            .frame(maxWidth: .infinity, alignment: .trailing)
-
-            SalatiLightCountdownText(targetDate: targetDate, size: 31)
-                .frame(width: 88, alignment: .center)
         }
         .padding(.horizontal, 4)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .multilineTextAlignment(.trailing)
+        .multilineTextAlignment(.center)
         .environment(\.layoutDirection, .rightToLeft)
     }
 }
@@ -1343,14 +1305,20 @@ private struct SalatiIslandCompactLeading: View {
     let context: ActivityViewContext<PrayerLiveActivityAttributes>
 
     var body: some View {
-        Text(salatiCompactTitle(for: context))
-            .font(.system(size: 12, weight: .black, design: .rounded))
-            .foregroundStyle(.white)
-            .lineLimit(1)
-            .minimumScaleFactor(0.68)
-            .allowsTightening(true)
-            .frame(width: 42, height: 18, alignment: .center)
-            .environment(\.layoutDirection, .rightToLeft)
+        Group {
+            if salatiShouldShowIslandContent(for: context) {
+                Text(salatiCompactTitle(for: context))
+                    .font(.system(size: 12, weight: .black, design: .rounded))
+                    .foregroundStyle(.white)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.68)
+                    .allowsTightening(true)
+            } else {
+                EmptyView()
+            }
+        }
+        .frame(width: 42, height: 18, alignment: .center)
+        .environment(\.layoutDirection, .rightToLeft)
     }
 }
 
@@ -1363,11 +1331,17 @@ private struct SalatiIslandCompactTrailing: View {
     }
 
     var body: some View {
-        SalatiLightCountdownText(targetDate: targetDate, size: 12)
-            .lineLimit(1)
-            .minimumScaleFactor(0.68)
-            .allowsTightening(true)
-            .frame(width: 40, height: 18, alignment: .leading)
+        Group {
+            if salatiShouldShowIslandContent(for: context) {
+                SalatiLightCountdownText(targetDate: targetDate, size: 12)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.68)
+                    .allowsTightening(true)
+            } else {
+                EmptyView()
+            }
+        }
+        .frame(width: 40, height: 18, alignment: .leading)
     }
 }
 
@@ -1380,11 +1354,17 @@ private struct SalatiIslandMinimal: View {
     }
 
     var body: some View {
-        Text(salatiPrayerAbbreviation(for: context.attributes.prayerName))
-            .font(.system(size: 12, weight: .black, design: .rounded))
-            .foregroundStyle(SalatiLiveActivityStyle.gold)
-            .lineLimit(1)
-            .accessibilityLabel(isPrayerDue ? "حان الأذان" : "باقي على الأذان")
+        Group {
+            if salatiShouldShowIslandContent(for: context) {
+                Text(salatiPrayerAbbreviation(for: context.attributes.prayerName))
+                    .font(.system(size: 12, weight: .black, design: .rounded))
+                    .foregroundStyle(SalatiLiveActivityStyle.gold)
+                    .lineLimit(1)
+            } else {
+                EmptyView()
+            }
+        }
+        .accessibilityLabel(isPrayerDue ? "حان الأذان" : "باقي على الأذان")
     }
 }
 
@@ -1464,12 +1444,18 @@ private func salatiHasReachedPrayer(for context: ActivityViewContext<PrayerLiveA
 
 @available(iOSApplicationExtension 16.1, *)
 private func salatiLiveTargetDate(for context: ActivityViewContext<PrayerLiveActivityAttributes>) -> Date {
-    salatiHasReachedPrayer(for: context) ? salatiIqamaDate(for: context) : context.attributes.prayerDate
+    context.attributes.prayerDate
 }
 
 @available(iOSApplicationExtension 16.1, *)
 private func salatiCompactTitle(for context: ActivityViewContext<PrayerLiveActivityAttributes>) -> String {
-    salatiHasReachedPrayer(for: context) ? "إقامة" : context.attributes.prayerName
+    context.attributes.prayerName
+}
+
+@available(iOSApplicationExtension 16.1, *)
+private func salatiShouldShowIslandContent(for context: ActivityViewContext<PrayerLiveActivityAttributes>) -> Bool {
+    let secondsUntilPrayer = context.attributes.prayerDate.timeIntervalSinceNow
+    return secondsUntilPrayer > 0 && secondsUntilPrayer <= 60
 }
 
 @available(iOSApplicationExtension 16.1, *)

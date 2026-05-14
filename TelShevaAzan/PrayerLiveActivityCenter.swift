@@ -144,8 +144,7 @@ final class PrayerLiveActivityCenter: ObservableObject {
         await endActivities(where: { _ in true })
 
         let prayerDate = now.addingTimeInterval(previewDuration)
-        let prayerKey = next?.key ?? .maghrib
-        let activityEndDate = Self.iqamaDate(for: prayerDate, prayerKey: prayerKey)
+        let activityEndDate = prayerDate
         let prayerName = next?.title ?? "المغرب"
         let previousName = previous?.title ?? "الصلاة السابقة"
         let attributes = PrayerLiveActivityAttributes(
@@ -208,7 +207,7 @@ final class PrayerLiveActivityCenter: ObservableObject {
             return
         }
 
-        let activityEndDate = Self.iqamaDate(for: next.date, prayerKey: next.key)
+        let activityEndDate = next.date
         let phase = phase(for: secondsUntilPrayer)
         let state = PrayerLiveActivityAttributes.ContentState(
             phase: phase,
@@ -258,8 +257,7 @@ final class PrayerLiveActivityCenter: ObservableObject {
 
     @available(iOS 16.1, *)
     private func activityEndDate(for activity: Activity<PrayerLiveActivityAttributes>) -> Date {
-        let prayerKey = Self.prayerKey(for: activity.attributes)
-        return Self.iqamaDate(for: activity.attributes.prayerDate, prayerKey: prayerKey)
+        activity.attributes.prayerDate
     }
 
     @available(iOS 16.1, *)
