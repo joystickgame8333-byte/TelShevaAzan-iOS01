@@ -16,8 +16,8 @@ final class PrayerLiveActivityCenter: ObservableObject {
 
     private let previewDuration: TimeInterval = 30
     private let autoLeadTime: TimeInterval = 120
-    private let nowDisplayDuration: TimeInterval = 1
-    private let expiredCleanupGrace: TimeInterval = 4
+    private let nowDisplayDuration: TimeInterval = 0
+    private let expiredCleanupGrace: TimeInterval = 0
     private var lastSyncDate = Date.distantPast
     private var lastCleanupDate = Date.distantPast
 

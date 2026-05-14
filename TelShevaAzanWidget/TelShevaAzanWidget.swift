@@ -882,11 +882,15 @@ private struct SalatiLightLockScreenPanel: View {
     }
 
     private var titleText: String {
-        hasReachedPrayer ? "تقام على \(iqamaTime)" : "باقي على صلاة \(context.attributes.prayerName)"
+        hasReachedPrayer ? "تقام على \(iqamaTime)" : "الأذان \(context.attributes.prayerTime)"
     }
 
     private var detailText: String {
-        hasReachedPrayer ? "الأذان \(context.attributes.prayerTime)" : "الأذان \(context.attributes.prayerTime)"
+        hasReachedPrayer ? "الأذان \(context.attributes.prayerTime)" : "الإقامة \(iqamaTime)"
+    }
+
+    private var statusText: String {
+        hasReachedPrayer ? "الإقامة" : "صلاة \(context.attributes.prayerName)"
     }
 
     var body: some View {
@@ -906,7 +910,7 @@ private struct SalatiLightLockScreenPanel: View {
             RoundedRectangle(cornerRadius: 30, style: .continuous)
                 .stroke(SalatiLiveActivityStyle.gold.opacity(0.22), lineWidth: 1)
 
-            VStack(alignment: .trailing, spacing: 16) {
+            VStack(alignment: .center, spacing: 13) {
                 HStack(spacing: 10) {
                     Text("صلاة \(context.attributes.prayerName)")
                         .font(.system(size: 13, weight: .black, design: .rounded))
@@ -921,32 +925,27 @@ private struct SalatiLightLockScreenPanel: View {
                         .lineLimit(1)
                 }
 
-                HStack(alignment: .lastTextBaseline, spacing: 18) {
-                    VStack(alignment: .trailing, spacing: 7) {
-                        Text(titleText)
-                            .font(.system(size: 34, weight: .black, design: .rounded).monospacedDigit())
-                            .foregroundStyle(.white)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.62)
+                VStack(spacing: 6) {
+                    Text(statusText)
+                        .font(.system(size: 13, weight: .black, design: .rounded))
+                        .foregroundStyle(SalatiLiveActivityStyle.gold)
+                        .lineLimit(1)
 
-                        Text(detailText)
-                            .font(.system(size: 14, weight: .bold, design: .rounded).monospacedDigit())
-                            .foregroundStyle(.white.opacity(0.64))
-                            .lineLimit(1)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .trailing)
+                    Text(titleText)
+                        .font(.system(size: 34, weight: .black, design: .rounded).monospacedDigit())
+                        .foregroundStyle(.white)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.62)
 
-                    VStack(spacing: 5) {
-                        SalatiLightCountdownText(targetDate: targetDate, size: 30)
+                    Text(detailText)
+                        .font(.system(size: 14, weight: .bold, design: .rounded).monospacedDigit())
+                        .foregroundStyle(.white.opacity(0.64))
+                        .lineLimit(1)
 
-                        Text(hasReachedPrayer ? "باقي للإقامة" : "باقي للأذان")
-                            .font(.system(size: 10, weight: .bold, design: .rounded))
-                            .foregroundStyle(.white.opacity(0.58))
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.76)
-                    }
-                    .frame(width: 104, alignment: .center)
+                    SalatiLightCountdownText(targetDate: targetDate, size: 30)
+                        .padding(.top, 2)
                 }
+                .frame(maxWidth: .infinity, alignment: .center)
             }
             .padding(.vertical, 16)
             .padding(.horizontal, 18)
@@ -1350,7 +1349,7 @@ private struct SalatiIslandCompactLeading: View {
             .lineLimit(1)
             .minimumScaleFactor(0.68)
             .allowsTightening(true)
-            .frame(width: 42, height: 18, alignment: .trailing)
+            .frame(width: 42, height: 18, alignment: .center)
             .environment(\.layoutDirection, .rightToLeft)
     }
 }
@@ -1396,7 +1395,7 @@ private struct SalatiLightCountdownText: View {
 
     var body: some View {
         if Date() >= targetDate {
-            Text("تم")
+            Text("0:00")
                 .font(.system(size: size, weight: .black, design: .rounded))
                 .foregroundStyle(SalatiLiveActivityStyle.gold)
                 .lineLimit(1)
