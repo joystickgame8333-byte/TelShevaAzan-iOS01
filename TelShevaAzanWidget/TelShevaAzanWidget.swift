@@ -846,8 +846,8 @@ private struct SalatiLiveActivityCard: View {
     let context: ActivityViewContext<PrayerLiveActivityAttributes>
 
     var body: some View {
-        SalatiPrayerHadithPanel(context: context, presentation: .lockScreen)
-        .activityBackgroundTint(Color(red: 0.04, green: 0.07, blue: 0.07))
+        SalatiLightLockScreenPanel(context: context)
+        .activityBackgroundTint(Color(red: 0.03, green: 0.05, blue: 0.06))
         .activitySystemActionForegroundColor(SalatiLiveActivityStyle.gold)
     }
 }
@@ -857,7 +857,155 @@ private struct SalatiIslandExpandedCenter: View {
     let context: ActivityViewContext<PrayerLiveActivityAttributes>
 
     var body: some View {
-        SalatiAppleTimerIslandPanel(context: context)
+        SalatiLightExpandedIslandPanel(context: context)
+    }
+}
+
+@available(iOSApplicationExtension 16.1, *)
+private struct SalatiLightLockScreenPanel: View {
+    let context: ActivityViewContext<PrayerLiveActivityAttributes>
+
+    private var iqamaDate: Date {
+        salatiIqamaDate(for: context)
+    }
+
+    private var iqamaTime: String {
+        salatiTimeText(for: iqamaDate)
+    }
+
+    private var targetDate: Date {
+        salatiLiveTargetDate(for: context)
+    }
+
+    private var hasReachedPrayer: Bool {
+        salatiHasReachedPrayer(for: context)
+    }
+
+    private var titleText: String {
+        hasReachedPrayer ? "تقام على \(iqamaTime)" : "باقي على صلاة \(context.attributes.prayerName)"
+    }
+
+    private var detailText: String {
+        hasReachedPrayer ? "الأذان \(context.attributes.prayerTime)" : "الأذان \(context.attributes.prayerTime)"
+    }
+
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 30, style: .continuous)
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            Color(red: 0.05, green: 0.10, blue: 0.12),
+                            Color(red: 0.02, green: 0.03, blue: 0.04)
+                        ],
+                        startPoint: .topTrailing,
+                        endPoint: .bottomLeading
+                    )
+                )
+
+            RoundedRectangle(cornerRadius: 30, style: .continuous)
+                .stroke(SalatiLiveActivityStyle.gold.opacity(0.22), lineWidth: 1)
+
+            VStack(alignment: .trailing, spacing: 16) {
+                HStack(spacing: 10) {
+                    Text("صلاة \(context.attributes.prayerName)")
+                        .font(.system(size: 13, weight: .black, design: .rounded))
+                        .foregroundStyle(SalatiLiveActivityStyle.gold)
+                        .lineLimit(1)
+
+                    Spacer(minLength: 8)
+
+                    Text(context.attributes.cityName)
+                        .font(.system(size: 12, weight: .bold, design: .rounded))
+                        .foregroundStyle(.white.opacity(0.56))
+                        .lineLimit(1)
+                }
+
+                HStack(alignment: .lastTextBaseline, spacing: 18) {
+                    VStack(alignment: .trailing, spacing: 7) {
+                        Text(titleText)
+                            .font(.system(size: 34, weight: .black, design: .rounded).monospacedDigit())
+                            .foregroundStyle(.white)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.62)
+
+                        Text(detailText)
+                            .font(.system(size: 14, weight: .bold, design: .rounded).monospacedDigit())
+                            .foregroundStyle(.white.opacity(0.64))
+                            .lineLimit(1)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+
+                    VStack(spacing: 5) {
+                        SalatiLightCountdownText(targetDate: targetDate, size: 30)
+
+                        Text(hasReachedPrayer ? "باقي للإقامة" : "باقي للأذان")
+                            .font(.system(size: 10, weight: .bold, design: .rounded))
+                            .foregroundStyle(.white.opacity(0.58))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.76)
+                    }
+                    .frame(width: 104, alignment: .center)
+                }
+            }
+            .padding(.vertical, 16)
+            .padding(.horizontal, 18)
+        }
+        .frame(maxWidth: .infinity)
+        .multilineTextAlignment(.trailing)
+        .environment(\.layoutDirection, .rightToLeft)
+    }
+}
+
+@available(iOSApplicationExtension 16.1, *)
+private struct SalatiLightExpandedIslandPanel: View {
+    let context: ActivityViewContext<PrayerLiveActivityAttributes>
+
+    private var targetDate: Date {
+        salatiLiveTargetDate(for: context)
+    }
+
+    private var hasReachedPrayer: Bool {
+        salatiHasReachedPrayer(for: context)
+    }
+
+    private var iqamaTime: String {
+        salatiTimeText(for: salatiIqamaDate(for: context))
+    }
+
+    private var titleText: String {
+        hasReachedPrayer ? "تقام \(context.attributes.prayerName) على \(iqamaTime)" : "باقي على صلاة \(context.attributes.prayerName)"
+    }
+
+    private var detailText: String {
+        hasReachedPrayer ? "الأذان \(context.attributes.prayerTime)" : "الإقامة \(iqamaTime)"
+    }
+
+    var body: some View {
+        HStack(spacing: 14) {
+            VStack(alignment: .trailing, spacing: 5) {
+                Text(titleText)
+                    .font(.system(size: 22, weight: .black, design: .rounded).monospacedDigit())
+                    .foregroundStyle(.white)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.64)
+                    .allowsTightening(true)
+
+                Text(detailText)
+                    .font(.system(size: 13, weight: .bold, design: .rounded).monospacedDigit())
+                    .foregroundStyle(.white.opacity(0.62))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.72)
+            }
+            .frame(maxWidth: .infinity, alignment: .trailing)
+
+            SalatiLightCountdownText(targetDate: targetDate, size: 31)
+                .frame(width: 88, alignment: .center)
+        }
+        .padding(.horizontal, 4)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .multilineTextAlignment(.trailing)
+        .environment(\.layoutDirection, .rightToLeft)
     }
 }
 
@@ -1196,8 +1344,14 @@ private struct SalatiIslandCompactLeading: View {
     let context: ActivityViewContext<PrayerLiveActivityAttributes>
 
     var body: some View {
-        SalatiPrayerBadge(prayerName: context.attributes.prayerName, size: 22, mode: salatiBadgeMode(for: context, targetDate: context.attributes.prayerDate))
-            .frame(width: 24, height: 24)
+        Text(salatiCompactTitle(for: context))
+            .font(.system(size: 12, weight: .black, design: .rounded))
+            .foregroundStyle(.white)
+            .lineLimit(1)
+            .minimumScaleFactor(0.68)
+            .allowsTightening(true)
+            .frame(width: 42, height: 18, alignment: .trailing)
+            .environment(\.layoutDirection, .rightToLeft)
     }
 }
 
@@ -1205,20 +1359,16 @@ private struct SalatiIslandCompactLeading: View {
 private struct SalatiIslandCompactTrailing: View {
     let context: ActivityViewContext<PrayerLiveActivityAttributes>
 
-    private var prayerDate: Date {
-        context.attributes.prayerDate
-    }
-
-    private var mode: SalatiPrayerBadgeMode {
-        salatiBadgeMode(for: context, targetDate: prayerDate)
+    private var targetDate: Date {
+        salatiLiveTargetDate(for: context)
     }
 
     var body: some View {
-        SalatiCompactPrayerCountdownText(targetDate: prayerDate, size: 11, mode: mode)
+        SalatiLightCountdownText(targetDate: targetDate, size: 12)
             .lineLimit(1)
-            .minimumScaleFactor(0.72)
+            .minimumScaleFactor(0.68)
             .allowsTightening(true)
-            .frame(width: 36, height: 18, alignment: .leading)
+            .frame(width: 40, height: 18, alignment: .leading)
     }
 }
 
@@ -1231,8 +1381,33 @@ private struct SalatiIslandMinimal: View {
     }
 
     var body: some View {
-        SalatiPrayerBadge(prayerName: context.attributes.prayerName, size: 18, mode: salatiBadgeMode(for: context, targetDate: context.attributes.prayerDate))
+        Text(salatiPrayerAbbreviation(for: context.attributes.prayerName))
+            .font(.system(size: 12, weight: .black, design: .rounded))
+            .foregroundStyle(SalatiLiveActivityStyle.gold)
+            .lineLimit(1)
             .accessibilityLabel(isPrayerDue ? "حان الأذان" : "باقي على الأذان")
+    }
+}
+
+@available(iOSApplicationExtension 16.1, *)
+private struct SalatiLightCountdownText: View {
+    let targetDate: Date
+    let size: CGFloat
+
+    var body: some View {
+        if Date() >= targetDate {
+            Text("تم")
+                .font(.system(size: size, weight: .black, design: .rounded))
+                .foregroundStyle(SalatiLiveActivityStyle.gold)
+                .lineLimit(1)
+                .minimumScaleFactor(0.62)
+        } else {
+            Text(timerInterval: Date()...targetDate, countsDown: true)
+                .font(.system(size: size, weight: .black, design: .rounded).monospacedDigit())
+                .foregroundStyle(SalatiLiveActivityStyle.gold)
+                .lineLimit(1)
+                .minimumScaleFactor(0.62)
+        }
     }
 }
 
@@ -1281,6 +1456,37 @@ private func salatiIqamaDate(for context: ActivityViewContext<PrayerLiveActivity
     let delay = SalatiPrayerHadithInfo.info(for: prayerKey).iqamaDelayMinutes
 
     return context.attributes.prayerDate.addingTimeInterval(TimeInterval(delay * 60))
+}
+
+@available(iOSApplicationExtension 16.1, *)
+private func salatiHasReachedPrayer(for context: ActivityViewContext<PrayerLiveActivityAttributes>) -> Bool {
+    context.state.phase != .almostTime || Date() >= context.attributes.prayerDate
+}
+
+@available(iOSApplicationExtension 16.1, *)
+private func salatiLiveTargetDate(for context: ActivityViewContext<PrayerLiveActivityAttributes>) -> Date {
+    salatiHasReachedPrayer(for: context) ? salatiIqamaDate(for: context) : context.attributes.prayerDate
+}
+
+@available(iOSApplicationExtension 16.1, *)
+private func salatiCompactTitle(for context: ActivityViewContext<PrayerLiveActivityAttributes>) -> String {
+    salatiHasReachedPrayer(for: context) ? "إقامة" : context.attributes.prayerName
+}
+
+@available(iOSApplicationExtension 16.1, *)
+private func salatiPrayerAbbreviation(for prayerName: String) -> String {
+    switch salatiPrayerKey(for: prayerName) {
+    case .fajr:
+        return "ف"
+    case .dhuhr, .sunrise:
+        return "ظ"
+    case .asr:
+        return "ع"
+    case .maghrib:
+        return "م"
+    case .isha:
+        return "ع"
+    }
 }
 
 @available(iOSApplicationExtension 16.1, *)
