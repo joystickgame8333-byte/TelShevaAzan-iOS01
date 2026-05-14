@@ -6,6 +6,8 @@
 	<string>OMARASAM09.com.omaralasam.telshevaazan</string>
 	<key>com.apple.developer.team-identifier</key>
 	<string>OMARASAM09</string>
+	<key>com.apple.developer.usernotifications.critical-alerts</key>
+	<true/>
 	<key>com.apple.security.application-groups</key>
 	<array>
 		<string>group.com.omaralasam.telshevaazan</string>

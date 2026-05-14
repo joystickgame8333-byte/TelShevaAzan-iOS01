@@ -137,42 +137,71 @@ enum FajrAlarmIntensity: String, CaseIterable, Identifiable {
 }
 
 enum FajrAlarmSound: String, CaseIterable, Identifiable {
-    case adhan
-    case nafahat
-    case system
+    case dawnRise
+    case strongPulse
+    case urgentWake
+    case goldenChime
+    case deepAlarm
 
     var id: String { rawValue }
 
     var title: String {
         switch self {
-        case .adhan:
-            return "الأذان"
-        case .nafahat:
-            return "نفحة قوية"
-        case .system:
-            return "منبه الآيفون"
+        case .dawnRise:
+            return "فجر صاعد"
+        case .strongPulse:
+            return "نبض قوي"
+        case .urgentWake:
+            return "إيقاظ سريع"
+        case .goldenChime:
+            return "رنين ذهبي"
+        case .deepAlarm:
+            return "منبه عميق"
         }
     }
 
     var subtitle: String {
         switch self {
-        case .adhan:
-            return "أفضل خيار للإيقاظ بصوت الأذان"
-        case .nafahat:
-            return "صوت أخف لو الأذان قوي عليك"
-        case .system:
-            return "صوت النظام السريع"
+        case .dawnRise:
+            return "نغمة صاعدة وواضحة للفجر"
+        case .strongPulse:
+            return "نبضات عالية ومريحة بدون إزعاج زائد"
+        case .urgentWake:
+            return "أقوى خيار للاختبار والإيقاظ"
+        case .goldenChime:
+            return "رنين جميل لكنه واضح"
+        case .deepAlarm:
+            return "نغمة منخفضة وثابتة للغفلة الثقيلة"
         }
     }
 
     var systemImage: String {
         switch self {
-        case .adhan:
+        case .dawnRise:
+            return "sunrise.fill"
+        case .strongPulse:
             return "waveform.circle.fill"
-        case .nafahat:
-            return "sparkles"
-        case .system:
-            return "iphone.gen3.radiowaves.left.and.right"
+        case .urgentWake:
+            return "alarm.fill"
+        case .goldenChime:
+            return "bell.and.waves.left.and.right.fill"
+        case .deepAlarm:
+            return "speaker.wave.3.fill"
+        }
+    }
+
+    var fileNames: [String] {
+        switch self {
+        case .dawnRise:
+            return ["fajr-alarm-dawn-rise.wav"]
+        case .strongPulse:
+            return ["fajr-alarm-strong-pulse.wav"]
+        case .urgentWake:
+            return ["fajr-alarm-urgent-wake.wav"]
+        case .goldenChime:
+            return ["fajr-alarm-golden-chime.wav"]
+        case .deepAlarm:
+            return ["fajr-alarm-deep-alarm.wav"]
         }
     }
 }
@@ -549,7 +578,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
     }
 
     private var selectedFajrAlarmSound: FajrAlarmSound {
-        FajrAlarmSound(rawValue: selectedFajrAlarmSoundID) ?? .adhan
+        FajrAlarmSound(rawValue: selectedFajrAlarmSoundID) ?? .dawnRise
     }
 
     private override init() {
@@ -588,7 +617,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
         let savedFajrIntensityID = UserDefaults.standard.string(forKey: Self.selectedFajrAlarmIntensityIDKey)
         selectedFajrAlarmIntensityID = savedFajrIntensityID ?? FajrAlarmIntensity.wakeUp.rawValue
         let savedFajrSoundID = UserDefaults.standard.string(forKey: Self.selectedFajrAlarmSoundIDKey)
-        selectedFajrAlarmSoundID = savedFajrSoundID ?? FajrAlarmSound.adhan.rawValue
+        selectedFajrAlarmSoundID = savedFajrSoundID ?? FajrAlarmSound.dawnRise.rawValue
         let savedWakeBefore = UserDefaults.standard.object(forKey: Self.fajrAlarmWakeBeforeMinutesKey) as? Int
         fajrAlarmWakeBeforeMinutes = savedWakeBefore ?? 0
         let savedSnooze = UserDefaults.standard.object(forKey: Self.fajrAlarmSnoozeMinutesKey) as? Int
@@ -622,7 +651,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
     }
 
     func enable() {
-        center.requestAuthorization(options: [.alert, .sound, .timeSensitive]) { [weak self] granted, _ in
+        center.requestAuthorization(options: [.alert, .sound, .timeSensitive, .criticalAlert]) { [weak self] granted, _ in
             DispatchQueue.main.async {
                 guard let self else { return }
 
@@ -807,7 +836,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
             case .authorized, .provisional:
                 self.schedulePreviewNotification()
             case .notDetermined:
-                self.center.requestAuthorization(options: [.alert, .sound, .timeSensitive]) { [weak self] granted, _ in
+                self.center.requestAuthorization(options: [.alert, .sound, .timeSensitive, .criticalAlert]) { [weak self] granted, _ in
                     guard let self else { return }
                     DispatchQueue.main.async {
                         guard granted else {
@@ -841,7 +870,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
             case .authorized, .provisional:
                 self.scheduleNafahatPreviewNotification()
             case .notDetermined:
-                self.center.requestAuthorization(options: [.alert, .sound, .timeSensitive]) { [weak self] granted, _ in
+                self.center.requestAuthorization(options: [.alert, .sound, .timeSensitive, .criticalAlert]) { [weak self] granted, _ in
                     guard let self else { return }
                     DispatchQueue.main.async {
                         guard granted else {
@@ -871,7 +900,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
             case .authorized, .provisional:
                 self.scheduleFajrAlarmPreviewNotification()
             case .notDetermined:
-                self.center.requestAuthorization(options: [.alert, .sound, .timeSensitive]) { [weak self] granted, _ in
+                self.center.requestAuthorization(options: [.alert, .sound, .timeSensitive, .criticalAlert]) { [weak self] granted, _ in
                     guard let self else { return }
                     DispatchQueue.main.async {
                         guard granted else {
@@ -999,7 +1028,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
         content.sound = fajrAlarmNotificationSound
         content.categoryIdentifier = Self.fajrAlarmCategoryID
         content.threadIdentifier = "tel-sheva-fajr-alarm"
-        content.interruptionLevel = .timeSensitive
+        content.interruptionLevel = .critical
         content.userInfo = ["fajrDateKey": PrayerEngine.defaultDateKey(for: prayer.date)]
 
         var components = PrayerEngine.calendar.dateComponents([.year, .month, .day, .hour, .minute], from: date)
@@ -1194,17 +1223,17 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
         content.sound = fajrAlarmNotificationSound
         content.categoryIdentifier = Self.fajrAlarmCategoryID
         content.threadIdentifier = "tel-sheva-fajr-alarm"
-        content.interruptionLevel = .timeSensitive
+        content.interruptionLevel = .critical
 
         let identifier = previewNotificationIdentifier + "-fajr-alarm"
         center.removePendingNotificationRequests(withIdentifiers: [identifier])
-        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 2, repeats: false)
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 5, repeats: false)
         let request = UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
 
         center.add(request) { [weak self] error in
             DispatchQueue.main.async {
                 guard let self else { return }
-                self.statusText = error == nil ? "منبه الفجر التجريبي بعد ثانيتين" : "تعذر إرسال اختبار منبه الفجر"
+                self.statusText = error == nil ? "منبه الفجر التجريبي بعد 5 ثواني" : "تعذر إرسال اختبار منبه الفجر"
             }
         }
     }
@@ -1216,7 +1245,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
         content.sound = fajrAlarmNotificationSound
         content.categoryIdentifier = Self.fajrAlarmCategoryID
         content.threadIdentifier = "tel-sheva-fajr-alarm"
-        content.interruptionLevel = .timeSensitive
+        content.interruptionLevel = .critical
         if let dateKey {
             content.userInfo = ["fajrDateKey": dateKey]
         }
@@ -1245,14 +1274,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
     }
 
     private var fajrAlarmNotificationSound: UNNotificationSound {
-        switch selectedFajrAlarmSound {
-        case .system:
-            return .default
-        case .adhan:
-            return bundledNotificationSound(["adhan.caf", "adhan.wav", "adhan.aiff"])
-        case .nafahat:
-            return bundledNotificationSound(["nafahat.wav", "nafahat.caf", "nafahat.aiff"])
-        }
+        bundledCriticalNotificationSound(selectedFajrAlarmSound.fileNames)
     }
 
     private var adhkarNotificationSound: UNNotificationSound {
@@ -1277,6 +1299,22 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
         }
 
         return .default
+    }
+
+    private func bundledCriticalNotificationSound(_ fileNames: [String]) -> UNNotificationSound {
+        for fileName in fileNames {
+            let parts = fileName.split(separator: ".", maxSplits: 1).map(String.init)
+            guard parts.count == 2 else { continue }
+
+            if Bundle.main.url(forResource: parts[0], withExtension: parts[1]) != nil {
+                return UNNotificationSound.criticalSoundNamed(
+                    UNNotificationSoundName(fileName),
+                    withAudioVolume: 1.0
+                )
+            }
+        }
+
+        return UNNotificationSound.defaultCriticalSound(withAudioVolume: 1.0)
     }
 
     private func removeScheduledPrayerNotifications(completion: (() -> Void)? = nil) {

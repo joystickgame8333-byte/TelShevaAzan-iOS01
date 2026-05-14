@@ -151,6 +151,16 @@ jobs:
           echo "Force-copy bundled Nafahat sound into the app bundle:"
           cp -f "TelShevaAzan/Sounds/nafahat.wav" "$APP_PATH/nafahat.wav"
 
+          echo "Force-copy bundled Fajr alarm sounds into the app bundle:"
+          for sound in \
+            fajr-alarm-dawn-rise.wav \
+            fajr-alarm-strong-pulse.wav \
+            fajr-alarm-urgent-wake.wav \
+            fajr-alarm-golden-chime.wav \
+            fajr-alarm-deep-alarm.wav; do
+            cp -f "TelShevaAzan/Sounds/$sound" "$APP_PATH/$sound"
+          done
+
           echo "Force-copy Nabawi background images into the app bundle:"
           cp -f "TelShevaAzan/Resources/Nabawi/nabawi-day.jpg" "$APP_PATH/nabawi-day.jpg"
           cp -f "TelShevaAzan/Resources/Nabawi/nabawi-night.jpg" "$APP_PATH/nabawi-night.jpg"

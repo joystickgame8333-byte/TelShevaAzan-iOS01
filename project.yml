@@ -61,6 +61,11 @@ targets:
       - path: TelShevaAzan/Fonts/AmiriQuran-Regular.ttf
       - path: TelShevaAzan/Sounds/adhan.caf
       - path: TelShevaAzan/Sounds/nafahat.wav
+      - path: TelShevaAzan/Sounds/fajr-alarm-dawn-rise.wav
+      - path: TelShevaAzan/Sounds/fajr-alarm-strong-pulse.wav
+      - path: TelShevaAzan/Sounds/fajr-alarm-urgent-wake.wav
+      - path: TelShevaAzan/Sounds/fajr-alarm-golden-chime.wav
+      - path: TelShevaAzan/Sounds/fajr-alarm-deep-alarm.wav
       - path: TelShevaAzan/Resources/Nabawi/nabawi-day.jpg
       - path: TelShevaAzan/Resources/Nabawi/nabawi-night.jpg
     settings:

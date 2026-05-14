@@ -571,7 +571,7 @@ struct NotificationSettingsView: View {
                             .lineLimit(1)
                             .minimumScaleFactor(0.80)
 
-                        Text("يصلك اختبار بعد ثانيتين مع صحيت وغفوة")
+                        Text("يصلك اختبار بعد 5 ثواني مع صحيت وغفوة")
                             .font(.caption2.weight(.semibold))
                             .foregroundStyle(theme.secondaryText.opacity(0.82))
                             .lineLimit(2)
