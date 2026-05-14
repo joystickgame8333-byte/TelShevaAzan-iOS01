@@ -309,6 +309,24 @@ final class PrayerLiveActivityCenter: ObservableObject {
 
     @available(iOS 16.1, *)
     private func keepAlive(_ activity: Activity<PrayerLiveActivityAttributes>, until endDate: Date) {
+        let onNowHandler: (() -> Void)?
+        if nowDisplayDuration > 0 {
+            onNowHandler = { [weak self] in
+                Task { @MainActor in
+                    guard let self else { return }
+                    let now = Date()
+                    let state = PrayerLiveActivityAttributes.ContentState(
+                        phase: .now,
+                        prayerDate: activity.attributes.prayerDate,
+                        updatedAt: now
+                    )
+                    await self.updateActivity(activity, state: state, staleDate: endDate)
+                }
+            }
+        } else {
+            onNowHandler = nil
+        }
+
         PrayerLiveActivityKeepAlive.shared.start(
             until: endDate,
             nowDate: activity.attributes.prayerDate,
@@ -323,18 +341,7 @@ final class PrayerLiveActivityCenter: ObservableObject {
                     await self?.updateActivity(activity, state: state, staleDate: endDate)
                 }
             },
-            onNow: { [weak self] in
-                Task { @MainActor in
-                    guard let self else { return }
-                    let now = Date()
-                    let state = PrayerLiveActivityAttributes.ContentState(
-                        phase: .now,
-                        prayerDate: activity.attributes.prayerDate,
-                        updatedAt: now
-                    )
-                    await self.updateActivity(activity, state: state, staleDate: endDate)
-                }
-            },
+            onNow: onNowHandler,
             onEnd: { [weak self] in
                 Task { @MainActor in
                     await self?.endActivity(activity, phase: .now)
@@ -383,7 +390,18 @@ final class PrayerLiveActivityCenter: ObservableObject {
     }
 
     private static func iqamaDelayMinutes(for prayerKey: PrayerKey) -> Int {
-        prayerKey == .maghrib ? 5 : 10
+        switch prayerKey {
+        case .fajr:
+            return 25
+        case .dhuhr, .sunrise:
+            return 15
+        case .asr:
+            return 12
+        case .maghrib:
+            return 7
+        case .isha:
+            return 10
+        }
     }
 
     private static func iqamaDate(for prayerDate: Date, prayerKey: PrayerKey) -> Date {

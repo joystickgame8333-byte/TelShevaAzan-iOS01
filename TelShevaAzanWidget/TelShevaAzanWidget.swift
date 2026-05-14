@@ -843,27 +843,38 @@ struct PrayerLiveActivityWidget: Widget {
 
 @available(iOSApplicationExtension 16.1, *)
 private struct SalatiLiveActivityCard: View {
+    @Environment(\.colorScheme) private var colorScheme
     let context: ActivityViewContext<PrayerLiveActivityAttributes>
 
+    private var style: SalatiLiveActivityThemeStyle {
+        salatiLiveActivityTheme(isNight: colorScheme == .dark)
+    }
+
     var body: some View {
-        SalatiLightLockScreenPanel(context: context)
-        .activityBackgroundTint(Color(red: 0.03, green: 0.05, blue: 0.06))
-        .activitySystemActionForegroundColor(SalatiLiveActivityStyle.gold)
+        SalatiLightLockScreenPanel(context: context, style: style)
+        .activityBackgroundTint(style.activityTint)
+        .activitySystemActionForegroundColor(style.accent)
     }
 }
 
 @available(iOSApplicationExtension 16.1, *)
 private struct SalatiIslandExpandedCenter: View {
+    @Environment(\.colorScheme) private var colorScheme
     let context: ActivityViewContext<PrayerLiveActivityAttributes>
 
+    private var style: SalatiLiveActivityThemeStyle {
+        salatiLiveActivityTheme(isNight: colorScheme == .dark)
+    }
+
     var body: some View {
-        SalatiLightExpandedIslandPanel(context: context)
+        SalatiLightExpandedIslandPanel(context: context, style: style)
     }
 }
 
 @available(iOSApplicationExtension 16.1, *)
 private struct SalatiLightLockScreenPanel: View {
     let context: ActivityViewContext<PrayerLiveActivityAttributes>
+    let style: SalatiLiveActivityThemeStyle
 
     private var iqamaDate: Date {
         salatiIqamaDate(for: context)
@@ -882,44 +893,47 @@ private struct SalatiLightLockScreenPanel: View {
             RoundedRectangle(cornerRadius: 30, style: .continuous)
                 .fill(
                     LinearGradient(
-                        colors: [
-                            Color(red: 0.05, green: 0.10, blue: 0.12),
-                            Color(red: 0.02, green: 0.03, blue: 0.04)
-                        ],
+                        colors: style.lockScreenGradient,
                         startPoint: .topTrailing,
                         endPoint: .bottomLeading
                     )
                 )
 
             RoundedRectangle(cornerRadius: 30, style: .continuous)
-                .stroke(SalatiLiveActivityStyle.gold.opacity(0.22), lineWidth: 1)
+                .stroke(style.border, lineWidth: 1)
 
             VStack(alignment: .center, spacing: 12) {
                 HStack(spacing: 10) {
                     Text("صلاة \(context.attributes.prayerName)")
                         .font(.system(size: 13, weight: .black, design: .rounded))
-                        .foregroundStyle(SalatiLiveActivityStyle.gold)
+                        .foregroundStyle(style.accent)
                         .lineLimit(1)
 
                     Spacer(minLength: 8)
 
                     Text(context.attributes.cityName)
                         .font(.system(size: 12, weight: .bold, design: .rounded))
-                        .foregroundStyle(.white.opacity(0.56))
+                        .foregroundStyle(style.mutedText)
                         .lineLimit(1)
                 }
 
                 VStack(spacing: 7) {
                     Text("باقي للأذان")
                         .font(.system(size: 15, weight: .black, design: .rounded))
-                        .foregroundStyle(SalatiLiveActivityStyle.gold)
+                        .foregroundStyle(style.accent)
                         .lineLimit(1)
 
-                    SalatiLightCountdownText(targetDate: targetDate, size: 44)
+                    SalatiLightCountdownText(
+                        targetDate: targetDate,
+                        size: 44,
+                        color: style.accent,
+                        shadowColor: style.accentShadow,
+                        shadowRadius: 9
+                    )
 
                     Text("الأذان \(context.attributes.prayerTime) · الإقامة \(iqamaTime)")
                         .font(.system(size: 13, weight: .bold, design: .rounded).monospacedDigit())
-                        .foregroundStyle(.white.opacity(0.64))
+                        .foregroundStyle(style.secondaryText)
                         .lineLimit(1)
                         .minimumScaleFactor(0.78)
                 }
@@ -937,6 +951,7 @@ private struct SalatiLightLockScreenPanel: View {
 @available(iOSApplicationExtension 16.1, *)
 private struct SalatiLightExpandedIslandPanel: View {
     let context: ActivityViewContext<PrayerLiveActivityAttributes>
+    let style: SalatiLiveActivityThemeStyle
 
     private var targetDate: Date {
         context.attributes.prayerDate
@@ -948,14 +963,20 @@ private struct SalatiLightExpandedIslandPanel: View {
                 VStack(spacing: 6) {
                     Text("باقي للأذان")
                         .font(.system(size: 18, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(style.islandPrimaryText)
                         .lineLimit(1)
 
-                    SalatiLightCountdownText(targetDate: targetDate, size: 36)
+                    SalatiLightCountdownText(
+                        targetDate: targetDate,
+                        size: 36,
+                        color: style.accent,
+                        shadowColor: style.accentShadow,
+                        shadowRadius: 7
+                    )
 
                     Text("صلاة \(context.attributes.prayerName)")
                         .font(.system(size: 12, weight: .bold, design: .rounded))
-                        .foregroundStyle(.white.opacity(0.62))
+                        .foregroundStyle(style.islandSecondaryText)
                         .lineLimit(1)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
@@ -1197,28 +1218,28 @@ private struct SalatiPrayerHadithInfo {
         switch prayerKey {
         case .fajr:
             return SalatiPrayerHadithInfo(
-                iqamaDelayMinutes: 10,
+                iqamaDelayMinutes: 25,
                 hadith: "بشر المشائين في الظلم إلى المساجد بالنور التام",
                 source: "صحيح الترمذي",
                 narrator: "الراوي: بريدة بن الحصيب"
             )
         case .dhuhr, .sunrise:
             return SalatiPrayerHadithInfo(
-                iqamaDelayMinutes: 10,
+                iqamaDelayMinutes: 15,
                 hadith: "أحب الأعمال إلى الله الصلاة على وقتها",
                 source: "البخاري ومسلم",
                 narrator: "الراوي: عبدالله بن مسعود"
             )
         case .asr:
             return SalatiPrayerHadithInfo(
-                iqamaDelayMinutes: 10,
+                iqamaDelayMinutes: 12,
                 hadith: "من صلى البردين دخل الجنة",
                 source: "البخاري ومسلم",
                 narrator: "الراوي: أبو موسى الأشعري"
             )
         case .maghrib:
             return SalatiPrayerHadithInfo(
-                iqamaDelayMinutes: 5,
+                iqamaDelayMinutes: 7,
                 hadith: "الصلوات الخمس كفارة لما بينهن",
                 source: "صحيح مسلم",
                 narrator: "الراوي: أبو هريرة"
@@ -1302,14 +1323,19 @@ private struct SalatiQiblaCompassBadge: View {
 
 @available(iOSApplicationExtension 16.1, *)
 private struct SalatiIslandCompactLeading: View {
+    @Environment(\.colorScheme) private var colorScheme
     let context: ActivityViewContext<PrayerLiveActivityAttributes>
+
+    private var style: SalatiLiveActivityThemeStyle {
+        salatiLiveActivityTheme(isNight: colorScheme == .dark)
+    }
 
     var body: some View {
         Group {
             if salatiShouldShowIslandContent(for: context) {
                 Text(salatiCompactTitle(for: context))
                     .font(.system(size: 12, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(style.islandPrimaryText)
                     .lineLimit(1)
                     .minimumScaleFactor(0.68)
                     .allowsTightening(true)
@@ -1324,7 +1350,12 @@ private struct SalatiIslandCompactLeading: View {
 
 @available(iOSApplicationExtension 16.1, *)
 private struct SalatiIslandCompactTrailing: View {
+    @Environment(\.colorScheme) private var colorScheme
     let context: ActivityViewContext<PrayerLiveActivityAttributes>
+
+    private var style: SalatiLiveActivityThemeStyle {
+        salatiLiveActivityTheme(isNight: colorScheme == .dark)
+    }
 
     private var targetDate: Date {
         salatiLiveTargetDate(for: context)
@@ -1333,7 +1364,7 @@ private struct SalatiIslandCompactTrailing: View {
     var body: some View {
         Group {
             if salatiShouldShowIslandContent(for: context) {
-                SalatiLightCountdownText(targetDate: targetDate, size: 12)
+                SalatiLightCountdownText(targetDate: targetDate, size: 12, color: style.accent)
                     .lineLimit(1)
                     .minimumScaleFactor(0.68)
                     .allowsTightening(true)
@@ -1347,7 +1378,12 @@ private struct SalatiIslandCompactTrailing: View {
 
 @available(iOSApplicationExtension 16.1, *)
 private struct SalatiIslandMinimal: View {
+    @Environment(\.colorScheme) private var colorScheme
     let context: ActivityViewContext<PrayerLiveActivityAttributes>
+
+    private var style: SalatiLiveActivityThemeStyle {
+        salatiLiveActivityTheme(isNight: colorScheme == .dark)
+    }
 
     private var isPrayerDue: Bool {
         Date() >= context.attributes.prayerDate
@@ -1358,7 +1394,7 @@ private struct SalatiIslandMinimal: View {
             if salatiShouldShowIslandContent(for: context) {
                 Text(salatiPrayerAbbreviation(for: context.attributes.prayerName))
                     .font(.system(size: 12, weight: .black, design: .rounded))
-                    .foregroundStyle(SalatiLiveActivityStyle.gold)
+                    .foregroundStyle(style.accent)
                     .lineLimit(1)
             } else {
                 EmptyView()
@@ -1372,18 +1408,37 @@ private struct SalatiIslandMinimal: View {
 private struct SalatiLightCountdownText: View {
     let targetDate: Date
     let size: CGFloat
+    let color: Color
+    let shadowColor: Color
+    let shadowRadius: CGFloat
+
+    init(
+        targetDate: Date,
+        size: CGFloat,
+        color: Color = SalatiLiveActivityStyle.gold,
+        shadowColor: Color = .clear,
+        shadowRadius: CGFloat = 0
+    ) {
+        self.targetDate = targetDate
+        self.size = size
+        self.color = color
+        self.shadowColor = shadowColor
+        self.shadowRadius = shadowRadius
+    }
 
     var body: some View {
         if Date() >= targetDate {
             Text("0:00")
                 .font(.system(size: size, weight: .black, design: .rounded))
-                .foregroundStyle(SalatiLiveActivityStyle.gold)
+                .foregroundStyle(color)
+                .shadow(color: shadowColor, radius: shadowRadius)
                 .lineLimit(1)
                 .minimumScaleFactor(0.62)
         } else {
             Text(timerInterval: Date()...targetDate, countsDown: true)
                 .font(.system(size: size, weight: .black, design: .rounded).monospacedDigit())
-                .foregroundStyle(SalatiLiveActivityStyle.gold)
+                .foregroundStyle(color)
+                .shadow(color: shadowColor, radius: shadowRadius)
                 .lineLimit(1)
                 .minimumScaleFactor(0.62)
         }
@@ -1727,6 +1782,63 @@ private struct SalatiCompactPrayerCountdownText: View {
         case .now:
             return Color(red: 1.0, green: 0.90, blue: 0.58)
         }
+    }
+}
+
+private struct SalatiLiveActivityThemeStyle {
+    let lockScreenGradient: [Color]
+    let activityTint: Color
+    let border: Color
+    let accent: Color
+    let accentShadow: Color
+    let secondaryText: Color
+    let mutedText: Color
+    let islandPrimaryText: Color
+    let islandSecondaryText: Color
+
+    static let nightApple = SalatiLiveActivityThemeStyle(
+        lockScreenGradient: [
+            Color(red: 0.05, green: 0.10, blue: 0.12),
+            Color(red: 0.02, green: 0.03, blue: 0.04)
+        ],
+        activityTint: Color(red: 0.03, green: 0.05, blue: 0.06),
+        border: SalatiLiveActivityStyle.gold.opacity(0.22),
+        accent: SalatiLiveActivityStyle.gold,
+        accentShadow: SalatiLiveActivityStyle.gold.opacity(0.22),
+        secondaryText: .white.opacity(0.64),
+        mutedText: .white.opacity(0.56),
+        islandPrimaryText: .white,
+        islandSecondaryText: .white.opacity(0.62)
+    )
+
+    static let dayApple = SalatiLiveActivityThemeStyle(
+        lockScreenGradient: [
+            Color(red: 0.96, green: 0.98, blue: 1.00),
+            Color(red: 0.82, green: 0.90, blue: 0.96)
+        ],
+        activityTint: Color(red: 0.91, green: 0.96, blue: 1.00),
+        border: Color(red: 0.19, green: 0.41, blue: 0.62).opacity(0.20),
+        accent: Color(red: 0.88, green: 0.55, blue: 0.12),
+        accentShadow: Color(red: 0.88, green: 0.55, blue: 0.12).opacity(0.18),
+        secondaryText: Color(red: 0.18, green: 0.25, blue: 0.30).opacity(0.72),
+        mutedText: Color(red: 0.18, green: 0.25, blue: 0.30).opacity(0.54),
+        islandPrimaryText: .white,
+        islandSecondaryText: .white.opacity(0.62)
+    )
+}
+
+private func salatiLiveActivityTheme(isNight: Bool) -> SalatiLiveActivityThemeStyle {
+    let nightID = AppThemeStorage.defaults.string(forKey: AppThemeStorage.nightThemeKey) ?? PrayerVisualTheme.defaultNight.rawValue
+    let dayID = AppThemeStorage.defaults.string(forKey: AppThemeStorage.dayThemeKey) ?? PrayerVisualTheme.defaultDay.rawValue
+    let selectedTheme = PrayerVisualTheme.selected(isNight: isNight, nightID: nightID, dayID: dayID)
+
+    switch selectedTheme {
+    case .nightAppleGlass:
+        return .nightApple
+    case .dayAppleGlass:
+        return .dayApple
+    default:
+        return selectedTheme.isNightTheme ? .nightApple : .dayApple
     }
 }
 
