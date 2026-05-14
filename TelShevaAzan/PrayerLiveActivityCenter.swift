@@ -23,16 +23,17 @@ final class PrayerLiveActivityCenter: ObservableObject {
 
     private init() {}
 
-    func startPreview() {
+    func startPreview(themeID: String? = nil) {
         let now = Date()
         let dateKey = PrayerEngine.defaultDateKey(for: now)
         startPreview(
             next: PrayerEngine.nextPrayer(for: dateKey, now: now),
-            previous: PrayerEngine.previousPrayer(for: dateKey, now: now)
+            previous: PrayerEngine.previousPrayer(for: dateKey, now: now),
+            themeID: themeID
         )
     }
 
-    func startPreview(prayerKey: PrayerKey) {
+    func startPreview(prayerKey: PrayerKey, themeID: String? = nil) {
         let now = Date()
         let prayerDate = now.addingTimeInterval(previewDuration)
         let previousDate = now.addingTimeInterval(-3600)
@@ -50,10 +51,10 @@ final class PrayerLiveActivityCenter: ObservableObject {
             date: previousDate
         )
 
-        startPreview(next: next, previous: previous)
+        startPreview(next: next, previous: previous, themeID: themeID)
     }
 
-    func startPreview(next: PrayerTime?, previous: PrayerTime?) {
+    func startPreview(next: PrayerTime?, previous: PrayerTime?, themeID: String? = nil) {
 #if canImport(ActivityKit)
         guard #available(iOS 16.1, *) else {
             statusText = "غير مدعوم على هذا الإصدار"
@@ -62,7 +63,7 @@ final class PrayerLiveActivityCenter: ObservableObject {
             return
         }
         Task {
-            await startPreviewActivity(next: next, previous: previous)
+            await startPreviewActivity(next: next, previous: previous, themeID: themeID ?? Self.fallbackThemeID())
         }
 #else
         statusText = "غير مدعوم في هذا البناء"
@@ -71,7 +72,7 @@ final class PrayerLiveActivityCenter: ObservableObject {
 #endif
     }
 
-    func syncWithPrayerWindow(now: Date = Date()) {
+    func syncWithPrayerWindow(now: Date = Date(), themeID: String? = nil) {
 #if canImport(ActivityKit)
         guard #available(iOS 16.1, *) else { return }
         cleanupExpiredLiveActivities(now: now)
@@ -79,7 +80,7 @@ final class PrayerLiveActivityCenter: ObservableObject {
         lastSyncDate = now
 
         Task {
-            await syncActivity(now: now)
+            await syncActivity(now: now, themeID: themeID ?? Self.fallbackThemeID(now: now))
         }
 #endif
     }
@@ -123,7 +124,7 @@ final class PrayerLiveActivityCenter: ObservableObject {
 
 #if canImport(ActivityKit)
     @available(iOS 16.1, *)
-    private func startPreviewActivity(next: PrayerTime?, previous: PrayerTime?) async {
+    private func startPreviewActivity(next: PrayerTime?, previous: PrayerTime?, themeID: String) async {
         guard ActivityAuthorizationInfo().areActivitiesEnabled else {
             isPreviewActive = false
             statusText = "Live Activities مقفلة"
@@ -155,6 +156,7 @@ final class PrayerLiveActivityCenter: ObservableObject {
             previousPrayerName: previousName,
             previousPrayerDate: previous?.date ?? now.addingTimeInterval(-3600),
             cityName: "تل السبع",
+            themeID: themeID,
             isPreview: true
         )
         let state = PrayerLiveActivityAttributes.ContentState(
@@ -179,7 +181,7 @@ final class PrayerLiveActivityCenter: ObservableObject {
     }
 
     @available(iOS 16.1, *)
-    private func syncActivity(now: Date) async {
+    private func syncActivity(now: Date, themeID: String) async {
         guard ActivityAuthorizationInfo().areActivitiesEnabled else { return }
         guard isWidgetExtensionBundled else { return }
         await cleanupExpiredLiveActivities(now: now, includeStalePreviews: true)
@@ -229,6 +231,7 @@ final class PrayerLiveActivityCenter: ObservableObject {
             previousPrayerName: previous?.title ?? "الصلاة السابقة",
             previousPrayerDate: previous?.date,
             cityName: "تل السبع",
+            themeID: themeID,
             isPreview: false
         )
 
@@ -406,6 +409,17 @@ final class PrayerLiveActivityCenter: ObservableObject {
 
     private static func iqamaDate(for prayerDate: Date, prayerKey: PrayerKey) -> Date {
         prayerDate.addingTimeInterval(TimeInterval(iqamaDelayMinutes(for: prayerKey) * 60))
+    }
+
+    private static func fallbackThemeID(now: Date = Date()) -> String {
+        let hour = PrayerEngine.calendar.component(.hour, from: now)
+        let isNight = hour < 6 || hour >= 18
+
+        if isNight {
+            return AppThemeStorage.defaults.string(forKey: AppThemeStorage.nightThemeKey) ?? PrayerVisualTheme.nightAppleGlass.rawValue
+        }
+
+        return AppThemeStorage.defaults.string(forKey: AppThemeStorage.dayThemeKey) ?? PrayerVisualTheme.dayAppleGlass.rawValue
     }
 
     private var isWidgetExtensionBundled: Bool {

@@ -226,7 +226,7 @@ struct NotificationSettingsView: View {
         panel(title: "اختبار الجزيرة") {
             VStack(alignment: .trailing, spacing: 12) {
                 Button {
-                    liveActivityCenter.startPreview()
+                    liveActivityCenter.startPreview(themeID: theme.rawValue)
                 } label: {
                     HStack(alignment: .center, spacing: 12) {
                         Image(systemName: liveActivityCenter.isPreviewActive ? "checkmark.circle.fill" : "timer.circle.fill")
@@ -307,7 +307,7 @@ struct NotificationSettingsView: View {
             ) {
                 ForEach(PrayerEngine.prayerOrder, id: \.self) { prayerKey in
                     Button {
-                        liveActivityCenter.startPreview(prayerKey: prayerKey)
+                        liveActivityCenter.startPreview(prayerKey: prayerKey, themeID: theme.rawValue)
                     } label: {
                         HStack(spacing: 5) {
                             Text(prayerKey.title)

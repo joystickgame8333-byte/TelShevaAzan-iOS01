@@ -87,7 +87,7 @@ struct ContentView: View {
             if selectedTab == .schedule {
                 updateScheduleClock(value)
             }
-            liveActivityCenter.syncWithPrayerWindow(now: value)
+            liveActivityCenter.syncWithPrayerWindow(now: value, themeID: activeTheme.rawValue)
         }
         .onChange(of: selectedNightThemeID) { _ in
             WidgetRefreshCenter.refreshAll()
@@ -99,7 +99,7 @@ struct ContentView: View {
             if phase == .active {
                 WidgetRefreshCenter.refreshAll()
                 WidgetRefreshCenter.refreshAgainSoon()
-                liveActivityCenter.syncWithPrayerWindow(now: Date())
+                liveActivityCenter.syncWithPrayerWindow(now: Date(), themeID: activeTheme.rawValue)
             }
         }
         .onAppear {
@@ -107,7 +107,7 @@ struct ContentView: View {
             notifications.refreshIfEnabled()
             WidgetRefreshCenter.refreshAll()
             WidgetRefreshCenter.refreshAgainSoon()
-            liveActivityCenter.syncWithPrayerWindow(now: Date())
+            liveActivityCenter.syncWithPrayerWindow(now: Date(), themeID: activeTheme.rawValue)
         }
         .onReceive(NotificationCenter.default.publisher(for: PrayerNotificationManager.openSettingsNotification)) { _ in
             withAnimation(.easeInOut(duration: 0.18)) {

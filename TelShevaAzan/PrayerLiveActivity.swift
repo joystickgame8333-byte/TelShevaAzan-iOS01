@@ -17,6 +17,7 @@ struct PrayerLiveActivityAttributes: ActivityAttributes {
     let previousPrayerName: String
     let previousPrayerDate: Date?
     let cityName: String
+    let themeID: String
     let isPreview: Bool
 }
 
