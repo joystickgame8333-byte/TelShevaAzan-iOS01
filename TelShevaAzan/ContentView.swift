@@ -550,58 +550,61 @@ struct ContentView: View {
     private func nabawiNextPrayerPanel(next: PrayerTime?, previous: PrayerTime?, compact: Bool) -> some View {
         let progress = prayerProgress(previous: previous, next: next)
         let cornerRadius: CGFloat = compact ? 20 : 22
-        let cardHeight: CGFloat = compact ? 148 : 164
+        let cardHeight: CGFloat = compact ? 146 : 164
         let isNightCard = activeTheme.isNightTheme
 
         return ZStack {
             nabawiCardBackground(height: cardHeight, isNight: isNightCard)
 
-            VStack(alignment: .trailing, spacing: compact ? 7 : 8) {
-                HStack(alignment: .center, spacing: compact ? 9 : 12) {
-                    countdownBadge(next: next, isNight: isNightCard)
-
-                    Spacer(minLength: 10)
+            VStack(alignment: .trailing, spacing: compact ? 6 : 7) {
+                HStack(alignment: .top, spacing: 0) {
+                    Spacer(minLength: compact ? 118 : 156)
 
                     VStack(alignment: .trailing, spacing: 3) {
                         Text("الصلاة القادمة")
-                            .font(.caption2.weight(.black))
+                            .font(.system(size: compact ? 12 : 13, weight: .black, design: .rounded))
                             .foregroundStyle(activeTheme.accent)
                             .lineLimit(1)
 
                         Text(next?.title ?? "--")
-                            .font(.system(size: compact ? 28 : 33, weight: .black, design: .rounded))
+                            .font(.system(size: compact ? 24 : 29, weight: .black, design: .rounded))
                             .foregroundStyle(nabawiPrimaryText)
                             .lineLimit(1)
                             .minimumScaleFactor(0.72)
 
                         Text(next?.time ?? "--:--")
-                            .font(.system(size: compact ? 38 : 48, weight: .black, design: .rounded))
+                            .font(.system(size: compact ? 36 : 46, weight: .black, design: .rounded))
                             .foregroundStyle(activeTheme.accent)
                             .monospacedDigit()
                             .lineLimit(1)
                             .minimumScaleFactor(0.72)
                     }
+                    .frame(maxWidth: compact ? 190 : 230, alignment: .trailing)
                 }
 
                 Text(elapsedText(for: previous))
-                    .font(.caption.weight(.heavy))
+                    .font(.system(size: compact ? 12 : 14, weight: .heavy, design: .rounded))
                     .foregroundStyle(nabawiSecondaryText)
                     .lineLimit(1)
                     .minimumScaleFactor(0.72)
 
-                rtlPrayerProgressBar(progress: progress)
-                    .frame(height: compact ? 6 : 7)
+                VStack(spacing: compact ? 5 : 6) {
+                    rtlPrayerProgressBar(progress: progress)
+                        .frame(height: compact ? 6 : 7)
 
-                HStack {
-                    Text(next?.title ?? "--")
-                    Spacer()
-                    Text(previous?.title ?? "--")
+                    HStack {
+                        Text(next?.title ?? "--")
+                        Spacer()
+                        Text(previous?.title ?? "--")
+                    }
+                    .font(.system(size: compact ? 11 : 12, weight: .bold, design: .rounded))
+                    .foregroundStyle(nabawiSecondaryText)
+                    .padding(.horizontal, 2)
                 }
-                .font(.caption2.weight(.bold))
-                .foregroundStyle(nabawiSecondaryText)
             }
-            .padding(.horizontal, compact ? 13 : 16)
-            .padding(.vertical, compact ? 12 : 14)
+            .padding(.horizontal, compact ? 14 : 16)
+            .padding(.top, compact ? 10 : 12)
+            .padding(.bottom, compact ? 9 : 11)
         }
         .frame(maxWidth: .infinity)
         .frame(height: cardHeight)
@@ -818,9 +821,9 @@ struct ContentView: View {
                     nabawiImage(isNight: true)
                         .resizable()
                         .scaledToFill()
-                        .frame(width: geometry.size.width * 0.52, height: height)
-                        .scaleEffect(1.34, anchor: .bottom)
-                        .brightness(0.18)
+                        .frame(width: geometry.size.width * 0.62, height: height)
+                        .scaleEffect(1.18, anchor: .bottom)
+                        .brightness(0.20)
                         .saturation(1.12)
                         .clipped()
                         .overlay(
@@ -828,7 +831,7 @@ struct ContentView: View {
                                 colors: [
                                     Color.black.opacity(0.00),
                                     Color.black.opacity(0.16),
-                                    Color.black.opacity(0.78)
+                                    Color.black.opacity(0.68)
                                 ],
                                 startPoint: .leading,
                                 endPoint: .trailing
@@ -838,8 +841,8 @@ struct ContentView: View {
                     LinearGradient(
                         colors: [
                             Color.black.opacity(0.02),
-                            Color.black.opacity(0.34),
-                            Color.black.opacity(0.94)
+                            Color.black.opacity(0.26),
+                            Color.black.opacity(0.88)
                         ],
                         startPoint: .leading,
                         endPoint: .trailing
