@@ -481,7 +481,16 @@ struct ContentView: View {
         0
     }
 
+    @ViewBuilder
     private func nextPrayerPanel(next: PrayerTime?, previous: PrayerTime?, compact: Bool) -> some View {
+        if usesNabawiPrayerCard {
+            nabawiNextPrayerPanel(next: next, previous: previous, compact: compact)
+        } else {
+            defaultNextPrayerPanel(next: next, previous: previous, compact: compact)
+        }
+    }
+
+    private func defaultNextPrayerPanel(next: PrayerTime?, previous: PrayerTime?, compact: Bool) -> some View {
         HStack(alignment: .center, spacing: 12) {
             VStack(alignment: .leading, spacing: 5) {
                 VStack(alignment: .leading, spacing: 2) {
@@ -532,6 +541,122 @@ struct ContentView: View {
         .background(glassSurface(activeTheme.panelBackground, radius: 8, prominence: .strong))
         .clipShape(RoundedRectangle(cornerRadius: 8))
         .shadow(color: .black.opacity(isNight ? 0.22 : 0.06), radius: 12, y: 6)
+    }
+
+    private func nabawiNextPrayerPanel(next: PrayerTime?, previous: PrayerTime?, compact: Bool) -> some View {
+        let progress = prayerProgress(previous: previous, next: next)
+        let cornerRadius: CGFloat = compact ? 22 : 24
+        let isNightCard = activeTheme.isNightTheme
+
+        return ZStack {
+            Image(nabawiPrayerCardImageName)
+                .resizable()
+                .scaledToFill()
+                .overlay(nabawiCardOverlay(isNight: isNightCard))
+
+            VStack(alignment: .trailing, spacing: compact ? 8 : 10) {
+                HStack(alignment: .center, spacing: compact ? 10 : 14) {
+                    countdownBadge(next: next, isNight: isNightCard)
+
+                    Spacer(minLength: 10)
+
+                    VStack(alignment: .trailing, spacing: 3) {
+                        Text("الصلاة القادمة")
+                            .font(.caption2.weight(.black))
+                            .foregroundStyle(activeTheme.accent)
+                            .lineLimit(1)
+
+                        Text(next?.title ?? "--")
+                            .font(.system(size: compact ? 30 : 36, weight: .black, design: .rounded))
+                            .foregroundStyle(nabawiPrimaryText)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.72)
+
+                        Text(next?.time ?? "--:--")
+                            .font(.system(size: compact ? 42 : 52, weight: .black, design: .rounded))
+                            .foregroundStyle(activeTheme.accent)
+                            .monospacedDigit()
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.72)
+                    }
+                }
+
+                Text(elapsedText(for: previous))
+                    .font(.caption.weight(.heavy))
+                    .foregroundStyle(nabawiSecondaryText)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.72)
+
+                rtlPrayerProgressBar(progress: progress)
+                    .frame(height: compact ? 6 : 7)
+
+                HStack {
+                    Text(next?.title ?? "--")
+                    Spacer()
+                    Text(previous?.title ?? "--")
+                }
+                .font(.caption2.weight(.bold))
+                .foregroundStyle(nabawiSecondaryText)
+            }
+            .padding(.horizontal, compact ? 14 : 18)
+            .padding(.vertical, compact ? 13 : 16)
+        }
+        .frame(maxWidth: .infinity)
+        .frame(minHeight: compact ? 148 : 168)
+        .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                .stroke(nabawiCardBorder, lineWidth: 1)
+        )
+        .shadow(color: .black.opacity(isNightCard ? 0.28 : 0.10), radius: 16, y: 8)
+    }
+
+    private func countdownBadge(next: PrayerTime?, isNight: Bool) -> some View {
+        VStack(spacing: 5) {
+            Text("باقي")
+                .font(.caption2.weight(.black))
+                .foregroundStyle(nabawiSecondaryText)
+                .lineLimit(1)
+
+            Text(countdownText(for: next))
+                .font(.system(size: isNight ? 22 : 21, weight: .black, design: .rounded))
+                .monospacedDigit()
+                .foregroundStyle(nabawiPrimaryText)
+                .lineLimit(1)
+                .minimumScaleFactor(0.68)
+        }
+        .frame(width: 128, height: 76)
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(isNight ? Color.black.opacity(0.46) : Color.white.opacity(0.74))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(Color.white.opacity(isNight ? 0.16 : 0.55), lineWidth: 1)
+        )
+    }
+
+    private func rtlPrayerProgressBar(progress: Double) -> some View {
+        GeometryReader { geometry in
+            ZStack(alignment: .trailing) {
+                Capsule()
+                    .fill(nabawiProgressTrack)
+
+                Capsule()
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                activeTheme.accent.opacity(activeTheme.isNightTheme ? 0.78 : 0.72),
+                                activeTheme.accent
+                            ],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .frame(width: geometry.size.width * CGFloat(progress))
+            }
+        }
+        .clipShape(Capsule())
     }
 
     private var dateControls: some View {
@@ -659,6 +784,87 @@ struct ContentView: View {
 
     private func rowBorder(isActive: Bool) -> Color {
         isActive ? activeTheme.activeRowBorder : activeTheme.rowBorder
+    }
+
+    private var usesNabawiPrayerCard: Bool {
+        activeTheme == .dayAppleGlass || activeTheme == .nightAppleGlass
+    }
+
+    private var nabawiPrayerCardImageName: String {
+        activeTheme.isNightTheme ? "NabawiNight" : "NabawiDay"
+    }
+
+    private var nabawiPrimaryText: Color {
+        activeTheme.isNightTheme ? .white : Color(red: 0.02, green: 0.06, blue: 0.12)
+    }
+
+    private var nabawiSecondaryText: Color {
+        activeTheme.isNightTheme ? Color.white.opacity(0.82) : Color(red: 0.25, green: 0.30, blue: 0.39).opacity(0.88)
+    }
+
+    private var nabawiCardBorder: Color {
+        activeTheme.isNightTheme ? Color.white.opacity(0.14) : Color.white.opacity(0.72)
+    }
+
+    private var nabawiProgressTrack: Color {
+        activeTheme.isNightTheme ? Color.white.opacity(0.20) : Color(red: 0.70, green: 0.82, blue: 0.94).opacity(0.72)
+    }
+
+    @ViewBuilder
+    private func nabawiCardOverlay(isNight: Bool) -> some View {
+        if isNight {
+            ZStack {
+                LinearGradient(
+                    colors: [
+                        Color.black.opacity(0.10),
+                        Color.black.opacity(0.48),
+                        Color.black.opacity(0.88)
+                    ],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+
+                LinearGradient(
+                    colors: [
+                        Color.black.opacity(0.02),
+                        Color.black.opacity(0.66)
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            }
+        } else {
+            ZStack {
+                LinearGradient(
+                    colors: [
+                        Color.white.opacity(0.20),
+                        Color.white.opacity(0.76),
+                        Color.white.opacity(0.94)
+                    ],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+
+                LinearGradient(
+                    colors: [
+                        Color.white.opacity(0.12),
+                        Color(red: 0.90, green: 0.96, blue: 1.0).opacity(0.76)
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            }
+        }
+    }
+
+    private func prayerProgress(previous: PrayerTime?, next: PrayerTime?) -> Double {
+        guard let previous, let next else { return 0 }
+
+        let total = next.date.timeIntervalSince(previous.date)
+        guard total > 0 else { return 0 }
+
+        let elapsed = now.timeIntervalSince(previous.date)
+        return min(max(elapsed / total, 0), 1)
     }
 
     private var dockBackgroundFill: Color {
