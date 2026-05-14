@@ -1001,40 +1001,30 @@ private struct SalatiLightExpandedIslandPanel: View {
     var body: some View {
         Group {
             if salatiShouldShowIslandContent(for: context) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 25, style: .continuous)
-                        .fill(style.islandPanelFill)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 25, style: .continuous)
-                                .stroke(style.islandBorder, lineWidth: 1)
-                        )
+                HStack(spacing: 10) {
+                    SalatiLightCountdownText(
+                        targetDate: targetDate,
+                        size: 26,
+                        color: style.accent,
+                        shadowColor: style.accentShadow,
+                        shadowRadius: 1
+                    )
+                    .frame(minWidth: 76, alignment: .leading)
 
-                    HStack(spacing: 10) {
-                        SalatiLightCountdownText(
-                            targetDate: targetDate,
-                            size: 28,
-                            color: style.accent,
-                            shadowColor: style.accentShadow,
-                            shadowRadius: 1
-                        )
-                        .frame(minWidth: 78, alignment: .leading)
+                    Spacer(minLength: 8)
 
-                        Spacer(minLength: 8)
-
-                        Text("باقي للأذان لصلاة \(context.attributes.prayerName)")
-                            .font(.system(size: 15, weight: .black, design: .rounded))
-                            .foregroundStyle(style.islandText)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.68)
-                            .allowsTightening(true)
-                            .frame(maxWidth: .infinity, alignment: .trailing)
-                            .environment(\.layoutDirection, .rightToLeft)
-                    }
-                    .padding(.vertical, 7)
-                    .padding(.horizontal, 14)
-                    .environment(\.layoutDirection, .leftToRight)
+                    Text("باقي للأذان لصلاة \(context.attributes.prayerName)")
+                        .font(.system(size: 15, weight: .black, design: .rounded))
+                        .foregroundStyle(style.islandText)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.68)
+                        .allowsTightening(true)
+                        .frame(maxWidth: .infinity, alignment: .trailing)
+                        .environment(\.layoutDirection, .rightToLeft)
                 }
-                .frame(maxWidth: .infinity, minHeight: 48, maxHeight: 54, alignment: .center)
+                .padding(.horizontal, 8)
+                .frame(maxWidth: .infinity, minHeight: 38, maxHeight: 42, alignment: .center)
+                .environment(\.layoutDirection, .leftToRight)
             } else {
                 EmptyView()
             }
@@ -1848,8 +1838,6 @@ private struct SalatiLiveActivityThemeStyle {
     let islandPrimaryText: Color
     let islandSecondaryText: Color
     let islandText: Color
-    let islandPanelFill: Color
-    let islandBorder: Color
     let timePillFill: Color
     let timePillActiveFill: Color
     let timePillBorder: Color
@@ -1869,9 +1857,7 @@ private struct SalatiLiveActivityThemeStyle {
             mutedText: palette.mutedText.opacity(isNight ? 0.76 : 0.66),
             islandPrimaryText: .white,
             islandSecondaryText: .white.opacity(0.66),
-            islandText: isNight ? .white : palette.primaryText,
-            islandPanelFill: isNight ? Color(red: 0.02, green: 0.08, blue: 0.16).opacity(0.96) : Color.white.opacity(0.94),
-            islandBorder: isNight ? palette.accent.opacity(0.42) : palette.accent.opacity(0.28),
+            islandText: .white,
             timePillFill: isNight ? Color.white.opacity(0.06) : Color.white.opacity(0.54),
             timePillActiveFill: palette.accent.opacity(isNight ? 0.14 : 0.12),
             timePillBorder: isNight ? Color.white.opacity(0.09) : palette.accent.opacity(0.14),
