@@ -546,19 +546,11 @@ struct ContentView: View {
     private func nabawiNextPrayerPanel(next: PrayerTime?, previous: PrayerTime?, compact: Bool) -> some View {
         let progress = prayerProgress(previous: previous, next: next)
         let cornerRadius: CGFloat = compact ? 20 : 22
-        let cardHeight: CGFloat = compact ? 136 : 154
+        let cardHeight: CGFloat = compact ? 148 : 164
         let isNightCard = activeTheme.isNightTheme
 
         return ZStack {
-            Image(nabawiPrayerCardImageName)
-                .resizable()
-                .scaledToFill()
-                .frame(maxWidth: .infinity)
-                .frame(height: cardHeight)
-                .scaleEffect(isNightCard ? 1.42 : 1.04, anchor: .bottom)
-                .brightness(isNightCard ? 0.10 : 0)
-                .saturation(isNightCard ? 1.10 : 1.0)
-                .overlay(nabawiCardOverlay(isNight: isNightCard))
+            nabawiCardBackground(height: cardHeight, isNight: isNightCard)
 
             VStack(alignment: .trailing, spacing: compact ? 7 : 8) {
                 HStack(alignment: .center, spacing: compact ? 9 : 12) {
@@ -605,7 +597,7 @@ struct ContentView: View {
                 .foregroundStyle(nabawiSecondaryText)
             }
             .padding(.horizontal, compact ? 13 : 16)
-            .padding(.vertical, compact ? 10 : 13)
+            .padding(.vertical, compact ? 12 : 14)
         }
         .frame(maxWidth: .infinity)
         .frame(height: cardHeight)
@@ -814,6 +806,66 @@ struct ContentView: View {
 
     private var nabawiProgressTrack: Color {
         activeTheme.isNightTheme ? Color.white.opacity(0.20) : Color(red: 0.70, green: 0.82, blue: 0.94).opacity(0.72)
+    }
+
+    @ViewBuilder
+    private func nabawiCardBackground(height: CGFloat, isNight: Bool) -> some View {
+        if isNight {
+            GeometryReader { geometry in
+                ZStack(alignment: .leading) {
+                    Color(red: 0.01, green: 0.03, blue: 0.05)
+
+                    Image(nabawiPrayerCardImageName)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: geometry.size.width * 0.52, height: height)
+                        .scaleEffect(1.34, anchor: .bottom)
+                        .brightness(0.18)
+                        .saturation(1.12)
+                        .clipped()
+                        .overlay(
+                            LinearGradient(
+                                colors: [
+                                    Color.black.opacity(0.00),
+                                    Color.black.opacity(0.16),
+                                    Color.black.opacity(0.78)
+                                ],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+
+                    LinearGradient(
+                        colors: [
+                            Color.black.opacity(0.02),
+                            Color.black.opacity(0.34),
+                            Color.black.opacity(0.94)
+                        ],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+
+                    LinearGradient(
+                        colors: [
+                            Color.black.opacity(0.00),
+                            Color.black.opacity(0.18)
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                }
+            }
+            .frame(height: height)
+        } else {
+            Image(nabawiPrayerCardImageName)
+                .resizable()
+                .scaledToFill()
+                .frame(maxWidth: .infinity)
+                .frame(height: height)
+                .brightness(0.02)
+                .saturation(1.04)
+                .overlay(nabawiCardOverlay(isNight: false))
+        }
     }
 
     @ViewBuilder
