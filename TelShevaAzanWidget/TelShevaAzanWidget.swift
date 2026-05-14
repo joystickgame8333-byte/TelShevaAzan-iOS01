@@ -1024,6 +1024,10 @@ private struct SalatiLightExpandedIslandPanel: View {
                 }
                 .padding(.horizontal, 8)
                 .frame(maxWidth: .infinity, minHeight: 38, maxHeight: 42, alignment: .center)
+                .background(
+                    Capsule(style: .continuous)
+                        .fill(style.islandSoftBackground)
+                )
                 .environment(\.layoutDirection, .leftToRight)
             } else {
                 EmptyView()
@@ -1838,6 +1842,7 @@ private struct SalatiLiveActivityThemeStyle {
     let islandPrimaryText: Color
     let islandSecondaryText: Color
     let islandText: Color
+    let islandSoftBackground: Color
     let timePillFill: Color
     let timePillActiveFill: Color
     let timePillBorder: Color
@@ -1858,6 +1863,7 @@ private struct SalatiLiveActivityThemeStyle {
             islandPrimaryText: .white,
             islandSecondaryText: .white.opacity(0.66),
             islandText: .white,
+            islandSoftBackground: isNight ? palette.accent.opacity(0.11) : Color.white.opacity(0.13),
             timePillFill: isNight ? Color.white.opacity(0.06) : Color.white.opacity(0.54),
             timePillActiveFill: palette.accent.opacity(isNight ? 0.14 : 0.12),
             timePillBorder: isNight ? Color.white.opacity(0.09) : palette.accent.opacity(0.14),
