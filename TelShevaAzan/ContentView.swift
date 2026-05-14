@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct ContentView: View {
     @Environment(\.colorScheme) private var colorScheme
@@ -13,6 +14,9 @@ struct ContentView: View {
     @Namespace private var dockSelectionNamespace
     @StateObject private var notifications = PrayerNotificationManager.shared
     @StateObject private var liveActivityCenter = PrayerLiveActivityCenter.shared
+
+    private static let nabawiDayImage = Self.loadNabawiImage(named: "nabawi-day")
+    private static let nabawiNightImage = Self.loadNabawiImage(named: "nabawi-night")
 
     private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     private let visualRefreshKey = "v0_6_26_apple_glass_applied"
@@ -788,10 +792,6 @@ struct ContentView: View {
         activeTheme == .dayAppleGlass || activeTheme == .nightAppleGlass
     }
 
-    private var nabawiPrayerCardImageName: String {
-        activeTheme.isNightTheme ? "NabawiNight" : "NabawiDay"
-    }
-
     private var nabawiPrimaryText: Color {
         activeTheme.isNightTheme ? .white : Color(red: 0.02, green: 0.06, blue: 0.12)
     }
@@ -815,7 +815,7 @@ struct ContentView: View {
                 ZStack(alignment: .leading) {
                     Color(red: 0.01, green: 0.03, blue: 0.05)
 
-                    Image(nabawiPrayerCardImageName)
+                    nabawiImage(isNight: true)
                         .resizable()
                         .scaledToFill()
                         .frame(width: geometry.size.width * 0.52, height: height)
@@ -857,7 +857,7 @@ struct ContentView: View {
             }
             .frame(height: height)
         } else {
-            Image(nabawiPrayerCardImageName)
+            nabawiImage(isNight: false)
                 .resizable()
                 .scaledToFill()
                 .frame(maxWidth: .infinity)
@@ -866,6 +866,27 @@ struct ContentView: View {
                 .saturation(1.04)
                 .overlay(nabawiCardOverlay(isNight: false))
         }
+    }
+
+    private func nabawiImage(isNight: Bool) -> Image {
+        let image = isNight ? Self.nabawiNightImage : Self.nabawiDayImage
+        if let image = image {
+            return Image(uiImage: image)
+        }
+
+        return Image(systemName: "photo")
+    }
+
+    private static func loadNabawiImage(named name: String) -> UIImage? {
+        let bundle = Bundle.main
+        let urls = [
+            bundle.url(forResource: name, withExtension: "jpg"),
+            bundle.url(forResource: name, withExtension: "jpg", subdirectory: "Nabawi"),
+            bundle.url(forResource: name, withExtension: "jpg", subdirectory: "Resources/Nabawi")
+        ].compactMap { $0 }
+
+        guard let url = urls.first else { return nil }
+        return UIImage(contentsOfFile: url.path)
     }
 
     @ViewBuilder

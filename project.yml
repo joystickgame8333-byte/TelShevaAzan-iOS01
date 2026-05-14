@@ -61,6 +61,8 @@ targets:
       - path: TelShevaAzan/Fonts/AmiriQuran-Regular.ttf
       - path: TelShevaAzan/Sounds/adhan.caf
       - path: TelShevaAzan/Sounds/nafahat.wav
+      - path: TelShevaAzan/Resources/Nabawi/nabawi-day.jpg
+      - path: TelShevaAzan/Resources/Nabawi/nabawi-night.jpg
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.omaralasam.telshevaazan
