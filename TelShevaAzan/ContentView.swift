@@ -545,17 +545,22 @@ struct ContentView: View {
 
     private func nabawiNextPrayerPanel(next: PrayerTime?, previous: PrayerTime?, compact: Bool) -> some View {
         let progress = prayerProgress(previous: previous, next: next)
-        let cornerRadius: CGFloat = compact ? 22 : 24
+        let cornerRadius: CGFloat = compact ? 20 : 22
+        let cardHeight: CGFloat = compact ? 136 : 154
         let isNightCard = activeTheme.isNightTheme
 
         return ZStack {
             Image(nabawiPrayerCardImageName)
                 .resizable()
                 .scaledToFill()
+                .frame(maxWidth: .infinity, height: cardHeight)
+                .scaleEffect(isNightCard ? 1.42 : 1.04, anchor: .bottom)
+                .brightness(isNightCard ? 0.10 : 0)
+                .saturation(isNightCard ? 1.10 : 1.0)
                 .overlay(nabawiCardOverlay(isNight: isNightCard))
 
-            VStack(alignment: .trailing, spacing: compact ? 8 : 10) {
-                HStack(alignment: .center, spacing: compact ? 10 : 14) {
+            VStack(alignment: .trailing, spacing: compact ? 7 : 8) {
+                HStack(alignment: .center, spacing: compact ? 9 : 12) {
                     countdownBadge(next: next, isNight: isNightCard)
 
                     Spacer(minLength: 10)
@@ -567,13 +572,13 @@ struct ContentView: View {
                             .lineLimit(1)
 
                         Text(next?.title ?? "--")
-                            .font(.system(size: compact ? 30 : 36, weight: .black, design: .rounded))
+                            .font(.system(size: compact ? 28 : 33, weight: .black, design: .rounded))
                             .foregroundStyle(nabawiPrimaryText)
                             .lineLimit(1)
                             .minimumScaleFactor(0.72)
 
                         Text(next?.time ?? "--:--")
-                            .font(.system(size: compact ? 42 : 52, weight: .black, design: .rounded))
+                            .font(.system(size: compact ? 38 : 48, weight: .black, design: .rounded))
                             .foregroundStyle(activeTheme.accent)
                             .monospacedDigit()
                             .lineLimit(1)
@@ -598,11 +603,11 @@ struct ContentView: View {
                 .font(.caption2.weight(.bold))
                 .foregroundStyle(nabawiSecondaryText)
             }
-            .padding(.horizontal, compact ? 14 : 18)
-            .padding(.vertical, compact ? 13 : 16)
+            .padding(.horizontal, compact ? 13 : 16)
+            .padding(.vertical, compact ? 10 : 13)
         }
         .frame(maxWidth: .infinity)
-        .frame(minHeight: compact ? 148 : 168)
+        .frame(height: cardHeight)
         .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
@@ -619,19 +624,19 @@ struct ContentView: View {
                 .lineLimit(1)
 
             Text(countdownText(for: next))
-                .font(.system(size: isNight ? 22 : 21, weight: .black, design: .rounded))
+                .font(.system(size: isNight ? 20 : 19, weight: .black, design: .rounded))
                 .monospacedDigit()
                 .foregroundStyle(nabawiPrimaryText)
                 .lineLimit(1)
                 .minimumScaleFactor(0.68)
         }
-        .frame(width: 128, height: 76)
+        .frame(width: 116, height: 68)
         .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .fill(isNight ? Color.black.opacity(0.46) : Color.white.opacity(0.74))
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .stroke(Color.white.opacity(isNight ? 0.16 : 0.55), lineWidth: 1)
         )
     }
@@ -816,9 +821,9 @@ struct ContentView: View {
             ZStack {
                 LinearGradient(
                     colors: [
-                        Color.black.opacity(0.10),
-                        Color.black.opacity(0.48),
-                        Color.black.opacity(0.88)
+                        Color.black.opacity(0.00),
+                        Color.black.opacity(0.22),
+                        Color.black.opacity(0.72)
                     ],
                     startPoint: .leading,
                     endPoint: .trailing
@@ -826,8 +831,8 @@ struct ContentView: View {
 
                 LinearGradient(
                     colors: [
-                        Color.black.opacity(0.02),
-                        Color.black.opacity(0.66)
+                        Color.black.opacity(0.00),
+                        Color.black.opacity(0.34)
                     ],
                     startPoint: .top,
                     endPoint: .bottom
@@ -837,9 +842,9 @@ struct ContentView: View {
             ZStack {
                 LinearGradient(
                     colors: [
-                        Color.white.opacity(0.20),
-                        Color.white.opacity(0.76),
-                        Color.white.opacity(0.94)
+                        Color.white.opacity(0.12),
+                        Color.white.opacity(0.62),
+                        Color.white.opacity(0.86)
                     ],
                     startPoint: .leading,
                     endPoint: .trailing
@@ -847,8 +852,8 @@ struct ContentView: View {
 
                 LinearGradient(
                     colors: [
-                        Color.white.opacity(0.12),
-                        Color(red: 0.90, green: 0.96, blue: 1.0).opacity(0.76)
+                        Color.white.opacity(0.04),
+                        Color(red: 0.90, green: 0.96, blue: 1.0).opacity(0.58)
                     ],
                     startPoint: .top,
                     endPoint: .bottom
