@@ -513,7 +513,7 @@ struct ContentView: View {
                 .background(activeTheme.countdownBackground)
                 .clipShape(RoundedRectangle(cornerRadius: 8))
 
-                Text(elapsedText(for: previous))
+                Text(remainingPrayerText(for: next))
                     .font(.caption2.weight(.semibold))
                     .foregroundStyle(activeTheme.secondaryText.opacity(0.82))
                     .lineLimit(1)
@@ -582,7 +582,7 @@ struct ContentView: View {
                     .frame(maxWidth: compact ? 190 : 230, alignment: .trailing)
                 }
 
-                Text(elapsedText(for: previous))
+                Text(remainingPrayerText(for: next))
                     .font(.system(size: compact ? 12 : 14, weight: .heavy, design: .rounded))
                     .foregroundStyle(nabawiSecondaryText)
                     .lineLimit(1)
@@ -991,17 +991,26 @@ struct ContentView: View {
         return String(format: "%02d:%02d:%02d", hours, minutes, remainingSeconds)
     }
 
-    private func elapsedText(for previous: PrayerTime?) -> String {
-        guard let previous else { return "مضى --:--" }
-        let seconds = max(Int(now.timeIntervalSince(previous.date)), 0)
-        return "مضى على صلاة \(previous.title) \(hourMinuteText(from: seconds))"
+    private func remainingPrayerText(for next: PrayerTime?) -> String {
+        guard let next else { return "متبقي للصلاة --:--:--" }
+        return "متبقي \(remainingPrayerTarget(for: next.key)) \(countdownText(for: next))"
     }
 
-    private func hourMinuteText(from seconds: Int) -> String {
-        let hours = seconds / 3600
-        let minutes = (seconds % 3600) / 60
-
-        return String(format: "%02d:%02d", hours, minutes)
+    private func remainingPrayerTarget(for key: PrayerKey) -> String {
+        switch key {
+        case .fajr:
+            return "للفجر"
+        case .sunrise:
+            return "للشروق"
+        case .dhuhr:
+            return "للظهر"
+        case .asr:
+            return "للعصر"
+        case .maghrib:
+            return "للمغرب"
+        case .isha:
+            return "للعشاء"
+        }
     }
 
     private func moveDay(_ offset: Int) {
