@@ -15,7 +15,7 @@ final class PrayerLiveActivityCenter: ObservableObject {
     @Published private(set) var debugText = ""
 
     private let previewDuration: TimeInterval = 30
-    private let autoLeadTime: TimeInterval = 120
+    private let autoLeadTime: TimeInterval = 5 * 60
     private let nowDisplayDuration: TimeInterval = 0
     private let expiredCleanupGrace: TimeInterval = 0
     private var lastSyncDate = Date.distantPast
