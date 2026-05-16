@@ -667,6 +667,43 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
         }
     }
 
+    func enableWelcomeDefaults() {
+        center.getNotificationSettings { [weak self] settings in
+            guard let self else { return }
+
+            switch settings.authorizationStatus {
+            case .authorized, .provisional:
+                DispatchQueue.main.async {
+                    self.applyWelcomeDefaults()
+                    self.isEnabled = true
+                    self.defaults.set(true, forKey: Self.enabledKey)
+                    self.scheduleUpcomingPrayerNotifications()
+                }
+            case .notDetermined:
+                self.center.requestAuthorization(options: [.alert, .sound, .timeSensitive, .criticalAlert]) { [weak self] granted, _ in
+                    DispatchQueue.main.async {
+                        guard let self else { return }
+
+                        guard granted else {
+                            self.statusText = "اسمح بالإشعارات من إعدادات الآيفون"
+                            return
+                        }
+
+                        self.applyWelcomeDefaults()
+                        self.isEnabled = true
+                        self.defaults.set(true, forKey: Self.enabledKey)
+                        self.scheduleUpcomingPrayerNotifications()
+                    }
+                }
+            default:
+                DispatchQueue.main.async {
+                    self.applyWelcomeDefaults()
+                    self.statusText = "اسمح بالإشعارات من إعدادات الآيفون"
+                }
+            }
+        }
+    }
+
     func disable() {
         isEnabled = false
         defaults.set(false, forKey: Self.enabledKey)
@@ -944,6 +981,19 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
 
     private func persistAdhkarPrayerSelection() {
         defaults.set(Array(enabledAdhkarPrayerIDs).sorted(), forKey: Self.adhkarPrayerIDsKey)
+    }
+
+    private func applyWelcomeDefaults() {
+        enabledPrayerIDs = Set(PrayerEngine.prayerOrder.map(\.rawValue))
+        persistPrayerSelection()
+
+        isAdhkarReminderEnabled = true
+        defaults.set(true, forKey: Self.adhkarEnabledKey)
+        enabledAdhkarPrayerIDs = Set(PrayerEngine.prayerOrder.map(\.rawValue))
+        persistAdhkarPrayerSelection()
+
+        isNafahatEnabled = true
+        defaults.set(true, forKey: Self.nafahatEnabledKey)
     }
 
     private func scheduleUpcomingPrayerNotifications() {

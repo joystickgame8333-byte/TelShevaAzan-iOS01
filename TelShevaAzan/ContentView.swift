@@ -6,11 +6,13 @@ struct ContentView: View {
     @Environment(\.scenePhase) private var scenePhase
     @AppStorage(AppThemeStorage.nightThemeKey, store: AppThemeStorage.defaults) private var selectedNightThemeID = PrayerVisualTheme.defaultNight.rawValue
     @AppStorage(AppThemeStorage.dayThemeKey, store: AppThemeStorage.defaults) private var selectedDayThemeID = PrayerVisualTheme.defaultDay.rawValue
+    @AppStorage("welcomeActivationPromptCompleted") private var welcomeActivationPromptCompleted = false
     @State private var now = Date()
     @State private var selectedDateKey = PrayerEngine.defaultDateKey()
     @State private var followsToday = true
     @State private var selectedTab: HomeDockItem = .schedule
     @State private var tabTransitionEdge: Edge = .leading
+    @State private var showWelcomeActivationPrompt = false
     @Namespace private var dockSelectionNamespace
     @StateObject private var notifications = PrayerNotificationManager.shared
     @StateObject private var liveActivityCenter = PrayerLiveActivityCenter.shared
@@ -85,6 +87,12 @@ struct ContentView: View {
                     .padding(.bottom, dockBottomPadding)
                     .frame(width: proxy.size.width, height: proxy.size.height, alignment: .bottom)
                     .zIndex(6)
+
+                if showWelcomeActivationPrompt {
+                    welcomeActivationOverlay
+                        .transition(.opacity.combined(with: .scale(scale: 0.96)))
+                        .zIndex(20)
+                }
             }
         }
         .onReceive(timer) { value in
@@ -112,6 +120,7 @@ struct ContentView: View {
             WidgetRefreshCenter.refreshAll()
             WidgetRefreshCenter.refreshAgainSoon()
             liveActivityCenter.syncWithPrayerWindow(now: Date(), themeID: activeTheme.rawValue)
+            presentWelcomeActivationPromptIfNeeded()
         }
         .onReceive(NotificationCenter.default.publisher(for: PrayerNotificationManager.openSettingsNotification)) { _ in
             withAnimation(.easeInOut(duration: 0.18)) {
@@ -120,6 +129,164 @@ struct ContentView: View {
         }
         .onOpenURL { url in
             handleDeepLink(url)
+        }
+    }
+
+    private var welcomeActivationOverlay: some View {
+        ZStack {
+            Color.black
+                .opacity(activeTheme.isNightTheme ? 0.52 : 0.24)
+                .ignoresSafeArea()
+
+            VStack(alignment: .trailing, spacing: 16) {
+                HStack(alignment: .center, spacing: 12) {
+                    Image(systemName: "bell.badge.fill")
+                        .font(.system(size: 22, weight: .black, design: .rounded))
+                        .foregroundStyle(activeTheme.accent)
+                        .frame(width: 48, height: 48)
+                        .background(Circle().fill(activeTheme.countdownBackground.opacity(activeTheme.isNightTheme ? 0.92 : 0.16)))
+                        .overlay(
+                            Circle()
+                                .stroke(Color.white.opacity(activeTheme.isNightTheme ? 0.18 : 0.74), lineWidth: 1)
+                        )
+
+                    VStack(alignment: .trailing, spacing: 4) {
+                        Text("خلّي الأذان حاضر معك")
+                            .font(.system(size: 22, weight: .black, design: .rounded))
+                            .foregroundStyle(activeTheme.primaryText)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.76)
+
+                        Text("فعّل الإشعارات والأذكار لتظهر لك الصلاة القادمة في وقتها.")
+                            .font(.system(size: 13, weight: .bold, design: .rounded))
+                            .foregroundStyle(activeTheme.secondaryText.opacity(0.90))
+                            .lineLimit(2)
+                            .minimumScaleFactor(0.74)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                }
+
+                VStack(spacing: 9) {
+                    welcomeFeatureRow(symbol: "speaker.wave.2.fill", title: "تنبيهات الأذان", detail: "لكل الصلوات المختارة")
+                    welcomeFeatureRow(symbol: "sparkles", title: "الأذكار والنفحات", detail: "تذكير هادئ بعد الصلاة وبين الأوقات")
+                    welcomeFeatureRow(symbol: "livephoto", title: "الجزيرة الحية", detail: "تظهر تلقائيًا عند قرب الصلاة")
+                }
+
+                HStack(spacing: 10) {
+                    Button {
+                        completeWelcomeActivationPrompt(activate: false)
+                    } label: {
+                        Text("لاحقًا")
+                            .font(.system(size: 14, weight: .black, design: .rounded))
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 46)
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(activeTheme.secondaryText)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .fill(activeTheme.controlBackground)
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .stroke(activeTheme.controlBorder, lineWidth: 1)
+                    )
+
+                    Button {
+                        completeWelcomeActivationPrompt(activate: true)
+                    } label: {
+                        HStack(spacing: 8) {
+                            Image(systemName: "checkmark.circle.fill")
+                            Text("تفعيل الآن")
+                        }
+                        .font(.system(size: 14, weight: .black, design: .rounded))
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 46)
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.white)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .fill(
+                                LinearGradient(
+                                    colors: [activeTheme.accent, activeTheme.accent.opacity(0.72)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                    )
+                    .shadow(color: activeTheme.accent.opacity(0.28), radius: 10, y: 5)
+                }
+            }
+            .padding(18)
+            .frame(maxWidth: 360)
+            .background(glassSurface(activeTheme.panelBackground, radius: 26, prominence: .strong))
+            .overlay(
+                RoundedRectangle(cornerRadius: 26, style: .continuous)
+                    .stroke(Color.white.opacity(activeTheme.isNightTheme ? 0.16 : 0.62), lineWidth: 1)
+            )
+            .padding(.horizontal, 20)
+            .environment(\.layoutDirection, .rightToLeft)
+            .multilineTextAlignment(.trailing)
+        }
+    }
+
+    private func welcomeFeatureRow(symbol: String, title: String, detail: String) -> some View {
+        HStack(alignment: .center, spacing: 10) {
+            Image(systemName: symbol)
+                .font(.system(size: 15, weight: .black, design: .rounded))
+                .foregroundStyle(activeTheme.accent)
+                .frame(width: 34, height: 34)
+                .background(Circle().fill(activeTheme.accent.opacity(activeTheme.isNightTheme ? 0.14 : 0.10)))
+
+            VStack(alignment: .trailing, spacing: 2) {
+                Text(title)
+                    .font(.system(size: 14, weight: .black, design: .rounded))
+                    .foregroundStyle(activeTheme.primaryText)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.78)
+
+                Text(detail)
+                    .font(.system(size: 11.5, weight: .semibold, design: .rounded))
+                    .foregroundStyle(activeTheme.secondaryText.opacity(0.84))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.72)
+            }
+            .frame(maxWidth: .infinity, alignment: .trailing)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 9)
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(activeTheme.controlBackground.opacity(activeTheme.isNightTheme ? 0.82 : 0.62))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(activeTheme.controlBorder.opacity(0.9), lineWidth: 1)
+        )
+    }
+
+    private func presentWelcomeActivationPromptIfNeeded() {
+        guard !welcomeActivationPromptCompleted, !showWelcomeActivationPrompt else { return }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) {
+            guard !welcomeActivationPromptCompleted, !showWelcomeActivationPrompt else { return }
+            withAnimation(.spring(response: 0.36, dampingFraction: 0.86)) {
+                showWelcomeActivationPrompt = true
+            }
+        }
+    }
+
+    private func completeWelcomeActivationPrompt(activate: Bool) {
+        welcomeActivationPromptCompleted = true
+        withAnimation(.easeInOut(duration: 0.20)) {
+            showWelcomeActivationPrompt = false
+        }
+
+        if activate {
+            notifications.enableWelcomeDefaults()
+            WidgetRefreshCenter.refreshAll()
+            WidgetRefreshCenter.refreshAgainSoon()
         }
     }
 
