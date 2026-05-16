@@ -182,8 +182,18 @@ final class PrayerLiveActivityCenter: ObservableObject {
 
     @available(iOS 16.1, *)
     private func syncActivity(now: Date, themeID: String) async {
-        guard ActivityAuthorizationInfo().areActivitiesEnabled else { return }
-        guard isWidgetExtensionBundled else { return }
+        guard ActivityAuthorizationInfo().areActivitiesEnabled else {
+            statusText = "Live Activities مقفلة"
+            detailText = "فعّل Live Activities من إعدادات الآيفون حتى تظهر الجزيرة وشاشة القفل للصلاة."
+            debugText = ""
+            return
+        }
+        guard isWidgetExtensionBundled else {
+            statusText = "الجزيرة غير مدمجة في هذا البناء"
+            detailText = "ثبت نسخة تحتوي على TelShevaAzanWidgetExtensionV3 حتى تعمل الجزيرة وشاشة القفل."
+            debugText = "Missing PlugIns/TelShevaAzanWidgetExtensionV3.appex"
+            return
+        }
         await cleanupExpiredLiveActivities(now: now, includeStalePreviews: true)
 
         let hasActivePreview = Activity<PrayerLiveActivityAttributes>.activities.contains { $0.attributes.isPreview }
@@ -244,7 +254,13 @@ final class PrayerLiveActivityCenter: ObservableObject {
         do {
             let activity = try requestActivity(attributes: attributes, state: state, staleDate: activityEndDate)
             keepAlive(activity, until: activityEndDate)
+            statusText = "الجزيرة تعمل الآن"
+            detailText = "ظهرت Live Activity للصلاة القادمة. إذا قفلت الشاشة الآن ستظهر بطاقة شاشة القفل حتى وقت الأذان."
+            debugText = ""
         } catch {
+            statusText = "لم تبدأ الجزيرة تلقائيًا"
+            detailText = "النظام رفض تشغيل Live Activity في نافذة الصلاة الحالية. جرّب فتح التطبيق قبل الأذان بخمس دقائق وتأكد أن Live Activities مفعلة."
+            debugText = String(describing: error)
             return
         }
     }

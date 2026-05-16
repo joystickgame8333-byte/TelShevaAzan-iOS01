@@ -355,9 +355,9 @@ struct ContentView: View {
         size: CGSize
     ) -> some View {
         VStack(alignment: .trailing, spacing: sectionSpacing) {
-            quranVerse
-
             header
+
+            quranVerse
 
             nextPrayerPanel(next: next, previous: previous, compact: compactHeight)
 
@@ -381,28 +381,46 @@ struct ContentView: View {
     }
 
     private var quranVerse: some View {
-        VStack(alignment: .trailing, spacing: 4) {
-            Text("فَأَقِيمُوا الصَّلَاةَ ۚ إِنَّ الصَّلَاةَ كَانَتْ عَلَى الْمُؤْمِنِينَ كِتَابًا مَّوْقُوتًا")
-                .font(.custom("AmiriQuran-Regular", size: 19))
+        VStack(alignment: .trailing, spacing: 3) {
+            Text("فَأَقِيمُوا الصَّلَاةَ")
+                .font(.custom("AmiriQuran-Regular", size: 21))
                 .foregroundStyle(activeTheme.accent)
+                .lineLimit(1)
+                .minimumScaleFactor(0.72)
+                .multilineTextAlignment(.trailing)
+
+            Text("إِنَّ الصَّلَاةَ كَانَتْ عَلَى الْمُؤْمِنِينَ كِتَابًا مَّوْقُوتًا")
+                .font(.custom("AmiriQuran-Regular", size: 16))
+                .foregroundStyle(activeTheme.accent.opacity(activeTheme.isNightTheme ? 0.88 : 0.82))
                 .lineLimit(2)
-                .minimumScaleFactor(0.58)
+                .minimumScaleFactor(0.60)
                 .multilineTextAlignment(.trailing)
 
             Text("النساء 103")
-                .font(.system(size: 11, weight: .bold, design: .rounded))
-                .foregroundStyle(activeTheme.secondaryText.opacity(0.74))
+                .font(.system(size: 10.5, weight: .black, design: .rounded))
+                .foregroundStyle(activeTheme.accent.opacity(0.88))
+                .padding(.horizontal, 8)
+                .padding(.vertical, 3)
+                .background(
+                    Capsule(style: .continuous)
+                        .fill(activeTheme.accent.opacity(activeTheme.isNightTheme ? 0.14 : 0.10))
+                )
+                .overlay(
+                    Capsule(style: .continuous)
+                        .stroke(activeTheme.accent.opacity(activeTheme.isNightTheme ? 0.22 : 0.16), lineWidth: 1)
+                )
                 .lineLimit(1)
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
+        .padding(.horizontal, 13)
+        .padding(.vertical, 10)
         .frame(maxWidth: .infinity, alignment: .trailing)
-        .background(glassSurface(activeTheme.panelBackground.opacity(0.74), radius: 12, prominence: .quiet))
+        .background(glassSurface(activeTheme.panelBackground.opacity(activeTheme.isNightTheme ? 0.66 : 0.72), radius: 14, prominence: .quiet))
         .overlay(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .stroke(activeTheme.rowBorder.opacity(activeTheme.isNightTheme ? 0.48 : 0.62), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .stroke(activeTheme.rowBorder.opacity(activeTheme.isNightTheme ? 0.42 : 0.56), lineWidth: 1)
         )
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .environment(\.layoutDirection, .rightToLeft)
     }
 
     private var header: some View {
