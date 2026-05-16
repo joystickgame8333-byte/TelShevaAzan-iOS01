@@ -158,74 +158,38 @@ struct FajrAlarmRingingView: View {
 
     private var actionButtons: some View {
         VStack(spacing: 12) {
-            Button {
+            alarmActionButton(title: "صحيت", isPrimary: true) {
                 PrayerNotificationManager.shared.stopFajrAlarm(dateKey: alarm.dateKey)
                 audioPlayer.stop()
                 dismiss()
-            } label: {
-                Text("صحيت")
-                    .font(.system(size: 24, weight: .black, design: .rounded))
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 62)
             }
-            .buttonStyle(FajrAlarmActionButtonStyle(theme: theme, isPrimary: true))
 
-            Button {
+            alarmActionButton(title: "غفوة \(alarm.snoozeMinutes) دقائق", isPrimary: false) {
                 PrayerNotificationManager.shared.snoozeFajrAlarm(dateKey: alarm.dateKey)
                 audioPlayer.stop()
                 dismiss()
-            } label: {
-                Text("غفوة \(alarm.snoozeMinutes) دقائق")
-                    .font(.system(size: 20, weight: .black, design: .rounded))
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 58)
             }
-            .buttonStyle(FajrAlarmActionButtonStyle(theme: theme, isPrimary: false))
         }
     }
-}
 
-private struct FajrAlarmActionButtonStyle: ButtonStyle {
-    let theme: PrayerVisualTheme
-    let isPrimary: Bool
-
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .foregroundStyle(isPrimary ? primaryText : theme.primaryText)
-            .background(background(isPressed: configuration.isPressed))
-            .overlay(
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .stroke(borderColor, lineWidth: 1)
-            )
-            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-            .scaleEffect(configuration.isPressed ? 0.98 : 1)
-            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
-    }
-
-    private var primaryText: Color {
-        theme.isNightTheme ? Color.black.opacity(0.92) : .white
-    }
-
-    private var borderColor: Color {
-        isPrimary ? theme.accent.opacity(0.55) : theme.controlBorder.opacity(0.95)
-    }
-
-    private func background(isPressed: Bool) -> some View {
-        Group {
-            if isPrimary {
-                LinearGradient(
-                    colors: [
-                        theme.accent.opacity(isPressed ? 0.72 : 1.0),
-                        theme.accent.opacity(isPressed ? 0.56 : 0.82)
-                    ],
-                    startPoint: .topTrailing,
-                    endPoint: .bottomLeading
+    private func alarmActionButton(title: String, isPrimary: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(.system(size: isPrimary ? 24 : 20, weight: .black, design: .rounded))
+                .foregroundStyle(isPrimary ? (theme.isNightTheme ? Color.black.opacity(0.92) : .white) : theme.primaryText)
+                .frame(maxWidth: .infinity)
+                .frame(height: isPrimary ? 62 : 58)
+                .background {
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        .fill(isPrimary ? theme.accent : theme.controlBackground)
+                        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                }
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        .stroke(isPrimary ? theme.accent.opacity(0.55) : theme.controlBorder.opacity(0.95), lineWidth: 1)
                 )
-            } else {
-                theme.controlBackground
-                    .opacity(isPressed ? 0.72 : 0.98)
-                    .background(.thinMaterial)
-            }
+                .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
         }
+        .buttonStyle(.plain)
     }
 }
