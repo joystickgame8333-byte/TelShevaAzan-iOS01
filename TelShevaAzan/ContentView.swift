@@ -363,13 +363,7 @@ struct ContentView: View {
 
             dateControls
 
-            VStack(spacing: rowSpacing) {
-                ForEach(schedule.displayTimes) { item in
-                    prayerRow(item, next: next, rowHeight: rowHeight)
-                }
-            }
-
-            footerNote
+            prayerRows(schedule: schedule, next: next, rowSpacing: rowSpacing, rowHeight: rowHeight)
         }
         .padding(.horizontal, 16)
         .padding(.top, compactHeight ? 12 : 18)
@@ -382,10 +376,10 @@ struct ContentView: View {
 
     private var quranVerse: some View {
         Text("فَأَقِيمُوا الصَّلَاةَ إِنَّ الصَّلَاةَ كَانَتْ عَلَى الْمُؤْمِنِينَ كِتَابًا مَّوْقُوتًا")
-            .font(.custom("AmiriQuran-Regular", size: 27))
+            .font(.custom("AmiriQuran-Regular", size: 30))
             .foregroundStyle(activeTheme.accent.opacity(activeTheme.isNightTheme ? 0.94 : 0.88))
             .lineLimit(1)
-            .minimumScaleFactor(0.64)
+            .minimumScaleFactor(0.66)
             .allowsTightening(true)
             .multilineTextAlignment(.trailing)
             .padding(.horizontal, 10)
@@ -436,6 +430,38 @@ struct ContentView: View {
         }
         .multilineTextAlignment(.center)
         .frame(maxWidth: .infinity, alignment: .center)
+    }
+
+    private func prayerRows(
+        schedule: DaySchedule,
+        next: PrayerTime?,
+        rowSpacing: CGFloat,
+        rowHeight: CGFloat
+    ) -> some View {
+        VStack(spacing: rowSpacing) {
+            ForEach(schedule.displayTimes) { item in
+                prayerRow(item, next: next, rowHeight: rowHeight)
+            }
+        }
+        .padding(7)
+        .background(glassSurface(activeTheme.panelBackground.opacity(activeTheme.isNightTheme ? 0.54 : 0.66), radius: 14, prominence: .quiet))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .stroke(
+                    LinearGradient(
+                        colors: [
+                            activeTheme.rowBorder.opacity(activeTheme.isNightTheme ? 0.72 : 0.80),
+                            activeTheme.accent.opacity(activeTheme.isNightTheme ? 0.28 : 0.22),
+                            activeTheme.rowBorder.opacity(activeTheme.isNightTheme ? 0.40 : 0.52)
+                        ],
+                        startPoint: .topTrailing,
+                        endPoint: .bottomLeading
+                    ),
+                    lineWidth: 1.1
+                )
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .shadow(color: activeTheme.accent.opacity(activeTheme.isNightTheme ? 0.10 : 0.08), radius: 12, y: 5)
     }
 
     private var bottomDock: some View {
@@ -917,15 +943,6 @@ struct ContentView: View {
             .opacity(0.02)
         }
         .fixedSize()
-    }
-
-    private var footerNote: some View {
-        Text("مواقيت محلية \(AppInfo.displayVersion) · تتحدث تلقائيًا")
-            .font(.caption2.weight(.bold))
-            .foregroundStyle(activeTheme.accent)
-            .lineLimit(1)
-            .minimumScaleFactor(0.75)
-        .frame(maxWidth: .infinity, alignment: .trailing)
     }
 
     private func prayerRow(_ item: PrayerTime, next: PrayerTime?, rowHeight: CGFloat) -> some View {
