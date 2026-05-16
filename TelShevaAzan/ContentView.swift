@@ -135,7 +135,7 @@ struct ContentView: View {
     private var welcomeActivationOverlay: some View {
         ZStack {
             Color.black
-                .opacity(activeTheme.isNightTheme ? 0.52 : 0.24)
+                .opacity(activeTheme.isNightTheme ? 0.62 : 0.38)
                 .ignoresSafeArea()
 
             VStack(alignment: .trailing, spacing: 16) {
@@ -220,15 +220,28 @@ struct ContentView: View {
             }
             .padding(18)
             .frame(maxWidth: 360)
-            .background(glassSurface(activeTheme.panelBackground, radius: 26, prominence: .strong))
+            .background(
+                RoundedRectangle(cornerRadius: 26, style: .continuous)
+                    .fill(welcomeActivationCardBackground)
+                    .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 26, style: .continuous))
+            )
             .overlay(
                 RoundedRectangle(cornerRadius: 26, style: .continuous)
-                    .stroke(Color.white.opacity(activeTheme.isNightTheme ? 0.16 : 0.62), lineWidth: 1)
+                    .stroke(Color.white.opacity(activeTheme.isNightTheme ? 0.18 : 0.76), lineWidth: 1)
             )
+            .shadow(color: Color.black.opacity(activeTheme.isNightTheme ? 0.32 : 0.16), radius: 22, y: 12)
             .padding(.horizontal, 20)
             .environment(\.layoutDirection, .rightToLeft)
             .multilineTextAlignment(.trailing)
         }
+    }
+
+    private var welcomeActivationCardBackground: Color {
+        if activeTheme.isNightTheme {
+            return Color(red: 0.03, green: 0.06, blue: 0.07).opacity(0.96)
+        }
+
+        return Color(red: 0.88, green: 0.94, blue: 1.00).opacity(0.97)
     }
 
     private func welcomeFeatureRow(symbol: String, title: String, detail: String) -> some View {
