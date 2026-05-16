@@ -68,6 +68,14 @@ enum PrayerEngine {
         formatter.dateStyle = .full
         return formatter
     }()
+    private static let hijriArabicDateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "ar")
+        formatter.calendar = Calendar(identifier: .islamicUmmAlQura)
+        formatter.timeZone = Self.timeZone
+        formatter.dateStyle = .long
+        return formatter
+    }()
 
     static let prayerOrder: [PrayerKey] = [.fajr, .dhuhr, .asr, .maghrib, .isha]
     static let displayOrder: [PrayerKey] = [.fajr, .sunrise, .dhuhr, .asr, .maghrib, .isha]
@@ -191,6 +199,11 @@ enum PrayerEngine {
     static func longDateLabel(for dateKey: String) -> String {
         guard let date = Self.date(from: dateKey, time: "12:00") else { return dateKey }
         return Self.longArabicDateFormatter.string(from: date)
+    }
+
+    static func hijriDateLabel(for dateKey: String) -> String {
+        guard let date = Self.date(from: dateKey, time: "12:00") else { return "" }
+        return Self.hijriArabicDateFormatter.string(from: date)
     }
 
     static func date(from dateKey: String, time: String) -> Date? {

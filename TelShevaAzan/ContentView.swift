@@ -382,13 +382,14 @@ struct ContentView: View {
 
     private var quranVerse: some View {
         Text("فَأَقِيمُوا الصَّلَاةَ إِنَّ الصَّلَاةَ كَانَتْ عَلَى الْمُؤْمِنِينَ كِتَابًا مَّوْقُوتًا")
-            .font(.custom("AmiriQuran-Regular", size: 23))
+            .font(.custom("AmiriQuran-Regular", size: 27))
             .foregroundStyle(activeTheme.accent.opacity(activeTheme.isNightTheme ? 0.94 : 0.88))
             .lineLimit(1)
-            .minimumScaleFactor(0.54)
+            .minimumScaleFactor(0.64)
+            .allowsTightening(true)
             .multilineTextAlignment(.trailing)
-            .padding(.horizontal, 14)
-            .padding(.vertical, 7)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
             .frame(maxWidth: .infinity, alignment: .trailing)
             .background(
                 Capsule(style: .continuous)
@@ -398,8 +399,8 @@ struct ContentView: View {
                 Capsule(style: .continuous)
                     .stroke(activeTheme.accent.opacity(activeTheme.isNightTheme ? 0.24 : 0.16), lineWidth: 1)
             )
-            .padding(.horizontal, 12)
-            .padding(.vertical, 9)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 8)
             .frame(maxWidth: .infinity, alignment: .trailing)
         .frame(maxWidth: .infinity, alignment: .trailing)
         .background(glassSurface(activeTheme.panelBackground.opacity(activeTheme.isNightTheme ? 0.66 : 0.72), radius: 14, prominence: .quiet))
@@ -412,21 +413,29 @@ struct ContentView: View {
     }
 
     private var header: some View {
-        VStack(alignment: .trailing, spacing: 2) {
+        VStack(alignment: .center, spacing: 3) {
             Text("أذان تل السبع")
                 .font(.system(size: 25, weight: .black, design: .rounded))
                 .lineLimit(1)
                 .minimumScaleFactor(0.72)
-                .frame(maxWidth: .infinity, alignment: .trailing)
+                .frame(maxWidth: .infinity, alignment: .center)
 
             Text(PrayerEngine.longDateLabel(for: selectedDateKey))
                 .font(.system(size: 11.5, weight: .semibold, design: .rounded))
                 .foregroundStyle(activeTheme.secondaryText.opacity(0.82))
                 .lineLimit(1)
                 .minimumScaleFactor(0.75)
-                .frame(maxWidth: .infinity, alignment: .trailing)
+                .frame(maxWidth: .infinity, alignment: .center)
+
+            Text(PrayerEngine.hijriDateLabel(for: selectedDateKey))
+                .font(.system(size: 11, weight: .bold, design: .rounded))
+                .foregroundStyle(activeTheme.secondaryText.opacity(0.72))
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+                .frame(maxWidth: .infinity, alignment: .center)
         }
-        .frame(maxWidth: .infinity, alignment: .trailing)
+        .multilineTextAlignment(.center)
+        .frame(maxWidth: .infinity, alignment: .center)
     }
 
     private var bottomDock: some View {
