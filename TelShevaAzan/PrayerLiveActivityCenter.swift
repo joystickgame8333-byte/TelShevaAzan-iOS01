@@ -185,6 +185,12 @@ final class PrayerLiveActivityCenter: ObservableObject {
         guard ActivityAuthorizationInfo().areActivitiesEnabled else { return }
         guard isWidgetExtensionBundled else { return }
         await cleanupExpiredLiveActivities(now: now, includeStalePreviews: true)
+
+        let hasActivePreview = Activity<PrayerLiveActivityAttributes>.activities.contains { $0.attributes.isPreview }
+        if isPreviewActive && !hasActivePreview {
+            isPreviewActive = false
+        }
+
         guard !isPreviewActive else { return }
         await endActivities(where: { $0.attributes.isPreview })
 
