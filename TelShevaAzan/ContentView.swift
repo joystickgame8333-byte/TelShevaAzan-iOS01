@@ -381,45 +381,26 @@ struct ContentView: View {
     }
 
     private var quranVerse: some View {
-        VStack(alignment: .trailing, spacing: 6) {
-            Text("فَأَقِيمُوا الصَّلَاةَ")
-                .font(.custom("AmiriQuran-Regular", size: 25))
-                .foregroundStyle(activeTheme.accent.opacity(activeTheme.isNightTheme ? 0.96 : 0.92))
-                .lineLimit(1)
-                .minimumScaleFactor(0.76)
-                .multilineTextAlignment(.trailing)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 4)
-                .background(
-                    Capsule(style: .continuous)
-                        .fill(activeTheme.accent.opacity(activeTheme.isNightTheme ? 0.16 : 0.10))
-                )
-                .overlay(
-                    Capsule(style: .continuous)
-                        .stroke(activeTheme.accent.opacity(activeTheme.isNightTheme ? 0.26 : 0.18), lineWidth: 1)
-                )
-                .frame(maxWidth: .infinity, alignment: .trailing)
-
-            Text("إِنَّ الصَّلَاةَ كَانَتْ عَلَى الْمُؤْمِنِينَ كِتَابًا مَّوْقُوتًا")
-                .font(.custom("AmiriQuran-Regular", size: 18))
-                .foregroundStyle(activeTheme.accent.opacity(activeTheme.isNightTheme ? 0.88 : 0.82))
-                .lineLimit(2)
-                .minimumScaleFactor(0.66)
-                .multilineTextAlignment(.trailing)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 5)
-                .background(
-                    Capsule(style: .continuous)
-                        .fill(activeTheme.accent.opacity(activeTheme.isNightTheme ? 0.12 : 0.075))
-                )
-                .overlay(
-                    Capsule(style: .continuous)
-                        .stroke(activeTheme.accent.opacity(activeTheme.isNightTheme ? 0.20 : 0.14), lineWidth: 1)
-                )
-                .frame(maxWidth: .infinity, alignment: .trailing)
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 9)
+        Text("فَأَقِيمُوا الصَّلَاةَ إِنَّ الصَّلَاةَ كَانَتْ عَلَى الْمُؤْمِنِينَ كِتَابًا مَّوْقُوتًا")
+            .font(.custom("AmiriQuran-Regular", size: 23))
+            .foregroundStyle(activeTheme.accent.opacity(activeTheme.isNightTheme ? 0.94 : 0.88))
+            .lineLimit(1)
+            .minimumScaleFactor(0.54)
+            .multilineTextAlignment(.trailing)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 7)
+            .frame(maxWidth: .infinity, alignment: .trailing)
+            .background(
+                Capsule(style: .continuous)
+                    .fill(activeTheme.accent.opacity(activeTheme.isNightTheme ? 0.14 : 0.085))
+            )
+            .overlay(
+                Capsule(style: .continuous)
+                    .stroke(activeTheme.accent.opacity(activeTheme.isNightTheme ? 0.24 : 0.16), lineWidth: 1)
+            )
+            .padding(.horizontal, 12)
+            .padding(.vertical, 9)
+            .frame(maxWidth: .infinity, alignment: .trailing)
         .frame(maxWidth: .infinity, alignment: .trailing)
         .background(glassSurface(activeTheme.panelBackground.opacity(activeTheme.isNightTheme ? 0.66 : 0.72), radius: 14, prominence: .quiet))
         .overlay(
