@@ -1489,7 +1489,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
             return []
         }
 
-        [.banner, .sound]
+        return [.banner, .sound]
     }
 
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse) async {
