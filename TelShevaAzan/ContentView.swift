@@ -381,31 +381,40 @@ struct ContentView: View {
     }
 
     private var quranVerse: some View {
-        VStack(alignment: .trailing, spacing: 0) {
-            Text("إِنَّ ٱلصَّلَوٰةَ كَانَتْ عَلَى ٱلْمُؤْمِنِينَ كِتَـٰبًا مَّوْقُوتًا")
-                .font(.custom("AmiriQuran-Regular", size: 25))
+        VStack(alignment: .trailing, spacing: 4) {
+            Text("فَأَقِيمُوا الصَّلَاةَ ۚ إِنَّ الصَّلَاةَ كَانَتْ عَلَى الْمُؤْمِنِينَ كِتَابًا مَّوْقُوتًا")
+                .font(.custom("AmiriQuran-Regular", size: 19))
                 .foregroundStyle(activeTheme.accent)
                 .lineLimit(2)
-                .minimumScaleFactor(0.64)
+                .minimumScaleFactor(0.58)
+                .multilineTextAlignment(.trailing)
 
-            Text("النساء ١٠٣")
-                .font(.caption.weight(.bold))
+            Text("النساء 103")
+                .font(.system(size: 11, weight: .bold, design: .rounded))
                 .foregroundStyle(activeTheme.secondaryText.opacity(0.74))
                 .lineLimit(1)
         }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
         .frame(maxWidth: .infinity, alignment: .trailing)
+        .background(glassSurface(activeTheme.panelBackground.opacity(0.74), radius: 12, prominence: .quiet))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(activeTheme.rowBorder.opacity(activeTheme.isNightTheme ? 0.48 : 0.62), lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
     private var header: some View {
-        VStack(alignment: .trailing, spacing: 3) {
+        VStack(alignment: .trailing, spacing: 2) {
             Text("أذان تل السبع")
-                .font(.system(size: 28, weight: .black, design: .rounded))
+                .font(.system(size: 25, weight: .black, design: .rounded))
                 .lineLimit(1)
                 .minimumScaleFactor(0.72)
                 .frame(maxWidth: .infinity, alignment: .trailing)
 
             Text(PrayerEngine.longDateLabel(for: selectedDateKey))
-                .font(.caption2.weight(.semibold))
+                .font(.system(size: 11.5, weight: .semibold, design: .rounded))
                 .foregroundStyle(activeTheme.secondaryText.opacity(0.82))
                 .lineLimit(1)
                 .minimumScaleFactor(0.75)
@@ -695,19 +704,13 @@ struct ContentView: View {
                 .padding(.vertical, 7)
                 .background(activeTheme.countdownBackground)
                 .clipShape(RoundedRectangle(cornerRadius: 8))
-
-                Text(remainingPrayerText(for: next))
-                    .font(.caption2.weight(.semibold))
-                    .foregroundStyle(activeTheme.secondaryText.opacity(0.82))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.72)
             }
 
             Spacer(minLength: 0)
 
             VStack(alignment: .trailing, spacing: 2) {
                 Text("الصلاة القادمة")
-                    .font(.caption2.weight(.bold))
+                    .font(.system(size: 10.5, weight: .bold, design: .rounded))
                     .foregroundStyle(activeTheme.accent)
                     .lineLimit(1)
 
@@ -745,7 +748,7 @@ struct ContentView: View {
 
                     VStack(alignment: .trailing, spacing: 3) {
                         Text("الصلاة القادمة")
-                            .font(.system(size: compact ? 12 : 13, weight: .black, design: .rounded))
+                            .font(.system(size: compact ? 10.5 : 11.5, weight: .black, design: .rounded))
                             .foregroundStyle(activeTheme.accent)
                             .lineLimit(1)
 
@@ -765,11 +768,7 @@ struct ContentView: View {
                     .frame(maxWidth: compact ? 190 : 230, alignment: .trailing)
                 }
 
-                Text(remainingPrayerText(for: next))
-                    .font(.system(size: compact ? 12 : 14, weight: .heavy, design: .rounded))
-                    .foregroundStyle(nabawiSecondaryText)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.72)
+                Spacer(minLength: compact ? 2 : 4)
 
                 VStack(spacing: compact ? 5 : 6) {
                     rtlPrayerProgressBar(progress: progress)
@@ -834,8 +833,8 @@ struct ContentView: View {
                     .fill(
                         LinearGradient(
                             colors: [
-                                activeTheme.accent.opacity(activeTheme.isNightTheme ? 0.78 : 0.72),
-                                activeTheme.accent
+                                activeTheme.accent.opacity(activeTheme.isNightTheme ? 0.70 : 0.64),
+                                activeTheme.accent.opacity(0.92)
                             ],
                             startPoint: .leading,
                             endPoint: .trailing
@@ -1152,8 +1151,8 @@ struct ContentView: View {
                 LinearGradient(
                     colors: [
                         Color.white.opacity(0.12),
-                        Color.white.opacity(0.62),
-                        Color.white.opacity(0.86)
+                        Color.white.opacity(0.48),
+                        Color.white.opacity(0.78)
                     ],
                     startPoint: .leading,
                     endPoint: .trailing
@@ -1162,7 +1161,7 @@ struct ContentView: View {
                 LinearGradient(
                     colors: [
                         Color.white.opacity(0.04),
-                        Color(red: 0.90, green: 0.96, blue: 1.0).opacity(0.58)
+                        Color(red: 0.90, green: 0.96, blue: 1.0).opacity(0.42)
                     ],
                     startPoint: .top,
                     endPoint: .bottom
