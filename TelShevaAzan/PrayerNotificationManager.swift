@@ -137,73 +137,117 @@ enum FajrAlarmIntensity: String, CaseIterable, Identifiable {
 }
 
 enum FajrAlarmSound: String, CaseIterable, Identifiable {
-    case dawnRise
-    case strongPulse
-    case urgentWake
-    case goldenChime
-    case deepAlarm
+    case classicAlarm
+    case morningClock
+    case clockBeep
+    case digitalBuzzer
+    case vintageWarning
+    case alert
+    case emergencyAlert
+    case warningBuzzer
+    case facilityAlarm
+    case hallAlert
 
     var id: String { rawValue }
 
     var title: String {
         switch self {
-        case .dawnRise:
-            return "فجر صاعد"
-        case .strongPulse:
-            return "نبض قوي"
-        case .urgentWake:
-            return "إيقاظ سريع"
-        case .goldenChime:
-            return "رنين ذهبي"
-        case .deepAlarm:
-            return "منبه عميق"
+        case .classicAlarm:
+            return "منبه كلاسيكي"
+        case .morningClock:
+            return "منبه صباحي"
+        case .clockBeep:
+            return "بيب الساعة"
+        case .digitalBuzzer:
+            return "جرس رقمي"
+        case .vintageWarning:
+            return "تحذير قديم"
+        case .alert:
+            return "تنبيه حاد"
+        case .emergencyAlert:
+            return "إيقاظ قوي"
+        case .warningBuzzer:
+            return "جرس مزعج"
+        case .facilityAlarm:
+            return "تنبيه طويل"
+        case .hallAlert:
+            return "صدى القاعة"
         }
     }
 
     var subtitle: String {
         switch self {
-        case .dawnRise:
-            return "نغمة صاعدة وواضحة للفجر"
-        case .strongPulse:
-            return "نبضات عالية ومريحة بدون إزعاج زائد"
-        case .urgentWake:
-            return "أقوى خيار للاختبار والإيقاظ"
-        case .goldenChime:
-            return "رنين جميل لكنه واضح"
-        case .deepAlarm:
-            return "نغمة منخفضة وثابتة للغفلة الثقيلة"
+        case .classicAlarm:
+            return "صوت ساعة منبه واضح وقصير"
+        case .morningClock:
+            return "أقرب إحساس لمنبه صباح حقيقي"
+        case .clockBeep:
+            return "بيب ثابت ومباشر"
+        case .digitalBuzzer:
+            return "نغمة رقمية تشبه منبه الآيفون"
+        case .vintageWarning:
+            return "قوي بطابع قديم"
+        case .alert:
+            return "حاد ومختصر لمن يريد تنبيه سريع"
+        case .emergencyAlert:
+            return "أقوى خيار للإيقاظ"
+        case .warningBuzzer:
+            return "مزعج كفاية للغفلة الثقيلة"
+        case .facilityAlarm:
+            return "طويل وواضح بدون تجاوز حد iOS"
+        case .hallAlert:
+            return "نظيف وفيه صدى واضح"
         }
     }
 
     var systemImage: String {
         switch self {
-        case .dawnRise:
-            return "sunrise.fill"
-        case .strongPulse:
-            return "waveform.circle.fill"
-        case .urgentWake:
+        case .classicAlarm, .morningClock:
             return "alarm.fill"
-        case .goldenChime:
+        case .clockBeep, .digitalBuzzer:
+            return "waveform.circle.fill"
+        case .vintageWarning, .warningBuzzer:
             return "bell.and.waves.left.and.right.fill"
-        case .deepAlarm:
+        case .alert, .emergencyAlert:
             return "speaker.wave.3.fill"
+        case .facilityAlarm, .hallAlert:
+            return "dot.radiowaves.left.and.right"
         }
     }
 
     var fileNames: [String] {
         switch self {
-        case .dawnRise:
-            return ["fajr-alarm-dawn-rise.wav"]
-        case .strongPulse:
-            return ["fajr-alarm-strong-pulse.wav"]
-        case .urgentWake:
-            return ["fajr-alarm-urgent-wake.wav"]
-        case .goldenChime:
-            return ["fajr-alarm-golden-chime.wav"]
-        case .deepAlarm:
-            return ["fajr-alarm-deep-alarm.wav"]
+        case .classicAlarm:
+            return ["fajr-alarm-01-classic-alarm.wav"]
+        case .morningClock:
+            return ["fajr-alarm-02-morning-clock.wav"]
+        case .clockBeep:
+            return ["fajr-alarm-03-clock-beep.wav"]
+        case .digitalBuzzer:
+            return ["fajr-alarm-04-digital-buzzer.wav"]
+        case .vintageWarning:
+            return ["fajr-alarm-05-vintage-warning.wav"]
+        case .alert:
+            return ["fajr-alarm-06-alert.wav"]
+        case .emergencyAlert:
+            return ["fajr-alarm-07-emergency-alert.wav"]
+        case .warningBuzzer:
+            return ["fajr-alarm-08-warning-buzzer.wav"]
+        case .facilityAlarm:
+            return ["fajr-alarm-09-facility-alarm.wav"]
+        case .hallAlert:
+            return ["fajr-alarm-10-hall-alert.wav"]
         }
     }
+}
+
+struct FajrAlarmPresentation: Identifiable, Equatable {
+    let id = UUID()
+    let dateKey: String?
+    let title: String
+    let body: String
+    let soundFileNames: [String]
+    let snoozeMinutes: Int
 }
 
 enum AdhkarReminderStyle: String, CaseIterable, Identifiable {
@@ -499,6 +543,7 @@ enum NafahatQuietWindow: String, CaseIterable, Identifiable {
 
 final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotificationCenterDelegate {
     static let openSettingsNotification = Notification.Name("PrayerNotificationManagerOpenSettings")
+    static let presentFajrAlarmNotification = Notification.Name("PrayerNotificationManagerPresentFajrAlarm")
 
     private static let enabledKey = "prayer_notifications_enabled"
     private static let enabledPrayerIDsKey = "prayer_notifications_enabled_prayers"
@@ -541,6 +586,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
     @Published private(set) var selectedFajrAlarmSoundID: String
     @Published private(set) var fajrAlarmWakeBeforeMinutes: Int
     @Published private(set) var fajrAlarmSnoozeMinutes: Int
+    @Published private(set) var pendingFajrAlarmPresentation: FajrAlarmPresentation?
 
     private let center = UNUserNotificationCenter.current()
     private let notificationPrefix = "tel-sheva-prayer-"
@@ -578,7 +624,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
     }
 
     private var selectedFajrAlarmSound: FajrAlarmSound {
-        FajrAlarmSound(rawValue: selectedFajrAlarmSoundID) ?? .dawnRise
+        FajrAlarmSound(rawValue: selectedFajrAlarmSoundID) ?? .morningClock
     }
 
     private override init() {
@@ -617,7 +663,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
         let savedFajrIntensityID = UserDefaults.standard.string(forKey: Self.selectedFajrAlarmIntensityIDKey)
         selectedFajrAlarmIntensityID = savedFajrIntensityID ?? FajrAlarmIntensity.wakeUp.rawValue
         let savedFajrSoundID = UserDefaults.standard.string(forKey: Self.selectedFajrAlarmSoundIDKey)
-        selectedFajrAlarmSoundID = savedFajrSoundID ?? FajrAlarmSound.dawnRise.rawValue
+        selectedFajrAlarmSoundID = FajrAlarmSound(rawValue: savedFajrSoundID ?? "")?.rawValue ?? FajrAlarmSound.morningClock.rawValue
         let savedWakeBefore = UserDefaults.standard.object(forKey: Self.fajrAlarmWakeBeforeMinutesKey) as? Int
         fajrAlarmWakeBeforeMinutes = savedWakeBefore ?? 0
         let savedSnooze = UserDefaults.standard.object(forKey: Self.fajrAlarmSnoozeMinutesKey) as? Int
@@ -863,6 +909,23 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
         defaults.set(minutes, forKey: Self.fajrAlarmSnoozeMinutesKey)
         registerNotificationCategories()
         rescheduleIfEnabled()
+    }
+
+    func stopFajrAlarm(dateKey: String?) {
+        removePendingFajrAlarmNotifications(for: dateKey)
+        DispatchQueue.main.async {
+            self.statusText = "تم إيقاف منبه الفجر"
+        }
+    }
+
+    func snoozeFajrAlarm(dateKey: String?) {
+        scheduleFajrAlarmSnoozeNotification(dateKey: dateKey)
+    }
+
+    func consumePendingFajrAlarmPresentation() -> FajrAlarmPresentation? {
+        let presentation = pendingFajrAlarmPresentation
+        pendingFajrAlarmPresentation = nil
+        return presentation
     }
 
     func sendPreviewNotification() {
@@ -1421,6 +1484,11 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
     }
 
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification) async -> UNNotificationPresentationOptions {
+        if notification.request.content.categoryIdentifier == Self.fajrAlarmCategoryID {
+            presentFajrAlarm(from: notification)
+            return []
+        }
+
         [.banner, .sound]
     }
 
@@ -1430,21 +1498,41 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
 
             switch response.actionIdentifier {
             case Self.fajrAlarmAwakeActionID:
-                removePendingFajrAlarmNotifications(for: fajrDateKey)
-                await MainActor.run {
-                    statusText = "تم إيقاف منبه الفجر"
-                }
+                stopFajrAlarm(dateKey: fajrDateKey)
                 return
             case Self.fajrAlarmSnoozeActionID:
-                scheduleFajrAlarmSnoozeNotification(dateKey: fajrDateKey)
+                snoozeFajrAlarm(dateKey: fajrDateKey)
                 return
             default:
-                break
+                presentFajrAlarm(from: response.notification)
+                await MainActor.run {
+                    NotificationCenter.default.post(name: Self.openSettingsNotification, object: nil)
+                }
+                return
             }
         }
 
         await MainActor.run {
             NotificationCenter.default.post(name: Self.openSettingsNotification, object: nil)
+        }
+    }
+
+    private func presentFajrAlarm(from notification: UNNotification) {
+        let dateKey = notification.request.content.userInfo["fajrDateKey"] as? String
+        let presentation = FajrAlarmPresentation(
+            dateKey: dateKey,
+            title: notification.request.content.title.isEmpty ? "منبه الفجر" : notification.request.content.title,
+            body: notification.request.content.body.isEmpty ? "حان وقت صلاة الفجر" : notification.request.content.body,
+            soundFileNames: selectedFajrAlarmSound.fileNames,
+            snoozeMinutes: fajrAlarmSnoozeMinutes
+        )
+
+        DispatchQueue.main.async {
+            self.pendingFajrAlarmPresentation = presentation
+            NotificationCenter.default.post(
+                name: Self.presentFajrAlarmNotification,
+                object: presentation
+            )
         }
     }
 }

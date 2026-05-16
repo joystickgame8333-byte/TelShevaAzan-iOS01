@@ -45,7 +45,6 @@ targets:
         NSSupportsLiveActivities: true
         UIAppFonts:
           - AmiriQuran-Regular.ttf
-          - NotoNaskhArabic-Regular.ttf
         NSLocationWhenInUseUsageDescription: يستخدم التطبيق الموقع محليًا فقط لتحسين دقة القبلة والشمال الحقيقي.
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
@@ -60,7 +59,6 @@ targets:
       - path: TelShevaAzan/Icon-60@2x.png
       - path: TelShevaAzan/Icon-60@3x.png
       - path: TelShevaAzan/Fonts/AmiriQuran-Regular.ttf
-      - path: TelShevaAzan/Fonts/NotoNaskhArabic-Regular.ttf
       - path: TelShevaAzan/Sounds/adhan.caf
       - path: TelShevaAzan/Sounds/nafahat.wav
       - path: TelShevaAzan/Sounds/fajr-alarm-dawn-rise.wav
@@ -68,6 +66,16 @@ targets:
       - path: TelShevaAzan/Sounds/fajr-alarm-urgent-wake.wav
       - path: TelShevaAzan/Sounds/fajr-alarm-golden-chime.wav
       - path: TelShevaAzan/Sounds/fajr-alarm-deep-alarm.wav
+      - path: TelShevaAzan/Sounds/fajr-alarm-01-classic-alarm.wav
+      - path: TelShevaAzan/Sounds/fajr-alarm-02-morning-clock.wav
+      - path: TelShevaAzan/Sounds/fajr-alarm-03-clock-beep.wav
+      - path: TelShevaAzan/Sounds/fajr-alarm-04-digital-buzzer.wav
+      - path: TelShevaAzan/Sounds/fajr-alarm-05-vintage-warning.wav
+      - path: TelShevaAzan/Sounds/fajr-alarm-06-alert.wav
+      - path: TelShevaAzan/Sounds/fajr-alarm-07-emergency-alert.wav
+      - path: TelShevaAzan/Sounds/fajr-alarm-08-warning-buzzer.wav
+      - path: TelShevaAzan/Sounds/fajr-alarm-09-facility-alarm.wav
+      - path: TelShevaAzan/Sounds/fajr-alarm-10-hall-alert.wav
       - path: TelShevaAzan/Resources/Nabawi/nabawi-day.jpg
       - path: TelShevaAzan/Resources/Nabawi/nabawi-night.jpg
     settings:

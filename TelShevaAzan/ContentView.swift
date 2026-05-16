@@ -13,6 +13,7 @@ struct ContentView: View {
     @State private var selectedTab: HomeDockItem = .schedule
     @State private var tabTransitionEdge: Edge = .leading
     @State private var showWelcomeActivationPrompt = false
+    @State private var activeFajrAlarm: FajrAlarmPresentation?
     @Namespace private var dockSelectionNamespace
     @StateObject private var notifications = PrayerNotificationManager.shared
     @StateObject private var liveActivityCenter = PrayerLiveActivityCenter.shared
@@ -121,11 +122,23 @@ struct ContentView: View {
             WidgetRefreshCenter.refreshAgainSoon()
             liveActivityCenter.syncWithPrayerWindow(now: Date(), themeID: activeTheme.rawValue)
             presentWelcomeActivationPromptIfNeeded()
+            if let alarm = notifications.consumePendingFajrAlarmPresentation() {
+                activeFajrAlarm = alarm
+            }
         }
         .onReceive(NotificationCenter.default.publisher(for: PrayerNotificationManager.openSettingsNotification)) { _ in
             withAnimation(.easeInOut(duration: 0.18)) {
                 selectedTab = .notifications
             }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: PrayerNotificationManager.presentFajrAlarmNotification)) { notification in
+            if let alarm = notification.object as? FajrAlarmPresentation {
+                _ = notifications.consumePendingFajrAlarmPresentation()
+                activeFajrAlarm = alarm
+            }
+        }
+        .fullScreenCover(item: $activeFajrAlarm) { alarm in
+            FajrAlarmRingingView(alarm: alarm, theme: activeTheme)
         }
         .onOpenURL { url in
             handleDeepLink(url)
