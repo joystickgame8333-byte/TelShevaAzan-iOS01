@@ -140,16 +140,6 @@ struct ContentView: View {
 
             VStack(alignment: .trailing, spacing: 16) {
                 HStack(alignment: .center, spacing: 12) {
-                    Image(systemName: "bell.badge.fill")
-                        .font(.system(size: 22, weight: .black, design: .rounded))
-                        .foregroundStyle(activeTheme.accent)
-                        .frame(width: 48, height: 48)
-                        .background(Circle().fill(activeTheme.countdownBackground.opacity(activeTheme.isNightTheme ? 0.92 : 0.16)))
-                        .overlay(
-                            Circle()
-                                .stroke(Color.white.opacity(activeTheme.isNightTheme ? 0.18 : 0.74), lineWidth: 1)
-                        )
-
                     VStack(alignment: .trailing, spacing: 4) {
                         Text("خلّي الأذان حاضر معك")
                             .font(.system(size: 22, weight: .black, design: .rounded))
@@ -164,7 +154,18 @@ struct ContentView: View {
                             .minimumScaleFactor(0.74)
                     }
                     .frame(maxWidth: .infinity, alignment: .trailing)
+
+                    Image(systemName: "bell.badge.fill")
+                        .font(.system(size: 22, weight: .black, design: .rounded))
+                        .foregroundStyle(activeTheme.accent)
+                        .frame(width: 48, height: 48)
+                        .background(Circle().fill(activeTheme.countdownBackground.opacity(activeTheme.isNightTheme ? 0.92 : 0.16)))
+                        .overlay(
+                            Circle()
+                                .stroke(Color.white.opacity(activeTheme.isNightTheme ? 0.18 : 0.74), lineWidth: 1)
+                        )
                 }
+                .environment(\.layoutDirection, .leftToRight)
 
                 VStack(spacing: 9) {
                     welcomeFeatureRow(symbol: "speaker.wave.2.fill", title: "تنبيهات الأذان", detail: "لكل الصلوات المختارة")
@@ -196,8 +197,8 @@ struct ContentView: View {
                         completeWelcomeActivationPrompt(activate: true)
                     } label: {
                         HStack(spacing: 8) {
-                            Image(systemName: "checkmark.circle.fill")
                             Text("تفعيل الآن")
+                            Image(systemName: "checkmark.circle.fill")
                         }
                         .font(.system(size: 14, weight: .black, design: .rounded))
                         .frame(maxWidth: .infinity)
@@ -217,6 +218,7 @@ struct ContentView: View {
                     )
                     .shadow(color: activeTheme.accent.opacity(0.28), radius: 10, y: 5)
                 }
+                .environment(\.layoutDirection, .leftToRight)
             }
             .padding(18)
             .frame(maxWidth: 360)
@@ -246,12 +248,6 @@ struct ContentView: View {
 
     private func welcomeFeatureRow(symbol: String, title: String, detail: String) -> some View {
         HStack(alignment: .center, spacing: 10) {
-            Image(systemName: symbol)
-                .font(.system(size: 15, weight: .black, design: .rounded))
-                .foregroundStyle(activeTheme.accent)
-                .frame(width: 34, height: 34)
-                .background(Circle().fill(activeTheme.accent.opacity(activeTheme.isNightTheme ? 0.14 : 0.10)))
-
             VStack(alignment: .trailing, spacing: 2) {
                 Text(title)
                     .font(.system(size: 14, weight: .black, design: .rounded))
@@ -266,9 +262,16 @@ struct ContentView: View {
                     .minimumScaleFactor(0.72)
             }
             .frame(maxWidth: .infinity, alignment: .trailing)
+
+            Image(systemName: symbol)
+                .font(.system(size: 15, weight: .black, design: .rounded))
+                .foregroundStyle(activeTheme.accent)
+                .frame(width: 34, height: 34)
+                .background(Circle().fill(activeTheme.accent.opacity(activeTheme.isNightTheme ? 0.14 : 0.10)))
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 9)
+        .environment(\.layoutDirection, .leftToRight)
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .fill(activeTheme.controlBackground.opacity(activeTheme.isNightTheme ? 0.82 : 0.62))
