@@ -45,6 +45,7 @@ targets:
         NSSupportsLiveActivities: true
         UIAppFonts:
           - AmiriQuran-Regular.ttf
+          - NotoNaskhArabic-Regular.ttf
         NSLocationWhenInUseUsageDescription: يستخدم التطبيق الموقع محليًا فقط لتحسين دقة القبلة والشمال الحقيقي.
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
@@ -59,6 +60,7 @@ targets:
       - path: TelShevaAzan/Icon-60@2x.png
       - path: TelShevaAzan/Icon-60@3x.png
       - path: TelShevaAzan/Fonts/AmiriQuran-Regular.ttf
+      - path: TelShevaAzan/Fonts/NotoNaskhArabic-Regular.ttf
       - path: TelShevaAzan/Sounds/adhan.caf
       - path: TelShevaAzan/Sounds/nafahat.wav
       - path: TelShevaAzan/Sounds/fajr-alarm-dawn-rise.wav
