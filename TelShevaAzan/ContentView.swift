@@ -376,10 +376,10 @@ struct ContentView: View {
 
     private var quranVerse: some View {
         Text("فَأَقِيمُوا الصَّلَاةَ إِنَّ الصَّلَاةَ كَانَتْ عَلَى الْمُؤْمِنِينَ كِتَابًا مَّوْقُوتًا")
-            .font(.custom("AmiriQuran-Regular", size: 30))
+            .font(.custom("AmiriQuran-Regular", size: 26))
             .foregroundStyle(activeTheme.accent.opacity(activeTheme.isNightTheme ? 0.94 : 0.88))
             .lineLimit(1)
-            .minimumScaleFactor(0.66)
+            .minimumScaleFactor(0.48)
             .allowsTightening(true)
             .multilineTextAlignment(.trailing)
             .padding(.horizontal, 10)
