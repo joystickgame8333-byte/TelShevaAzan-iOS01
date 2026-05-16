@@ -142,8 +142,11 @@ jobs:
             cp -f "TelShevaAzan/$icon" "$APP_PATH/$icon"
           done
 
-          echo "Force-copy bundled Quran font into the app bundle:"
-          cp -f "TelShevaAzan/Fonts/AmiriQuran-Regular.ttf" "$APP_PATH/AmiriQuran-Regular.ttf"
+          echo "Force-copy bundled fonts into the app bundle:"
+          for font in TelShevaAzan/Fonts/*.ttf; do
+            [ -f "$font" ] || continue
+            cp -f "$font" "$APP_PATH/$(basename "$font")"
+          done
 
           echo "Force-copy bundled adhan sound into the app bundle:"
           cp -f "TelShevaAzan/Sounds/adhan.caf" "$APP_PATH/adhan.caf"
@@ -179,7 +182,12 @@ jobs:
           echo "Force app font registration into the built Info.plist:"
           /usr/libexec/PlistBuddy -c "Delete :UIAppFonts" "$APP_PATH/Info.plist" || true
           /usr/libexec/PlistBuddy -c "Add :UIAppFonts array" "$APP_PATH/Info.plist"
-          /usr/libexec/PlistBuddy -c "Add :UIAppFonts:0 string AmiriQuran-Regular.ttf" "$APP_PATH/Info.plist"
+          FONT_INDEX=0
+          for font in "$APP_PATH"/*.ttf; do
+            [ -f "$font" ] || continue
+            /usr/libexec/PlistBuddy -c "Add :UIAppFonts:$FONT_INDEX string $(basename "$font")" "$APP_PATH/Info.plist"
+            FONT_INDEX=$((FONT_INDEX + 1))
+          done
 
           echo "Widget extension registration:"
           for PLUGIN_PATH in "${PLUGIN_PATHS[@]}"; do
@@ -207,11 +215,13 @@ jobs:
               exit 1
             fi
           done
-          if [ ! -f "$APP_PATH/AmiriQuran-Regular.ttf" ]; then
-            echo "Missing packaged Quran font: $APP_PATH/AmiriQuran-Regular.ttf"
-            find "$APP_PATH" -maxdepth 3 -type f -name '*.ttf' -print
-            exit 1
-          fi
+          for font_name in AmiriQuran-Regular.ttf NotoNaskhArabic-Regular.ttf; do
+            if [ ! -f "$APP_PATH/$font_name" ]; then
+              echo "Missing packaged Quran font: $APP_PATH/$font_name"
+              find "$APP_PATH" -maxdepth 3 -type f -name '*.ttf' -print
+              exit 1
+            fi
+          done
           if [ ! -f "$APP_PATH/adhan.caf" ]; then
             echo "Missing packaged adhan sound: $APP_PATH/adhan.caf"
             find "$APP_PATH" -maxdepth 3 -type f -name '*.caf' -print
@@ -320,6 +330,7 @@ jobs:
           awk '/Payload\/TelShevaAzan.app\/Icon-|Payload\/TelShevaAzan.app\/PlugIns\/.*\.appex\// { print; shown++; if (shown >= 80) exit }' ipa-contents.txt
           grep -q 'Payload/TelShevaAzan.app/Icon-60@3x.png' ipa-contents.txt
           grep -q 'Payload/TelShevaAzan.app/AmiriQuran-Regular.ttf' ipa-contents.txt
+          grep -q 'Payload/TelShevaAzan.app/NotoNaskhArabic-Regular.ttf' ipa-contents.txt
           grep -q 'Payload/TelShevaAzan.app/adhan.caf' ipa-contents.txt
           grep -q 'Payload/TelShevaAzan.app/nafahat.wav' ipa-contents.txt
           grep -q 'Payload/TelShevaAzan.app/nabawi-day.jpg' ipa-contents.txt
