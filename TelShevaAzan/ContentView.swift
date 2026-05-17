@@ -994,6 +994,7 @@ struct ContentView: View {
                         .minimumScaleFactor(0.70)
                 }
             }
+            .offset(y: isPrevious ? -2 : 0)
 
             Image(systemName: prayerSymbol(for: item.key))
                 .font(.system(size: isActive ? 20 : 18, weight: .bold, design: .rounded))
