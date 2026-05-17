@@ -376,7 +376,7 @@ struct ContentView: View {
 
             dateControls
 
-            prayerRows(schedule: schedule, next: next, rowSpacing: rowSpacing, rowHeight: rowHeight)
+            prayerRows(schedule: schedule, next: next, previous: previous, rowSpacing: rowSpacing, rowHeight: rowHeight)
         }
         .padding(.horizontal, 16)
         .padding(.top, compactHeight ? 12 : 18)
@@ -448,12 +448,13 @@ struct ContentView: View {
     private func prayerRows(
         schedule: DaySchedule,
         next: PrayerTime?,
+        previous: PrayerTime?,
         rowSpacing: CGFloat,
         rowHeight: CGFloat
     ) -> some View {
         VStack(spacing: rowSpacing) {
             ForEach(schedule.displayTimes) { item in
-                prayerRow(item, next: next, rowHeight: rowHeight)
+                prayerRow(item, next: next, previous: previous, rowHeight: rowHeight)
             }
         }
         .padding(7)
@@ -958,14 +959,15 @@ struct ContentView: View {
         .fixedSize()
     }
 
-    private func prayerRow(_ item: PrayerTime, next: PrayerTime?, rowHeight: CGFloat) -> some View {
+    private func prayerRow(_ item: PrayerTime, next: PrayerTime?, previous: PrayerTime?, rowHeight: CGFloat) -> some View {
         let isActive = item.key == next?.key
-        let effectiveRowHeight = isActive ? max(rowHeight, 56) : rowHeight
+        let isPrevious = isPreviousPrayerRow(item, previous: previous, next: next)
+        let effectiveRowHeight = (isActive || isPrevious) ? max(rowHeight, 56) : rowHeight
 
         return HStack(spacing: 10) {
             Text(item.time)
                 .font(.headline.monospacedDigit().weight(.bold))
-                .foregroundStyle(isActive ? activeTheme.accent : activeTheme.primaryText)
+                .foregroundStyle((isActive || isPrevious) ? activeTheme.accent : activeTheme.primaryText)
                 .lineLimit(1)
                 .minimumScaleFactor(0.78)
 
@@ -974,7 +976,7 @@ struct ContentView: View {
             VStack(alignment: .trailing, spacing: 1) {
                 Text(item.title)
                     .font(.headline.weight(.bold))
-                    .foregroundStyle(isActive ? activeTheme.accent : activeTheme.secondaryText.opacity(0.78))
+                    .foregroundStyle(isActive ? activeTheme.accent : (isPrevious ? activeTheme.primaryText.opacity(0.92) : activeTheme.secondaryText.opacity(0.78)))
                     .lineLimit(1)
                     .minimumScaleFactor(0.74)
 
@@ -984,33 +986,39 @@ struct ContentView: View {
                         .foregroundStyle(activeTheme.secondaryText.opacity(0.82))
                         .lineLimit(1)
                         .minimumScaleFactor(0.70)
+                } else if isPrevious {
+                    Text(elapsedPrayerText(for: previous))
+                        .font(.system(size: 10.5, weight: .bold, design: .rounded))
+                        .foregroundStyle(activeTheme.secondaryText.opacity(0.82))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.70)
                 }
             }
 
             Image(systemName: prayerSymbol(for: item.key))
-                .font(.system(size: isActive ? 20 : 18, weight: .bold, design: .rounded))
-                .foregroundStyle(isActive ? activeTheme.accent : activeTheme.secondaryText.opacity(0.62))
+                .font(.system(size: (isActive || isPrevious) ? 20 : 18, weight: .bold, design: .rounded))
+                .foregroundStyle((isActive || isPrevious) ? activeTheme.accent : activeTheme.secondaryText.opacity(0.62))
                 .symbolRenderingMode(.hierarchical)
                 .frame(width: 26, height: 26)
         }
         .padding(.horizontal, 12)
         .frame(height: effectiveRowHeight)
-        .background(glassSurface(rowBackground(isActive: isActive), radius: 8, prominence: isActive ? .regular : .quiet))
+        .background(glassSurface(rowBackground(isActive: isActive, isPrevious: isPrevious), radius: 8, prominence: (isActive || isPrevious) ? .regular : .quiet))
         .overlay(alignment: .trailing) {
-            if isActive {
+            if isActive || isPrevious {
                 RoundedRectangle(cornerRadius: 2, style: .continuous)
                     .fill(activeTheme.accent)
-                    .frame(width: 4)
+                    .frame(width: isActive ? 4 : 3)
                     .padding(.vertical, 11)
                     .padding(.trailing, 1)
             }
         }
         .overlay(
             RoundedRectangle(cornerRadius: 8)
-                .stroke(rowBorder(isActive: isActive))
+                .stroke(rowBorder(isActive: isActive, isPrevious: isPrevious))
         )
         .clipShape(RoundedRectangle(cornerRadius: 8))
-        .shadow(color: isActive ? activeTheme.accent.opacity(activeTheme.isNightTheme ? 0.18 : 0.14) : .clear, radius: 10, y: 4)
+        .shadow(color: (isActive || isPrevious) ? activeTheme.accent.opacity(activeTheme.isNightTheme ? 0.18 : 0.14) : .clear, radius: 10, y: 4)
     }
 
     private var isNight: Bool {
@@ -1059,12 +1067,28 @@ struct ContentView: View {
         }
     }
 
-    private func rowBackground(isActive: Bool) -> Color {
-        isActive ? activeTheme.activeRowBackground : activeTheme.rowBackground
+    private func rowBackground(isActive: Bool, isPrevious: Bool) -> Color {
+        if isActive {
+            return activeTheme.activeRowBackground
+        }
+
+        if isPrevious {
+            return activeTheme.activeRowBackground.opacity(activeTheme.isNightTheme ? 0.54 : 0.42)
+        }
+
+        return activeTheme.rowBackground
     }
 
-    private func rowBorder(isActive: Bool) -> Color {
-        isActive ? activeTheme.activeRowBorder : activeTheme.rowBorder
+    private func rowBorder(isActive: Bool, isPrevious: Bool) -> Color {
+        if isActive {
+            return activeTheme.activeRowBorder
+        }
+
+        if isPrevious {
+            return activeTheme.activeRowBorder.opacity(activeTheme.isNightTheme ? 0.42 : 0.34)
+        }
+
+        return activeTheme.rowBorder
     }
 
     private var usesNabawiPrayerCard: Bool {
@@ -1270,6 +1294,29 @@ struct ContentView: View {
     private func remainingPrayerText(for next: PrayerTime?) -> String {
         guard let next else { return "متبقي للصلاة --:--:--" }
         return "متبقي \(remainingPrayerTarget(for: next.key)) \(countdownText(for: next))"
+    }
+
+    private func elapsedPrayerText(for previous: PrayerTime?) -> String {
+        guard let previous else { return "مضى على الصلاة --:--:--" }
+        return "مضى على \(previous.title) \(elapsedText(since: previous.date))"
+    }
+
+    private func elapsedText(since date: Date) -> String {
+        let seconds = max(0, Int(now.timeIntervalSince(date)))
+        let hours = seconds / 3600
+        let minutes = (seconds % 3600) / 60
+        let remainingSeconds = seconds % 60
+        return String(format: "%02d:%02d:%02d", hours, minutes, remainingSeconds)
+    }
+
+    private func isPreviousPrayerRow(_ item: PrayerTime, previous: PrayerTime?, next: PrayerTime?) -> Bool {
+        guard let previous,
+              item.key == previous.key,
+              item.key != next?.key else {
+            return false
+        }
+
+        return abs(item.date.timeIntervalSince(previous.date)) < 60
     }
 
     private func remainingPrayerTarget(for key: PrayerKey) -> String {
