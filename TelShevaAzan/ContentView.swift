@@ -962,12 +962,12 @@ struct ContentView: View {
     private func prayerRow(_ item: PrayerTime, next: PrayerTime?, previous: PrayerTime?, rowHeight: CGFloat) -> some View {
         let isActive = item.key == next?.key
         let isPrevious = isPreviousPrayerRow(item, previous: previous, next: next)
-        let effectiveRowHeight = (isActive || isPrevious) ? max(rowHeight, 56) : rowHeight
+        let effectiveRowHeight = isActive ? max(rowHeight, 56) : rowHeight
 
         return HStack(spacing: 10) {
             Text(item.time)
                 .font(.headline.monospacedDigit().weight(.bold))
-                .foregroundStyle((isActive || isPrevious) ? activeTheme.accent : activeTheme.primaryText)
+                .foregroundStyle(isActive ? activeTheme.accent : activeTheme.primaryText)
                 .lineLimit(1)
                 .minimumScaleFactor(0.78)
 
@@ -976,7 +976,7 @@ struct ContentView: View {
             VStack(alignment: .trailing, spacing: 1) {
                 Text(item.title)
                     .font(.headline.weight(.bold))
-                    .foregroundStyle(isActive ? activeTheme.accent : (isPrevious ? activeTheme.primaryText.opacity(0.92) : activeTheme.secondaryText.opacity(0.78)))
+                    .foregroundStyle(isActive ? activeTheme.accent : activeTheme.secondaryText.opacity(0.78))
                     .lineLimit(1)
                     .minimumScaleFactor(0.74)
 
@@ -996,29 +996,29 @@ struct ContentView: View {
             }
 
             Image(systemName: prayerSymbol(for: item.key))
-                .font(.system(size: (isActive || isPrevious) ? 20 : 18, weight: .bold, design: .rounded))
-                .foregroundStyle((isActive || isPrevious) ? activeTheme.accent : activeTheme.secondaryText.opacity(0.62))
+                .font(.system(size: isActive ? 20 : 18, weight: .bold, design: .rounded))
+                .foregroundStyle(isActive ? activeTheme.accent : activeTheme.secondaryText.opacity(0.62))
                 .symbolRenderingMode(.hierarchical)
                 .frame(width: 26, height: 26)
         }
         .padding(.horizontal, 12)
         .frame(height: effectiveRowHeight)
-        .background(glassSurface(rowBackground(isActive: isActive, isPrevious: isPrevious), radius: 8, prominence: (isActive || isPrevious) ? .regular : .quiet))
+        .background(glassSurface(rowBackground(isActive: isActive), radius: 8, prominence: isActive ? .regular : .quiet))
         .overlay(alignment: .trailing) {
-            if isActive || isPrevious {
+            if isActive {
                 RoundedRectangle(cornerRadius: 2, style: .continuous)
                     .fill(activeTheme.accent)
-                    .frame(width: isActive ? 4 : 3)
+                    .frame(width: 4)
                     .padding(.vertical, 11)
                     .padding(.trailing, 1)
             }
         }
         .overlay(
             RoundedRectangle(cornerRadius: 8)
-                .stroke(rowBorder(isActive: isActive, isPrevious: isPrevious))
+                .stroke(rowBorder(isActive: isActive))
         )
         .clipShape(RoundedRectangle(cornerRadius: 8))
-        .shadow(color: (isActive || isPrevious) ? activeTheme.accent.opacity(activeTheme.isNightTheme ? 0.18 : 0.14) : .clear, radius: 10, y: 4)
+        .shadow(color: isActive ? activeTheme.accent.opacity(activeTheme.isNightTheme ? 0.18 : 0.14) : .clear, radius: 10, y: 4)
     }
 
     private var isNight: Bool {
@@ -1067,28 +1067,12 @@ struct ContentView: View {
         }
     }
 
-    private func rowBackground(isActive: Bool, isPrevious: Bool) -> Color {
-        if isActive {
-            return activeTheme.activeRowBackground
-        }
-
-        if isPrevious {
-            return activeTheme.activeRowBackground.opacity(activeTheme.isNightTheme ? 0.54 : 0.42)
-        }
-
-        return activeTheme.rowBackground
+    private func rowBackground(isActive: Bool) -> Color {
+        isActive ? activeTheme.activeRowBackground : activeTheme.rowBackground
     }
 
-    private func rowBorder(isActive: Bool, isPrevious: Bool) -> Color {
-        if isActive {
-            return activeTheme.activeRowBorder
-        }
-
-        if isPrevious {
-            return activeTheme.activeRowBorder.opacity(activeTheme.isNightTheme ? 0.42 : 0.34)
-        }
-
-        return activeTheme.rowBorder
+    private func rowBorder(isActive: Bool) -> Color {
+        isActive ? activeTheme.activeRowBorder : activeTheme.rowBorder
     }
 
     private var usesNabawiPrayerCard: Bool {
