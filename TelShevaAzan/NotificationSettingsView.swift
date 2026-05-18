@@ -105,8 +105,6 @@ struct NotificationSettingsView: View {
                         nafahatSettings
                     } else if selectedPage == .adhan {
                         adhanSettings
-                    } else if selectedPage == .fajrAlarm {
-                        fajrAlarmSettings
                     } else {
                         appearanceSettings
                     }
@@ -123,7 +121,6 @@ struct NotificationSettingsView: View {
         HStack(spacing: 8) {
             Spacer(minLength: 0)
             notificationPageButton(.appearance)
-            notificationPageButton(.fajrAlarm)
             notificationPageButton(.adhan)
         }
         .frame(maxWidth: .infinity, alignment: .topTrailing)
@@ -203,17 +200,7 @@ struct NotificationSettingsView: View {
 
     private var appearanceSettings: some View {
         VStack(alignment: .trailing, spacing: 16) {
-            themePalettePanel(
-                title: "أنماط الليل",
-                themes: PrayerVisualTheme.nightChoices,
-                selectedID: selectedNightThemeID
-            )
-
-            themePalettePanel(
-                title: "أنماط النهار",
-                themes: PrayerVisualTheme.dayChoices,
-                selectedID: selectedDayThemeID
-            )
+            themeSplitPalettePanel
 
             widgetRefreshPanel
         }
@@ -1074,6 +1061,70 @@ struct NotificationSettingsView: View {
             .accessibilityHidden(true)
     }
 
+    private var themeSplitPalettePanel: some View {
+        panel(title: "أنماط التطبيق") {
+            HStack(alignment: .top, spacing: 10) {
+                themeColumn(
+                    title: "نهاري",
+                    themes: PrayerVisualTheme.dayChoices,
+                    selectedID: selectedDayThemeID
+                )
+
+                themeColumn(
+                    title: "ليلي",
+                    themes: PrayerVisualTheme.nightChoices,
+                    selectedID: selectedNightThemeID
+                )
+            }
+            .environment(\.layoutDirection, .leftToRight)
+        }
+    }
+
+    private func themeColumn(title: String, themes: [PrayerVisualTheme], selectedID: String) -> some View {
+        VStack(alignment: .trailing, spacing: 8) {
+            Text(title)
+                .font(.caption.weight(.black))
+                .foregroundStyle(theme.accent)
+                .frame(maxWidth: .infinity, alignment: .trailing)
+
+            ForEach(themes) { visualTheme in
+                Button {
+                    selectTheme(visualTheme)
+                } label: {
+                    VStack(alignment: .trailing, spacing: 3) {
+                        HStack(spacing: 6) {
+                            Image(systemName: selectedID == visualTheme.rawValue ? "checkmark.circle.fill" : visualTheme.symbol)
+                                .font(.system(size: 13, weight: .black))
+                                .foregroundStyle(selectedID == visualTheme.rawValue ? theme.accent : theme.secondaryText.opacity(0.72))
+
+                            Spacer(minLength: 4)
+
+                            Text(visualTheme.title)
+                                .font(.caption2.weight(.black))
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.68)
+                        }
+                        .environment(\.layoutDirection, .leftToRight)
+
+                        Text(visualThemeSubtitle(for: visualTheme))
+                            .font(.system(size: 9, weight: .semibold, design: .rounded))
+                            .foregroundStyle(theme.secondaryText.opacity(0.76))
+                            .lineLimit(2)
+                            .minimumScaleFactor(0.70)
+                            .multilineTextAlignment(.trailing)
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 8)
+                    .frame(maxWidth: .infinity, minHeight: 52, alignment: .trailing)
+                    .background(lightRowSurface(selectedID == visualTheme.rawValue ? theme.activeRowBackground : settingsRowFill, radius: 8, selected: selectedID == visualTheme.rawValue))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .topTrailing)
+    }
+
     private func themePalettePanel(title: String, themes: [PrayerVisualTheme], selectedID: String) -> some View {
         panel(title: title) {
             LazyVStack(spacing: 0) {
@@ -1197,7 +1248,6 @@ struct NotificationSettingsView: View {
 
 private enum NotificationSettingsPage: String, CaseIterable, Identifiable {
     case adhan
-    case fajrAlarm
     case appearance
 
     var id: String { rawValue }
@@ -1206,8 +1256,6 @@ private enum NotificationSettingsPage: String, CaseIterable, Identifiable {
         switch self {
         case .adhan:
             return "الأذان"
-        case .fajrAlarm:
-            return "منبه الفجر"
         case .appearance:
             return "الأنماط"
         }
@@ -1217,8 +1265,6 @@ private enum NotificationSettingsPage: String, CaseIterable, Identifiable {
         switch self {
         case .adhan:
             return "bell.badge.fill"
-        case .fajrAlarm:
-            return "alarm.fill"
         case .appearance:
             return "paintpalette.fill"
         }

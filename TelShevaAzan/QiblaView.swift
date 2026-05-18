@@ -86,9 +86,7 @@ struct QiblaView: View {
                 }
                 .buttonStyle(.plain)
             } else {
-                Image(systemName: "location.north.fill")
-                    .font(.system(size: 17, weight: .black))
-                    .foregroundStyle(theme.accent)
+                KaabaCompassMarker(size: 24, theme: theme)
                     .frame(width: 38, height: 38)
                     .background(glassSurface(theme.controlBackground, radius: 8))
                     .overlay(
@@ -132,9 +130,7 @@ struct QiblaView: View {
                     .rotationEffect(.degrees(Double(index) * 10))
             }
 
-            Image(systemName: "location.north.fill")
-                .font(.system(size: size * 0.28, weight: .black))
-                .foregroundStyle(theme.accent)
+            KaabaCompassMarker(size: size * 0.34, theme: theme)
                 .shadow(color: theme.accent.opacity(0.32), radius: 10)
                 .rotationEffect(.degrees(delta ?? 0))
                 .animation(.easeOut(duration: 0.18), value: delta ?? 0)
@@ -322,5 +318,109 @@ struct QiblaView: View {
             cornerRadius: radius,
             prominence: prominence
         )
+    }
+}
+
+private struct KaabaCompassMarker: View {
+    let size: CGFloat
+    let theme: PrayerVisualTheme
+
+    private var gold: Color {
+        Color(red: 0.94, green: 0.66, blue: 0.20)
+    }
+
+    private var darkGold: Color {
+        Color(red: 0.52, green: 0.34, blue: 0.08)
+    }
+
+    var body: some View {
+        ZStack {
+            Ellipse()
+                .fill(Color.black.opacity(theme.isNightTheme ? 0.36 : 0.18))
+                .frame(width: size * 0.78, height: size * 0.18)
+                .blur(radius: size * 0.025)
+                .offset(y: size * 0.36)
+
+            Path { path in
+                let w = size * 0.54
+                let h = size * 0.54
+                let x = size * 0.47
+                let y = size * 0.24
+                path.move(to: CGPoint(x: x, y: y))
+                path.addLine(to: CGPoint(x: x + w * 0.22, y: y - h * 0.12))
+                path.addLine(to: CGPoint(x: x + w * 0.22, y: y + h * 0.86))
+                path.addLine(to: CGPoint(x: x, y: y + h))
+                path.closeSubpath()
+            }
+            .fill(
+                LinearGradient(
+                    colors: [Color.black.opacity(0.82), Color(red: 0.16, green: 0.13, blue: 0.08)],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            )
+
+            RoundedRectangle(cornerRadius: size * 0.055, style: .continuous)
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            Color(red: 0.02, green: 0.02, blue: 0.018),
+                            Color(red: 0.10, green: 0.09, blue: 0.075)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .frame(width: size * 0.54, height: size * 0.54)
+                .overlay(alignment: .top) {
+                    Rectangle()
+                        .fill(
+                            LinearGradient(
+                                colors: [gold.opacity(0.96), darkGold.opacity(0.84)],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .frame(height: size * 0.075)
+                        .padding(.top, size * 0.13)
+                }
+                .overlay(alignment: .bottom) {
+                    RoundedRectangle(cornerRadius: size * 0.018, style: .continuous)
+                        .fill(
+                            LinearGradient(
+                                colors: [gold.opacity(0.88), darkGold.opacity(0.86)],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                        .frame(width: size * 0.12, height: size * 0.18)
+                        .padding(.bottom, size * 0.06)
+                }
+                .overlay(
+                    RoundedRectangle(cornerRadius: size * 0.055, style: .continuous)
+                        .stroke(Color.white.opacity(theme.isNightTheme ? 0.10 : 0.16), lineWidth: 1)
+                )
+
+            Path { path in
+                let w = size * 0.54
+                let h = size * 0.54
+                let x = size * 0.23
+                let y = size * 0.24
+                path.move(to: CGPoint(x: x, y: y))
+                path.addLine(to: CGPoint(x: x + w * 0.24, y: y - h * 0.12))
+                path.addLine(to: CGPoint(x: x + w * 1.22, y: y - h * 0.12))
+                path.addLine(to: CGPoint(x: x + w, y: y))
+                path.closeSubpath()
+            }
+            .fill(
+                LinearGradient(
+                    colors: [Color(red: 0.14, green: 0.12, blue: 0.09), Color.black],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+            )
+        }
+        .frame(width: size, height: size)
+        .accessibilityLabel("الكعبة المشرفة")
     }
 }

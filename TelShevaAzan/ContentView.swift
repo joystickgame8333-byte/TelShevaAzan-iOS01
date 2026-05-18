@@ -13,7 +13,6 @@ struct ContentView: View {
     @State private var selectedTab: HomeDockItem = .schedule
     @State private var tabTransitionEdge: Edge = .leading
     @State private var showWelcomeActivationPrompt = false
-    @State private var activeFajrAlarm: FajrAlarmPresentation?
     @Namespace private var dockSelectionNamespace
     @StateObject private var notifications = PrayerNotificationManager.shared
     @StateObject private var liveActivityCenter = PrayerLiveActivityCenter.shared
@@ -30,8 +29,8 @@ struct ContentView: View {
             let sectionSpacing: CGFloat = compactHeight ? 6 : 8
             let rowSpacing: CGFloat = compactHeight ? 6 : 8
             let dockBottomPadding = max(proxy.safeAreaInsets.bottom * 0.22, CGFloat(6))
-            let dockReservedHeight = proxy.safeAreaInsets.bottom + (compactHeight ? 62 : 70)
-            let rowHeight = min(CGFloat(58), max(CGFloat(38), (proxy.size.height - dockReservedHeight - 430) / 6))
+            let dockReservedHeight = proxy.safeAreaInsets.bottom + (compactHeight ? 86 : 96)
+            let rowHeight = min(CGFloat(58), max(CGFloat(38), (proxy.size.height - dockReservedHeight - 388) / 6))
 
             ZStack {
                 background
@@ -112,8 +111,8 @@ struct ContentView: View {
             if phase == .active {
                 WidgetRefreshCenter.refreshAll()
                 WidgetRefreshCenter.refreshAgainSoon()
-                liveActivityCenter.syncWithPrayerWindow(now: Date(), themeID: activeTheme.rawValue)
             }
+            liveActivityCenter.syncWithPrayerWindow(now: Date(), themeID: activeTheme.rawValue)
         }
         .onAppear {
             applyVisualRefreshThemeOnce()
@@ -122,23 +121,11 @@ struct ContentView: View {
             WidgetRefreshCenter.refreshAgainSoon()
             liveActivityCenter.syncWithPrayerWindow(now: Date(), themeID: activeTheme.rawValue)
             presentWelcomeActivationPromptIfNeeded()
-            if let alarm = notifications.consumePendingFajrAlarmPresentation() {
-                activeFajrAlarm = alarm
-            }
         }
         .onReceive(NotificationCenter.default.publisher(for: PrayerNotificationManager.openSettingsNotification)) { _ in
             withAnimation(.easeInOut(duration: 0.18)) {
                 selectedTab = .notifications
             }
-        }
-        .onReceive(NotificationCenter.default.publisher(for: PrayerNotificationManager.presentFajrAlarmNotification)) { notification in
-            if let alarm = notification.object as? FajrAlarmPresentation {
-                _ = notifications.consumePendingFajrAlarmPresentation()
-                activeFajrAlarm = alarm
-            }
-        }
-        .fullScreenCover(item: $activeFajrAlarm) { alarm in
-            FajrAlarmRingingView(alarm: alarm, theme: activeTheme)
         }
         .onOpenURL { url in
             handleDeepLink(url)
@@ -373,8 +360,6 @@ struct ContentView: View {
             quranVerse
 
             nextPrayerPanel(next: next, previous: previous, compact: compactHeight)
-
-            dateControls
 
             prayerRows(schedule: schedule, next: next, previous: previous, rowSpacing: rowSpacing, rowHeight: rowHeight)
         }
@@ -802,7 +787,7 @@ struct ContentView: View {
     private func nabawiNextPrayerPanel(next: PrayerTime?, previous: PrayerTime?, compact: Bool) -> some View {
         let progress = prayerProgress(previous: previous, next: next)
         let cornerRadius: CGFloat = compact ? 20 : 22
-        let cardHeight: CGFloat = compact ? 146 : 164
+        let cardHeight: CGFloat = compact ? 158 : 184
         let isNightCard = activeTheme.isNightTheme
 
         return ZStack {
@@ -973,7 +958,7 @@ struct ContentView: View {
     private func prayerRow(_ item: PrayerTime, next: PrayerTime?, previous: PrayerTime?, rowHeight: CGFloat) -> some View {
         let isActive = item.key == next?.key
         let isPrevious = isPreviousPrayerRow(item, previous: previous, next: next)
-        let effectiveRowHeight = isActive ? max(rowHeight, 56) : rowHeight
+        let effectiveRowHeight = (isActive || isPrevious) ? max(rowHeight, 56) : rowHeight
 
         return HStack(spacing: 10) {
             Text(item.time)
@@ -1005,7 +990,6 @@ struct ContentView: View {
                         .minimumScaleFactor(0.70)
                 }
             }
-            .offset(y: isPrevious ? -2 : 0)
 
             Image(systemName: prayerSymbol(for: item.key))
                 .font(.system(size: isActive ? 20 : 18, weight: .bold, design: .rounded))

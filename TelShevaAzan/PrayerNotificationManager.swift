@@ -4,6 +4,11 @@ import UserNotifications
 
 enum PrayerNotificationSound: String, CaseIterable, Identifiable {
     case bundledAdhan
+    case adhanSoftCall
+    case adhanClearCall
+    case adhanWarmCall
+    case adhanDeepCall
+    case adhanFinalCall
     case softDhikr
     case system
 
@@ -13,6 +18,16 @@ enum PrayerNotificationSound: String, CaseIterable, Identifiable {
         switch self {
         case .bundledAdhan:
             return "الأذان الحالي"
+        case .adhanSoftCall:
+            return "أذان هادئ 1"
+        case .adhanClearCall:
+            return "أذان واضح 2"
+        case .adhanWarmCall:
+            return "أذان دافئ 3"
+        case .adhanDeepCall:
+            return "أذان عميق 4"
+        case .adhanFinalCall:
+            return "أذان خفيف 5"
         case .softDhikr:
             return "نفحة روحانية"
         case .system:
@@ -24,6 +39,16 @@ enum PrayerNotificationSound: String, CaseIterable, Identifiable {
         switch self {
         case .bundledAdhan:
             return "المقطع الذي أرسلته يعمل مع إشعارات الصلاة"
+        case .adhanSoftCall:
+            return "مقطع أذان قصير ولطيف للتنبيه اليومي"
+        case .adhanClearCall:
+            return "صوت أذان أوضح مع بداية ناعمة"
+        case .adhanWarmCall:
+            return "نبرة أذان متوسطة بدون حدة"
+        case .adhanDeepCall:
+            return "اختيار أعمق لمن يريد صوتًا أقوى"
+        case .adhanFinalCall:
+            return "مقطع خفيف ومختصر للتجربة اليومية"
         case .softDhikr:
             return "صوت هادئ لمن يريد تنبيهًا أخف"
         case .system:
@@ -33,7 +58,7 @@ enum PrayerNotificationSound: String, CaseIterable, Identifiable {
 
     var systemImage: String {
         switch self {
-        case .bundledAdhan:
+        case .bundledAdhan, .adhanSoftCall, .adhanClearCall, .adhanWarmCall, .adhanDeepCall, .adhanFinalCall:
             return "waveform.circle.fill"
         case .softDhikr:
             return "sparkles"
@@ -359,6 +384,7 @@ enum NafahatReminderText: String, CaseIterable, Identifiable {
     case protection
     case gratitude
     case quran
+    case lightReminders
     case mixed
 
     var id: String { rawValue }
@@ -379,6 +405,8 @@ enum NafahatReminderText: String, CaseIterable, Identifiable {
             return "شكر"
         case .quran:
             return "آيات وتذكير"
+        case .lightReminders:
+            return "إشعارات خفيفة"
         case .mixed:
             return "منوّع"
         }
@@ -400,6 +428,8 @@ enum NafahatReminderText: String, CaseIterable, Identifiable {
             return "تذكير بالحمد والرضا"
         case .quran:
             return "آيات قصيرة ومعانٍ لطيفة"
+        case .lightReminders:
+            return "عبارات إيمانية قصيرة تصل بهدوء"
         case .mixed:
             return "يتغير بين صلاة واستغفار وتسبيح ودعاء"
         }
@@ -421,6 +451,8 @@ enum NafahatReminderText: String, CaseIterable, Identifiable {
             return "sun.max.fill"
         case .quran:
             return "book.closed.fill"
+        case .lightReminders:
+            return "bell.and.waves.left.and.right.fill"
         case .mixed:
             return "shuffle"
         }
@@ -477,6 +509,14 @@ enum NafahatReminderText: String, CaseIterable, Identifiable {
                 NafahatReminderMessage(title: "نور", body: "اللَّهُ نُورُ السَّمَاوَاتِ وَالْأَرْضِ"),
                 NafahatReminderMessage(title: "سعة", body: "فَإِنَّ مَعَ الْعُسْرِ يُسْرًا")
             ]
+        case .lightReminders:
+            return [
+                NafahatReminderMessage(title: "ذكر خفيف", body: "سبحان الله وبحمده"),
+                NafahatReminderMessage(title: "استغفار", body: "أستغفر الله وأتوب إليه"),
+                NafahatReminderMessage(title: "دعاء قصير", body: "اللهم أعني على ذكرك وشكرك وحسن عبادتك"),
+                NafahatReminderMessage(title: "طمأنينة", body: "لا حول ولا قوة إلا بالله"),
+                NafahatReminderMessage(title: "دعوة جامعة", body: "ربنا آتنا في الدنيا حسنة وفي الآخرة حسنة")
+            ]
         case .mixed:
             return NafahatReminderText.salawat.messages
                 + NafahatReminderText.istighfar.messages
@@ -485,6 +525,7 @@ enum NafahatReminderText: String, CaseIterable, Identifiable {
                 + NafahatReminderText.protection.messages
                 + NafahatReminderText.gratitude.messages
                 + NafahatReminderText.quran.messages
+                + NafahatReminderText.lightReminders.messages
         }
     }
 }
@@ -659,7 +700,8 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
         selectedNafahatTextID = savedNafahatTextID ?? NafahatReminderText.mixed.rawValue
         let savedNafahatQuietID = UserDefaults.standard.string(forKey: Self.selectedNafahatQuietWindowIDKey)
         selectedNafahatQuietWindowID = savedNafahatQuietID ?? NafahatQuietWindow.lateNight.rawValue
-        isFajrAlarmEnabled = UserDefaults.standard.bool(forKey: Self.fajrAlarmEnabledKey)
+        isFajrAlarmEnabled = false
+        UserDefaults.standard.set(false, forKey: Self.fajrAlarmEnabledKey)
         let savedFajrIntensityID = UserDefaults.standard.string(forKey: Self.selectedFajrAlarmIntensityIDKey)
         selectedFajrAlarmIntensityID = savedFajrIntensityID ?? FajrAlarmIntensity.wakeUp.rawValue
         let savedFajrSoundID = UserDefaults.standard.string(forKey: Self.selectedFajrAlarmSoundIDKey)
@@ -672,28 +714,12 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
         super.init()
         center.delegate = self
         registerNotificationCategories()
+        removePendingFajrAlarmNotifications(for: nil)
         refreshStatus()
     }
 
     private func registerNotificationCategories() {
-        let awakeAction = UNNotificationAction(
-            identifier: Self.fajrAlarmAwakeActionID,
-            title: "صحيت",
-            options: []
-        )
-        let snoozeAction = UNNotificationAction(
-            identifier: Self.fajrAlarmSnoozeActionID,
-            title: "غفوة \(fajrAlarmSnoozeMinutes) د",
-            options: []
-        )
-        let fajrCategory = UNNotificationCategory(
-            identifier: Self.fajrAlarmCategoryID,
-            actions: [awakeAction, snoozeAction],
-            intentIdentifiers: [],
-            options: [.customDismissAction]
-        )
-
-        center.setNotificationCategories([fajrCategory])
+        center.setNotificationCategories([])
     }
 
     func enable() {
@@ -876,14 +902,10 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
     }
 
     func setFajrAlarmEnabled(_ enabled: Bool) {
-        isFajrAlarmEnabled = enabled
-        defaults.set(enabled, forKey: Self.fajrAlarmEnabledKey)
-
-        if enabled && !isEnabled {
-            enable()
-        } else {
-            rescheduleIfEnabled()
-        }
+        isFajrAlarmEnabled = false
+        defaults.set(false, forKey: Self.fajrAlarmEnabledKey)
+        removePendingFajrAlarmNotifications(for: nil)
+        rescheduleIfEnabled()
     }
 
     func selectFajrAlarmIntensity(_ intensity: FajrAlarmIntensity) {
@@ -1067,7 +1089,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
             }
 
             DispatchQueue.main.async {
-                if self.enabledPrayerIDs.isEmpty && !self.isNafahatEnabled && !self.isFajrAlarmEnabled {
+                if self.enabledPrayerIDs.isEmpty && !self.isNafahatEnabled {
                     self.statusText = "اختر صلاة واحدة على الأقل للتنبيه"
                 } else {
                     self.statusText = events.isEmpty ? "لا توجد صلوات قادمة في الجدول" : "التنبيهات مفعلة للصلوات المختارة"
@@ -1097,8 +1119,6 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
         }
 
         events.append(contentsOf: upcomingNafahatEvents(now: now))
-        events.append(contentsOf: upcomingFajrAlarmEvents(now: now))
-
         return events
             .sorted { $0.date < $1.date }
             .prefix(maxPendingNotifications)
@@ -1381,6 +1401,16 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
             return .default
         case .bundledAdhan:
             return bundledNotificationSound(["adhan.caf", "adhan.wav", "adhan.aiff"])
+        case .adhanSoftCall:
+            return bundledNotificationSound(["adhan-01-soft-call.wav"])
+        case .adhanClearCall:
+            return bundledNotificationSound(["adhan-02-clear-call.wav"])
+        case .adhanWarmCall:
+            return bundledNotificationSound(["adhan-03-warm-call.wav"])
+        case .adhanDeepCall:
+            return bundledNotificationSound(["adhan-04-deep-call.wav"])
+        case .adhanFinalCall:
+            return bundledNotificationSound(["adhan-05-final-call.wav"])
         case .softDhikr:
             return bundledNotificationSound(["nafahat.wav", "nafahat.caf", "nafahat.aiff"])
         }
@@ -1473,7 +1503,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
             DispatchQueue.main.async {
                 guard let self else { return }
                 if self.isEnabled && (settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional) {
-                    self.statusText = self.enabledPrayerIDs.isEmpty && !self.isNafahatEnabled && !self.isFajrAlarmEnabled ? "اختر صلاة واحدة على الأقل للتنبيه" : "التنبيهات مفعلة"
+                    self.statusText = self.enabledPrayerIDs.isEmpty && !self.isNafahatEnabled ? "اختر صلاة واحدة على الأقل للتنبيه" : "التنبيهات مفعلة"
                 } else if settings.authorizationStatus == .denied {
                     self.statusText = "اسمح بالإشعارات من إعدادات الآيفون"
                 } else {
@@ -1484,34 +1514,10 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
     }
 
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification) async -> UNNotificationPresentationOptions {
-        if notification.request.content.categoryIdentifier == Self.fajrAlarmCategoryID {
-            presentFajrAlarm(from: notification)
-            return []
-        }
-
         return [.banner, .sound]
     }
 
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse) async {
-        if response.notification.request.content.categoryIdentifier == Self.fajrAlarmCategoryID {
-            let fajrDateKey = response.notification.request.content.userInfo["fajrDateKey"] as? String
-
-            switch response.actionIdentifier {
-            case Self.fajrAlarmAwakeActionID:
-                stopFajrAlarm(dateKey: fajrDateKey)
-                return
-            case Self.fajrAlarmSnoozeActionID:
-                snoozeFajrAlarm(dateKey: fajrDateKey)
-                return
-            default:
-                presentFajrAlarm(from: response.notification)
-                await MainActor.run {
-                    NotificationCenter.default.post(name: Self.openSettingsNotification, object: nil)
-                }
-                return
-            }
-        }
-
         await MainActor.run {
             NotificationCenter.default.post(name: Self.openSettingsNotification, object: nil)
         }
