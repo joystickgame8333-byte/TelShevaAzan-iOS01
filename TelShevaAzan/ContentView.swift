@@ -443,6 +443,17 @@ struct ContentView: View {
         }
         .multilineTextAlignment(.center)
         .frame(maxWidth: .infinity, alignment: .center)
+        .padding(.horizontal, 18)
+        .padding(.vertical, 9)
+        .background(
+            glassSurface(activeTheme.panelBackground.opacity(activeTheme.isNightTheme ? 0.52 : 0.64), radius: 18, prominence: .quiet)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(activeTheme.rowBorder.opacity(activeTheme.isNightTheme ? 0.34 : 0.50), lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .padding(.horizontal, 22)
     }
 
     private func prayerRows(
@@ -1106,17 +1117,17 @@ struct ContentView: View {
                     nabawiImage(isNight: true)
                         .resizable()
                         .scaledToFill()
-                        .frame(width: geometry.size.width * 0.62, height: height)
-                        .scaleEffect(1.18, anchor: .bottom)
-                        .brightness(0.20)
+                        .frame(width: geometry.size.width * 0.74, height: height)
+                        .scaleEffect(1.08, anchor: .bottomLeading)
+                        .brightness(0.16)
                         .saturation(1.12)
                         .clipped()
                         .overlay(
                             LinearGradient(
                                 colors: [
                                     Color.black.opacity(0.00),
-                                    Color.black.opacity(0.16),
-                                    Color.black.opacity(0.68)
+                                    Color.black.opacity(0.10),
+                                    Color.black.opacity(0.52)
                                 ],
                                 startPoint: .leading,
                                 endPoint: .trailing
@@ -1126,8 +1137,8 @@ struct ContentView: View {
                     LinearGradient(
                         colors: [
                             Color.black.opacity(0.02),
-                            Color.black.opacity(0.26),
-                            Color.black.opacity(0.88)
+                            Color.black.opacity(0.18),
+                            Color.black.opacity(0.76)
                         ],
                         startPoint: .leading,
                         endPoint: .trailing

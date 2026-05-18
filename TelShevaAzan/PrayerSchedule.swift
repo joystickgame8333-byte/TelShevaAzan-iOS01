@@ -198,12 +198,12 @@ enum PrayerEngine {
 
     static func longDateLabel(for dateKey: String) -> String {
         guard let date = Self.date(from: dateKey, time: "12:00") else { return dateKey }
-        return Self.longArabicDateFormatter.string(from: date)
+        return Self.latinDigits(Self.longArabicDateFormatter.string(from: date))
     }
 
     static func hijriDateLabel(for dateKey: String) -> String {
         guard let date = Self.date(from: dateKey, time: "12:00") else { return "" }
-        return Self.hijriArabicDateFormatter.string(from: date)
+        return Self.latinDigits(Self.hijriArabicDateFormatter.string(from: date))
     }
 
     static func date(from dateKey: String, time: String) -> Date? {
@@ -231,6 +231,17 @@ enum PrayerEngine {
             components.month ?? 0,
             components.day ?? 0
         )
+    }
+
+    private static func latinDigits(_ text: String) -> String {
+        let replacements: [Character: Character] = [
+            "٠": "0", "١": "1", "٢": "2", "٣": "3", "٤": "4",
+            "٥": "5", "٦": "6", "٧": "7", "٨": "8", "٩": "9",
+            "۰": "0", "۱": "1", "۲": "2", "۳": "3", "۴": "4",
+            "۵": "5", "۶": "6", "۷": "7", "۸": "8", "۹": "9"
+        ]
+
+        return String(text.map { replacements[$0] ?? $0 })
     }
 
     private static func addMinutes(_ minutes: Int, to time: String) -> String {
