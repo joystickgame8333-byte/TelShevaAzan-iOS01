@@ -16,6 +16,7 @@ final class PrayerLiveActivityCenter: ObservableObject {
 
     private let previewDuration: TimeInterval = 30
     private let autoLeadTime: TimeInterval = 5 * 60
+    private let postPrayerDisplayDuration: TimeInterval = 45
     private let nowDisplayDuration: TimeInterval = 0
     private let expiredCleanupGrace: TimeInterval = 0
     private var lastSyncDate = Date.distantPast
@@ -205,11 +206,22 @@ final class PrayerLiveActivityCenter: ObservableObject {
         await endActivities(where: { $0.attributes.isPreview })
 
         let dateKey = PrayerEngine.defaultDateKey(for: now)
-        guard let next = PrayerEngine.nextPrayer(for: dateKey, now: now) else { return }
+        let previousAtNow = PrayerEngine.previousPrayer(for: dateKey, now: now)
 
-        let secondsUntilPrayer = next.date.timeIntervalSince(now)
-        let previous = PrayerEngine.previousPrayer(for: dateKey, now: now)
-        let prayerID = realPrayerID(for: next)
+        let targetPrayer: PrayerTime
+        let previous: PrayerTime?
+        if let justStartedPrayer = previousAtNow,
+           now.timeIntervalSince(justStartedPrayer.date) <= postPrayerDisplayDuration {
+            targetPrayer = justStartedPrayer
+            previous = PrayerEngine.previousPrayer(for: dateKey, now: justStartedPrayer.date.addingTimeInterval(-1))
+        } else {
+            guard let nextPrayer = PrayerEngine.nextPrayer(for: dateKey, now: now) else { return }
+            targetPrayer = nextPrayer
+            previous = previousAtNow
+        }
+
+        let secondsUntilPrayer = targetPrayer.date.timeIntervalSince(now)
+        let prayerID = realPrayerID(for: targetPrayer)
 
         for activity in Activity<PrayerLiveActivityAttributes>.activities where !activity.attributes.isPreview && activity.attributes.prayerID != prayerID {
             if now >= activityEndDate(for: activity) {
@@ -221,15 +233,15 @@ final class PrayerLiveActivityCenter: ObservableObject {
             return
         }
 
-        if secondsUntilPrayer <= 0 {
+        if secondsUntilPrayer <= -postPrayerDisplayDuration {
             return
         }
 
-        let activityEndDate = next.date
+        let activityEndDate = liveActivityEndDate(for: targetPrayer.date, isPreview: false)
         let phase = phase(for: secondsUntilPrayer)
         let state = PrayerLiveActivityAttributes.ContentState(
             phase: phase,
-            prayerDate: next.date,
+            prayerDate: targetPrayer.date,
             updatedAt: now
         )
 
@@ -241,9 +253,9 @@ final class PrayerLiveActivityCenter: ObservableObject {
 
         let attributes = PrayerLiveActivityAttributes(
             prayerID: prayerID,
-            prayerName: next.title,
-            prayerTime: next.time,
-            prayerDate: next.date,
+            prayerName: targetPrayer.title,
+            prayerTime: targetPrayer.time,
+            prayerDate: targetPrayer.date,
             previousPrayerName: previous?.title ?? "الصلاة السابقة",
             previousPrayerDate: previous?.date,
             cityName: "تل السبع",
@@ -282,7 +294,11 @@ final class PrayerLiveActivityCenter: ObservableObject {
 
     @available(iOS 16.1, *)
     private func activityEndDate(for activity: Activity<PrayerLiveActivityAttributes>) -> Date {
-        activity.attributes.prayerDate
+        liveActivityEndDate(for: activity.attributes.prayerDate, isPreview: activity.attributes.isPreview)
+    }
+
+    private func liveActivityEndDate(for prayerDate: Date, isPreview: Bool) -> Date {
+        isPreview ? prayerDate : prayerDate.addingTimeInterval(postPrayerDisplayDuration)
     }
 
     @available(iOS 16.1, *)

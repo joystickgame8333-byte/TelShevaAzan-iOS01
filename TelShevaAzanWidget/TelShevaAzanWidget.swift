@@ -1556,7 +1556,7 @@ private func salatiCompactTitle(for context: ActivityViewContext<PrayerLiveActiv
 @available(iOSApplicationExtension 16.1, *)
 private func salatiShouldShowIslandContent(for context: ActivityViewContext<PrayerLiveActivityAttributes>) -> Bool {
     let secondsUntilPrayer = context.attributes.prayerDate.timeIntervalSinceNow
-    return secondsUntilPrayer > 0 && secondsUntilPrayer <= 60
+    return secondsUntilPrayer > -45 && secondsUntilPrayer <= 60
 }
 
 @available(iOSApplicationExtension 16.1, *)
