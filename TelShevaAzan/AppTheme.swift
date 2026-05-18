@@ -366,29 +366,29 @@ enum PrayerVisualTheme: String, CaseIterable, Identifiable {
         case .nightAppleGlass:
             return ThemePalette(
                 appBackground: [
-                    Color(red: 0.000, green: 0.000, blue: 0.000),
-                    Color(red: 0.035, green: 0.042, blue: 0.052),
-                    Color(red: 0.015, green: 0.070, blue: 0.120),
-                    Color(red: 0.000, green: 0.000, blue: 0.000)
+                    Color(red: 0.004, green: 0.010, blue: 0.018),
+                    Color(red: 0.030, green: 0.050, blue: 0.072),
+                    Color(red: 0.018, green: 0.090, blue: 0.145),
+                    Color(red: 0.006, green: 0.012, blue: 0.022)
                 ],
                 widgetBackground: [
-                    Color(red: 0.010, green: 0.014, blue: 0.020),
-                    Color(red: 0.035, green: 0.060, blue: 0.095)
+                    Color(red: 0.016, green: 0.024, blue: 0.034),
+                    Color(red: 0.030, green: 0.078, blue: 0.118)
                 ],
                 accent: Color(red: 0.050, green: 0.520, blue: 1.000),
                 primaryText: .white,
                 secondaryText: Color(red: 0.820, green: 0.880, blue: 0.940),
                 mutedText: .white.opacity(0.80),
-                panelBackground: Color.white.opacity(0.102),
+                panelBackground: Color.white.opacity(0.124),
                 countdownBackground: Color(red: 0.030, green: 0.320, blue: 0.660).opacity(0.96),
-                rowBackground: Color.white.opacity(0.068),
-                activeRowBackground: Color(red: 0.050, green: 0.520, blue: 1.000).opacity(0.20),
-                rowBorder: .white.opacity(0.150),
+                rowBackground: Color.white.opacity(0.086),
+                activeRowBackground: Color(red: 0.050, green: 0.520, blue: 1.000).opacity(0.23),
+                rowBorder: .white.opacity(0.180),
                 activeRowBorder: Color(red: 0.300, green: 0.690, blue: 1.000).opacity(0.62),
-                chipBackground: .white.opacity(0.122),
-                controlBackground: .white.opacity(0.118),
+                chipBackground: .white.opacity(0.140),
+                controlBackground: .white.opacity(0.138),
                 controlPressedBackground: .white.opacity(0.080),
-                controlBorder: .white.opacity(0.220)
+                controlBorder: .white.opacity(0.250)
             )
         case .dayMint:
             return ThemePalette(

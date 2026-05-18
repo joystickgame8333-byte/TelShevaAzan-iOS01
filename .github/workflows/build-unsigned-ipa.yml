@@ -313,8 +313,6 @@ jobs:
           grep -q 'Payload/TelShevaAzan.app/Icon-60@3x.png' ipa-contents.txt
           grep -q 'Payload/TelShevaAzan.app/AmiriQuran-Regular.ttf' ipa-contents.txt
           grep -q 'Payload/TelShevaAzan.app/adhan.caf' ipa-contents.txt
-          grep -q 'Payload/TelShevaAzan.app/adhan-01-soft-call.wav' ipa-contents.txt
-          grep -q 'Payload/TelShevaAzan.app/adhan-05-final-call.wav' ipa-contents.txt
           grep -q 'Payload/TelShevaAzan.app/nafahat.wav' ipa-contents.txt
           grep -q 'Payload/TelShevaAzan.app/fajr-alarm-02-morning-clock.wav' ipa-contents.txt
           grep -q 'Payload/TelShevaAzan.app/nabawi-day.jpg' ipa-contents.txt

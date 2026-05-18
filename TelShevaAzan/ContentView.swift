@@ -29,8 +29,8 @@ struct ContentView: View {
             let sectionSpacing: CGFloat = compactHeight ? 6 : 8
             let rowSpacing: CGFloat = compactHeight ? 6 : 8
             let dockBottomPadding = max(proxy.safeAreaInsets.bottom * 0.22, CGFloat(6))
-            let dockReservedHeight = proxy.safeAreaInsets.bottom + (compactHeight ? 86 : 96)
-            let rowHeight = min(CGFloat(58), max(CGFloat(38), (proxy.size.height - dockReservedHeight - 388) / 6))
+            let dockReservedHeight = proxy.safeAreaInsets.bottom + (compactHeight ? 126 : 142)
+            let rowHeight = min(CGFloat(58), max(CGFloat(38), (proxy.size.height - dockReservedHeight - 348) / 6))
 
             ZStack {
                 background
@@ -405,12 +405,18 @@ struct ContentView: View {
     }
 
     private var header: some View {
-        VStack(alignment: .center, spacing: 3) {
-            Text("أذان تل السبع")
-                .font(.system(size: 25, weight: .black, design: .rounded))
-                .lineLimit(1)
-                .minimumScaleFactor(0.72)
-                .frame(maxWidth: .infinity, alignment: .center)
+        VStack(alignment: .center, spacing: 5) {
+            HStack(spacing: 7) {
+                Image(systemName: activeTheme.isNightTheme ? "moon.stars.fill" : "sun.max.fill")
+                    .font(.system(size: 13, weight: .black, design: .rounded))
+                    .foregroundStyle(activeTheme.accent)
+
+                Text("أذان تل السبع")
+                    .font(.system(size: 25, weight: .black, design: .rounded))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.72)
+            }
+            .frame(maxWidth: .infinity, alignment: .center)
 
             Text(PrayerEngine.longDateLabel(for: selectedDateKey))
                 .font(.system(size: 11.5, weight: .semibold, design: .rounded))
@@ -425,13 +431,28 @@ struct ContentView: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.75)
                 .frame(maxWidth: .infinity, alignment: .center)
+
+            Capsule(style: .continuous)
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            activeTheme.accent.opacity(0.18),
+                            activeTheme.accent.opacity(0.74),
+                            activeTheme.accent.opacity(0.18)
+                        ],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+                .frame(width: 64, height: 2.5)
+                .padding(.top, 1)
         }
         .multilineTextAlignment(.center)
         .frame(maxWidth: .infinity, alignment: .center)
         .padding(.horizontal, 18)
-        .padding(.vertical, 9)
+        .padding(.vertical, 10)
         .background(
-            glassSurface(activeTheme.panelBackground.opacity(activeTheme.isNightTheme ? 0.52 : 0.64), radius: 18, prominence: .quiet)
+            glassSurface(activeTheme.panelBackground.opacity(activeTheme.isNightTheme ? 0.44 : 0.66), radius: 18, prominence: .quiet)
         )
         .overlay(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
@@ -1103,15 +1124,15 @@ struct ContentView: View {
                         .scaledToFill()
                         .frame(width: geometry.size.width * 0.74, height: height)
                         .scaleEffect(1.08, anchor: .bottomLeading)
-                        .brightness(0.16)
-                        .saturation(1.12)
+                        .brightness(0.22)
+                        .saturation(1.18)
                         .clipped()
                         .overlay(
                             LinearGradient(
                                 colors: [
                                     Color.black.opacity(0.00),
-                                    Color.black.opacity(0.10),
-                                    Color.black.opacity(0.52)
+                                    Color.black.opacity(0.06),
+                                    Color.black.opacity(0.34)
                                 ],
                                 startPoint: .leading,
                                 endPoint: .trailing
@@ -1121,8 +1142,8 @@ struct ContentView: View {
                     LinearGradient(
                         colors: [
                             Color.black.opacity(0.02),
-                            Color.black.opacity(0.18),
-                            Color.black.opacity(0.76)
+                            Color.black.opacity(0.10),
+                            Color.black.opacity(0.58)
                         ],
                         startPoint: .leading,
                         endPoint: .trailing
@@ -1131,7 +1152,7 @@ struct ContentView: View {
                     LinearGradient(
                         colors: [
                             Color.black.opacity(0.00),
-                            Color.black.opacity(0.18)
+                            Color.black.opacity(0.10)
                         ],
                         startPoint: .top,
                         endPoint: .bottom

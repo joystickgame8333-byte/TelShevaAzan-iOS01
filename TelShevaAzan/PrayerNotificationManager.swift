@@ -4,11 +4,6 @@ import UserNotifications
 
 enum PrayerNotificationSound: String, CaseIterable, Identifiable {
     case bundledAdhan
-    case adhanSoftCall
-    case adhanClearCall
-    case adhanWarmCall
-    case adhanDeepCall
-    case adhanFinalCall
     case softDhikr
     case system
 
@@ -18,16 +13,6 @@ enum PrayerNotificationSound: String, CaseIterable, Identifiable {
         switch self {
         case .bundledAdhan:
             return "الأذان الحالي"
-        case .adhanSoftCall:
-            return "أذان هادئ 1"
-        case .adhanClearCall:
-            return "أذان واضح 2"
-        case .adhanWarmCall:
-            return "أذان دافئ 3"
-        case .adhanDeepCall:
-            return "أذان عميق 4"
-        case .adhanFinalCall:
-            return "أذان خفيف 5"
         case .softDhikr:
             return "نفحة روحانية"
         case .system:
@@ -39,16 +24,6 @@ enum PrayerNotificationSound: String, CaseIterable, Identifiable {
         switch self {
         case .bundledAdhan:
             return "المقطع الذي أرسلته يعمل مع إشعارات الصلاة"
-        case .adhanSoftCall:
-            return "مقطع أذان قصير ولطيف للتنبيه اليومي"
-        case .adhanClearCall:
-            return "صوت أذان أوضح مع بداية ناعمة"
-        case .adhanWarmCall:
-            return "نبرة أذان متوسطة بدون حدة"
-        case .adhanDeepCall:
-            return "اختيار أعمق لمن يريد صوتًا أقوى"
-        case .adhanFinalCall:
-            return "مقطع خفيف ومختصر للتجربة اليومية"
         case .softDhikr:
             return "صوت هادئ لمن يريد تنبيهًا أخف"
         case .system:
@@ -58,7 +33,7 @@ enum PrayerNotificationSound: String, CaseIterable, Identifiable {
 
     var systemImage: String {
         switch self {
-        case .bundledAdhan, .adhanSoftCall, .adhanClearCall, .adhanWarmCall, .adhanDeepCall, .adhanFinalCall:
+        case .bundledAdhan:
             return "waveform.circle.fill"
         case .softDhikr:
             return "sparkles"
@@ -1401,16 +1376,6 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
             return .default
         case .bundledAdhan:
             return bundledNotificationSound(["adhan.caf", "adhan.wav", "adhan.aiff"])
-        case .adhanSoftCall:
-            return bundledNotificationSound(["adhan-01-soft-call.wav"])
-        case .adhanClearCall:
-            return bundledNotificationSound(["adhan-02-clear-call.wav"])
-        case .adhanWarmCall:
-            return bundledNotificationSound(["adhan-03-warm-call.wav"])
-        case .adhanDeepCall:
-            return bundledNotificationSound(["adhan-04-deep-call.wav"])
-        case .adhanFinalCall:
-            return bundledNotificationSound(["adhan-05-final-call.wav"])
         case .softDhikr:
             return bundledNotificationSound(["nafahat.wav", "nafahat.caf", "nafahat.aiff"])
         }

@@ -86,7 +86,7 @@ struct QiblaView: View {
                 }
                 .buttonStyle(.plain)
             } else {
-                KaabaCompassMarker(size: 24, theme: theme)
+                QiblaNeedleMarker(size: 24, theme: theme, aligned: alignmentIsGood, compact: true)
                     .frame(width: 38, height: 38)
                     .background(glassSurface(theme.controlBackground, radius: 8))
                     .overlay(
@@ -115,23 +115,54 @@ struct QiblaView: View {
     private func compassFace(size: CGFloat) -> some View {
         ZStack {
             Circle()
-                .fill(theme.panelBackground)
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            theme.panelBackground.opacity(theme.isNightTheme ? 0.98 : 0.92),
+                            theme.controlBackground.opacity(theme.isNightTheme ? 0.72 : 0.84)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
                 .overlay(
                     Circle()
-                        .stroke(theme.controlBorder, lineWidth: 1)
+                        .stroke(theme.controlBorder.opacity(0.82), lineWidth: 1)
                 )
                 .shadow(color: .black.opacity(0.24), radius: 18, y: 8)
 
+            Circle()
+                .stroke(
+                    AngularGradient(
+                        colors: [
+                            theme.accent.opacity(0.95),
+                            theme.secondaryText.opacity(0.18),
+                            theme.secondaryText.opacity(0.12),
+                            theme.accent.opacity(0.72),
+                            theme.secondaryText.opacity(0.16),
+                            theme.accent.opacity(0.95)
+                        ],
+                        center: .center
+                    ),
+                    lineWidth: 3
+                )
+                .padding(size * 0.055)
+
             ForEach(0..<36, id: \.self) { index in
                 Rectangle()
-                    .fill(index % 3 == 0 ? theme.accent : theme.secondaryText.opacity(0.34))
-                    .frame(width: index % 3 == 0 ? 3 : 2, height: index % 3 == 0 ? 16 : 9)
-                    .offset(y: -(size / 2) + 20)
+                    .fill(index % 3 == 0 ? theme.accent.opacity(0.95) : theme.secondaryText.opacity(0.30))
+                    .frame(width: index % 3 == 0 ? 3 : 1.6, height: index % 3 == 0 ? 17 : 8)
+                    .offset(y: -(size / 2) + 24)
                     .rotationEffect(.degrees(Double(index) * 10))
             }
 
-            KaabaCompassMarker(size: size * 0.34, theme: theme)
-                .shadow(color: theme.accent.opacity(0.32), radius: 10)
+            Circle()
+                .fill(theme.accent.opacity(theme.isNightTheme ? 0.10 : 0.12))
+                .frame(width: size * 0.52, height: size * 0.52)
+                .blur(radius: 16)
+
+            QiblaNeedleMarker(size: size * 0.50, theme: theme, aligned: alignmentIsGood, compact: false)
+                .shadow(color: theme.accent.opacity(alignmentIsGood ? 0.55 : 0.32), radius: alignmentIsGood ? 16 : 10)
                 .rotationEffect(.degrees(delta ?? 0))
                 .animation(.easeOut(duration: 0.18), value: delta ?? 0)
 
@@ -148,7 +179,7 @@ struct QiblaView: View {
             Image(systemName: alignmentIsGood ? "checkmark.seal.fill" : "location.north.fill")
                 .font(.caption.weight(.black))
 
-            Text(alignmentIsGood ? "أنت على اتجاه القبلة" : "السهم الذهبي يشير للقبلة")
+            Text(alignmentIsGood ? "أنت على اتجاه القبلة" : "المؤشر المضيء يشير للقبلة")
                 .font(.caption.weight(.black))
                 .lineLimit(1)
                 .minimumScaleFactor(0.72)
@@ -321,106 +352,72 @@ struct QiblaView: View {
     }
 }
 
-private struct KaabaCompassMarker: View {
+private struct QiblaNeedleMarker: View {
     let size: CGFloat
     let theme: PrayerVisualTheme
+    let aligned: Bool
+    var compact = false
 
     private var gold: Color {
-        Color(red: 0.94, green: 0.66, blue: 0.20)
+        Color(red: 1.00, green: 0.72, blue: 0.28)
     }
 
-    private var darkGold: Color {
-        Color(red: 0.52, green: 0.34, blue: 0.08)
+    private var glow: Color {
+        aligned ? Color(red: 0.34, green: 0.92, blue: 0.48) : theme.accent
     }
 
     var body: some View {
         ZStack {
-            Ellipse()
-                .fill(Color.black.opacity(theme.isNightTheme ? 0.36 : 0.18))
-                .frame(width: size * 0.78, height: size * 0.18)
-                .blur(radius: size * 0.025)
-                .offset(y: size * 0.36)
+            if !compact {
+                Circle()
+                    .stroke(glow.opacity(0.15), lineWidth: size * 0.07)
+                    .frame(width: size * 0.74, height: size * 0.74)
+                    .blur(radius: size * 0.02)
+            }
+
+            Capsule(style: .continuous)
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            gold,
+                            glow.opacity(aligned ? 0.92 : 0.70)
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+                .frame(width: compact ? size * 0.20 : size * 0.16, height: compact ? size * 0.78 : size * 0.84)
+                .offset(y: compact ? 0 : -size * 0.02)
+                .overlay(
+                    Capsule(style: .continuous)
+                        .stroke(Color.white.opacity(theme.isNightTheme ? 0.30 : 0.62), lineWidth: compact ? 0.6 : 1)
+                )
 
             Path { path in
-                let w = size * 0.54
-                let h = size * 0.54
-                let x = size * 0.47
-                let y = size * 0.24
-                path.move(to: CGPoint(x: x, y: y))
-                path.addLine(to: CGPoint(x: x + w * 0.22, y: y - h * 0.12))
-                path.addLine(to: CGPoint(x: x + w * 0.22, y: y + h * 0.86))
-                path.addLine(to: CGPoint(x: x, y: y + h))
+                path.move(to: CGPoint(x: size * 0.50, y: size * 0.02))
+                path.addLine(to: CGPoint(x: size * 0.67, y: size * 0.30))
+                path.addLine(to: CGPoint(x: size * 0.50, y: size * 0.22))
+                path.addLine(to: CGPoint(x: size * 0.33, y: size * 0.30))
                 path.closeSubpath()
             }
             .fill(
                 LinearGradient(
-                    colors: [Color.black.opacity(0.82), Color(red: 0.16, green: 0.13, blue: 0.08)],
+                    colors: [gold, Color.white.opacity(0.92)],
                     startPoint: .top,
                     endPoint: .bottom
                 )
             )
 
-            RoundedRectangle(cornerRadius: size * 0.055, style: .continuous)
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            Color(red: 0.02, green: 0.02, blue: 0.018),
-                            Color(red: 0.10, green: 0.09, blue: 0.075)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-                .frame(width: size * 0.54, height: size * 0.54)
-                .overlay(alignment: .top) {
-                    Rectangle()
-                        .fill(
-                            LinearGradient(
-                                colors: [gold.opacity(0.96), darkGold.opacity(0.84)],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
-                        .frame(height: size * 0.075)
-                        .padding(.top, size * 0.13)
-                }
-                .overlay(alignment: .bottom) {
-                    RoundedRectangle(cornerRadius: size * 0.018, style: .continuous)
-                        .fill(
-                            LinearGradient(
-                                colors: [gold.opacity(0.88), darkGold.opacity(0.86)],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                        )
-                        .frame(width: size * 0.12, height: size * 0.18)
-                        .padding(.bottom, size * 0.06)
-                }
+            Circle()
+                .fill(theme.isNightTheme ? Color.black.opacity(0.52) : Color.white.opacity(0.82))
+                .frame(width: compact ? size * 0.24 : size * 0.22, height: compact ? size * 0.24 : size * 0.22)
                 .overlay(
-                    RoundedRectangle(cornerRadius: size * 0.055, style: .continuous)
-                        .stroke(Color.white.opacity(theme.isNightTheme ? 0.10 : 0.16), lineWidth: 1)
+                    Circle()
+                        .stroke(glow.opacity(0.92), lineWidth: compact ? 2 : 3)
                 )
-
-            Path { path in
-                let w = size * 0.54
-                let h = size * 0.54
-                let x = size * 0.23
-                let y = size * 0.24
-                path.move(to: CGPoint(x: x, y: y))
-                path.addLine(to: CGPoint(x: x + w * 0.24, y: y - h * 0.12))
-                path.addLine(to: CGPoint(x: x + w * 1.22, y: y - h * 0.12))
-                path.addLine(to: CGPoint(x: x + w, y: y))
-                path.closeSubpath()
-            }
-            .fill(
-                LinearGradient(
-                    colors: [Color(red: 0.14, green: 0.12, blue: 0.09), Color.black],
-                    startPoint: .leading,
-                    endPoint: .trailing
-                )
-            )
+                .shadow(color: glow.opacity(0.44), radius: compact ? 3 : 8)
         }
         .frame(width: size, height: size)
-        .accessibilityLabel("الكعبة المشرفة")
+        .accessibilityLabel("مؤشر القبلة")
     }
 }
