@@ -13,6 +13,7 @@ struct ContentView: View {
     @State private var selectedTab: HomeDockItem = .schedule
     @State private var tabTransitionEdge: Edge = .leading
     @State private var showWelcomeActivationPrompt = false
+    @State private var selectedPrayerDetails: PrayerTime?
     @Namespace private var dockSelectionNamespace
     @StateObject private var notifications = PrayerNotificationManager.shared
     @StateObject private var liveActivityCenter = PrayerLiveActivityCenter.shared
@@ -133,6 +134,17 @@ struct ContentView: View {
         }
         .onOpenURL { url in
             handleDeepLink(url)
+        }
+        .sheet(item: $selectedPrayerDetails) { prayer in
+            PrayerDetailsSheet(
+                prayer: prayer,
+                now: now,
+                theme: activeTheme,
+                iqamaTime: iqamaTime(for: prayer),
+                statusText: prayerDetailStatus(for: prayer)
+            )
+            .presentationDetents([.height(360), .medium])
+            .presentationDragIndicator(.visible)
         }
     }
 
@@ -364,6 +376,8 @@ struct ContentView: View {
             quranVerse
 
             nextPrayerPanel(next: next, previous: previous, compact: compactHeight)
+
+            liveActivityStatusPanel(next: next)
 
             prayerRows(schedule: schedule, next: next, previous: previous, rowSpacing: rowSpacing, rowHeight: rowHeight)
         }
@@ -983,63 +997,162 @@ struct ContentView: View {
     private func prayerRow(_ item: PrayerTime, next: PrayerTime?, previous: PrayerTime?, rowHeight: CGFloat) -> some View {
         let isActive = item.key == next?.key
         let isPrevious = isPreviousPrayerRow(item, previous: previous, next: next)
-        let effectiveRowHeight = (isActive || isPrevious) ? max(rowHeight, 56) : rowHeight
+        let effectiveRowHeight = max(rowHeight, (isActive || isPrevious) ? 60 : 54)
 
-        return HStack(spacing: 10) {
-            Text(item.time)
-                .font(.headline.monospacedDigit().weight(.bold))
-                .foregroundStyle(isActive ? activeTheme.accent : activeTheme.primaryText)
-                .lineLimit(1)
-                .minimumScaleFactor(0.78)
-
-            Spacer()
-
-            VStack(alignment: .trailing, spacing: 1) {
-                Text(item.title)
-                    .font(.headline.weight(.bold))
-                    .foregroundStyle(isActive ? activeTheme.accent : activeTheme.secondaryText.opacity(0.78))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.74)
-
-                if isActive {
-                    Text(remainingPrayerText(for: next))
-                        .font(.system(size: 10.5, weight: .bold, design: .rounded))
-                        .foregroundStyle(activeTheme.secondaryText.opacity(0.82))
+        return Button {
+            selectedPrayerDetails = item
+        } label: {
+            HStack(spacing: 10) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(item.time)
+                        .font(.headline.monospacedDigit().weight(.bold))
+                        .foregroundStyle(isActive ? activeTheme.accent : activeTheme.primaryText)
                         .lineLimit(1)
-                        .minimumScaleFactor(0.70)
-                } else if isPrevious {
-                    Text(elapsedPrayerText(for: previous))
-                        .font(.system(size: 10.5, weight: .bold, design: .rounded))
-                        .foregroundStyle(activeTheme.secondaryText.opacity(0.82))
+                        .minimumScaleFactor(0.78)
+
+                    Text("الإقامة \(iqamaTime(for: item))")
+                        .font(.system(size: 9.5, weight: .bold, design: .rounded))
+                        .foregroundStyle(activeTheme.secondaryText.opacity(isActive ? 0.92 : 0.68))
                         .lineLimit(1)
                         .minimumScaleFactor(0.70)
                 }
-            }
 
-            Image(systemName: prayerSymbol(for: item.key))
-                .font(.system(size: isActive ? 20 : 18, weight: .bold, design: .rounded))
-                .foregroundStyle(isActive ? activeTheme.accent : activeTheme.secondaryText.opacity(0.62))
-                .symbolRenderingMode(.hierarchical)
-                .frame(width: 26, height: 26)
+                Spacer()
+
+                VStack(alignment: .trailing, spacing: 1) {
+                    Text(item.title)
+                        .font(.headline.weight(.bold))
+                        .foregroundStyle(isActive ? activeTheme.accent : activeTheme.secondaryText.opacity(0.78))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.74)
+
+                    if isActive {
+                        Text(remainingPrayerText(for: next))
+                            .font(.system(size: 10.5, weight: .bold, design: .rounded))
+                            .foregroundStyle(activeTheme.secondaryText.opacity(0.82))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.70)
+                    } else if isPrevious {
+                        Text(elapsedPrayerText(for: previous))
+                            .font(.system(size: 10.5, weight: .bold, design: .rounded))
+                            .foregroundStyle(activeTheme.secondaryText.opacity(0.82))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.70)
+                    }
+                }
+
+                Image(systemName: prayerSymbol(for: item.key))
+                    .font(.system(size: isActive ? 20 : 18, weight: .bold, design: .rounded))
+                    .foregroundStyle(isActive ? activeTheme.accent : activeTheme.secondaryText.opacity(0.62))
+                    .symbolRenderingMode(.hierarchical)
+                    .frame(width: 26, height: 26)
+
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 10, weight: .black))
+                    .foregroundStyle(activeTheme.secondaryText.opacity(0.38))
+                    .frame(width: 10)
+            }
+            .padding(.horizontal, 12)
+            .frame(height: effectiveRowHeight)
+            .background(glassSurface(rowBackground(isActive: isActive), radius: 8, prominence: isActive ? .regular : .quiet))
+            .overlay(alignment: .trailing) {
+                if isActive {
+                    RoundedRectangle(cornerRadius: 2, style: .continuous)
+                        .fill(activeTheme.accent)
+                        .frame(width: 4)
+                        .padding(.vertical, 11)
+                        .padding(.trailing, 1)
+                }
+            }
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(rowBorder(isActive: isActive))
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .shadow(color: isActive ? activeTheme.accent.opacity(activeTheme.isNightTheme ? 0.18 : 0.14) : .clear, radius: 10, y: 4)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func liveActivityStatusPanel(next: PrayerTime?) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: liveActivityStatusSymbol(for: next))
+                .font(.system(size: 13, weight: .black))
+                .foregroundStyle(liveActivityStatusColor(for: next))
+                .frame(width: 22, height: 22)
+                .background(
+                    Circle()
+                        .fill(liveActivityStatusColor(for: next).opacity(activeTheme.isNightTheme ? 0.16 : 0.12))
+                )
+
+            Spacer(minLength: 8)
+
+            VStack(alignment: .trailing, spacing: 1) {
+                Text(liveActivityStatusTitle(for: next))
+                    .font(.system(size: 12.5, weight: .black, design: .rounded))
+                    .foregroundStyle(activeTheme.primaryText)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.76)
+
+                Text(liveActivityStatusSubtitle(for: next))
+                    .font(.system(size: 10.5, weight: .semibold, design: .rounded))
+                    .foregroundStyle(activeTheme.secondaryText.opacity(0.82))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.68)
+            }
+            .frame(maxWidth: .infinity, alignment: .trailing)
         }
         .padding(.horizontal, 12)
-        .frame(height: effectiveRowHeight)
-        .background(glassSurface(rowBackground(isActive: isActive), radius: 8, prominence: isActive ? .regular : .quiet))
-        .overlay(alignment: .trailing) {
-            if isActive {
-                RoundedRectangle(cornerRadius: 2, style: .continuous)
-                    .fill(activeTheme.accent)
-                    .frame(width: 4)
-                    .padding(.vertical, 11)
-                    .padding(.trailing, 1)
-            }
-        }
+        .padding(.vertical, 8)
+        .background(glassSurface(activeTheme.controlBackground.opacity(activeTheme.isNightTheme ? 0.74 : 0.78), radius: 12, prominence: .quiet))
         .overlay(
-            RoundedRectangle(cornerRadius: 8)
-                .stroke(rowBorder(isActive: isActive))
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(liveActivityStatusColor(for: next).opacity(activeTheme.isNightTheme ? 0.34 : 0.28), lineWidth: 1)
         )
-        .clipShape(RoundedRectangle(cornerRadius: 8))
-        .shadow(color: isActive ? activeTheme.accent.opacity(activeTheme.isNightTheme ? 0.18 : 0.14) : .clear, radius: 10, y: 4)
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .environment(\.layoutDirection, .leftToRight)
+    }
+
+    private func liveActivityStatusTitle(for next: PrayerTime?) -> String {
+        guard let next else { return "الجزيرة تنتظر جدول الصلاة" }
+        let seconds = next.date.timeIntervalSince(now)
+
+        if seconds > 5 * 60 {
+            return "الجزيرة جاهزة لصلاة \(next.title)"
+        }
+
+        if seconds > 0 {
+            return "الجزيرة تظهر الآن"
+        }
+
+        return "حان الأذان"
+    }
+
+    private func liveActivityStatusSubtitle(for next: PrayerTime?) -> String {
+        guard let next else { return "افتح التنبيهات لتجربة الجزيرة يدويًا" }
+        let seconds = next.date.timeIntervalSince(now)
+
+        if seconds > 5 * 60 {
+            return "ستظهر تلقائيًا قبل الأذان بخمس دقائق"
+        }
+
+        if seconds > 0 {
+            return "اقفل الشاشة أو ارجع للرئيسية وشاهد Dynamic Island"
+        }
+
+        return "ستختفي تلقائيًا بعد انتهاء نافذة الأذان"
+    }
+
+    private func liveActivityStatusSymbol(for next: PrayerTime?) -> String {
+        guard let next else { return "livephoto.slash" }
+        let seconds = next.date.timeIntervalSince(now)
+        return seconds <= 5 * 60 ? "livephoto" : "checkmark.seal.fill"
+    }
+
+    private func liveActivityStatusColor(for next: PrayerTime?) -> Color {
+        guard let next else { return activeTheme.secondaryText.opacity(0.72) }
+        let seconds = next.date.timeIntervalSince(now)
+        return seconds <= 5 * 60 ? activeTheme.accent : Color(red: 0.22, green: 0.74, blue: 0.46)
     }
 
     private var isNight: Bool {
@@ -1306,6 +1419,44 @@ struct ContentView: View {
         return "مضى على \(previous.title) \(elapsedText(since: previous.date))"
     }
 
+    private func iqamaTime(for prayer: PrayerTime) -> String {
+        let date = prayer.date.addingTimeInterval(TimeInterval(iqamaDelayMinutes(for: prayer.key) * 60))
+        return timeText(for: date)
+    }
+
+    private func iqamaDelayMinutes(for key: PrayerKey) -> Int {
+        switch key {
+        case .fajr:
+            return 25
+        case .dhuhr, .sunrise:
+            return 15
+        case .asr:
+            return 12
+        case .maghrib:
+            return 7
+        case .isha:
+            return 10
+        }
+    }
+
+    private func prayerDetailStatus(for prayer: PrayerTime) -> String {
+        let seconds = prayer.date.timeIntervalSince(now)
+
+        if seconds > 0 {
+            return "متبقي \(remainingPrayerTarget(for: prayer.key)) \(countdownText(for: prayer))"
+        }
+
+        return "مضى على \(prayer.title) \(elapsedText(since: prayer.date))"
+    }
+
+    private func timeText(for date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = PrayerEngine.timeZone
+        formatter.dateFormat = "HH:mm"
+        return formatter.string(from: date)
+    }
+
     private func elapsedText(since date: Date) -> String {
         let seconds = max(0, Int(now.timeIntervalSince(date)))
         let hours = seconds / 3600
@@ -1358,6 +1509,128 @@ struct ContentView: View {
         AppThemeStorage.defaults.synchronize()
         WidgetRefreshCenter.refreshAll()
         WidgetRefreshCenter.refreshAgainSoon()
+    }
+}
+
+private struct PrayerDetailsSheet: View {
+    let prayer: PrayerTime
+    let now: Date
+    let theme: PrayerVisualTheme
+    let iqamaTime: String
+    let statusText: String
+
+    var body: some View {
+        ZStack {
+            ThemeBackdrop(theme: theme)
+
+            VStack(alignment: .trailing, spacing: 16) {
+                HStack(spacing: 12) {
+                    Image(systemName: symbol)
+                        .font(.system(size: 24, weight: .black))
+                        .foregroundStyle(theme.accent)
+                        .frame(width: 54, height: 54)
+                        .background(Circle().fill(theme.accent.opacity(theme.isNightTheme ? 0.14 : 0.10)))
+
+                    Spacer()
+
+                    VStack(alignment: .trailing, spacing: 4) {
+                        Text("تفاصيل الصلاة")
+                            .font(.caption.weight(.black))
+                            .foregroundStyle(theme.accent)
+
+                        Text("صلاة \(prayer.title)")
+                            .font(.system(size: 30, weight: .black, design: .rounded))
+                            .foregroundStyle(theme.primaryText)
+                            .lineLimit(1)
+                    }
+                }
+
+                HStack(spacing: 10) {
+                    detailTile(title: "الإقامة", value: iqamaTime, highlighted: true)
+                    detailTile(title: "الأذان", value: prayer.time, highlighted: false)
+                }
+
+                VStack(alignment: .trailing, spacing: 8) {
+                    Text(statusText)
+                        .font(.headline.weight(.black))
+                        .foregroundStyle(theme.primaryText)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.78)
+
+                    Text(detailMessage)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(theme.secondaryText.opacity(0.84))
+                        .lineLimit(3)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .frame(maxWidth: .infinity, alignment: .trailing)
+                .padding(14)
+                .background(surface(theme.rowBackground, radius: 16, prominence: .quiet))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .stroke(theme.rowBorder)
+                )
+
+                Spacer(minLength: 0)
+            }
+            .padding(20)
+        }
+        .environment(\.layoutDirection, .leftToRight)
+        .multilineTextAlignment(.trailing)
+    }
+
+    private func detailTile(title: String, value: String, highlighted: Bool) -> some View {
+        VStack(alignment: .trailing, spacing: 5) {
+            Text(title)
+                .font(.caption.weight(.bold))
+                .foregroundStyle(theme.secondaryText.opacity(0.78))
+
+            Text(value)
+                .font(.system(size: 30, weight: .black, design: .rounded).monospacedDigit())
+                .foregroundStyle(highlighted ? theme.accent : theme.primaryText)
+        }
+        .frame(maxWidth: .infinity, alignment: .trailing)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 16)
+        .background(surface(highlighted ? theme.activeRowBackground : theme.controlBackground, radius: 18, prominence: highlighted ? .regular : .quiet))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(highlighted ? theme.activeRowBorder : theme.controlBorder)
+        )
+    }
+
+    private var detailMessage: String {
+        if prayer.date > now {
+            return "تقدر تتابع الوقت من الواجهة، والجزيرة تظهر تلقائيًا عند دخول نافذة آخر خمس دقائق."
+        }
+
+        return "بعد الصلاة خذ لحظة للأذكار، وتقدر ترجع لصف المواقيت لمتابعة الصلاة القادمة."
+    }
+
+    private var symbol: String {
+        switch prayer.key {
+        case .fajr:
+            return "sunrise.fill"
+        case .sunrise:
+            return "sun.max"
+        case .dhuhr:
+            return "sun.max.fill"
+        case .asr:
+            return "cloud.sun.fill"
+        case .maghrib:
+            return "sunset.fill"
+        case .isha:
+            return "moon.stars.fill"
+        }
+    }
+
+    private func surface(_ base: Color, radius: CGFloat, prominence: GlassProminence) -> some View {
+        ThemeGlassSurface(
+            theme: theme,
+            base: base,
+            cornerRadius: radius,
+            prominence: prominence
+        )
     }
 }
 

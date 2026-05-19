@@ -103,7 +103,7 @@ struct QiblaView: View {
                     .font(.system(size: 34, weight: .black, design: .rounded))
                     .lineLimit(1)
 
-                Text("تل السبع إلى الكعبة · \(bearingText(qiblaBearing))")
+                Text("اتجاه مكة من تل السبع · \(bearingText(qiblaBearing))")
                     .font(.caption.weight(.bold))
                     .foregroundStyle(theme.accent)
                     .lineLimit(1)
@@ -161,14 +161,37 @@ struct QiblaView: View {
                 .frame(width: size * 0.52, height: size * 0.52)
                 .blur(radius: 16)
 
+            VStack(spacing: 3) {
+                Text("مكة")
+                    .font(.system(size: 15, weight: .black, design: .rounded))
+                    .foregroundStyle(theme.accent)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 5)
+                    .background(
+                        Capsule(style: .continuous)
+                            .fill(theme.controlBackground.opacity(theme.isNightTheme ? 0.58 : 0.78))
+                    )
+
+                Spacer()
+
+                Text(alignmentIsGood ? "الاتجاه صحيح" : "حرّك الهاتف بهدوء")
+                    .font(.caption.weight(.black))
+                    .foregroundStyle(alignmentIsGood ? Color(red: 0.34, green: 0.92, blue: 0.48) : theme.secondaryText.opacity(0.78))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.72)
+            }
+            .padding(.vertical, size * 0.13)
+            .frame(width: size * 0.78, height: size * 0.78)
+
             QiblaNeedleMarker(size: size * 0.50, theme: theme, aligned: alignmentIsGood, compact: false)
                 .shadow(color: theme.accent.opacity(alignmentIsGood ? 0.55 : 0.32), radius: alignmentIsGood ? 16 : 10)
                 .rotationEffect(.degrees(delta ?? 0))
                 .animation(.easeOut(duration: 0.18), value: delta ?? 0)
 
             Circle()
-                .fill(theme.accent)
-                .frame(width: 12, height: 12)
+                .fill(alignmentIsGood ? Color(red: 0.34, green: 0.92, blue: 0.48) : theme.accent)
+                .frame(width: 10, height: 10)
+                .shadow(color: directionColor.opacity(0.55), radius: 8)
 
         }
         .frame(width: size, height: size)
@@ -370,42 +393,46 @@ private struct QiblaNeedleMarker: View {
         ZStack {
             if !compact {
                 Circle()
-                    .stroke(glow.opacity(0.15), lineWidth: size * 0.07)
-                    .frame(width: size * 0.74, height: size * 0.74)
-                    .blur(radius: size * 0.02)
+                    .stroke(glow.opacity(0.18), lineWidth: size * 0.05)
+                    .frame(width: size * 0.72, height: size * 0.72)
+                    .blur(radius: size * 0.025)
             }
 
-            Capsule(style: .continuous)
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            gold,
-                            glow.opacity(aligned ? 0.92 : 0.70)
-                        ],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                )
-                .frame(width: compact ? size * 0.20 : size * 0.16, height: compact ? size * 0.78 : size * 0.84)
-                .offset(y: compact ? 0 : -size * 0.02)
-                .overlay(
-                    Capsule(style: .continuous)
-                        .stroke(Color.white.opacity(theme.isNightTheme ? 0.30 : 0.62), lineWidth: compact ? 0.6 : 1)
-                )
+            RoundedRectangle(cornerRadius: size * 0.10, style: .continuous)
+                .fill(theme.isNightTheme ? Color.black.opacity(0.28) : Color.white.opacity(0.34))
+                .frame(width: compact ? size * 0.34 : size * 0.30, height: compact ? size * 0.82 : size * 0.86)
+                .blur(radius: compact ? 0 : size * 0.045)
 
             Path { path in
-                path.move(to: CGPoint(x: size * 0.50, y: size * 0.02))
-                path.addLine(to: CGPoint(x: size * 0.67, y: size * 0.30))
-                path.addLine(to: CGPoint(x: size * 0.50, y: size * 0.22))
-                path.addLine(to: CGPoint(x: size * 0.33, y: size * 0.30))
+                path.move(to: CGPoint(x: size * 0.50, y: size * 0.00))
+                path.addLine(to: CGPoint(x: size * 0.66, y: size * 0.44))
+                path.addQuadCurve(
+                    to: CGPoint(x: size * 0.50, y: size * 0.94),
+                    control: CGPoint(x: size * 0.59, y: size * 0.70)
+                )
+                path.addQuadCurve(
+                    to: CGPoint(x: size * 0.34, y: size * 0.44),
+                    control: CGPoint(x: size * 0.41, y: size * 0.70)
+                )
                 path.closeSubpath()
             }
             .fill(
                 LinearGradient(
-                    colors: [gold, Color.white.opacity(0.92)],
+                    colors: [
+                        gold,
+                        glow.opacity(aligned ? 0.92 : 0.72),
+                        theme.isNightTheme ? Color.white.opacity(0.86) : Color.white.opacity(0.96)
+                    ],
                     startPoint: .top,
                     endPoint: .bottom
                 )
+            )
+            .overlay(
+                Path { path in
+                    path.move(to: CGPoint(x: size * 0.50, y: size * 0.04))
+                    path.addLine(to: CGPoint(x: size * 0.50, y: size * 0.82))
+                }
+                .stroke(Color.white.opacity(theme.isNightTheme ? 0.42 : 0.72), lineWidth: compact ? 1 : 1.4)
             )
 
             Circle()

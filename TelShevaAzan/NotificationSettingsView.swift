@@ -166,12 +166,79 @@ struct NotificationSettingsView: View {
 
     private var adhanSettings: some View {
         VStack(alignment: .trailing, spacing: 16) {
+            quickTestPanel
             masterPanel
             liveActivityTestPanel
             soundPanel
             prayerPanel
         }
         .transition(.opacity)
+    }
+
+    private var quickTestPanel: some View {
+        panel(title: "اختبار سريع") {
+            VStack(alignment: .trailing, spacing: 10) {
+                HStack(spacing: 8) {
+                    quickTestButton(
+                        title: "الجزيرة",
+                        subtitle: "30 ثانية",
+                        symbol: "livephoto",
+                        action: { liveActivityCenter.startPreview(themeID: theme.rawValue) }
+                    )
+
+                    quickTestButton(
+                        title: "الأذان",
+                        subtitle: "إشعار صوت",
+                        symbol: "speaker.wave.2.fill",
+                        action: { notifications.sendPreviewNotification() }
+                    )
+
+                    quickTestButton(
+                        title: "الأذكار",
+                        subtitle: "نفحة خفيفة",
+                        symbol: "sparkles",
+                        action: { notifications.sendNafahatPreviewNotification() }
+                    )
+                }
+                .environment(\.layoutDirection, .leftToRight)
+
+                Text("هذا المكان يجرب أهم المزايا بسرعة بدون دخول كل قسم لوحده.")
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(theme.secondaryText.opacity(0.78))
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+            }
+        }
+    }
+
+    private func quickTestButton(title: String, subtitle: String, symbol: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack(spacing: 5) {
+                Image(systemName: symbol)
+                    .font(.system(size: 17, weight: .black))
+                    .foregroundStyle(theme.accent)
+
+                Text(title)
+                    .font(.caption.weight(.black))
+                    .foregroundStyle(theme.primaryText)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.72)
+
+                Text(subtitle)
+                    .font(.system(size: 9, weight: .bold, design: .rounded))
+                    .foregroundStyle(theme.secondaryText.opacity(0.76))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.68)
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: 72)
+            .background(lightRowSurface(theme.controlBackground, radius: 8))
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(theme.controlBorder)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+        }
+        .buttonStyle(.plain)
     }
 
     private var fajrAlarmSettings: some View {
@@ -1063,21 +1130,82 @@ struct NotificationSettingsView: View {
 
     private var themeSplitPalettePanel: some View {
         panel(title: "أنماط التطبيق") {
-            HStack(alignment: .top, spacing: 10) {
-                themeColumn(
-                    title: "نهاري",
-                    themes: PrayerVisualTheme.dayChoices,
-                    selectedID: selectedDayThemeID
-                )
+            VStack(alignment: .trailing, spacing: 10) {
+                HStack(alignment: .top, spacing: 10) {
+                    themeEssentialCard(
+                        title: "زجاج أبل نهاري",
+                        subtitle: "فاتح، صورة واضحة، أزرق هادئ",
+                        visualTheme: .dayAppleGlass,
+                        selected: selectedDayThemeID == PrayerVisualTheme.dayAppleGlass.rawValue
+                    )
 
-                themeColumn(
-                    title: "ليلي",
-                    themes: PrayerVisualTheme.nightChoices,
-                    selectedID: selectedNightThemeID
-                )
+                    themeEssentialCard(
+                        title: "ليل أبل",
+                        subtitle: "أسود أنيق، صورة ليلية، تباين واضح",
+                        visualTheme: .nightAppleGlass,
+                        selected: selectedNightThemeID == PrayerVisualTheme.nightAppleGlass.rawValue
+                    )
+                }
+                .environment(\.layoutDirection, .leftToRight)
+
+                Text("خليت الاختيار مركز على نمطين فقط حتى التطبيق يبقى مرتب: نهاري وليلي.")
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(theme.secondaryText.opacity(0.78))
+                    .frame(maxWidth: .infinity, alignment: .trailing)
             }
-            .environment(\.layoutDirection, .leftToRight)
         }
+    }
+
+    private func themeEssentialCard(title: String, subtitle: String, visualTheme: PrayerVisualTheme, selected: Bool) -> some View {
+        Button {
+            selectTheme(visualTheme)
+        } label: {
+            VStack(alignment: .trailing, spacing: 8) {
+                HStack(spacing: 8) {
+                    Image(systemName: selected ? "checkmark.circle.fill" : visualTheme.symbol)
+                        .font(.system(size: 17, weight: .black))
+                        .foregroundStyle(selected ? theme.accent : theme.secondaryText.opacity(0.76))
+
+                    Spacer()
+
+                    Text(title)
+                        .font(.caption.weight(.black))
+                        .foregroundStyle(theme.primaryText)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.70)
+                }
+                .environment(\.layoutDirection, .leftToRight)
+
+                Text(subtitle)
+                    .font(.system(size: 10, weight: .semibold, design: .rounded))
+                    .foregroundStyle(theme.secondaryText.opacity(0.78))
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.72)
+
+                Capsule()
+                    .fill(
+                        LinearGradient(
+                            colors: visualTheme.widgetBackground,
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .frame(height: 8)
+                    .overlay(
+                        Capsule()
+                            .stroke(Color.white.opacity(theme.isNightTheme ? 0.18 : 0.54), lineWidth: 0.8)
+                    )
+            }
+            .padding(10)
+            .frame(maxWidth: .infinity, minHeight: 112, alignment: .topTrailing)
+            .background(lightRowSurface(selected ? theme.activeRowBackground : settingsRowFill, radius: 8, selected: selected))
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(selected ? theme.activeRowBorder : theme.controlBorder)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+        }
+        .buttonStyle(.plain)
     }
 
     private func themeColumn(title: String, themes: [PrayerVisualTheme], selectedID: String) -> some View {
