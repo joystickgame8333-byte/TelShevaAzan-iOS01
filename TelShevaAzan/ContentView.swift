@@ -419,61 +419,98 @@ struct ContentView: View {
     }
 
     private var header: some View {
-        VStack(alignment: .center, spacing: 5) {
-            HStack(spacing: 7) {
-                Image(systemName: activeTheme.isNightTheme ? "moon.stars.fill" : "sun.max.fill")
-                    .font(.system(size: 13, weight: .black, design: .rounded))
-                    .foregroundStyle(activeTheme.accent)
+        let dateSummary = "\(PrayerEngine.longDateLabel(for: selectedDateKey)) · \(PrayerEngine.hijriDateLabel(for: selectedDateKey))"
+
+        return VStack(alignment: .center, spacing: 6) {
+            HStack(spacing: 8) {
+                ZStack {
+                    Circle()
+                        .fill(activeTheme.accent.opacity(activeTheme.isNightTheme ? 0.16 : 0.12))
+                        .overlay(
+                            Circle()
+                                .stroke(activeTheme.accent.opacity(activeTheme.isNightTheme ? 0.28 : 0.20), lineWidth: 1)
+                        )
+
+                    Image(systemName: activeTheme.isNightTheme ? "moon.stars.fill" : "sun.max.fill")
+                        .font(.system(size: 12.5, weight: .black, design: .rounded))
+                        .foregroundStyle(activeTheme.accent)
+                }
+                .frame(width: 25, height: 25)
 
                 Text("أذان تل السبع")
-                    .font(.system(size: 25, weight: .black, design: .rounded))
+                    .font(.system(size: 24, weight: .black, design: .rounded))
+                    .foregroundStyle(activeTheme.primaryText)
                     .lineLimit(1)
-                    .minimumScaleFactor(0.72)
+                    .minimumScaleFactor(0.78)
             }
+            .environment(\.layoutDirection, .rightToLeft)
             .frame(maxWidth: .infinity, alignment: .center)
 
-            Text(PrayerEngine.longDateLabel(for: selectedDateKey))
-                .font(.system(size: 11.5, weight: .semibold, design: .rounded))
-                .foregroundStyle(activeTheme.secondaryText.opacity(0.82))
+            Text(dateSummary)
+                .font(.system(size: 11.5, weight: .bold, design: .rounded))
+                .foregroundStyle(activeTheme.secondaryText.opacity(activeTheme.isNightTheme ? 0.82 : 0.76))
                 .lineLimit(1)
-                .minimumScaleFactor(0.75)
+                .minimumScaleFactor(0.68)
                 .frame(maxWidth: .infinity, alignment: .center)
 
-            Text(PrayerEngine.hijriDateLabel(for: selectedDateKey))
-                .font(.system(size: 11, weight: .bold, design: .rounded))
-                .foregroundStyle(activeTheme.secondaryText.opacity(0.72))
-                .lineLimit(1)
-                .minimumScaleFactor(0.75)
-                .frame(maxWidth: .infinity, alignment: .center)
+            ZStack {
+                Capsule(style: .continuous)
+                    .fill(activeTheme.accent.opacity(activeTheme.isNightTheme ? 0.10 : 0.08))
+                    .frame(width: 74, height: 3)
 
-            Capsule(style: .continuous)
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            activeTheme.accent.opacity(0.18),
-                            activeTheme.accent.opacity(0.74),
-                            activeTheme.accent.opacity(0.18)
-                        ],
-                        startPoint: .leading,
-                        endPoint: .trailing
+                Capsule(style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                activeTheme.accent.opacity(0.22),
+                                activeTheme.accent.opacity(0.82),
+                                activeTheme.accent.opacity(0.22)
+                            ],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
                     )
-                )
-                .frame(width: 64, height: 2.5)
-                .padding(.top, 1)
+                    .frame(width: 42, height: 3)
+            }
+            .padding(.top, 1)
         }
         .multilineTextAlignment(.center)
         .frame(maxWidth: .infinity, alignment: .center)
-        .padding(.horizontal, 18)
-        .padding(.vertical, 10)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
         .background(
-            glassSurface(activeTheme.panelBackground.opacity(activeTheme.isNightTheme ? 0.44 : 0.66), radius: 18, prominence: .quiet)
+            ZStack {
+                glassSurface(activeTheme.panelBackground.opacity(activeTheme.isNightTheme ? 0.36 : 0.58), radius: 20, prominence: .quiet)
+
+                LinearGradient(
+                    colors: [
+                        Color.white.opacity(activeTheme.isNightTheme ? 0.03 : 0.22),
+                        activeTheme.accent.opacity(activeTheme.isNightTheme ? 0.05 : 0.035),
+                        Color.clear
+                    ],
+                    startPoint: .topTrailing,
+                    endPoint: .bottomLeading
+                )
+            }
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .stroke(activeTheme.rowBorder.opacity(activeTheme.isNightTheme ? 0.34 : 0.50), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .stroke(
+                    LinearGradient(
+                        colors: [
+                            Color.white.opacity(activeTheme.isNightTheme ? 0.10 : 0.70),
+                            activeTheme.accent.opacity(activeTheme.isNightTheme ? 0.18 : 0.16),
+                            activeTheme.rowBorder.opacity(activeTheme.isNightTheme ? 0.36 : 0.42)
+                        ],
+                        startPoint: .topTrailing,
+                        endPoint: .bottomLeading
+                    ),
+                    lineWidth: 1
+                )
         )
-        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .padding(.horizontal, 22)
+        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .shadow(color: activeTheme.accent.opacity(activeTheme.isNightTheme ? 0.08 : 0.06), radius: 12, y: 5)
+        .padding(.horizontal, 28)
     }
 
     private func prayerRows(
