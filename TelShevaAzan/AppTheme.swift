@@ -61,8 +61,8 @@ enum PrayerVisualTheme: String, CaseIterable, Identifiable {
 
     static let defaultNight: PrayerVisualTheme = .nightSalatiGlass
     static let defaultDay: PrayerVisualTheme = .daySalatiGlass
-    static let nightChoices: [PrayerVisualTheme] = [.nightSalatiGlass, .nightAppleGlass, .nightSakinaGlass, .nightDawnGlass, .nightGlass, .nightOld, .nightEmerald, .nightMidnight, .nightAmber, .nightCalendar]
-    static let dayChoices: [PrayerVisualTheme] = [.daySalatiGlass, .dayAppleGlass, .dayOasisGlass, .dayDawnGlass, .dayGlass, .dayMint, .dayPearl, .daySky, .dayOlive, .dayAqua]
+    static let nightChoices: [PrayerVisualTheme] = [.nightSalatiGlass]
+    static let dayChoices: [PrayerVisualTheme] = [.daySalatiGlass]
 
     static func selected(isNight: Bool, nightID: String, dayID: String) -> PrayerVisualTheme {
         let choices = isNight ? Self.nightChoices : Self.dayChoices

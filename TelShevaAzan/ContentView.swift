@@ -22,7 +22,7 @@ struct ContentView: View {
     private static let nabawiNightImage = Self.loadNabawiImage(named: "nabawi-night")
 
     private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
-    private let visualRefreshKey = "v0_6_43_salati_glass_applied"
+    private let visualRefreshKey = "v0_6_44_salati_only_themes"
 
     var body: some View {
         GeometryReader { proxy in
