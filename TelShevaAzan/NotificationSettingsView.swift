@@ -1133,22 +1133,22 @@ struct NotificationSettingsView: View {
             VStack(alignment: .trailing, spacing: 10) {
                 HStack(alignment: .top, spacing: 10) {
                     themeEssentialCard(
-                        title: "زجاج أبل نهاري",
-                        subtitle: "فاتح، صورة واضحة، أزرق هادئ",
-                        visualTheme: .dayAppleGlass,
-                        selected: selectedDayThemeID == PrayerVisualTheme.dayAppleGlass.rawValue
+                        title: "زجاج صلاتي",
+                        subtitle: "نهاري، أبيض زجاجي، صورة أوضح",
+                        visualTheme: .daySalatiGlass,
+                        selected: selectedDayThemeID == PrayerVisualTheme.daySalatiGlass.rawValue
                     )
 
                     themeEssentialCard(
-                        title: "ليل أبل",
-                        subtitle: "أسود أنيق، صورة ليلية، تباين واضح",
-                        visualTheme: .nightAppleGlass,
-                        selected: selectedNightThemeID == PrayerVisualTheme.nightAppleGlass.rawValue
+                        title: "ليل صلاتي",
+                        subtitle: "ليلي، أزرق عميق، تباين مرتب",
+                        visualTheme: .nightSalatiGlass,
+                        selected: selectedNightThemeID == PrayerVisualTheme.nightSalatiGlass.rawValue
                     )
                 }
                 .environment(\.layoutDirection, .leftToRight)
 
-                Text("خليت الاختيار مركز على نمطين فقط حتى التطبيق يبقى مرتب: نهاري وليلي.")
+                Text("نمطين زجاجيين فقط حتى الواجهة تبقى مرتبة: نهاري وليلي.")
                     .font(.caption2.weight(.semibold))
                     .foregroundStyle(theme.secondaryText.opacity(0.78))
                     .frame(maxWidth: .infinity, alignment: .trailing)
@@ -1329,7 +1329,7 @@ struct NotificationSettingsView: View {
     }
 
     private func visualThemeSubtitle(for visualTheme: PrayerVisualTheme) -> String {
-        if visualTheme == .dayAppleGlass || visualTheme == .nightAppleGlass {
+        if visualTheme == .dayAppleGlass || visualTheme == .nightAppleGlass || visualTheme == .daySalatiGlass || visualTheme == .nightSalatiGlass {
             return "زجاج هادئ بروح iOS"
         }
 

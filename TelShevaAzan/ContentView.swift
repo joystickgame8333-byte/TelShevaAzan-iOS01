@@ -22,7 +22,7 @@ struct ContentView: View {
     private static let nabawiNightImage = Self.loadNabawiImage(named: "nabawi-night")
 
     private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
-    private let visualRefreshKey = "v0_6_26_apple_glass_applied"
+    private let visualRefreshKey = "v0_6_43_salati_glass_applied"
 
     var body: some View {
         GeometryReader { proxy in
@@ -422,29 +422,12 @@ struct ContentView: View {
         let dateSummary = "\(PrayerEngine.longDateLabel(for: selectedDateKey)) · \(PrayerEngine.hijriDateLabel(for: selectedDateKey))"
 
         return VStack(alignment: .center, spacing: 6) {
-            HStack(spacing: 8) {
-                ZStack {
-                    Circle()
-                        .fill(activeTheme.accent.opacity(activeTheme.isNightTheme ? 0.16 : 0.12))
-                        .overlay(
-                            Circle()
-                                .stroke(activeTheme.accent.opacity(activeTheme.isNightTheme ? 0.28 : 0.20), lineWidth: 1)
-                        )
-
-                    Image(systemName: activeTheme.isNightTheme ? "moon.stars.fill" : "sun.max.fill")
-                        .font(.system(size: 12.5, weight: .black, design: .rounded))
-                        .foregroundStyle(activeTheme.accent)
-                }
-                .frame(width: 25, height: 25)
-
-                Text("أذان تل السبع")
-                    .font(.system(size: 24, weight: .black, design: .rounded))
-                    .foregroundStyle(activeTheme.primaryText)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.78)
-            }
-            .environment(\.layoutDirection, .rightToLeft)
-            .frame(maxWidth: .infinity, alignment: .center)
+            Text("صلاتي")
+                .font(.system(size: 25, weight: .black, design: .rounded))
+                .foregroundStyle(activeTheme.primaryText)
+                .lineLimit(1)
+                .minimumScaleFactor(0.78)
+                .frame(maxWidth: .infinity, alignment: .center)
 
             Text(dateSummary)
                 .font(.system(size: 11.5, weight: .bold, design: .rounded))
@@ -857,7 +840,6 @@ struct ContentView: View {
     }
 
     private func nabawiNextPrayerPanel(next: PrayerTime?, previous: PrayerTime?, compact: Bool) -> some View {
-        let progress = prayerProgress(previous: previous, next: next)
         let cornerRadius: CGFloat = compact ? 20 : 22
         let cardHeight: CGFloat = compact ? 164 : 190
         let isNightCard = activeTheme.isNightTheme
@@ -892,20 +874,6 @@ struct ContentView: View {
                 }
 
                 Spacer(minLength: compact ? 2 : 4)
-
-                VStack(spacing: compact ? 5 : 6) {
-                    rtlPrayerProgressBar(progress: progress)
-                        .frame(height: compact ? 6 : 7)
-
-                    HStack {
-                        Text(next?.title ?? "--")
-                        Spacer()
-                        Text(previous?.title ?? "--")
-                    }
-                    .font(.system(size: compact ? 11 : 12, weight: .bold, design: .rounded))
-                    .foregroundStyle(nabawiSecondaryText)
-                    .padding(.horizontal, 2)
-                }
             }
             .padding(.horizontal, compact ? 14 : 16)
             .padding(.top, compact ? 10 : 12)
@@ -1243,7 +1211,7 @@ struct ContentView: View {
     }
 
     private var usesNabawiPrayerCard: Bool {
-        activeTheme == .dayAppleGlass || activeTheme == .nightAppleGlass
+        activeTheme == .dayAppleGlass || activeTheme == .nightAppleGlass || activeTheme == .daySalatiGlass || activeTheme == .nightSalatiGlass
     }
 
     private var nabawiPrimaryText: Color {
@@ -1464,11 +1432,11 @@ struct ContentView: View {
         case .dhuhr, .sunrise:
             return 15
         case .asr:
-            return 12
+            return 17
         case .maghrib:
-            return 7
+            return 8
         case .isha:
-            return 10
+            return 15
         }
     }
 
@@ -1534,8 +1502,8 @@ struct ContentView: View {
     private func applyVisualRefreshThemeOnce() {
         guard !AppThemeStorage.defaults.bool(forKey: visualRefreshKey) else { return }
 
-        selectedNightThemeID = PrayerVisualTheme.nightAppleGlass.rawValue
-        selectedDayThemeID = PrayerVisualTheme.dayAppleGlass.rawValue
+        selectedNightThemeID = PrayerVisualTheme.nightSalatiGlass.rawValue
+        selectedDayThemeID = PrayerVisualTheme.daySalatiGlass.rawValue
         AppThemeStorage.defaults.set(selectedNightThemeID, forKey: AppThemeStorage.nightThemeKey)
         AppThemeStorage.defaults.set(selectedDayThemeID, forKey: AppThemeStorage.dayThemeKey)
         AppThemeStorage.defaults.set(true, forKey: visualRefreshKey)

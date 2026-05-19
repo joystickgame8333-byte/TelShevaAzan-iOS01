@@ -1,4 +1,4 @@
-import SwiftUI
+﻿import SwiftUI
 import WidgetKit
 
 struct WatchPrayerEntry: TimelineEntry {
@@ -132,7 +132,7 @@ struct TelShevaAzanWatchWidget: Widget {
         StaticConfiguration(kind: kind, provider: WatchPrayerProvider()) { entry in
             TelShevaWatchWidgetView(entry: entry)
         }
-        .configurationDisplayName("أذان تل السبع")
+        .configurationDisplayName("صلاتي")
         .description("يعرض الصلاة القادمة في تل السبع على ساعة Apple.")
         .supportedFamilies([.accessoryInline, .accessoryCircular, .accessoryRectangular, .accessoryCorner])
     }

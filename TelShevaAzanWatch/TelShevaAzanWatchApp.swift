@@ -1,4 +1,4 @@
-import SwiftUI
+﻿import SwiftUI
 
 @main
 struct TelShevaAzanWatchApp: App {
@@ -44,7 +44,7 @@ struct WatchPrayerView: View {
 
     private var header: some View {
         VStack(alignment: .trailing, spacing: 2) {
-            Text("أذان تل السبع")
+            Text("صلاتي")
                 .font(.system(size: 19, weight: .black, design: .rounded))
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)

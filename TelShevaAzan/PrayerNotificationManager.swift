@@ -1,4 +1,4 @@
-import Combine
+﻿import Combine
 import Foundation
 import UserNotifications
 
@@ -1116,7 +1116,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
     private func adhanRequest(for prayer: PrayerTime, date: Date) -> UNNotificationRequest {
         let content = UNMutableNotificationContent()
         content.title = "حان وقت صلاة \(prayer.title)"
-        content.body = "أذان تل السبع • \(prayer.time)"
+        content.body = "صلاتي • \(prayer.time)"
         content.sound = notificationSound
 
         var components = PrayerEngine.calendar.dateComponents([.year, .month, .day, .hour, .minute], from: date)

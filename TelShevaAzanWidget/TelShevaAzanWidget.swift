@@ -1,4 +1,4 @@
-import Foundation
+﻿import Foundation
 #if canImport(ActivityKit)
 import ActivityKit
 #endif
@@ -406,7 +406,7 @@ struct TelShevaAzanWidgetView: View {
                         .foregroundColor(accent)
                         .lineLimit(1)
 
-                    Text("أذان تل السبع")
+                    Text("صلاتي")
                         .font(.system(size: 24, weight: .black, design: .rounded))
                         .foregroundColor(primaryText)
                         .lineLimit(1)
@@ -1281,21 +1281,21 @@ private struct SalatiPrayerHadithInfo {
             )
         case .asr:
             return SalatiPrayerHadithInfo(
-                iqamaDelayMinutes: 12,
+                iqamaDelayMinutes: 17,
                 hadith: "من صلى البردين دخل الجنة",
                 source: "البخاري ومسلم",
                 narrator: "الراوي: أبو موسى الأشعري"
             )
         case .maghrib:
             return SalatiPrayerHadithInfo(
-                iqamaDelayMinutes: 7,
+                iqamaDelayMinutes: 8,
                 hadith: "الصلوات الخمس كفارة لما بينهن",
                 source: "صحيح مسلم",
                 narrator: "الراوي: أبو هريرة"
             )
         case .isha:
             return SalatiPrayerHadithInfo(
-                iqamaDelayMinutes: 10,
+                iqamaDelayMinutes: 15,
                 hadith: "من صلى العشاء في جماعة فكأنما قام نصف الليل",
                 source: "صحيح مسلم",
                 narrator: "الراوي: عثمان بن عفان"

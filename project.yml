@@ -1,4 +1,4 @@
-name: TelShevaAzan
+﻿name: TelShevaAzan
 options:
   minimumXcodeGenVersion: 2.42.0
   developmentLanguage: ar
@@ -23,7 +23,7 @@ targets:
     info:
       path: TelShevaAzan/Info.plist
       properties:
-        CFBundleDisplayName: أذان تل السبع
+        CFBundleDisplayName: صلاتي
         CFBundlePackageType: APPL
         CFBundleShortVersionString: "0.6.41"
         CFBundleVersion: "132"
@@ -110,7 +110,7 @@ targets:
     info:
       path: TelShevaAzanWidget/Info.plist
       properties:
-        CFBundleDisplayName: TelSheva Azan Widget
+        CFBundleDisplayName: Salati Widget
         CFBundlePackageType: XPC!
         CFBundleShortVersionString: "0.6.41"
         CFBundleVersion: "132"
@@ -142,7 +142,7 @@ targets:
     info:
       path: TelShevaAzanWidget/Info.plist
       properties:
-        CFBundleDisplayName: TelSheva Azan Widget
+        CFBundleDisplayName: Salati Widget
         CFBundlePackageType: XPC!
         CFBundleShortVersionString: "0.6.41"
         CFBundleVersion: "132"
@@ -174,7 +174,7 @@ targets:
     info:
       path: TelShevaAzanWatch/Info.plist
       properties:
-        CFBundleDisplayName: أذان تل السبع
+        CFBundleDisplayName: صلاتي
         CFBundlePackageType: APPL
         CFBundleShortVersionString: "0.6.41"
         CFBundleVersion: "132"
@@ -207,7 +207,7 @@ targets:
     info:
       path: TelShevaAzanWatchWidget/Info.plist
       properties:
-        CFBundleDisplayName: أذان تل السبع
+        CFBundleDisplayName: صلاتي
         CFBundlePackageType: XPC!
         CFBundleShortVersionString: "0.6.41"
         CFBundleVersion: "132"

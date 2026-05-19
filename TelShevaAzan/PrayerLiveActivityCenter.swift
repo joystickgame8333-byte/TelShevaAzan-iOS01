@@ -1,4 +1,4 @@
-import Combine
+﻿import Combine
 import Foundation
 
 #if canImport(ActivityKit)
@@ -136,7 +136,7 @@ final class PrayerLiveActivityCenter: ObservableObject {
         guard ActivityAuthorizationInfo().areActivitiesEnabled else {
             isPreviewActive = false
             statusText = "Live Activities مقفلة"
-            detailText = "افتح إعدادات الآيفون > أذان تل السبع > فعّل Live Activities، ثم ارجع واضغط اختبار الجزيرة."
+            detailText = "افتح إعدادات الآيفون > صلاتي > فعّل Live Activities، ثم ارجع واضغط اختبار الجزيرة."
             debugText = ""
             return
         }
@@ -444,11 +444,11 @@ final class PrayerLiveActivityCenter: ObservableObject {
         case .dhuhr, .sunrise:
             return 15
         case .asr:
-            return 12
+            return 17
         case .maghrib:
-            return 7
+            return 8
         case .isha:
-            return 10
+            return 15
         }
     }
 
@@ -461,10 +461,10 @@ final class PrayerLiveActivityCenter: ObservableObject {
         let isNight = hour < 6 || hour >= 18
 
         if isNight {
-            return AppThemeStorage.defaults.string(forKey: AppThemeStorage.nightThemeKey) ?? PrayerVisualTheme.nightAppleGlass.rawValue
+            return AppThemeStorage.defaults.string(forKey: AppThemeStorage.nightThemeKey) ?? PrayerVisualTheme.nightSalatiGlass.rawValue
         }
 
-        return AppThemeStorage.defaults.string(forKey: AppThemeStorage.dayThemeKey) ?? PrayerVisualTheme.dayAppleGlass.rawValue
+        return AppThemeStorage.defaults.string(forKey: AppThemeStorage.dayThemeKey) ?? PrayerVisualTheme.daySalatiGlass.rawValue
     }
 
     private var isWidgetExtensionBundled: Bool {
