@@ -27,11 +27,11 @@ struct ContentView: View {
     var body: some View {
         GeometryReader { proxy in
             let compactHeight = proxy.size.height < 720
-            let sectionSpacing: CGFloat = compactHeight ? 6 : 8
-            let rowSpacing: CGFloat = compactHeight ? 6 : 8
+            let sectionSpacing: CGFloat = compactHeight ? 6 : 7
+            let rowSpacing: CGFloat = compactHeight ? 5 : 6
             let dockBottomPadding = max(proxy.safeAreaInsets.bottom * 0.22, CGFloat(6))
-            let dockReservedHeight = proxy.safeAreaInsets.bottom + (compactHeight ? 126 : 142)
-            let rowHeight = min(CGFloat(58), max(CGFloat(38), (proxy.size.height - dockReservedHeight - 348) / 6))
+            let dockReservedHeight = proxy.safeAreaInsets.bottom + (compactHeight ? 96 : 108)
+            let rowHeight = min(CGFloat(54), max(CGFloat(44), (proxy.size.height - dockReservedHeight - (compactHeight ? 250 : 292)) / 6))
 
             ZStack {
                 background
@@ -373,16 +373,12 @@ struct ContentView: View {
         VStack(alignment: .trailing, spacing: sectionSpacing) {
             header
 
-            quranVerse
-
             nextPrayerPanel(next: next, previous: previous, compact: compactHeight)
-
-            liveActivityStatusPanel(next: next)
 
             prayerRows(schedule: schedule, next: next, previous: previous, rowSpacing: rowSpacing, rowHeight: rowHeight)
         }
         .padding(.horizontal, 16)
-        .padding(.top, compactHeight ? 12 : 18)
+        .padding(.top, compactHeight ? 10 : 14)
         .padding(.bottom, dockReservedHeight)
         .frame(width: size.width, height: size.height, alignment: .topTrailing)
         .foregroundStyle(activeTheme.primaryText)
@@ -826,7 +822,7 @@ struct ContentView: View {
     private func nabawiNextPrayerPanel(next: PrayerTime?, previous: PrayerTime?, compact: Bool) -> some View {
         let progress = prayerProgress(previous: previous, next: next)
         let cornerRadius: CGFloat = compact ? 20 : 22
-        let cardHeight: CGFloat = compact ? 158 : 184
+        let cardHeight: CGFloat = compact ? 164 : 190
         let isNightCard = activeTheme.isNightTheme
 
         return ZStack {
@@ -997,7 +993,7 @@ struct ContentView: View {
     private func prayerRow(_ item: PrayerTime, next: PrayerTime?, previous: PrayerTime?, rowHeight: CGFloat) -> some View {
         let isActive = item.key == next?.key
         let isPrevious = isPreviousPrayerRow(item, previous: previous, next: next)
-        let effectiveRowHeight = max(rowHeight, (isActive || isPrevious) ? 60 : 54)
+        let effectiveRowHeight = max(rowHeight, (isActive || isPrevious) ? 52 : 47)
 
         return Button {
             selectedPrayerDetails = item
@@ -1052,7 +1048,7 @@ struct ContentView: View {
                     .foregroundStyle(activeTheme.secondaryText.opacity(0.38))
                     .frame(width: 10)
             }
-            .padding(.horizontal, 12)
+            .padding(.horizontal, 10)
             .frame(height: effectiveRowHeight)
             .background(glassSurface(rowBackground(isActive: isActive), radius: 8, prominence: isActive ? .regular : .quiet))
             .overlay(alignment: .trailing) {
@@ -1239,17 +1235,17 @@ struct ContentView: View {
                     nabawiImage(isNight: true)
                         .resizable()
                         .scaledToFill()
-                        .frame(width: geometry.size.width * 0.74, height: height)
-                        .scaleEffect(1.08, anchor: .bottomLeading)
-                        .brightness(0.22)
-                        .saturation(1.18)
+                        .frame(width: geometry.size.width, height: height)
+                        .scaleEffect(1.04, anchor: .bottomLeading)
+                        .brightness(0.16)
+                        .saturation(1.20)
                         .clipped()
                         .overlay(
                             LinearGradient(
                                 colors: [
                                     Color.black.opacity(0.00),
-                                    Color.black.opacity(0.06),
-                                    Color.black.opacity(0.34)
+                                    Color.black.opacity(0.08),
+                                    Color.black.opacity(0.44)
                                 ],
                                 startPoint: .leading,
                                 endPoint: .trailing
@@ -1258,9 +1254,9 @@ struct ContentView: View {
 
                     LinearGradient(
                         colors: [
-                            Color.black.opacity(0.02),
-                            Color.black.opacity(0.10),
-                            Color.black.opacity(0.58)
+                            Color.black.opacity(0.00),
+                            Color.black.opacity(0.12),
+                            Color.black.opacity(0.54)
                         ],
                         startPoint: .leading,
                         endPoint: .trailing
@@ -1269,7 +1265,7 @@ struct ContentView: View {
                     LinearGradient(
                         colors: [
                             Color.black.opacity(0.00),
-                            Color.black.opacity(0.10)
+                            Color.black.opacity(0.14)
                         ],
                         startPoint: .top,
                         endPoint: .bottom
@@ -1283,8 +1279,8 @@ struct ContentView: View {
                 .scaledToFill()
                 .frame(maxWidth: .infinity)
                 .frame(height: height)
-                .brightness(0.02)
-                .saturation(1.04)
+                .brightness(0.05)
+                .saturation(1.08)
                 .overlay(nabawiCardOverlay(isNight: false))
         }
     }
