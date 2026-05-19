@@ -42,6 +42,9 @@ targets:
         UILaunchScreen: {}
         UIBackgroundModes:
           - audio
+          - fetch
+        BGTaskSchedulerPermittedIdentifiers:
+          - com.omaralasam.telshevaazan.prayer-live-activity
         NSSupportsLiveActivities: true
         UIAppFonts:
           - AmiriQuran-Regular.ttf

@@ -24,6 +24,13 @@ final class PrayerLiveActivityCenter: ObservableObject {
 
     private init() {}
 
+    func syncImmediately(now: Date = Date(), themeID: String? = nil) async {
+#if canImport(ActivityKit)
+        guard #available(iOS 16.1, *) else { return }
+        await syncActivity(now: now, themeID: themeID ?? Self.fallbackThemeID(now: now))
+#endif
+    }
+
     func startPreview(themeID: String? = nil) {
         let now = Date()
         let dateKey = PrayerEngine.defaultDateKey(for: now)

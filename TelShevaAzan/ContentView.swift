@@ -111,6 +111,9 @@ struct ContentView: View {
             if phase == .active {
                 WidgetRefreshCenter.refreshAll()
                 WidgetRefreshCenter.refreshAgainSoon()
+                PrayerLiveActivityBackgroundScheduler.shared.scheduleNext()
+            } else if phase == .background {
+                PrayerLiveActivityBackgroundScheduler.shared.scheduleNext()
             }
             liveActivityCenter.syncWithPrayerWindow(now: Date(), themeID: activeTheme.rawValue)
         }
@@ -120,6 +123,7 @@ struct ContentView: View {
             WidgetRefreshCenter.refreshAll()
             WidgetRefreshCenter.refreshAgainSoon()
             liveActivityCenter.syncWithPrayerWindow(now: Date(), themeID: activeTheme.rawValue)
+            PrayerLiveActivityBackgroundScheduler.shared.scheduleNext()
             presentWelcomeActivationPromptIfNeeded()
         }
         .onReceive(NotificationCenter.default.publisher(for: PrayerNotificationManager.openSettingsNotification)) { _ in
