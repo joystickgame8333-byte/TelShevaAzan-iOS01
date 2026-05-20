@@ -12,9 +12,9 @@ enum PrayerNotificationSound: String, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .bundledAdhan:
-            return "الأذان الحالي"
+            return "أذان محمد جازي"
         case .softDhikr:
-            return "نفحة روحانية"
+            return "رسالة إشعار"
         case .system:
             return "صوت الآيفون"
         }
@@ -23,7 +23,7 @@ enum PrayerNotificationSound: String, CaseIterable, Identifiable {
     var subtitle: String {
         switch self {
         case .bundledAdhan:
-            return "المقطع الذي أرسلته يعمل مع إشعارات الصلاة"
+            return "المقطع الذي أرسلته مع بداية صوت تدريجية"
         case .softDhikr:
             return "صوت هادئ لمن يريد تنبيهًا أخف"
         case .system:
@@ -53,9 +53,9 @@ enum AdhkarNotificationSound: String, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .spiritual:
-            return "نفحة روحانية"
+            return "رسالة إشعار"
         case .adhanTone:
-            return "نغمة الأذان"
+            return "أذان محمد جازي"
         case .system:
             return "صوت الآيفون"
         }
@@ -66,7 +66,7 @@ enum AdhkarNotificationSound: String, CaseIterable, Identifiable {
         case .spiritual:
             return "الصوت الهادئ المناسب للأذكار"
         case .adhanTone:
-            return "استخدم مقطع الأذان كتذكير أقوى"
+            return "مقطع الأذان المضاف للتذكير الأقوى"
         case .system:
             return "تنبيه قصير وخفيف من النظام"
         }

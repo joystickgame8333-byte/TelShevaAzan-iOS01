@@ -8,9 +8,7 @@ enum NotificationSettingsMode {
 struct NotificationSettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject private var notifications = PrayerNotificationManager.shared
-    @ObservedObject private var liveActivityCenter = PrayerLiveActivityCenter.shared
     @State private var selectedPage: NotificationSettingsPage = .adhan
-    @State private var isPrayerListExpanded = false
     @AppStorage(AppThemeStorage.nightThemeKey, store: AppThemeStorage.defaults) private var selectedNightThemeID = PrayerVisualTheme.defaultNight.rawValue
     @AppStorage(AppThemeStorage.dayThemeKey, store: AppThemeStorage.defaults) private var selectedDayThemeID = PrayerVisualTheme.defaultDay.rawValue
 
@@ -166,79 +164,11 @@ struct NotificationSettingsView: View {
 
     private var adhanSettings: some View {
         VStack(alignment: .trailing, spacing: 16) {
-            quickTestPanel
             masterPanel
-            liveActivityTestPanel
             soundPanel
             prayerPanel
         }
         .transition(.opacity)
-    }
-
-    private var quickTestPanel: some View {
-        panel(title: "اختبار سريع") {
-            VStack(alignment: .trailing, spacing: 10) {
-                HStack(spacing: 8) {
-                    quickTestButton(
-                        title: "الجزيرة",
-                        subtitle: "30 ثانية",
-                        symbol: "livephoto",
-                        action: { liveActivityCenter.startPreview(themeID: theme.rawValue) }
-                    )
-
-                    quickTestButton(
-                        title: "الأذان",
-                        subtitle: "إشعار صوت",
-                        symbol: "speaker.wave.2.fill",
-                        action: { notifications.sendPreviewNotification() }
-                    )
-
-                    quickTestButton(
-                        title: "الأذكار",
-                        subtitle: "نفحة خفيفة",
-                        symbol: "sparkles",
-                        action: { notifications.sendNafahatPreviewNotification() }
-                    )
-                }
-                .environment(\.layoutDirection, .leftToRight)
-
-                Text("هذا المكان يجرب أهم المزايا بسرعة بدون دخول كل قسم لوحده.")
-                    .font(.caption2.weight(.semibold))
-                    .foregroundStyle(theme.secondaryText.opacity(0.78))
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-            }
-        }
-    }
-
-    private func quickTestButton(title: String, subtitle: String, symbol: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            VStack(spacing: 5) {
-                Image(systemName: symbol)
-                    .font(.system(size: 17, weight: .black))
-                    .foregroundStyle(theme.accent)
-
-                Text(title)
-                    .font(.caption.weight(.black))
-                    .foregroundStyle(theme.primaryText)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.72)
-
-                Text(subtitle)
-                    .font(.system(size: 9, weight: .bold, design: .rounded))
-                    .foregroundStyle(theme.secondaryText.opacity(0.76))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.68)
-            }
-            .frame(maxWidth: .infinity)
-            .frame(height: 72)
-            .background(lightRowSurface(theme.controlBackground, radius: 8))
-            .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(theme.controlBorder)
-            )
-            .clipShape(RoundedRectangle(cornerRadius: 8))
-        }
-        .buttonStyle(.plain)
     }
 
     private var fajrAlarmSettings: some View {
@@ -268,8 +198,6 @@ struct NotificationSettingsView: View {
     private var appearanceSettings: some View {
         VStack(alignment: .trailing, spacing: 16) {
             themeSplitPalettePanel
-
-            widgetRefreshPanel
         }
         .transition(.opacity)
     }
@@ -289,138 +217,6 @@ struct NotificationSettingsView: View {
                 }
             )
         )
-    }
-
-    private var liveActivityTestPanel: some View {
-        panel(title: "اختبار الجزيرة") {
-            VStack(alignment: .trailing, spacing: 12) {
-                Button {
-                    liveActivityCenter.startPreview(themeID: theme.rawValue)
-                } label: {
-                    HStack(alignment: .center, spacing: 12) {
-                        Image(systemName: liveActivityCenter.isPreviewActive ? "checkmark.circle.fill" : "timer.circle.fill")
-                            .font(.system(size: 24, weight: .black))
-                            .foregroundStyle(theme.accent)
-                            .frame(width: 34, alignment: .leading)
-
-                        Spacer(minLength: 10)
-
-                        VStack(alignment: .trailing, spacing: 3) {
-                            Text(liveActivityCenter.isPreviewActive ? "الاختبار شغال الآن" : "تشغيل اختبار الجزيرة")
-                                .font(.subheadline.weight(.black))
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.72)
-
-                            Text("اختبار سريع ٣٠ ثانية للجزيرة")
-                                .font(.caption2.weight(.semibold))
-                                .foregroundStyle(theme.secondaryText.opacity(0.82))
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.72)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .trailing)
-                    }
-                    .padding(.vertical, 12)
-                    .padding(.horizontal, 10)
-                    .background(glassSurface(theme.countdownBackground, radius: 8, prominence: .strong))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(theme.activeRowBorder)
-                    )
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                }
-                .buttonStyle(.plain)
-
-                liveActivityPrayerTestGrid
-
-                VStack(alignment: .trailing, spacing: 5) {
-                    Text(liveActivityCenter.statusText)
-                        .font(.caption.weight(.black))
-                        .foregroundStyle(theme.accent)
-                        .lineLimit(2)
-                        .minimumScaleFactor(0.76)
-                        .fixedSize(horizontal: false, vertical: true)
-
-                    Text(liveActivityCenter.detailText)
-                        .font(.caption2.weight(.semibold))
-                        .foregroundStyle(theme.secondaryText.opacity(0.80))
-                        .lineLimit(4)
-                        .minimumScaleFactor(0.72)
-                        .fixedSize(horizontal: false, vertical: true)
-
-                    Text(liveActivityCenter.debugText)
-                        .font(.caption2.monospaced().weight(.semibold))
-                        .foregroundStyle(theme.secondaryText.opacity(0.72))
-                        .lineLimit(8)
-                        .minimumScaleFactor(0.68)
-                        .multilineTextAlignment(.leading)
-                        .environment(\.layoutDirection, .leftToRight)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                .frame(maxWidth: .infinity, alignment: .trailing)
-                .padding(.horizontal, 8)
-            }
-        }
-    }
-
-    private var liveActivityPrayerTestGrid: some View {
-        VStack(alignment: .trailing, spacing: 8) {
-            Text("فحص كل الصلوات")
-                .font(.caption.weight(.black))
-                .foregroundStyle(theme.secondaryText.opacity(0.88))
-                .frame(maxWidth: .infinity, alignment: .trailing)
-
-            LazyVGrid(
-                columns: Array(repeating: GridItem(.flexible(), spacing: 7), count: 3),
-                alignment: .trailing,
-                spacing: 7
-            ) {
-                ForEach(PrayerEngine.prayerOrder, id: \.self) { prayerKey in
-                    Button {
-                        liveActivityCenter.startPreview(prayerKey: prayerKey, themeID: theme.rawValue)
-                    } label: {
-                        HStack(spacing: 5) {
-                            Text(prayerKey.title)
-                                .font(.caption.weight(.black))
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.72)
-
-                            Image(systemName: testIconName(for: prayerKey))
-                                .font(.caption.weight(.black))
-                                .foregroundStyle(theme.accent)
-                        }
-                        .environment(\.layoutDirection, .rightToLeft)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 9)
-                        .padding(.horizontal, 6)
-                        .background(lightRowSurface(theme.controlBackground, radius: 8))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 8)
-                                .stroke(theme.controlBorder)
-                        )
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .trailing)
-    }
-
-    private func testIconName(for key: PrayerKey) -> String {
-        switch key {
-        case .fajr:
-            return "moon.stars.fill"
-        case .dhuhr:
-            return "sun.max.fill"
-        case .asr:
-            return "cloud.sun.fill"
-        case .maghrib:
-            return "sunset.fill"
-        case .isha:
-            return "moon.fill"
-        case .sunrise:
-            return "sunrise.fill"
-        }
     }
 
     private var adhkarMasterPanel: some View {
@@ -654,7 +450,6 @@ struct NotificationSettingsView: View {
                 ForEach(Array(PrayerNotificationSound.allCases.enumerated()), id: \.element.id) { index, sound in
                     Button {
                         notifications.selectSound(sound)
-                        notifications.sendPreviewNotification()
                     } label: {
                         optionRow(
                             title: sound.title,
@@ -670,13 +465,6 @@ struct NotificationSettingsView: View {
                             .background(theme.controlBorder)
                     }
                 }
-
-                Divider()
-                    .background(theme.controlBorder)
-                    .padding(.top, 2)
-
-                previewButton
-                    .padding(.top, 10)
             }
         }
     }
@@ -711,65 +499,38 @@ struct NotificationSettingsView: View {
         let todayTimes = PrayerEngine.schedule(for: PrayerEngine.defaultDateKey()).times
 
         return panel(title: "الصلوات التي يصدر لها الأذان") {
-            VStack(alignment: .trailing, spacing: 0) {
-                Button {
-                    withAnimation(.spring(response: 0.30, dampingFraction: 0.82)) {
-                        isPrayerListExpanded.toggle()
-                    }
-                } label: {
-                    HStack(spacing: 12) {
-                        Image(systemName: "chevron.down")
-                            .font(.system(size: 14, weight: .black))
-                            .rotationEffect(.degrees(isPrayerListExpanded ? 0 : 90))
-                            .foregroundStyle(theme.accent)
-                            .frame(width: 32, height: 32)
-                            .background(lightRowSurface(theme.controlBackground, radius: 8))
-                            .clipShape(RoundedRectangle(cornerRadius: 8))
+            VStack(alignment: .trailing, spacing: 12) {
+                HStack(spacing: 8) {
+                    Text("\(enabledPrayerCount) من \(PrayerEngine.prayerOrder.count) مفعّلة")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(theme.secondaryText.opacity(0.82))
 
-                        Spacer(minLength: 8)
+                    Spacer(minLength: 8)
 
-                        VStack(alignment: .trailing, spacing: 3) {
-                            Text(isPrayerListExpanded ? "إخفاء الصلوات" : "عرض الصلوات")
-                                .font(.system(size: 16, weight: .black, design: .rounded))
-                                .foregroundStyle(theme.primaryText)
-
-                            Text("\(enabledPrayerCount) من \(PrayerEngine.prayerOrder.count) مفعّلة")
-                                .font(.caption.weight(.bold))
-                                .foregroundStyle(theme.secondaryText.opacity(0.82))
-                        }
-
-                        Image(systemName: "bell.and.waves.left.and.right.fill")
-                            .font(.system(size: 17, weight: .black))
-                            .foregroundStyle(theme.accent)
-                            .frame(width: 34, height: 34)
-                    }
-                    .padding(.vertical, 4)
+                    Image(systemName: "bell.and.waves.left.and.right.fill")
+                        .font(.system(size: 17, weight: .black))
+                        .foregroundStyle(theme.accent)
+                        .frame(width: 30, height: 30)
                 }
-                .buttonStyle(.plain)
+                .frame(maxWidth: .infinity, alignment: .trailing)
 
-                if isPrayerListExpanded {
-                    Divider()
-                        .background(theme.controlBorder)
-                        .padding(.vertical, 8)
-
-                    LazyVStack(spacing: 0) {
-                        ForEach(Array(PrayerEngine.prayerOrder.enumerated()), id: \.element.id) { index, key in
-                            prayerToggleRow(
-                                key,
-                                time: todayTimes[key] ?? "--:--",
-                                isOn: Binding(
-                                    get: { notifications.isPrayerEnabled(key) },
-                                    set: { notifications.setPrayer(key, enabled: $0) }
-                                )
+                LazyVStack(spacing: 10) {
+                    ForEach(PrayerEngine.prayerOrder, id: \.id) { key in
+                        prayerToggleRow(
+                            key,
+                            time: todayTimes[key] ?? "--:--",
+                            isOn: Binding(
+                                get: { notifications.isPrayerEnabled(key) },
+                                set: { notifications.setPrayer(key, enabled: $0) }
                             )
-
-                            if index < PrayerEngine.prayerOrder.count - 1 {
-                                Divider()
-                                    .background(theme.controlBorder)
-                            }
-                        }
+                        )
+                        .background(lightRowSurface(settingsRowFill, radius: 8))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(theme.controlBorder)
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
                     }
-                    .transition(.opacity.combined(with: .move(edge: .top)))
                 }
             }
         }
@@ -966,30 +727,6 @@ struct NotificationSettingsView: View {
                 }
             }
         }
-    }
-
-    private var previewButton: some View {
-        Button {
-            notifications.sendPreviewNotification()
-        } label: {
-            HStack(spacing: 8) {
-                Image(systemName: "speaker.wave.2.fill")
-
-                Text("معاينة الصوت")
-                    .lineLimit(1)
-            }
-            .font(.subheadline.weight(.black))
-            .foregroundStyle(theme.primaryText)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 11)
-            .background(glassSurface(theme.countdownBackground, radius: 8, prominence: .strong))
-            .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(theme.activeRowBorder)
-            )
-            .clipShape(RoundedRectangle(cornerRadius: 8))
-        }
-        .buttonStyle(.plain)
     }
 
     private func toggleSummaryPanel(title: String, subtitle: String, isOn: Binding<Bool>) -> some View {
@@ -1275,42 +1012,6 @@ struct NotificationSettingsView: View {
                     }
                 }
             }
-        }
-    }
-
-    private var widgetRefreshPanel: some View {
-        panel(title: "الويجت") {
-            Button {
-                WidgetRefreshCenter.refreshAll()
-                WidgetRefreshCenter.refreshAgainSoon()
-            } label: {
-                HStack(spacing: 12) {
-                    Image(systemName: "arrow.clockwise.circle.fill")
-                        .font(.system(size: 20, weight: .black))
-                        .foregroundStyle(theme.accent)
-                        .frame(width: 28, alignment: .leading)
-
-                    Spacer(minLength: 12)
-
-                    VStack(alignment: .trailing, spacing: 2) {
-                        Text("تحديث الويجت")
-                            .font(.subheadline.weight(.black))
-                            .lineLimit(1)
-
-                        Text("ينعش الودجت بدون إعادة تشغيل الهاتف")
-                            .font(.caption2.weight(.semibold))
-                            .foregroundStyle(theme.secondaryText.opacity(0.80))
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.72)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-                }
-                .padding(.vertical, 10)
-                .padding(.horizontal, 8)
-                .background(lightRowSurface(settingsRowFill, radius: 8))
-                .clipShape(RoundedRectangle(cornerRadius: 8))
-            }
-            .buttonStyle(.plain)
         }
     }
 
