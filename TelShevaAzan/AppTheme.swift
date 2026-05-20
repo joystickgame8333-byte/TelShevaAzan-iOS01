@@ -61,8 +61,8 @@ enum PrayerVisualTheme: String, CaseIterable, Identifiable {
 
     static let defaultNight: PrayerVisualTheme = .nightSalatiGlass
     static let defaultDay: PrayerVisualTheme = .daySalatiGlass
-    static let nightChoices: [PrayerVisualTheme] = [.nightSalatiGlass, .nightAppleGlass, .nightSakinaGlass, .nightDawnGlass, .nightGlass]
-    static let dayChoices: [PrayerVisualTheme] = [.daySalatiGlass, .dayAppleGlass, .dayOasisGlass, .dayDawnGlass, .dayGlass]
+    static let nightChoices: [PrayerVisualTheme] = [.nightSalatiGlass, .nightAppleGlass, .nightSakinaGlass]
+    static let dayChoices: [PrayerVisualTheme] = [.daySalatiGlass, .dayAppleGlass, .dayOasisGlass]
 
     static func selected(isNight: Bool, nightID: String, dayID: String) -> PrayerVisualTheme {
         let choices = isNight ? Self.nightChoices : Self.dayChoices
@@ -89,9 +89,9 @@ enum PrayerVisualTheme: String, CaseIterable, Identifiable {
         case .nightDawnGlass:
             return "زجاج المدار"
         case .nightSakinaGlass:
-            return "زجاج السكينة"
+            return "نبوي دافئ"
         case .nightAppleGlass:
-            return "ليل آبل"
+            return "نبوي ليلي"
         case .nightSalatiGlass:
             return "ليل صلاتي"
         case .dayMint:
@@ -109,9 +109,9 @@ enum PrayerVisualTheme: String, CaseIterable, Identifiable {
         case .dayDawnGlass:
             return "زجاج الشروق"
         case .dayOasisGlass:
-            return "زجاج الواحة"
+            return "نبوي سماوي"
         case .dayAppleGlass:
-            return "زجاج آبل"
+            return "نبوي أبيض"
         case .daySalatiGlass:
             return "زجاج صلاتي"
         case .dayRose:
@@ -144,7 +144,7 @@ enum PrayerVisualTheme: String, CaseIterable, Identifiable {
         case .nightSakinaGlass:
             return "moon.stars.fill"
         case .nightAppleGlass:
-            return "apple.logo"
+            return "moon.stars.circle.fill"
         case .nightSalatiGlass:
             return "moon.stars.circle.fill"
         case .dayMint:
@@ -162,9 +162,9 @@ enum PrayerVisualTheme: String, CaseIterable, Identifiable {
         case .dayDawnGlass:
             return "sun.max.fill"
         case .dayOasisGlass:
-            return "leaf.fill"
+            return "sun.max.circle.fill"
         case .dayAppleGlass:
-            return "apple.logo"
+            return "photo.fill"
         case .daySalatiGlass:
             return "sparkles"
         case .dayRose:

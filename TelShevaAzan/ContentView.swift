@@ -22,7 +22,7 @@ struct ContentView: View {
     private static let nabawiNightImage = Self.loadNabawiImage(named: "nabawi-night")
 
     private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
-    private let visualRefreshKey = "v0_6_46_audio_themes_perf"
+    private let visualRefreshKey = "v0_6_47_nabawi_card_themes"
 
     var body: some View {
         GeometryReader { proxy in
@@ -31,7 +31,7 @@ struct ContentView: View {
             let rowSpacing: CGFloat = compactHeight ? 5 : 6
             let dockBottomPadding = max(proxy.safeAreaInsets.bottom * 0.22, CGFloat(6))
             let dockReservedHeight = proxy.safeAreaInsets.bottom + (compactHeight ? 96 : 108)
-            let rowHeight = min(CGFloat(54), max(CGFloat(44), (proxy.size.height - dockReservedHeight - (compactHeight ? 250 : 292)) / 6))
+            let rowHeight = min(CGFloat(54), max(CGFloat(43), (proxy.size.height - dockReservedHeight - (compactHeight ? 268 : 316)) / 6))
 
             ZStack {
                 background
@@ -834,7 +834,7 @@ struct ContentView: View {
 
     private func nabawiNextPrayerPanel(next: PrayerTime?, previous: PrayerTime?, compact: Bool) -> some View {
         let cornerRadius: CGFloat = compact ? 20 : 22
-        let cardHeight: CGFloat = compact ? 164 : 190
+        let cardHeight: CGFloat = compact ? 184 : 214
         let isNightCard = activeTheme.isNightTheme
 
         return ZStack {
@@ -879,7 +879,7 @@ struct ContentView: View {
             RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                 .stroke(nabawiCardBorder, lineWidth: 1)
         )
-        .shadow(color: .black.opacity(isNightCard ? 0.28 : 0.10), radius: 16, y: 8)
+        .shadow(color: .black.opacity(isNightCard ? 0.16 : 0.06), radius: 8, y: 4)
     }
 
     private func countdownBadge(next: PrayerTime?, isNight: Bool) -> some View {
@@ -1204,7 +1204,7 @@ struct ContentView: View {
     }
 
     private var usesNabawiPrayerCard: Bool {
-        activeTheme == .dayAppleGlass || activeTheme == .nightAppleGlass || activeTheme == .daySalatiGlass || activeTheme == .nightSalatiGlass
+        activeTheme == .dayAppleGlass || activeTheme == .dayOasisGlass || activeTheme == .nightAppleGlass || activeTheme == .nightSakinaGlass || activeTheme == .daySalatiGlass || activeTheme == .nightSalatiGlass
     }
 
     private var nabawiPrimaryText: Color {
@@ -1235,15 +1235,15 @@ struct ContentView: View {
                         .scaledToFill()
                         .frame(width: geometry.size.width, height: height)
                         .scaleEffect(1.04, anchor: .bottomLeading)
-                        .brightness(0.16)
+                        .brightness(0.22)
                         .saturation(1.20)
                         .clipped()
                         .overlay(
                             LinearGradient(
                                 colors: [
                                     Color.black.opacity(0.00),
-                                    Color.black.opacity(0.08),
-                                    Color.black.opacity(0.44)
+                                    Color.black.opacity(0.05),
+                                    Color.black.opacity(0.34)
                                 ],
                                 startPoint: .leading,
                                 endPoint: .trailing
@@ -1253,8 +1253,8 @@ struct ContentView: View {
                     LinearGradient(
                         colors: [
                             Color.black.opacity(0.00),
-                            Color.black.opacity(0.12),
-                            Color.black.opacity(0.54)
+                            Color.black.opacity(0.08),
+                            Color.black.opacity(0.42)
                         ],
                         startPoint: .leading,
                         endPoint: .trailing
@@ -1263,7 +1263,7 @@ struct ContentView: View {
                     LinearGradient(
                         colors: [
                             Color.black.opacity(0.00),
-                            Color.black.opacity(0.14)
+                            Color.black.opacity(0.08)
                         ],
                         startPoint: .top,
                         endPoint: .bottom

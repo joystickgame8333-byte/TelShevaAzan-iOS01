@@ -22,21 +22,12 @@ struct ThemeBackdrop: View {
     }
 
     private var glassBackdropOverlay: some View {
-        ZStack {
-            LinearGradient(
-                colors: glassVeilColors,
-                startPoint: isOrbitGlass ? .topTrailing : .topLeading,
-                endPoint: isOrbitGlass ? .bottomLeading : .bottomTrailing
-            )
-            .opacity(isOrbitGlass ? (theme.isNightTheme ? 0.64 : 0.56) : (theme.isNightTheme ? 0.54 : 0.42))
-
-            LinearGradient(
-                colors: glassGlowColors,
-                startPoint: .topTrailing,
-                endPoint: .bottomLeading
-            )
-            .opacity(isOrbitGlass ? 0.72 : 0.54)
-        }
+        LinearGradient(
+            colors: glassVeilColors,
+            startPoint: isOrbitGlass ? .topTrailing : .topLeading,
+            endPoint: isOrbitGlass ? .bottomLeading : .bottomTrailing
+        )
+        .opacity(isOrbitGlass ? (theme.isNightTheme ? 0.50 : 0.44) : (theme.isNightTheme ? 0.38 : 0.30))
     }
 
     private var glassVeilColors: [Color] {
@@ -75,23 +66,6 @@ struct ThemeBackdrop: View {
         ]
     }
 
-    private var glassGlowColors: [Color] {
-        if isOrbitGlass {
-            return [
-                theme.accent.opacity(theme.isNightTheme ? 0.20 : 0.14),
-                Color.clear,
-                Color(red: 0.05, green: 0.55, blue: 0.56).opacity(theme.isNightTheme ? 0.16 : 0.11),
-                Color.clear
-            ]
-        }
-
-        return [
-            Color.clear,
-            theme.accent.opacity(theme.isNightTheme ? 0.07 : 0.06),
-            Color.white.opacity(theme.isNightTheme ? 0.02 : 0.14),
-            Color.clear
-        ]
-    }
 }
 
 struct ThemeGlassSurface: View {

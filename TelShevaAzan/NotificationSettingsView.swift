@@ -107,7 +107,7 @@ struct NotificationSettingsView: View {
                         appearanceSettings
                     }
                 }
-                .padding(.bottom, bottomReservedHeight + max(bottomInset, CGFloat(18)))
+                .padding(.bottom, bottomReservedHeight + max(bottomInset, CGFloat(34)) + 34)
                 .frame(maxWidth: .infinity, alignment: .topTrailing)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -455,7 +455,8 @@ struct NotificationSettingsView: View {
                             title: sound.title,
                             subtitle: sound.subtitle,
                             symbol: sound.systemImage,
-                            selected: notifications.selectedSoundID == sound.rawValue
+                            selected: notifications.selectedSoundID == sound.rawValue,
+                            showsSubtitle: false
                         )
                     }
                     .buttonStyle(.plain)
@@ -823,7 +824,7 @@ struct NotificationSettingsView: View {
         .clipShape(RoundedRectangle(cornerRadius: 8))
     }
 
-    private func optionRow(title: String, subtitle: String, symbol: String, selected: Bool) -> some View {
+    private func optionRow(title: String, subtitle: String, symbol: String, selected: Bool, showsSubtitle: Bool = true) -> some View {
         HStack(alignment: .center, spacing: 12) {
             Image(systemName: selected ? "checkmark.circle.fill" : symbol)
                 .font(.system(size: 18, weight: .bold))
@@ -840,18 +841,20 @@ struct NotificationSettingsView: View {
                     .minimumScaleFactor(0.82)
                     .fixedSize(horizontal: false, vertical: true)
 
-                Text(subtitle)
-                    .font(.caption2.weight(.semibold))
-                    .foregroundStyle(theme.secondaryText.opacity(0.80))
-                    .lineLimit(2)
-                    .minimumScaleFactor(0.76)
-                    .fixedSize(horizontal: false, vertical: true)
+                if showsSubtitle {
+                    Text(subtitle)
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(theme.secondaryText.opacity(0.80))
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.76)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
             .frame(maxWidth: .infinity, alignment: .trailing)
         }
-        .padding(.vertical, 11)
+        .padding(.vertical, showsSubtitle ? 11 : 10)
         .padding(.horizontal, 8)
-        .frame(minHeight: 64, alignment: .center)
+        .frame(minHeight: showsSubtitle ? 64 : 52, alignment: .center)
         .background(lightRowSurface(selected ? theme.activeRowBackground : settingsRowFill, radius: 8, selected: selected))
         .clipShape(RoundedRectangle(cornerRadius: 8))
         .contentShape(Rectangle())
@@ -1060,8 +1063,19 @@ struct NotificationSettingsView: View {
     }
 
     private func visualThemeSubtitle(for visualTheme: PrayerVisualTheme) -> String {
-        if visualTheme == .dayAppleGlass || visualTheme == .nightAppleGlass || visualTheme == .daySalatiGlass || visualTheme == .nightSalatiGlass {
-            return "زجاج هادئ بروح iOS"
+        switch visualTheme {
+        case .daySalatiGlass, .nightSalatiGlass:
+            return "النمط الأساسي الحالي"
+        case .dayAppleGlass:
+            return "زجاج أبيض مع صورة أوضح"
+        case .dayOasisGlass:
+            return "زجاج سماوي مع هدوء أكثر"
+        case .nightAppleGlass:
+            return "ليل أزرق مع صورة المسجد"
+        case .nightSakinaGlass:
+            return "ليل دافئ وناعم"
+        default:
+            break
         }
 
         return visualTheme.isGlassTheme ? "زجاج خفيف ومتناسق" : "نمط كلاسيكي"
