@@ -4,6 +4,7 @@ import UserNotifications
 
 enum PrayerNotificationSound: String, CaseIterable, Identifiable {
     case bundledAdhan
+    case originalAdhan
     case softDhikr
     case system
 
@@ -13,6 +14,8 @@ enum PrayerNotificationSound: String, CaseIterable, Identifiable {
         switch self {
         case .bundledAdhan:
             return "أذان محمد جازي"
+        case .originalAdhan:
+            return "الأذان الأول"
         case .softDhikr:
             return "رسالة إشعار"
         case .system:
@@ -23,7 +26,9 @@ enum PrayerNotificationSound: String, CaseIterable, Identifiable {
     var subtitle: String {
         switch self {
         case .bundledAdhan:
-            return "المقطع الذي أرسلته مع بداية صوت تدريجية"
+            return "المقطع الذي أرسلته بصوت أعلى وبداية تدريجية"
+        case .originalAdhan:
+            return "الصوت السابق رجع ضمن المجموعة"
         case .softDhikr:
             return "صوت هادئ لمن يريد تنبيهًا أخف"
         case .system:
@@ -35,6 +40,8 @@ enum PrayerNotificationSound: String, CaseIterable, Identifiable {
         switch self {
         case .bundledAdhan:
             return "waveform.circle.fill"
+        case .originalAdhan:
+            return "speaker.wave.2.circle.fill"
         case .softDhikr:
             return "sparkles"
         case .system:
@@ -45,7 +52,9 @@ enum PrayerNotificationSound: String, CaseIterable, Identifiable {
 
 enum AdhkarNotificationSound: String, CaseIterable, Identifiable {
     case spiritual
-    case adhanTone
+    case lightBell
+    case softChime
+    case pearlTap
     case system
 
     var id: String { rawValue }
@@ -53,9 +62,13 @@ enum AdhkarNotificationSound: String, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .spiritual:
-            return "رسالة إشعار"
-        case .adhanTone:
-            return "أذان محمد جازي"
+            return "رسالة إشعار 1"
+        case .lightBell:
+            return "رسالة إشعار 2"
+        case .softChime:
+            return "رسالة إشعار 3"
+        case .pearlTap:
+            return "رسالة إشعار 4"
         case .system:
             return "صوت الآيفون"
         }
@@ -64,9 +77,13 @@ enum AdhkarNotificationSound: String, CaseIterable, Identifiable {
     var subtitle: String {
         switch self {
         case .spiritual:
-            return "الصوت الهادئ المناسب للأذكار"
-        case .adhanTone:
-            return "مقطع الأذان المضاف للتذكير الأقوى"
+            return "نغمة خفيفة وناعمة للأذكار"
+        case .lightBell:
+            return "جرس قصير بدون إزعاج"
+        case .softChime:
+            return "لمعة صوتية هادئة"
+        case .pearlTap:
+            return "تنبيه لطيف ومختصر"
         case .system:
             return "تنبيه قصير وخفيف من النظام"
         }
@@ -76,8 +93,12 @@ enum AdhkarNotificationSound: String, CaseIterable, Identifiable {
         switch self {
         case .spiritual:
             return "sparkles"
-        case .adhanTone:
-            return "waveform.circle.fill"
+        case .lightBell:
+            return "bell.badge.fill"
+        case .softChime:
+            return "music.note"
+        case .pearlTap:
+            return "circle.dotted.circle.fill"
         case .system:
             return "iphone.gen3.radiowaves.left.and.right"
         }
@@ -1292,13 +1313,13 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
         content.sound = notificationSound
 
         center.removePendingNotificationRequests(withIdentifiers: [previewNotificationIdentifier])
-        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 2, repeats: false)
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 5, repeats: false)
         let request = UNNotificationRequest(identifier: previewNotificationIdentifier, content: content, trigger: trigger)
 
         center.add(request) { [weak self] error in
             DispatchQueue.main.async {
                 guard let self else { return }
-                self.statusText = error == nil ? "ستسمع معاينة الصوت بعد ثانيتين" : "تعذر إرسال معاينة الصوت"
+                self.statusText = error == nil ? "ستسمع معاينة الأذان بعد 5 ثواني" : "تعذر إرسال معاينة الصوت"
             }
         }
     }
@@ -1375,9 +1396,11 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
         case .system:
             return .default
         case .bundledAdhan:
+            return bundledNotificationSound(["adhan-mohamed-jazi.caf", "adhan-mohamed-jazi.wav", "adhan-mohamed-jazi.aiff"])
+        case .originalAdhan:
             return bundledNotificationSound(["adhan.caf", "adhan.wav", "adhan.aiff"])
         case .softDhikr:
-            return bundledNotificationSound(["nafahat.wav", "nafahat.caf", "nafahat.aiff"])
+            return bundledNotificationSound(["notification-soft-01.wav", "nafahat.wav", "nafahat.caf"])
         }
     }
 
@@ -1390,9 +1413,13 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
         case .system:
             return .default
         case .spiritual:
-            return bundledNotificationSound(["nafahat.wav", "nafahat.caf", "nafahat.aiff"])
-        case .adhanTone:
-            return bundledNotificationSound(["adhan.caf", "adhan.wav", "adhan.aiff"])
+            return bundledNotificationSound(["notification-soft-01.wav", "nafahat.wav"])
+        case .lightBell:
+            return bundledNotificationSound(["notification-soft-02.wav", "nafahat.wav"])
+        case .softChime:
+            return bundledNotificationSound(["notification-soft-03.wav", "nafahat.wav"])
+        case .pearlTap:
+            return bundledNotificationSound(["notification-soft-04.wav", "nafahat.wav"])
         }
     }
 

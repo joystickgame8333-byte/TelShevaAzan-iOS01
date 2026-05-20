@@ -465,6 +465,47 @@ struct NotificationSettingsView: View {
                             .background(theme.controlBorder)
                     }
                 }
+
+                Divider()
+                    .background(theme.controlBorder)
+                    .padding(.vertical, 8)
+
+                Button {
+                    notifications.sendPreviewNotification()
+                } label: {
+                    HStack(spacing: 10) {
+                        Image(systemName: "speaker.wave.2.fill")
+                            .font(.system(size: 19, weight: .black))
+                            .foregroundStyle(theme.accent)
+                            .frame(width: 34, alignment: .leading)
+
+                        Spacer(minLength: 10)
+
+                        VStack(alignment: .trailing, spacing: 4) {
+                            Text("اختبار الأذان بعد 5 ثواني")
+                                .font(.subheadline.weight(.black))
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.78)
+
+                            Text("اقفل الشاشة بسرعة وتأكد من الصوت المختار")
+                                .font(.caption2.weight(.semibold))
+                                .foregroundStyle(theme.secondaryText.opacity(0.82))
+                                .lineLimit(2)
+                                .minimumScaleFactor(0.76)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .trailing)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                    .padding(.vertical, 12)
+                    .padding(.horizontal, 12)
+                    .background(glassSurface(theme.countdownBackground, radius: 8, prominence: .strong))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(theme.activeRowBorder)
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                }
+                .buttonStyle(.plain)
             }
         }
     }
@@ -869,23 +910,12 @@ struct NotificationSettingsView: View {
         panel(title: "أنماط التطبيق") {
             VStack(alignment: .trailing, spacing: 10) {
                 HStack(alignment: .top, spacing: 10) {
-                    themeEssentialCard(
-                        title: "زجاج صلاتي",
-                        subtitle: "نهاري، أبيض زجاجي، صورة أوضح",
-                        visualTheme: .daySalatiGlass,
-                        selected: selectedDayThemeID == PrayerVisualTheme.daySalatiGlass.rawValue
-                    )
-
-                    themeEssentialCard(
-                        title: "ليل صلاتي",
-                        subtitle: "ليلي، أزرق عميق، تباين مرتب",
-                        visualTheme: .nightSalatiGlass,
-                        selected: selectedNightThemeID == PrayerVisualTheme.nightSalatiGlass.rawValue
-                    )
+                    themeColumn(title: "نهاري", themes: PrayerVisualTheme.dayChoices, selectedID: selectedDayThemeID)
+                    themeColumn(title: "ليلي", themes: PrayerVisualTheme.nightChoices, selectedID: selectedNightThemeID)
                 }
                 .environment(\.layoutDirection, .leftToRight)
 
-                Text("نمطين زجاجيين فقط حتى الواجهة تبقى مرتبة: نهاري وليلي.")
+                Text("اختار نمطًا نهاريًا ونمطًا ليليًا، والتطبيق يبدل بينهم تلقائيًا حسب الوقت.")
                     .font(.caption2.weight(.semibold))
                     .foregroundStyle(theme.secondaryText.opacity(0.78))
                     .frame(maxWidth: .infinity, alignment: .trailing)

@@ -83,9 +83,9 @@ final class PrayerLiveActivityCenter: ObservableObject {
     func syncWithPrayerWindow(now: Date = Date(), themeID: String? = nil) {
 #if canImport(ActivityKit)
         guard #available(iOS 16.1, *) else { return }
-        cleanupExpiredLiveActivities(now: now)
         guard now.timeIntervalSince(lastSyncDate) >= 2 else { return }
         lastSyncDate = now
+        cleanupExpiredLiveActivities(now: now)
 
         Task {
             await syncActivity(now: now, themeID: themeID ?? Self.fallbackThemeID(now: now))

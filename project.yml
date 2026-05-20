@@ -63,7 +63,12 @@ targets:
       - path: TelShevaAzan/Icon-60@3x.png
       - path: TelShevaAzan/Fonts/AmiriQuran-Regular.ttf
       - path: TelShevaAzan/Sounds/adhan.caf
+      - path: TelShevaAzan/Sounds/adhan-mohamed-jazi.caf
       - path: TelShevaAzan/Sounds/nafahat.wav
+      - path: TelShevaAzan/Sounds/notification-soft-01.wav
+      - path: TelShevaAzan/Sounds/notification-soft-02.wav
+      - path: TelShevaAzan/Sounds/notification-soft-03.wav
+      - path: TelShevaAzan/Sounds/notification-soft-04.wav
       - path: TelShevaAzan/Sounds/fajr-alarm-dawn-rise.wav
       - path: TelShevaAzan/Sounds/fajr-alarm-strong-pulse.wav
       - path: TelShevaAzan/Sounds/fajr-alarm-urgent-wake.wav

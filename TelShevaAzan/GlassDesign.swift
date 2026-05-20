@@ -129,9 +129,9 @@ struct ThemeGlassSurface: View {
 
     private var shouldDrawSheen: Bool {
         switch prominence {
-        case .quiet:
+        case .quiet, .regular:
             return false
-        case .regular, .strong:
+        case .strong:
             return true
         }
     }
@@ -141,9 +141,9 @@ struct ThemeGlassSurface: View {
         case .quiet:
             return 0
         case .regular:
-            return theme.isNightTheme ? 0.13 : 0.17
+            return 0
         case .strong:
-            return theme.isNightTheme ? 0.19 : 0.24
+            return theme.isNightTheme ? 0.14 : 0.18
         }
     }
 
@@ -152,9 +152,9 @@ struct ThemeGlassSurface: View {
         case .quiet:
             return 0
         case .regular:
-            return theme.isNightTheme ? 0.18 : 0.22
+            return 0
         case .strong:
-            return theme.isNightTheme ? 0.24 : 0.28
+            return theme.isNightTheme ? 0.18 : 0.22
         }
     }
 
@@ -202,7 +202,7 @@ struct ThemeGlassSurface: View {
         case .quiet, .regular:
             return 0
         case .strong:
-            return 3
+            return 1.5
         }
     }
 
