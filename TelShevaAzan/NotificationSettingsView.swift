@@ -11,6 +11,9 @@ struct NotificationSettingsView: View {
     @State private var selectedPage: NotificationSettingsPage = .adhan
     @AppStorage(AppThemeStorage.nightThemeKey, store: AppThemeStorage.defaults) private var selectedNightThemeID = PrayerVisualTheme.defaultNight.rawValue
     @AppStorage(AppThemeStorage.dayThemeKey, store: AppThemeStorage.defaults) private var selectedDayThemeID = PrayerVisualTheme.defaultDay.rawValue
+    @AppStorage("adhkar.miniKhatmah.enabled") private var isMiniKhatmahEnabled = false
+    @AppStorage("adhkar.miniKhatmah.dailyPortion") private var miniKhatmahDailyPortion = MiniKhatmahPortion.halfPage.rawValue
+    @AppStorage("adhkar.miniKhatmah.startDate") private var miniKhatmahStartDate: Double = 0
 
     let theme: PrayerVisualTheme
     var mode: NotificationSettingsMode = .full
@@ -107,7 +110,7 @@ struct NotificationSettingsView: View {
                         appearanceSettings
                     }
                 }
-                .padding(.bottom, bottomReservedHeight + max(bottomInset, CGFloat(34)) + 34)
+                .padding(.bottom, bottomReservedHeight + max(bottomInset, CGFloat(34)) + 72)
                 .frame(maxWidth: .infinity, alignment: .topTrailing)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -186,6 +189,7 @@ struct NotificationSettingsView: View {
     private var nafahatSettings: some View {
         VStack(alignment: .trailing, spacing: 16) {
             nafahatMasterPanel
+            miniKhatmahPanel
             adhkarSoundPanel
             nafahatPreviewPanel
             nafahatIntervalPanel
@@ -239,6 +243,137 @@ struct NotificationSettingsView: View {
                 set: { notifications.setNafahatEnabled($0) }
             )
         )
+    }
+
+    private var miniKhatmahPanel: some View {
+        let portion = MiniKhatmahPortion(rawValue: miniKhatmahDailyPortion) ?? .halfPage
+        let progress = miniKhatmahProgress(for: portion)
+
+        return panel(title: "ختمة مصغرة") {
+            VStack(alignment: .trailing, spacing: 12) {
+                Button {
+                    if !isMiniKhatmahEnabled {
+                        miniKhatmahStartDate = Date().timeIntervalSince1970
+                    }
+                    isMiniKhatmahEnabled.toggle()
+                } label: {
+                    HStack(spacing: 12) {
+                        lightSwitch(isOn: isMiniKhatmahEnabled)
+
+                        Spacer(minLength: 12)
+
+                        VStack(alignment: .trailing, spacing: 3) {
+                            Text(isMiniKhatmahEnabled ? "الختمة تعمل بهدوء" : "تشغيل الختمة المصغرة")
+                                .font(.subheadline.weight(.black))
+                                .foregroundStyle(isMiniKhatmahEnabled ? theme.accent : theme.primaryText)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.78)
+
+                            Text(portion.subtitle)
+                                .font(.caption2.weight(.semibold))
+                                .foregroundStyle(theme.secondaryText.opacity(0.82))
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.72)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .trailing)
+
+                        Image(systemName: "book.closed.fill")
+                            .font(.system(size: 18, weight: .black))
+                            .foregroundStyle(theme.accent)
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 12)
+                    .background(lightRowSurface(isMiniKhatmahEnabled ? theme.activeRowBackground : settingsRowFill, radius: 8, selected: isMiniKhatmahEnabled))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                }
+                .buttonStyle(.plain)
+
+                HStack(spacing: 8) {
+                    ForEach(MiniKhatmahPortion.allCases) { item in
+                        miniKhatmahPortionButton(item)
+                    }
+                }
+                .environment(\.layoutDirection, .leftToRight)
+
+                HStack(alignment: .center, spacing: 10) {
+                    VStack(alignment: .trailing, spacing: 2) {
+                        Text(progress.title)
+                            .font(.headline.weight(.black))
+                            .foregroundStyle(theme.primaryText)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.74)
+
+                        Text(progress.detail)
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(theme.secondaryText.opacity(0.86))
+                            .lineLimit(2)
+                            .minimumScaleFactor(0.72)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+
+                    ZStack {
+                        Circle()
+                            .stroke(theme.accent.opacity(theme.isNightTheme ? 0.20 : 0.16), lineWidth: 6)
+
+                        Circle()
+                            .trim(from: 0, to: progress.ratio)
+                            .stroke(theme.accent, style: StrokeStyle(lineWidth: 6, lineCap: .round))
+                            .rotationEffect(.degrees(-90))
+
+                        Text("\(progress.percent)%")
+                            .font(.caption2.monospacedDigit().weight(.black))
+                            .foregroundStyle(theme.accent)
+                    }
+                    .frame(width: 54, height: 54)
+                }
+                .padding(12)
+                .background(lightRowSurface(theme.countdownBackground.opacity(theme.isNightTheme ? 0.34 : 0.16), radius: 8, selected: false))
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+            }
+        }
+    }
+
+    private func miniKhatmahPortionButton(_ portion: MiniKhatmahPortion) -> some View {
+        let selected = miniKhatmahDailyPortion == portion.rawValue
+
+        return Button {
+            miniKhatmahDailyPortion = portion.rawValue
+            if miniKhatmahStartDate == 0 {
+                miniKhatmahStartDate = Date().timeIntervalSince1970
+            }
+        } label: {
+            Text(portion.title)
+                .font(.caption.weight(.black))
+                .foregroundStyle(selected ? .white : theme.primaryText)
+                .lineLimit(1)
+                .minimumScaleFactor(0.74)
+                .frame(maxWidth: .infinity)
+                .frame(height: 38)
+                .background(
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .fill(selected ? theme.accent : theme.controlBackground)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .stroke(selected ? Color.white.opacity(0.28) : theme.controlBorder, lineWidth: 1)
+                )
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func miniKhatmahProgress(for portion: MiniKhatmahPortion) -> (title: String, detail: String, ratio: CGFloat, percent: Int) {
+        let start = miniKhatmahStartDate > 0 ? Date(timeIntervalSince1970: miniKhatmahStartDate) : Date()
+        let days = max(0, Calendar.current.dateComponents([.day], from: Calendar.current.startOfDay(for: start), to: Calendar.current.startOfDay(for: Date())).day ?? 0)
+        let currentStep = min(portion.totalSteps, days + 1)
+        let currentPage = min(604, Int(ceil(Double(currentStep) * portion.pagesPerStep)))
+        let ratio = min(1, max(0, CGFloat(currentStep) / CGFloat(portion.totalSteps)))
+        let percent = Int((ratio * 100).rounded())
+        let title = isMiniKhatmahEnabled ? "ورد اليوم: \(portion.title)" : "ابدأ بخطة خفيفة"
+        let detail = isMiniKhatmahEnabled
+            ? "صفحة \(currentPage) • اليوم \(currentStep) من \(portion.totalSteps)"
+            : "اختر نصف صفحة أو صفحة يوميًا، والتطبيق يرتب لك المسار."
+
+        return (title, detail, ratio, percent)
     }
 
     private var nafahatPreviewPanel: some View {
@@ -979,48 +1114,94 @@ struct NotificationSettingsView: View {
     }
 
     private func themeColumn(title: String, themes: [PrayerVisualTheme], selectedID: String) -> some View {
-        VStack(alignment: .trailing, spacing: 8) {
+        VStack(alignment: .trailing, spacing: 10) {
             Text(title)
                 .font(.caption.weight(.black))
                 .foregroundStyle(theme.accent)
                 .frame(maxWidth: .infinity, alignment: .trailing)
 
             ForEach(themes) { visualTheme in
-                Button {
-                    selectTheme(visualTheme)
-                } label: {
-                    VStack(alignment: .trailing, spacing: 3) {
-                        HStack(spacing: 6) {
-                            Image(systemName: selectedID == visualTheme.rawValue ? "checkmark.circle.fill" : visualTheme.symbol)
-                                .font(.system(size: 13, weight: .black))
-                                .foregroundStyle(selectedID == visualTheme.rawValue ? theme.accent : theme.secondaryText.opacity(0.72))
-
-                            Spacer(minLength: 4)
-
-                            Text(visualTheme.title)
-                                .font(.caption2.weight(.black))
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.68)
-                        }
-                        .environment(\.layoutDirection, .leftToRight)
-
-                        Text(visualThemeSubtitle(for: visualTheme))
-                            .font(.system(size: 9, weight: .semibold, design: .rounded))
-                            .foregroundStyle(theme.secondaryText.opacity(0.76))
-                            .lineLimit(2)
-                            .minimumScaleFactor(0.70)
-                            .multilineTextAlignment(.trailing)
-                    }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 8)
-                    .frame(maxWidth: .infinity, minHeight: 52, alignment: .trailing)
-                    .background(lightRowSurface(selectedID == visualTheme.rawValue ? theme.activeRowBackground : settingsRowFill, radius: 8, selected: selectedID == visualTheme.rawValue))
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                }
-                .buttonStyle(.plain)
+                themePreviewOption(visualTheme, selected: selectedID == visualTheme.rawValue)
             }
         }
         .frame(maxWidth: .infinity, alignment: .topTrailing)
+    }
+
+    private func themePreviewOption(_ visualTheme: PrayerVisualTheme, selected: Bool) -> some View {
+        Button {
+            selectTheme(visualTheme)
+        } label: {
+            VStack(alignment: .trailing, spacing: 7) {
+                ZStack(alignment: .bottomTrailing) {
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(
+                            LinearGradient(
+                                colors: visualTheme.widgetBackground,
+                                startPoint: .topTrailing,
+                                endPoint: .bottomLeading
+                            )
+                        )
+
+                    LinearGradient(
+                        colors: [
+                            Color.white.opacity(visualTheme.isNightTheme ? 0.06 : 0.34),
+                            visualTheme.accent.opacity(visualTheme.isNightTheme ? 0.22 : 0.14),
+                            Color.black.opacity(visualTheme.isNightTheme ? 0.28 : 0.02)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+
+                    HStack(alignment: .bottom, spacing: 6) {
+                        Text("04:08")
+                            .font(.system(size: 13, weight: .black, design: .rounded))
+                            .monospacedDigit()
+                            .foregroundStyle(visualTheme.accent)
+
+                        Spacer(minLength: 4)
+
+                        Image(systemName: visualTheme.symbol)
+                            .font(.system(size: 14, weight: .black))
+                            .foregroundStyle(visualTheme.isNightTheme ? .white.opacity(0.90) : visualTheme.accent)
+                    }
+                    .padding(8)
+                }
+                .frame(height: 54)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .stroke(selected ? visualTheme.accent.opacity(0.78) : Color.white.opacity(theme.isNightTheme ? 0.16 : 0.70), lineWidth: selected ? 1.4 : 0.8)
+                )
+
+                HStack(spacing: 6) {
+                    Image(systemName: selected ? "checkmark.circle.fill" : "circle")
+                        .font(.system(size: 12, weight: .black))
+                        .foregroundStyle(selected ? theme.accent : theme.secondaryText.opacity(0.58))
+
+                    Spacer(minLength: 4)
+
+                    VStack(alignment: .trailing, spacing: 2) {
+                        Text(visualTheme.title)
+                            .font(.caption2.weight(.black))
+                            .foregroundStyle(selected ? theme.accent : theme.primaryText)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.68)
+
+                        Text(visualThemeSubtitle(for: visualTheme))
+                            .font(.system(size: 8.5, weight: .semibold, design: .rounded))
+                            .foregroundStyle(theme.secondaryText.opacity(0.72))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.62)
+                    }
+                }
+                .environment(\.layoutDirection, .leftToRight)
+            }
+            .padding(8)
+            .frame(maxWidth: .infinity, alignment: .trailing)
+            .background(lightRowSurface(selected ? theme.activeRowBackground : settingsRowFill, radius: 10, selected: selected))
+            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        }
+        .buttonStyle(.plain)
     }
 
     private func themePalettePanel(title: String, themes: [PrayerVisualTheme], selectedID: String) -> some View {
@@ -1116,6 +1297,49 @@ struct NotificationSettingsView: View {
 
     private var settingsRowFill: Color {
         theme.isGlassTheme ? theme.rowBackground.opacity(theme.isNightTheme ? 0.70 : 0.58) : Color.clear
+    }
+}
+
+private enum MiniKhatmahPortion: String, CaseIterable, Identifiable {
+    case halfPage
+    case fullPage
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .halfPage:
+            return "نصف صفحة"
+        case .fullPage:
+            return "صفحة يوميًا"
+        }
+    }
+
+    var subtitle: String {
+        switch self {
+        case .halfPage:
+            return "نصف صفحة يوميًا لمن يريد مسارًا هادئًا"
+        case .fullPage:
+            return "صفحة يوميًا لختمة ثابتة وواضحة"
+        }
+    }
+
+    var totalSteps: Int {
+        switch self {
+        case .halfPage:
+            return 1208
+        case .fullPage:
+            return 604
+        }
+    }
+
+    var pagesPerStep: Double {
+        switch self {
+        case .halfPage:
+            return 0.5
+        case .fullPage:
+            return 1
+        }
     }
 }
 

@@ -13,7 +13,7 @@ enum PrayerNotificationSound: String, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .bundledAdhan:
-            return "أذان محمد جازي"
+            return "الأذان الثاني"
         case .originalAdhan:
             return "الأذان الأول"
         case .softDhikr:
@@ -98,7 +98,7 @@ enum AdhkarNotificationSound: String, CaseIterable, Identifiable {
         case .softChime:
             return "music.note"
         case .pearlTap:
-            return "circle.dotted.circle.fill"
+            return "bell.circle.fill"
         case .system:
             return "iphone.gen3.radiowaves.left.and.right"
         }

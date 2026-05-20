@@ -22,7 +22,7 @@ struct ContentView: View {
     private static let nabawiNightImage = Self.loadNabawiImage(named: "nabawi-night")
 
     private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
-    private let visualRefreshKey = "v0_6_47_nabawi_card_themes"
+    private let visualRefreshKey = "v0_6_48_khatmah_theme_polish"
 
     var body: some View {
         GeometryReader { proxy in
@@ -420,10 +420,19 @@ struct ContentView: View {
 
     private var header: some View {
         let dateSummary = "\(PrayerEngine.longDateLabel(for: selectedDateKey)) · \(PrayerEngine.hijriDateLabel(for: selectedDateKey))"
+        let timeSummary = Self.timeWithSecondsFormatter.string(from: now)
 
-        return VStack(alignment: .center, spacing: 6) {
+        return VStack(alignment: .center, spacing: 5) {
+            Text(timeSummary)
+                .font(.system(size: 18, weight: .black, design: .rounded))
+                .monospacedDigit()
+                .foregroundStyle(activeTheme.accent.opacity(activeTheme.isNightTheme ? 0.98 : 0.94))
+                .lineLimit(1)
+                .minimumScaleFactor(0.82)
+                .frame(maxWidth: .infinity, alignment: .center)
+
             Text(dateSummary)
-                .font(.system(size: 15.5, weight: .black, design: .rounded))
+                .font(.system(size: 14, weight: .black, design: .rounded))
                 .foregroundStyle(activeTheme.accent.opacity(activeTheme.isNightTheme ? 0.96 : 0.92))
                 .lineLimit(1)
                 .minimumScaleFactor(0.72)
@@ -488,6 +497,14 @@ struct ContentView: View {
         .shadow(color: activeTheme.accent.opacity(activeTheme.isNightTheme ? 0.08 : 0.06), radius: 12, y: 5)
         .padding(.horizontal, 28)
     }
+
+    private static let timeWithSecondsFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = PrayerEngine.timeZone
+        formatter.dateFormat = "HH:mm:ss"
+        return formatter
+    }()
 
     private func prayerRows(
         schedule: DaySchedule,
