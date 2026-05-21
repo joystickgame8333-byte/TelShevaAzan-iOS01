@@ -929,15 +929,61 @@ private struct SalatiLockCircleWidgetView: View {
 }
 
 @available(iOSApplicationExtension 16.0, *)
-private struct SalatiLockCircleWidget: Widget {
-    let circleKind: SalatiLockCircleKind
-
+private struct SalatiFajrLockCircleWidget: Widget {
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: circleKind.widgetKind, provider: TelShevaWidgetProvider()) { entry in
-            SalatiLockCircleWidgetView(entry: entry, kind: circleKind)
+        StaticConfiguration(kind: SalatiLockCircleKind.fajrTime.widgetKind, provider: TelShevaWidgetProvider()) { entry in
+            SalatiLockCircleWidgetView(entry: entry, kind: .fajrTime)
         }
-        .configurationDisplayName(circleKind.displayName)
-        .description(circleKind.description)
+        .configurationDisplayName(SalatiLockCircleKind.fajrTime.displayName)
+        .description(SalatiLockCircleKind.fajrTime.description)
+        .supportedFamilies([.accessoryCircular])
+    }
+}
+
+@available(iOSApplicationExtension 16.0, *)
+private struct SalatiNextCountdownLockCircleWidget: Widget {
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: SalatiLockCircleKind.nextCountdown.widgetKind, provider: TelShevaWidgetProvider()) { entry in
+            SalatiLockCircleWidgetView(entry: entry, kind: .nextCountdown)
+        }
+        .configurationDisplayName(SalatiLockCircleKind.nextCountdown.displayName)
+        .description(SalatiLockCircleKind.nextCountdown.description)
+        .supportedFamilies([.accessoryCircular])
+    }
+}
+
+@available(iOSApplicationExtension 16.0, *)
+private struct SalatiIqamaMinutesLockCircleWidget: Widget {
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: SalatiLockCircleKind.iqamaMinutes.widgetKind, provider: TelShevaWidgetProvider()) { entry in
+            SalatiLockCircleWidgetView(entry: entry, kind: .iqamaMinutes)
+        }
+        .configurationDisplayName(SalatiLockCircleKind.iqamaMinutes.displayName)
+        .description(SalatiLockCircleKind.iqamaMinutes.description)
+        .supportedFamilies([.accessoryCircular])
+    }
+}
+
+@available(iOSApplicationExtension 16.0, *)
+private struct SalatiIqamaTimeLockCircleWidget: Widget {
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: SalatiLockCircleKind.iqamaTime.widgetKind, provider: TelShevaWidgetProvider()) { entry in
+            SalatiLockCircleWidgetView(entry: entry, kind: .iqamaTime)
+        }
+        .configurationDisplayName(SalatiLockCircleKind.iqamaTime.displayName)
+        .description(SalatiLockCircleKind.iqamaTime.description)
+        .supportedFamilies([.accessoryCircular])
+    }
+}
+
+@available(iOSApplicationExtension 16.0, *)
+private struct SalatiSunriseLockCircleWidget: Widget {
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: SalatiLockCircleKind.sunriseTime.widgetKind, provider: TelShevaWidgetProvider()) { entry in
+            SalatiLockCircleWidgetView(entry: entry, kind: .sunriseTime)
+        }
+        .configurationDisplayName(SalatiLockCircleKind.sunriseTime.displayName)
+        .description(SalatiLockCircleKind.sunriseTime.description)
         .supportedFamilies([.accessoryCircular])
     }
 }
@@ -955,11 +1001,11 @@ struct TelShevaAzanWidgetBundle: WidgetBundle {
         TelShevaAzanScheduleWidget()
         TelShevaAzanCountdownWidget()
         if #available(iOSApplicationExtension 16.0, *) {
-            SalatiLockCircleWidget(circleKind: .fajrTime)
-            SalatiLockCircleWidget(circleKind: .nextCountdown)
-            SalatiLockCircleWidget(circleKind: .iqamaMinutes)
-            SalatiLockCircleWidget(circleKind: .iqamaTime)
-            SalatiLockCircleWidget(circleKind: .sunriseTime)
+            SalatiFajrLockCircleWidget()
+            SalatiNextCountdownLockCircleWidget()
+            SalatiIqamaMinutesLockCircleWidget()
+            SalatiIqamaTimeLockCircleWidget()
+            SalatiSunriseLockCircleWidget()
         }
 #endif
     }
