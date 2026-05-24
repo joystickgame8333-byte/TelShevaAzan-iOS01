@@ -10,11 +10,10 @@ enum WidgetRefreshCenter {
         "com.omaralasam.telshevaazan.nextPrayer.v3",
         "com.omaralasam.telshevaazan.dailySchedule.v1",
         "com.omaralasam.telshevaazan.countdown.v1",
-        "com.omaralasam.telshevaazan.lockCircle.fajrTime.v1",
-        "com.omaralasam.telshevaazan.lockCircle.nextCountdown.v1",
-        "com.omaralasam.telshevaazan.lockCircle.iqamaMinutes.v1",
-        "com.omaralasam.telshevaazan.lockCircle.iqamaTime.v1",
-        "com.omaralasam.telshevaazan.lockCircle.sunriseTime.v1"
+        "com.omaralasam.telshevaazan.lockCircle.prayerTime.v2",
+        "com.omaralasam.telshevaazan.lockCircle.iqamaMinutes.v2",
+        "com.omaralasam.telshevaazan.lockCircle.nextCountdown.v2",
+        "com.omaralasam.telshevaazan.lockCircle.sunriseTime.v2"
     ]
 
     static func refreshAll() {

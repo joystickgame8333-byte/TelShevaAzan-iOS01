@@ -683,7 +683,7 @@ struct TelShevaAzanWidgetView: View {
                     Image(systemName: "clock.fill")
                 }
             case .accessoryCircular:
-                SalatiLockCircleWidgetView(entry: entry, kind: .nextCountdown)
+                SalatiLockCircleWidgetView(entry: entry, kind: .prayerTime)
             case .accessoryRectangular:
                 VStack(alignment: .trailing, spacing: 1) {
                     Text("تل السبع")
@@ -737,43 +737,38 @@ enum TelShevaWidgetPresentation {
 
 @available(iOSApplicationExtension 16.0, *)
 private enum SalatiLockCircleKind: String {
-    case fajrTime
-    case nextCountdown
+    case prayerTime
     case iqamaMinutes
-    case iqamaTime
+    case nextCountdown
     case sunriseTime
 
     var widgetKind: String {
-        "com.omaralasam.telshevaazan.lockCircle.\(rawValue).v1"
+        "com.omaralasam.telshevaazan.lockCircle.\(rawValue).v2"
     }
 
     var displayName: String {
         switch self {
-        case .fajrTime:
-            return "الفجر والتوقيت"
-        case .nextCountdown:
-            return "متبقي للصلاة"
+        case .prayerTime:
+            return "وقت الصلاة"
         case .iqamaMinutes:
-            return "مدة الإقامة"
-        case .iqamaTime:
-            return "وقت الإقامة"
+            return "الإقامة"
+        case .nextCountdown:
+            return "المتبقي للصلاة"
         case .sunriseTime:
-            return "وقت الشروق"
+            return "الشروق"
         }
     }
 
     var description: String {
         switch self {
-        case .fajrTime:
-            return "دائرة صغيرة تعرض وقت صلاة الفجر."
-        case .nextCountdown:
-            return "دائرة صغيرة تعرض المتبقي للصلاة القادمة وتتحدث كل دقيقة."
+        case .prayerTime:
+            return "دائرة شاشة القفل تعرض الصلاة القادمة ووقتها."
         case .iqamaMinutes:
-            return "دائرة صغيرة تعرض مدة الإقامة للصلاة القادمة."
-        case .iqamaTime:
-            return "دائرة صغيرة تعرض وقت الإقامة للصلاة القادمة."
+            return "دائرة شاشة القفل تعرض مدة الإقامة للصلاة القادمة."
+        case .nextCountdown:
+            return "دائرة شاشة القفل تعرض المتبقي للصلاة القادمة."
         case .sunriseTime:
-            return "دائرة صغيرة تعرض وقت الشروق."
+            return "دائرة شاشة القفل تعرض وقت الشروق."
         }
     }
 }
@@ -786,103 +781,166 @@ private struct SalatiLockCircleWidgetView: View {
     var body: some View {
         ZStack {
             AccessoryWidgetBackground()
+            ringLayer
 
             switch kind {
-            case .fajrTime:
+            case .prayerTime:
                 circleStack(
-                    icon: "sunrise.fill",
-                    title: "الفجر",
-                    value: prayer(.fajr)?.time ?? "--:--",
-                    footer: "أذان"
-                )
-            case .nextCountdown:
-                circleStack(
-                    icon: symbol(for: entry.nextPrayer?.key),
                     title: entry.nextPrayer?.title ?? "الصلاة",
-                    value: remainingMinuteText(until: entry.nextPrayer?.date),
-                    footer: "متبقي"
+                    value: entry.nextPrayer?.time ?? "--:--",
+                    valueSize: 8,
+                    titleSize: 13,
+                    footer: nil
                 )
             case .iqamaMinutes:
                 circleStack(
-                    icon: "bell.fill",
-                    title: "الإقامة",
+                    title: nil,
                     value: iqamaMinuteValue(for: entry.nextPrayer),
-                    footer: entry.nextPrayer?.title ?? "الصلاة"
+                    valueSize: 24,
+                    titleSize: 10,
+                    footer: "إقامة"
                 )
-            case .iqamaTime:
+            case .nextCountdown:
                 circleStack(
-                    icon: "bell.badge.fill",
-                    title: entry.nextPrayer?.title ?? "الصلاة",
-                    value: iqamaTimeText(for: entry.nextPrayer),
-                    footer: "الإقامة"
+                    title: nil,
+                    value: remainingValue(until: entry.nextPrayer?.date),
+                    valueSize: 22,
+                    titleSize: 10,
+                    footer: remainingUnit(until: entry.nextPrayer?.date)
                 )
             case .sunriseTime:
                 circleStack(
-                    icon: "sunrise.fill",
                     title: "الشروق",
                     value: prayer(.sunrise)?.time ?? "--:--",
-                    footer: "تل السبع"
+                    valueSize: 13,
+                    titleSize: 8,
+                    footer: nil
                 )
             }
         }
+        .dynamicTypeSize(.xSmall ... .small)
         .environment(\.layoutDirection, .rightToLeft)
     }
 
-    private func circleStack(icon: String, title: String, value: String, footer: String) -> some View {
-        VStack(spacing: 1) {
-            Image(systemName: icon)
-                .font(.system(size: 10, weight: .black, design: .rounded))
-                .imageScale(.small)
+    private var ringLayer: some View {
+        ZStack {
+            if usesOpenGauge {
+                Circle()
+                    .trim(from: 0.14, to: 0.86)
+                    .stroke(.white.opacity(0.36), style: StrokeStyle(lineWidth: 5.2, lineCap: .round))
+                    .rotationEffect(.degrees(115))
 
-            Text(title)
-                .font(.system(size: 9, weight: .black, design: .rounded))
-                .lineLimit(1)
-                .minimumScaleFactor(0.55)
+                Circle()
+                    .trim(from: 0.14, to: 0.14 + (0.72 * progress))
+                    .stroke(.white, style: StrokeStyle(lineWidth: 5.2, lineCap: .round))
+                    .rotationEffect(.degrees(115))
+            } else {
+                Circle()
+                    .stroke(.white.opacity(0.36), style: StrokeStyle(lineWidth: 5.2, lineCap: .round))
+
+                Circle()
+                    .trim(from: 0, to: progress)
+                    .stroke(.white, style: StrokeStyle(lineWidth: 5.2, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+            }
+        }
+        .padding(5.5)
+    }
+
+    private func circleStack(title: String?, value: String, valueSize: CGFloat, titleSize: CGFloat, footer: String?) -> some View {
+        VStack(spacing: 1) {
+            if let title {
+                Text(title)
+                    .font(.system(size: titleSize, weight: .black, design: .rounded))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
+            }
 
             Text(value)
-                .font(.system(size: value.count > 5 ? 13 : 15, weight: .black, design: .rounded).monospacedDigit())
+                .font(.system(size: valueSize, weight: .black, design: .rounded).monospacedDigit())
                 .lineLimit(1)
-                .minimumScaleFactor(0.55)
+                .minimumScaleFactor(0.48)
 
-            Text(footer)
-                .font(.system(size: 7, weight: .bold, design: .rounded))
-                .lineLimit(1)
-                .minimumScaleFactor(0.55)
-                .opacity(0.86)
+            if let footer {
+                Text(footer)
+                    .font(.system(size: 7, weight: .bold, design: .rounded))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
+                    .opacity(0.86)
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .multilineTextAlignment(.center)
-        .padding(6)
+        .padding(10)
+    }
+
+    private var usesOpenGauge: Bool {
+        kind == .nextCountdown || kind == .sunriseTime
+    }
+
+    private var progress: CGFloat {
+        switch kind {
+        case .prayerTime:
+            return intervalProgress
+        case .iqamaMinutes:
+            return iqamaProgress
+        case .nextCountdown:
+            return intervalProgress
+        case .sunriseTime:
+            return 0.38
+        }
+    }
+
+    private var intervalProgress: CGFloat {
+        guard let previous = entry.previousPrayer,
+              let next = entry.nextPrayer else {
+            return 0.58
+        }
+
+        let total = next.date.timeIntervalSince(previous.date)
+        guard total > 0 else { return 0.58 }
+
+        return clampedProgress(entry.date.timeIntervalSince(previous.date) / total)
+    }
+
+    private var iqamaProgress: CGFloat {
+        if let previous = entry.previousPrayer,
+           let minutes = iqamaOffsetMinutes(for: previous.key) {
+            let iqamaDate = previous.date.addingTimeInterval(TimeInterval(minutes * 60))
+
+            if entry.date >= previous.date && entry.date <= iqamaDate {
+                return clampedProgress(entry.date.timeIntervalSince(previous.date) / max(iqamaDate.timeIntervalSince(previous.date), 1))
+            }
+        }
+
+        return 0.68
+    }
+
+    private func clampedProgress(_ value: TimeInterval) -> CGFloat {
+        CGFloat(min(max(value, 0.06), 0.98))
     }
 
     private func prayer(_ key: PrayerKey) -> PrayerTime? {
         entry.times.first { $0.key == key }
     }
 
-    private func symbol(for key: PrayerKey?) -> String {
-        switch key {
-        case .fajr:
-            return "sunrise.fill"
-        case .sunrise:
-            return "sun.max.fill"
-        case .dhuhr:
-            return "sun.max.fill"
-        case .asr:
-            return "cloud.sun.fill"
-        case .maghrib:
-            return "sunset.fill"
-        case .isha:
-            return "moon.stars.fill"
-        case .none:
-            return "clock.fill"
-        }
-    }
-
-    private func remainingMinuteText(until targetDate: Date?) -> String {
+    private func remainingValue(until targetDate: Date?) -> String {
         guard let targetDate else { return "--:--" }
         let seconds = max(Int(targetDate.timeIntervalSince(entry.date)), 0)
         let minutes = (seconds + 59) / 60
-        return String(format: "%02d:%02d", minutes / 60, minutes % 60)
+
+        if minutes < 100 {
+            return "\(minutes)"
+        }
+
+        return String(format: "%d:%02d", minutes / 60, minutes % 60)
+    }
+
+    private func remainingUnit(until targetDate: Date?) -> String {
+        guard let targetDate else { return "متبقي" }
+        let seconds = max(Int(targetDate.timeIntervalSince(entry.date)), 0)
+        let minutes = (seconds + 59) / 60
+        return minutes < 100 ? "دقيقة" : "متبقي"
     }
 
     private func iqamaMinuteValue(for prayer: PrayerTime?) -> String {
@@ -890,16 +948,7 @@ private struct SalatiLockCircleWidgetView: View {
             return "--"
         }
 
-        return "\(minutes)د"
-    }
-
-    private func iqamaTimeText(for prayer: PrayerTime?) -> String {
-        guard let prayer, let minutes = iqamaOffsetMinutes(for: prayer.key) else {
-            return "--:--"
-        }
-
-        let iqamaDate = prayer.date.addingTimeInterval(TimeInterval(minutes * 60))
-        return Self.timeFormatter.string(from: iqamaDate)
+        return "\(minutes)"
     }
 
     private func iqamaOffsetMinutes(for key: PrayerKey) -> Int? {
@@ -919,35 +968,16 @@ private struct SalatiLockCircleWidgetView: View {
         }
     }
 
-    private static let timeFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.timeZone = PrayerEngine.timeZone
-        formatter.dateFormat = "HH:mm"
-        return formatter
-    }()
 }
 
 @available(iOSApplicationExtension 16.0, *)
-private struct SalatiFajrLockCircleWidget: Widget {
+private struct SalatiPrayerTimeLockCircleWidget: Widget {
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: SalatiLockCircleKind.fajrTime.widgetKind, provider: TelShevaWidgetProvider()) { entry in
-            SalatiLockCircleWidgetView(entry: entry, kind: .fajrTime)
+        StaticConfiguration(kind: SalatiLockCircleKind.prayerTime.widgetKind, provider: TelShevaWidgetProvider()) { entry in
+            SalatiLockCircleWidgetView(entry: entry, kind: .prayerTime)
         }
-        .configurationDisplayName(SalatiLockCircleKind.fajrTime.displayName)
-        .description(SalatiLockCircleKind.fajrTime.description)
-        .supportedFamilies([.accessoryCircular])
-    }
-}
-
-@available(iOSApplicationExtension 16.0, *)
-private struct SalatiNextCountdownLockCircleWidget: Widget {
-    var body: some WidgetConfiguration {
-        StaticConfiguration(kind: SalatiLockCircleKind.nextCountdown.widgetKind, provider: TelShevaWidgetProvider()) { entry in
-            SalatiLockCircleWidgetView(entry: entry, kind: .nextCountdown)
-        }
-        .configurationDisplayName(SalatiLockCircleKind.nextCountdown.displayName)
-        .description(SalatiLockCircleKind.nextCountdown.description)
+        .configurationDisplayName(SalatiLockCircleKind.prayerTime.displayName)
+        .description(SalatiLockCircleKind.prayerTime.description)
         .supportedFamilies([.accessoryCircular])
     }
 }
@@ -965,13 +995,13 @@ private struct SalatiIqamaMinutesLockCircleWidget: Widget {
 }
 
 @available(iOSApplicationExtension 16.0, *)
-private struct SalatiIqamaTimeLockCircleWidget: Widget {
+private struct SalatiNextCountdownLockCircleWidget: Widget {
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: SalatiLockCircleKind.iqamaTime.widgetKind, provider: TelShevaWidgetProvider()) { entry in
-            SalatiLockCircleWidgetView(entry: entry, kind: .iqamaTime)
+        StaticConfiguration(kind: SalatiLockCircleKind.nextCountdown.widgetKind, provider: TelShevaWidgetProvider()) { entry in
+            SalatiLockCircleWidgetView(entry: entry, kind: .nextCountdown)
         }
-        .configurationDisplayName(SalatiLockCircleKind.iqamaTime.displayName)
-        .description(SalatiLockCircleKind.iqamaTime.description)
+        .configurationDisplayName(SalatiLockCircleKind.nextCountdown.displayName)
+        .description(SalatiLockCircleKind.nextCountdown.description)
         .supportedFamilies([.accessoryCircular])
     }
 }
@@ -1001,10 +1031,9 @@ struct TelShevaAzanWidgetBundle: WidgetBundle {
         TelShevaAzanScheduleWidget()
         TelShevaAzanCountdownWidget()
         if #available(iOSApplicationExtension 16.0, *) {
-            SalatiFajrLockCircleWidget()
-            SalatiNextCountdownLockCircleWidget()
+            SalatiPrayerTimeLockCircleWidget()
             SalatiIqamaMinutesLockCircleWidget()
-            SalatiIqamaTimeLockCircleWidget()
+            SalatiNextCountdownLockCircleWidget()
             SalatiSunriseLockCircleWidget()
         }
 #endif
