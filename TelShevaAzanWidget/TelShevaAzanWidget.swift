@@ -150,37 +150,44 @@ struct TelShevaAzanWidgetView: View {
         )
     }
 
-    private var nabawiImageName: String {
-        isNight ? "nabawi-night" : "nabawi-day"
-    }
-
     private var widgetSurfaceBackground: some View {
         ZStack {
-            Image(nabawiImageName, bundle: .main)
-                .resizable()
-                .scaledToFill()
-
             LinearGradient(
                 colors: isNight
                     ? [
-                        Color.black.opacity(0.22),
-                        Color(red: 0.00, green: 0.05, blue: 0.09).opacity(0.70),
-                        Color.black.opacity(0.90)
+                        Color(red: 0.00, green: 0.03, blue: 0.06),
+                        Color(red: 0.02, green: 0.11, blue: 0.17),
+                        Color(red: 0.00, green: 0.02, blue: 0.05)
                     ]
                     : [
-                        Color.white.opacity(0.12),
-                        Color(red: 0.92, green: 0.97, blue: 1.00).opacity(0.72),
-                        Color.white.opacity(0.92)
+                        Color(red: 0.95, green: 0.99, blue: 1.00),
+                        Color(red: 0.80, green: 0.90, blue: 0.94),
+                        Color(red: 0.97, green: 0.99, blue: 0.98)
                     ],
-                startPoint: .leading,
-                endPoint: .trailing
+                startPoint: .topTrailing,
+                endPoint: .bottomLeading
             )
 
             RadialGradient(
-                colors: [accent.opacity(isNight ? 0.22 : 0.16), .clear],
+                colors: [
+                    accent.opacity(isNight ? 0.24 : 0.22),
+                    accent.opacity(isNight ? 0.10 : 0.08),
+                    .clear
+                ],
                 center: .topTrailing,
                 startRadius: 0,
-                endRadius: 190
+                endRadius: 210
+            )
+
+            RadialGradient(
+                colors: [
+                    Color.white.opacity(isNight ? 0.08 : 0.48),
+                    Color.white.opacity(isNight ? 0.02 : 0.16),
+                    .clear
+                ],
+                center: .bottomLeading,
+                startRadius: 0,
+                endRadius: 230
             )
         }
         .clipped()
