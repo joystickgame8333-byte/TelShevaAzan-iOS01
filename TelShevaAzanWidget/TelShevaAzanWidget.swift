@@ -150,6 +150,95 @@ struct TelShevaAzanWidgetView: View {
         )
     }
 
+    private var nabawiImageName: String {
+        isNight ? "nabawi-night" : "nabawi-day"
+    }
+
+    private var widgetSurfaceBackground: some View {
+        ZStack {
+            Image(nabawiImageName, bundle: .main)
+                .resizable()
+                .scaledToFill()
+
+            LinearGradient(
+                colors: isNight
+                    ? [
+                        Color.black.opacity(0.22),
+                        Color(red: 0.00, green: 0.05, blue: 0.09).opacity(0.70),
+                        Color.black.opacity(0.90)
+                    ]
+                    : [
+                        Color.white.opacity(0.12),
+                        Color(red: 0.92, green: 0.97, blue: 1.00).opacity(0.72),
+                        Color.white.opacity(0.92)
+                    ],
+                startPoint: .leading,
+                endPoint: .trailing
+            )
+
+            RadialGradient(
+                colors: [accent.opacity(isNight ? 0.22 : 0.16), .clear],
+                center: .topTrailing,
+                startRadius: 0,
+                endRadius: 190
+            )
+        }
+        .clipped()
+    }
+
+    private var capsuleFill: Color {
+        isNight ? Color.white.opacity(0.105) : Color.white.opacity(0.58)
+    }
+
+    private var capsuleStroke: Color {
+        isNight ? Color.white.opacity(0.13) : Color.white.opacity(0.84)
+    }
+
+    private var faintCapsuleFill: Color {
+        isNight ? Color.white.opacity(0.075) : Color.white.opacity(0.48)
+    }
+
+    private var nextAzanTitle: String {
+        entry.nextPrayer?.key == .sunrise ? nextTitle : "أذان \(nextTitle)"
+    }
+
+    private var remainingMinutes: Int {
+        guard let nextDate = entry.nextPrayer?.date else { return 0 }
+        let seconds = max(Int(nextDate.timeIntervalSince(entry.date)), 0)
+        return max((seconds + 59) / 60, 1)
+    }
+
+    private var remainingMinuteLabel: String {
+        let minutes = remainingMinutes
+        return minutes < 100 ? "\(minutes) دقيقة" : hourMinuteText(fromMinutes: minutes)
+    }
+
+    private var nextIqamaTime: String? {
+        guard let prayer = entry.nextPrayer,
+              let minutes = iqamaOffsetMinutes(for: prayer.key) else {
+            return nil
+        }
+
+        return clockText(for: prayer.date.addingTimeInterval(TimeInterval(minutes * 60)))
+    }
+
+    private var nextIqamaMinutesLabel: String? {
+        guard let prayer = entry.nextPrayer,
+              let minutes = iqamaOffsetMinutes(for: prayer.key) else {
+            return nil
+        }
+
+        return "\(minutes) دقيقة"
+    }
+
+    private var nextMetaText: Text {
+        if let iqama = nextIqamaTime {
+            return Text("الإقامة ") + Text(iqama).fontWeight(.black) + Text(" · متبقي ") + Text(remainingMinuteLabel).fontWeight(.black)
+        }
+
+        return Text("متبقي ") + Text(remainingMinuteLabel).fontWeight(.black)
+    }
+
     private var nextTitle: String {
         entry.nextPrayer?.title ?? "الصلاة"
     }
@@ -186,8 +275,8 @@ struct TelShevaAzanWidgetView: View {
 
     private var homeScreenLayout: some View {
         ZStack {
-            widgetBackground
-            .ignoresSafeArea()
+            widgetSurfaceBackground
+                .ignoresSafeArea()
 
             switch family {
             case .systemMedium:
@@ -197,15 +286,15 @@ struct TelShevaAzanWidgetView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(widgetBackground)
+        .background(widgetSurfaceBackground)
         .widgetContainerBackground {
-            widgetBackground
+            widgetSurfaceBackground
         }
     }
 
     private var scheduleHomeLayout: some View {
         ZStack {
-            widgetBackground
+            widgetSurfaceBackground
                 .ignoresSafeArea()
 
             switch family {
@@ -216,15 +305,15 @@ struct TelShevaAzanWidgetView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(widgetBackground)
+        .background(widgetSurfaceBackground)
         .widgetContainerBackground {
-            widgetBackground
+            widgetSurfaceBackground
         }
     }
 
     private var countdownHomeLayout: some View {
         ZStack {
-            widgetBackground
+            widgetSurfaceBackground
                 .ignoresSafeArea()
 
             switch family {
@@ -235,222 +324,125 @@ struct TelShevaAzanWidgetView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(widgetBackground)
+        .background(widgetSurfaceBackground)
         .widgetContainerBackground {
-            widgetBackground
+            widgetSurfaceBackground
         }
     }
 
     private var smallHomeLayout: some View {
-        VStack(alignment: .trailing, spacing: 4) {
-            HStack(spacing: 5) {
-                Spacer(minLength: 0)
+        VStack(alignment: .trailing, spacing: 8) {
+            salatiTopline("القادم")
 
-                Image(systemName: theme.symbol)
-                    .font(.system(size: 12, weight: .black, design: .rounded))
+            Spacer(minLength: 0)
 
-                Text("تل السبع")
-                    .font(.system(size: 11, weight: .black, design: .rounded))
+            VStack(alignment: .trailing, spacing: 8) {
+                Text(nextTitle)
+                    .font(.system(size: 27, weight: .black, design: .rounded))
+                    .foregroundColor(primaryText)
                     .lineLimit(1)
+                    .minimumScaleFactor(0.62)
+
+                salatiTimeCapsule(nextTime, fontSize: 33)
             }
-            .foregroundColor(secondaryText)
             .frame(maxWidth: .infinity, alignment: .trailing)
 
-            Spacer(minLength: 1)
+            Spacer(minLength: 0)
 
-            Text("الصلاة القادمة")
-                .font(.system(size: 12, weight: .black, design: .rounded))
-                .foregroundColor(secondaryText)
-                .lineLimit(1)
-                .minimumScaleFactor(0.78)
-                .frame(maxWidth: .infinity, alignment: .trailing)
-
-            Text(nextTitle)
-                .font(.system(size: 28, weight: .black, design: .rounded))
-                .foregroundColor(primaryText)
-                .lineLimit(1)
-                .minimumScaleFactor(0.64)
-                .frame(maxWidth: .infinity, alignment: .trailing)
-
-            Text(nextTime)
-                .font(.system(size: 34, weight: .black, design: .rounded))
-                .monospacedDigit()
-                .foregroundColor(accent)
-                .lineLimit(1)
-                .minimumScaleFactor(0.68)
-                .frame(maxWidth: .infinity, alignment: .trailing)
-
-            remainingChip(fontSize: 11)
-                .frame(maxWidth: .infinity, alignment: .trailing)
-
-            Text(compactElapsedText)
-                .font(.system(size: 8, weight: .bold, design: .rounded))
-                .foregroundColor(secondaryText.opacity(0.78))
-                .lineLimit(1)
-                .minimumScaleFactor(0.72)
-                .frame(maxWidth: .infinity, alignment: .trailing)
-
-            HStack(spacing: 4) {
-                Text("v\(AppInfo.build)")
-                    .font(.system(size: 8, weight: .black, design: .rounded).monospacedDigit())
-                    .lineLimit(1)
-                    .foregroundColor(secondaryText.opacity(0.68))
-
-                Spacer(minLength: 4)
-
-                Text("مواقيت محلية")
-                    .font(.system(size: 9, weight: .bold, design: .rounded))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.75)
-            }
-            .foregroundColor(secondaryText.opacity(0.94))
+            salatiMetaCapsule(Text("متبقي ") + Text(remainingMinuteLabel).fontWeight(.black))
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
         .multilineTextAlignment(.trailing)
         .environment(\.layoutDirection, .leftToRight)
-        .padding(10)
+        .padding(14)
     }
 
     private var mediumHomeLayout: some View {
-        HStack(alignment: .top, spacing: 10) {
-            VStack(spacing: 2) {
-                ForEach(Array(entry.times.prefix(6))) { item in
-                    mediumPrayerRow(item)
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .trailing)
-
-            VStack(alignment: .trailing, spacing: 4) {
-                Text("الصلاة القادمة")
-                    .font(.system(size: 12, weight: .black, design: .rounded))
-                    .foregroundColor(secondaryText)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.78)
-
-                Text(nextTitle)
-                    .font(.system(size: 24, weight: .black, design: .rounded))
-                    .foregroundColor(primaryText)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.68)
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-
-                Text(nextTime)
-                    .font(.system(size: 35, weight: .black, design: .rounded))
-                    .monospacedDigit()
-                    .foregroundColor(accent)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.66)
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-
-                remainingChip(fontSize: 11)
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-
-                Text(compactElapsedText)
-                    .font(.system(size: 8, weight: .bold, design: .rounded))
-                    .foregroundColor(secondaryText.opacity(0.78))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.72)
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-
-                Text("تل السبع \(AppInfo.displayVersion)")
-                    .font(.system(size: 9, weight: .bold, design: .rounded).monospacedDigit())
-                    .foregroundColor(secondaryText.opacity(0.92))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.7)
-            }
-            .frame(width: 124, alignment: .trailing)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .multilineTextAlignment(.trailing)
-        .environment(\.layoutDirection, .leftToRight)
-        .padding(10)
-    }
-
-    private var mediumScheduleLayout: some View {
-        HStack(alignment: .top, spacing: 12) {
-            VStack(spacing: 3) {
-                ForEach(Array(entry.times.prefix(6))) { item in
-                    schedulePrayerRow(item, height: 21)
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .trailing)
-
-            VStack(alignment: .trailing, spacing: 5) {
-                Text("جدول اليوم")
-                    .font(.system(size: 15, weight: .black, design: .rounded))
-                    .foregroundColor(accent)
-                    .lineLimit(1)
-
-                Text("تل السبع")
-                    .font(.system(size: 20, weight: .black, design: .rounded))
-                    .foregroundColor(primaryText)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.7)
-
-                remainingChip(fontSize: 11)
-                    .padding(.top, 2)
-
-                Text("\(nextTitle) \(nextTime)")
-                    .font(.system(size: 12, weight: .black, design: .rounded).monospacedDigit())
-                    .foregroundColor(secondaryText.opacity(0.90))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.76)
-
-                Spacer(minLength: 0)
-
-                Text("v\(AppInfo.build)")
-                    .font(.system(size: 9, weight: .bold, design: .rounded).monospacedDigit())
-                    .foregroundColor(secondaryText.opacity(0.72))
-                    .lineLimit(1)
-            }
-            .frame(width: 108, alignment: .trailing)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .multilineTextAlignment(.trailing)
-        .environment(\.layoutDirection, .leftToRight)
-        .padding(10)
-    }
-
-    private var largeScheduleLayout: some View {
         VStack(alignment: .trailing, spacing: 10) {
-            HStack(alignment: .top, spacing: 10) {
-                remainingChip(fontSize: 13)
+            salatiTopline("الصلاة القادمة")
+
+            Spacer(minLength: 0)
+
+            HStack(alignment: .center, spacing: 14) {
+                salatiTimeCapsule(nextTime, fontSize: 39)
 
                 Spacer(minLength: 8)
 
-                VStack(alignment: .trailing, spacing: 2) {
-                    Text("جدول صلاة اليوم")
-                        .font(.system(size: 15, weight: .black, design: .rounded))
-                        .foregroundColor(accent)
-                        .lineLimit(1)
-
-                    Text("صلاتي")
-                        .font(.system(size: 24, weight: .black, design: .rounded))
+                VStack(alignment: .trailing, spacing: 6) {
+                    Text(nextAzanTitle)
+                        .font(.system(size: 25, weight: .black, design: .rounded))
                         .foregroundColor(primaryText)
                         .lineLimit(1)
-                        .minimumScaleFactor(0.72)
+                        .minimumScaleFactor(0.66)
 
-                    Text("\(nextTitle) \(nextTime)")
-                        .font(.system(size: 13, weight: .bold, design: .rounded).monospacedDigit())
-                        .foregroundColor(secondaryText.opacity(0.88))
+                    Text(compactElapsedText)
+                        .font(.system(size: 11, weight: .black, design: .rounded).monospacedDigit())
+                        .foregroundColor(secondaryText)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.62)
+                }
+            }
+            .frame(maxWidth: .infinity)
+
+            Spacer(minLength: 0)
+
+            salatiMetaCapsule(nextMetaText)
+            .frame(maxWidth: .infinity, alignment: .center)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+        .multilineTextAlignment(.trailing)
+        .environment(\.layoutDirection, .leftToRight)
+        .padding(16)
+    }
+
+    private var mediumScheduleLayout: some View {
+        VStack(alignment: .trailing, spacing: 9) {
+            salatiTopline("باقي اليوم")
+
+            VStack(spacing: 7) {
+                ForEach(Array(upcomingPrayerRows.prefix(3))) { item in
+                    schedulePrayerRow(item, height: 28)
+                }
+            }
+            .frame(maxWidth: .infinity)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+        .multilineTextAlignment(.trailing)
+        .environment(\.layoutDirection, .leftToRight)
+        .padding(16)
+    }
+
+    private var largeScheduleLayout: some View {
+        VStack(alignment: .trailing, spacing: 11) {
+            salatiTopline("الأحد")
+
+            HStack(alignment: .center, spacing: 12) {
+                salatiTimeCapsule(nextTime, fontSize: 44)
+
+                Spacer(minLength: 8)
+
+                VStack(alignment: .trailing, spacing: 3) {
+                    Text(nextTitle)
+                        .font(.system(size: 27, weight: .black, design: .rounded))
+                        .foregroundColor(primaryText)
+                        .lineLimit(1)
+
+                    Text("الصلاة القادمة")
+                        .font(.system(size: 12, weight: .black, design: .rounded))
+                        .foregroundColor(secondaryText)
                         .lineLimit(1)
                 }
             }
 
             VStack(spacing: 6) {
                 ForEach(Array(entry.times.prefix(6))) { item in
-                    schedulePrayerRow(item, height: 34)
+                    schedulePrayerRow(item, height: 26)
                 }
             }
 
             Spacer(minLength: 0)
 
-            Text("مواقيت محلية · \(AppInfo.displayVersion)")
-                .font(.system(size: 11, weight: .bold, design: .rounded).monospacedDigit())
-                .foregroundColor(secondaryText.opacity(0.82))
-                .lineLimit(1)
-                .minimumScaleFactor(0.72)
-                .frame(maxWidth: .infinity, alignment: .trailing)
+            salatiMetaCapsule(nextMetaText)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
         .multilineTextAlignment(.trailing)
@@ -459,133 +451,156 @@ struct TelShevaAzanWidgetView: View {
     }
 
     private var smallCountdownLayout: some View {
-        VStack(alignment: .trailing, spacing: 6) {
-            HStack(spacing: 5) {
-                Spacer(minLength: 0)
+        VStack(alignment: .trailing, spacing: 8) {
+            salatiTopline("متبقي")
 
-                Text("عداد الصلاة")
-                    .font(.system(size: 11, weight: .black, design: .rounded))
+            Spacer(minLength: 0)
+
+            VStack(alignment: .trailing, spacing: 8) {
+                Text(nextAzanTitle)
+                    .font(.system(size: 18, weight: .black, design: .rounded))
+                    .foregroundColor(primaryText)
                     .lineLimit(1)
+                    .minimumScaleFactor(0.6)
 
-                Image(systemName: "hourglass.circle.fill")
-                    .font(.system(size: 12, weight: .black, design: .rounded))
+                salatiTimeCapsule(compactRemainingValue, fontSize: 34)
             }
-            .foregroundColor(secondaryText)
             .frame(maxWidth: .infinity, alignment: .trailing)
 
-            Spacer(minLength: 1)
+            Spacer(minLength: 0)
 
-            Text("باقي على \(nextTitle)")
-                .font(.system(size: 13, weight: .black, design: .rounded))
-                .foregroundColor(secondaryText)
-                .lineLimit(1)
-                .minimumScaleFactor(0.72)
-                .frame(maxWidth: .infinity, alignment: .trailing)
-
-            Text(compactRemainingValue)
-                .font(.system(size: 39, weight: .black, design: .rounded).monospacedDigit())
-                .foregroundColor(accent)
-                .lineLimit(1)
-                .minimumScaleFactor(0.62)
-                .frame(maxWidth: .infinity, alignment: .trailing)
-
-            countdownProgressBar(height: 7)
-
-            Text("\(nextTime) · \(nextTitle)")
-                .font(.system(size: 11, weight: .black, design: .rounded).monospacedDigit())
-                .foregroundColor(primaryText)
-                .lineLimit(1)
-                .minimumScaleFactor(0.72)
-                .frame(maxWidth: .infinity, alignment: .trailing)
-
-            Text(compactElapsedText)
-                .font(.system(size: 8, weight: .bold, design: .rounded))
-                .foregroundColor(secondaryText.opacity(0.76))
-                .lineLimit(1)
-                .minimumScaleFactor(0.66)
-                .frame(maxWidth: .infinity, alignment: .trailing)
+            salatiMetaCapsule(Text("الأذان ") + Text(nextTime).fontWeight(.black))
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
         .multilineTextAlignment(.trailing)
         .environment(\.layoutDirection, .leftToRight)
-        .padding(11)
+        .padding(14)
     }
 
     private var mediumCountdownLayout: some View {
-        HStack(alignment: .center, spacing: 12) {
-            VStack(alignment: .trailing, spacing: 8) {
-                Text("عداد الصلاة")
-                    .font(.system(size: 13, weight: .black, design: .rounded))
-                    .foregroundColor(accent)
-                    .lineLimit(1)
+        VStack(alignment: .trailing, spacing: 10) {
+            salatiTopline("الأذان والإقامة")
 
-                Text("باقي على \(nextTitle)")
-                    .font(.system(size: 12, weight: .black, design: .rounded))
-                    .foregroundColor(secondaryText)
-                    .lineLimit(1)
-
-                Text(compactRemainingValue)
-                    .font(.system(size: 40, weight: .black, design: .rounded).monospacedDigit())
-                    .foregroundColor(accent)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.72)
-
-                countdownProgressBar(height: 8)
-
-                Text(compactElapsedText)
-                    .font(.system(size: 9, weight: .bold, design: .rounded))
-                    .foregroundColor(secondaryText.opacity(0.78))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.72)
+            HStack(spacing: 10) {
+                salatiInfoPanel(title: "الإقامة", value: nextIqamaTime ?? "--:--", footer: nextIqamaMinutesLabel ?? "بعد الأذان", highlighted: false)
+                salatiInfoPanel(title: "الأذان", value: nextTime, footer: remainingMinuteLabel, highlighted: true)
             }
-            .frame(maxWidth: .infinity, alignment: .trailing)
 
-            VStack(alignment: .trailing, spacing: 6) {
-                Image(systemName: "hourglass.circle.fill")
-                    .font(.system(size: 26, weight: .black, design: .rounded))
-                    .foregroundColor(accent)
-
-                Text(nextTitle)
-                    .font(.system(size: 25, weight: .black, design: .rounded))
-                    .foregroundColor(primaryText)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.72)
-
-                Text(nextTime)
-                    .font(.system(size: 30, weight: .black, design: .rounded).monospacedDigit())
-                    .foregroundColor(primaryText)
-                    .lineLimit(1)
-
-                Text("تل السبع")
-                    .font(.system(size: 10, weight: .bold, design: .rounded))
-                    .foregroundColor(secondaryText.opacity(0.80))
-                    .lineLimit(1)
-            }
-            .frame(width: 104, alignment: .trailing)
+            salatiMetaCapsule(Text(nextAzanTitle) + Text(" · متبقي ") + Text(remainingMinuteLabel).fontWeight(.black))
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
         .multilineTextAlignment(.trailing)
         .environment(\.layoutDirection, .leftToRight)
-        .padding(12)
+        .padding(14)
     }
 
-    private func remainingChip(fontSize: CGFloat) -> some View {
-        VStack(alignment: .trailing, spacing: 1) {
-            Text("باقي على الصلاة")
-                .font(.system(size: max(fontSize - 2, 8), weight: .black, design: .rounded))
+    private func salatiTopline(_ title: String) -> some View {
+        HStack(spacing: 8) {
+            Circle()
+                .fill(accent)
+                .frame(width: 9, height: 9)
+                .shadow(color: accent.opacity(0.55), radius: 7)
 
-            Text(compactRemainingValue)
-                .font(.system(size: fontSize + 2, weight: .black, design: .rounded))
-                .monospacedDigit()
+            Spacer(minLength: 8)
+
+            Text(title)
+                .font(.system(size: 12, weight: .black, design: .rounded))
+                .foregroundColor(secondaryText)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
         }
-        .foregroundColor(primaryText)
-        .lineLimit(1)
-        .minimumScaleFactor(0.66)
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
-        .background(chipBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 7))
-        .environment(\.layoutDirection, .rightToLeft)
+        .frame(maxWidth: .infinity)
+    }
+
+    private func salatiTimeCapsule(_ value: String, fontSize: CGFloat) -> some View {
+        Text(value)
+            .font(.system(size: fontSize, weight: .black, design: .rounded).monospacedDigit())
+            .foregroundColor(accent)
+            .lineLimit(1)
+            .minimumScaleFactor(0.58)
+            .padding(.horizontal, fontSize > 38 ? 18 : 14)
+            .padding(.vertical, fontSize > 38 ? 10 : 8)
+            .background(
+                Capsule(style: .continuous)
+                    .fill(capsuleFill)
+            )
+            .overlay(
+                Capsule(style: .continuous)
+                    .stroke(capsuleStroke, lineWidth: 1)
+            )
+    }
+
+    private func salatiMetaCapsule(_ content: Text) -> some View {
+        content
+            .font(.system(size: 11, weight: .bold, design: .rounded).monospacedDigit())
+            .foregroundColor(secondaryText)
+            .lineLimit(1)
+            .minimumScaleFactor(0.54)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 8)
+            .background(
+                Capsule(style: .continuous)
+                    .fill(faintCapsuleFill)
+            )
+            .overlay(
+                Capsule(style: .continuous)
+                    .stroke(capsuleStroke.opacity(0.78), lineWidth: 1)
+            )
+    }
+
+    private func salatiInfoPanel(title: String, value: String, footer: String, highlighted: Bool) -> some View {
+        VStack(spacing: 6) {
+            Text(title)
+                .font(.system(size: 10, weight: .black, design: .rounded))
+                .foregroundColor(secondaryText)
+                .lineLimit(1)
+
+            salatiTimeCapsule(value, fontSize: 28)
+
+            Text(footer)
+                .font(.system(size: 10, weight: .black, design: .rounded).monospacedDigit())
+                .foregroundColor(secondaryText)
+                .lineLimit(1)
+                .minimumScaleFactor(0.66)
+        }
+        .frame(maxWidth: .infinity, minHeight: 86)
+        .padding(.horizontal, 9)
+        .padding(.vertical, 9)
+        .background(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(highlighted ? capsuleFill : capsuleFill.opacity(0.88))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(capsuleStroke, lineWidth: 1)
+        )
+    }
+
+    private var upcomingPrayerRows: [PrayerTime] {
+        let upcoming = entry.times.filter { $0.date >= entry.date }
+        return upcoming.isEmpty ? Array(entry.times.prefix(3)) : Array(upcoming.prefix(3))
+    }
+
+    private func clockText(for date: Date) -> String {
+        let components = PrayerEngine.calendar.dateComponents([.hour, .minute], from: date)
+        return String(format: "%02d:%02d", components.hour ?? 0, components.minute ?? 0)
+    }
+
+    private func iqamaOffsetMinutes(for key: PrayerKey) -> Int? {
+        switch key {
+        case .fajr:
+            return 25
+        case .dhuhr:
+            return 15
+        case .asr:
+            return 17
+        case .maghrib:
+            return 8
+        case .isha:
+            return 15
+        case .sunrise:
+            return nil
+        }
     }
 
     private var compactRemainingValue: String {
@@ -651,25 +666,32 @@ struct TelShevaAzanWidgetView: View {
 
         return HStack(spacing: 8) {
             Text(item.time)
-                .font(.system(size: height > 24 ? 18 : 13, weight: .black, design: .rounded).monospacedDigit())
+                .font(.system(size: height > 24 ? 13 : 12, weight: .black, design: .rounded).monospacedDigit())
                 .lineLimit(1)
+                .minimumScaleFactor(0.72)
+                .padding(.horizontal, 9)
+                .padding(.vertical, 4)
+                .background(
+                    Capsule(style: .continuous)
+                        .fill(isActive ? Color.white.opacity(0.22) : capsuleFill.opacity(0.72))
+                )
 
             Spacer(minLength: 4)
 
             Text(item.title)
-                .font(.system(size: height > 24 ? 18 : 13, weight: .black, design: .rounded))
+                .font(.system(size: height > 24 ? 14 : 13, weight: .black, design: .rounded))
                 .lineLimit(1)
                 .minimumScaleFactor(0.72)
         }
-        .foregroundColor(isActive ? accent : mutedText)
-        .padding(.horizontal, height > 24 ? 12 : 8)
+        .foregroundColor(isActive ? .white : primaryText)
+        .padding(.horizontal, 10)
         .frame(height: height)
-        .background(isActive ? activeRowBackground : chipBackground.opacity(0.42))
+        .background(isActive ? accent : faintCapsuleFill)
         .overlay(
-            RoundedRectangle(cornerRadius: 8)
-                .stroke(isActive ? accent.opacity(0.58) : secondaryText.opacity(0.16), lineWidth: 1)
+            Capsule(style: .continuous)
+                .stroke(isActive ? accent.opacity(0.62) : capsuleStroke.opacity(0.76), lineWidth: 1)
         )
-        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .clipShape(Capsule(style: .continuous))
     }
 
     @ViewBuilder
@@ -678,47 +700,44 @@ struct TelShevaAzanWidgetView: View {
             switch family {
             case .accessoryInline:
                 Label {
-                    inlineLiveText
+                    Text("\(nextAzanTitle) \(nextTime) · متبقي \(remainingMinuteLabel)")
                 } icon: {
                     Image(systemName: "clock.fill")
                 }
             case .accessoryCircular:
                 SalatiLockCircleWidgetView(entry: entry, kind: .prayerTime)
             case .accessoryRectangular:
-                VStack(alignment: .trailing, spacing: 1) {
-                    Text("تل السبع")
-                        .font(.system(size: 10, weight: .semibold, design: .rounded))
+                VStack(alignment: .trailing, spacing: 3) {
+                    Text("الآن")
+                        .font(.system(size: 10, weight: .black, design: .rounded))
                         .lineLimit(1)
-                        .frame(maxWidth: .infinity, alignment: .trailing)
-                        .multilineTextAlignment(.trailing)
+                        .opacity(0.82)
 
-                    HStack(alignment: .firstTextBaseline, spacing: 4) {
+                    HStack(alignment: .firstTextBaseline, spacing: 6) {
                         Text(nextTime)
-                            .font(.system(size: 17, weight: .black, design: .rounded).monospacedDigit())
+                            .font(.system(size: 20, weight: .black, design: .rounded).monospacedDigit())
                             .lineLimit(1)
 
-                        Text(nextTitle)
-                            .font(.system(size: 18, weight: .black, design: .rounded))
+                        Text(nextAzanTitle)
+                            .font(.system(size: 17, weight: .black, design: .rounded))
                             .lineLimit(1)
-                            .minimumScaleFactor(0.72)
+                            .minimumScaleFactor(0.62)
                     }
-                    .frame(maxWidth: .infinity, alignment: .trailing)
 
-                    liveRemainingText
-                        .font(.system(size: 12, weight: .bold, design: .rounded).monospacedDigit())
+                    Text("الإقامة \(nextIqamaTime ?? "--:--") · متبقي \(remainingMinuteLabel)")
+                        .font(.system(size: 11, weight: .black, design: .rounded).monospacedDigit())
                         .lineLimit(1)
-                        .minimumScaleFactor(0.75)
-                        .frame(maxWidth: .infinity, alignment: .trailing)
-                        .multilineTextAlignment(.trailing)
+                        .minimumScaleFactor(0.58)
+                        .opacity(0.86)
 
-                    liveElapsedText
+                    Text(compactElapsedText)
                         .font(.system(size: 9, weight: .semibold, design: .rounded).monospacedDigit())
                         .lineLimit(1)
-                        .minimumScaleFactor(0.62)
-                        .frame(maxWidth: .infinity, alignment: .trailing)
-                        .multilineTextAlignment(.trailing)
+                        .minimumScaleFactor(0.58)
+                        .opacity(0.74)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
+                .multilineTextAlignment(.trailing)
                 .environment(\.layoutDirection, .leftToRight)
             default:
                 smallHomeLayout
@@ -739,6 +758,7 @@ enum TelShevaWidgetPresentation {
 private enum SalatiLockCircleKind: String {
     case prayerTime
     case iqamaMinutes
+    case iqamaTime
     case nextCountdown
     case sunriseTime
 
@@ -751,7 +771,9 @@ private enum SalatiLockCircleKind: String {
         case .prayerTime:
             return "وقت الصلاة"
         case .iqamaMinutes:
-            return "الإقامة"
+            return "مدة الإقامة"
+        case .iqamaTime:
+            return "وقت الإقامة"
         case .nextCountdown:
             return "المتبقي للصلاة"
         case .sunriseTime:
@@ -765,6 +787,8 @@ private enum SalatiLockCircleKind: String {
             return "دائرة شاشة القفل تعرض الصلاة القادمة ووقتها."
         case .iqamaMinutes:
             return "دائرة شاشة القفل تعرض مدة الإقامة للصلاة القادمة."
+        case .iqamaTime:
+            return "دائرة شاشة القفل تعرض وقت إقامة الصلاة القادمة."
         case .nextCountdown:
             return "دائرة شاشة القفل تعرض المتبقي للصلاة القادمة."
         case .sunriseTime:
@@ -788,9 +812,9 @@ private struct SalatiLockCircleWidgetView: View {
                 circleStack(
                     title: entry.nextPrayer?.title ?? "الصلاة",
                     value: entry.nextPrayer?.time ?? "--:--",
-                    valueSize: 8,
-                    titleSize: 13,
-                    footer: nil
+                    valueSize: 14,
+                    titleSize: 9,
+                    footer: "أذان"
                 )
             case .iqamaMinutes:
                 circleStack(
@@ -799,6 +823,14 @@ private struct SalatiLockCircleWidgetView: View {
                     valueSize: 24,
                     titleSize: 10,
                     footer: "إقامة"
+                )
+            case .iqamaTime:
+                circleStack(
+                    title: "الإقامة",
+                    value: iqamaTimeValue(for: entry.nextPrayer),
+                    valueSize: 13,
+                    titleSize: 8,
+                    footer: nil
                 )
             case .nextCountdown:
                 circleStack(
@@ -875,7 +907,7 @@ private struct SalatiLockCircleWidgetView: View {
     }
 
     private var usesOpenGauge: Bool {
-        kind == .nextCountdown || kind == .sunriseTime
+        kind == .iqamaMinutes || kind == .nextCountdown || kind == .sunriseTime
     }
 
     private var progress: CGFloat {
@@ -883,6 +915,8 @@ private struct SalatiLockCircleWidgetView: View {
         case .prayerTime:
             return intervalProgress
         case .iqamaMinutes:
+            return iqamaProgress
+        case .iqamaTime:
             return iqamaProgress
         case .nextCountdown:
             return intervalProgress
@@ -951,6 +985,19 @@ private struct SalatiLockCircleWidgetView: View {
         return "\(minutes)"
     }
 
+    private func iqamaTimeValue(for prayer: PrayerTime?) -> String {
+        guard let prayer, let minutes = iqamaOffsetMinutes(for: prayer.key) else {
+            return "--:--"
+        }
+
+        return clockText(for: prayer.date.addingTimeInterval(TimeInterval(minutes * 60)))
+    }
+
+    private func clockText(for date: Date) -> String {
+        let components = PrayerEngine.calendar.dateComponents([.hour, .minute], from: date)
+        return String(format: "%02d:%02d", components.hour ?? 0, components.minute ?? 0)
+    }
+
     private func iqamaOffsetMinutes(for key: PrayerKey) -> Int? {
         switch key {
         case .fajr:
@@ -995,6 +1042,18 @@ private struct SalatiIqamaMinutesLockCircleWidget: Widget {
 }
 
 @available(iOSApplicationExtension 16.0, *)
+private struct SalatiIqamaTimeLockCircleWidget: Widget {
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: SalatiLockCircleKind.iqamaTime.widgetKind, provider: TelShevaWidgetProvider()) { entry in
+            SalatiLockCircleWidgetView(entry: entry, kind: .iqamaTime)
+        }
+        .configurationDisplayName(SalatiLockCircleKind.iqamaTime.displayName)
+        .description(SalatiLockCircleKind.iqamaTime.description)
+        .supportedFamilies([.accessoryCircular])
+    }
+}
+
+@available(iOSApplicationExtension 16.0, *)
 private struct SalatiNextCountdownLockCircleWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: SalatiLockCircleKind.nextCountdown.widgetKind, provider: TelShevaWidgetProvider()) { entry in
@@ -1028,6 +1087,7 @@ struct TelShevaAzanWidgetBundle: WidgetBundle {
         if #available(iOSApplicationExtension 16.0, *) {
             SalatiPrayerTimeLockCircleWidget()
             SalatiIqamaMinutesLockCircleWidget()
+            SalatiIqamaTimeLockCircleWidget()
             SalatiNextCountdownLockCircleWidget()
             SalatiSunriseLockCircleWidget()
         }
@@ -1041,6 +1101,7 @@ struct TelShevaAzanWidgetBundle: WidgetBundle {
         if #available(iOSApplicationExtension 16.0, *) {
             SalatiPrayerTimeLockCircleWidget()
             SalatiIqamaMinutesLockCircleWidget()
+            SalatiIqamaTimeLockCircleWidget()
             SalatiNextCountdownLockCircleWidget()
             SalatiSunriseLockCircleWidget()
         }
@@ -1058,7 +1119,7 @@ struct TelShevaAzanWidget: Widget {
                     .environment(\.layoutDirection, .rightToLeft)
             }
             .configurationDisplayName("الصلاة القادمة")
-            .description("يعرض الصلاة القادمة ووقت الأذان والباقي عليها في تل السبع.")
+            .description("يعرض الصلاة القادمة ووقت الأذان والمتبقي عليها.")
             .supportedFamilies([.systemSmall, .systemMedium, .accessoryInline, .accessoryRectangular])
         } else {
             StaticConfiguration(kind: kind, provider: TelShevaWidgetProvider()) { entry in
@@ -1066,7 +1127,7 @@ struct TelShevaAzanWidget: Widget {
                     .environment(\.layoutDirection, .rightToLeft)
             }
             .configurationDisplayName("الصلاة القادمة")
-            .description("يعرض الصلاة القادمة ووقت الأذان والباقي عليها في تل السبع.")
+            .description("يعرض الصلاة القادمة ووقت الأذان والمتبقي عليها.")
             .supportedFamilies([.systemSmall, .systemMedium])
         }
     }

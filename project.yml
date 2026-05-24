@@ -110,6 +110,9 @@ targets:
       - path: TelShevaAzan/PrayerSchedule.swift
       - path: TelShevaAzan/AppInfo.swift
       - path: TelShevaAzan/AppTheme.swift
+    resources:
+      - path: TelShevaAzan/Resources/Nabawi/nabawi-day.jpg
+      - path: TelShevaAzan/Resources/Nabawi/nabawi-night.jpg
     info:
       path: TelShevaAzanWidget/Info.plist
       properties:
@@ -142,6 +145,9 @@ targets:
       - path: TelShevaAzan/AppInfo.swift
       - path: TelShevaAzan/AppTheme.swift
       - path: TelShevaAzan/PrayerLiveActivity.swift
+    resources:
+      - path: TelShevaAzan/Resources/Nabawi/nabawi-day.jpg
+      - path: TelShevaAzan/Resources/Nabawi/nabawi-night.jpg
     info:
       path: TelShevaAzanWidget/Info.plist
       properties:
