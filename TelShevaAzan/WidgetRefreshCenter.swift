@@ -8,6 +8,7 @@ enum WidgetRefreshCenter {
     private static let widgetKinds = [
         "com.omaralasam.telshevaazan.nextPrayer.v2",
         "com.omaralasam.telshevaazan.nextPrayer.v3",
+        "com.omaralasam.telshevaazan.nextPrayer.clean.v4",
         "com.omaralasam.telshevaazan.dailySchedule.v1",
         "com.omaralasam.telshevaazan.countdown.v1",
         "com.omaralasam.telshevaazan.lockCircle.prayerTime.v2",

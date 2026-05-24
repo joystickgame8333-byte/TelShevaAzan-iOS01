@@ -24,26 +24,57 @@ struct TelShevaWidgetProvider: TimelineProvider {
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<TelShevaWidgetEntry>) -> Void) {
         let now = Date()
-        let firstEntry = makeEntry(for: now)
         let minuteStart = PrayerEngine.calendar.dateInterval(of: .minute, for: now)?.start ?? now
-        let targetDate = firstEntry.nextPrayer?.date ?? now.addingTimeInterval(3600)
-        let endDate = min(targetDate.addingTimeInterval(60), now.addingTimeInterval(3 * 60 * 60))
+        let endDate = PrayerEngine.calendar.date(byAdding: .hour, value: 24, to: minuteStart) ?? now.addingTimeInterval(24 * 60 * 60)
 
-        var entries: [TelShevaWidgetEntry] = [firstEntry]
-        var offset = 1
+        var entryDates: [Date] = [now, minuteStart]
+        var cursor = minuteStart
 
-        while offset <= 180 {
-            guard let entryDate = PrayerEngine.calendar.date(byAdding: .minute, value: offset, to: minuteStart),
-                  entryDate <= endDate else {
-                break
-            }
-
-            entries.append(makeEntry(for: entryDate))
-            offset += 1
+        while let nextDate = PrayerEngine.calendar.date(byAdding: .minute, value: 15, to: cursor),
+              nextDate <= endDate {
+            entryDates.append(nextDate)
+            cursor = nextDate
         }
 
-        let refreshDate = entries.last?.date.addingTimeInterval(60) ?? now.addingTimeInterval(60)
+        let todayKey = PrayerEngine.defaultDateKey(for: now)
+        let dateKeys = [todayKey, PrayerEngine.dateKey(from: todayKey, offset: 1)].compactMap { $0 }
+        for dateKey in dateKeys {
+            for prayer in PrayerEngine.schedule(for: dateKey).displayTimes {
+                appendTimelineDates(around: prayer.date, into: &entryDates, endDate: endDate)
+            }
+        }
+
+        if let nextPrayer = makeEntry(for: now).nextPrayer {
+            appendTimelineDates(around: nextPrayer.date, into: &entryDates, endDate: endDate)
+        }
+
+        let entries = uniqueMinuteDates(from: entryDates, now: now, endDate: endDate).map { makeEntry(for: $0) }
+        let refreshDate = (entries.last?.date ?? now).addingTimeInterval(15 * 60)
         completion(Timeline(entries: entries, policy: .after(refreshDate)))
+    }
+
+    private func appendTimelineDates(around date: Date, into dates: inout [Date], endDate: Date) {
+        for offset in [-60, 0, 60, 5 * 60] {
+            let candidate = date.addingTimeInterval(TimeInterval(offset))
+            if candidate <= endDate {
+                dates.append(candidate)
+            }
+        }
+    }
+
+    private func uniqueMinuteDates(from dates: [Date], now: Date, endDate: Date) -> [Date] {
+        let minuteBuckets = Set(
+            dates
+                .filter { $0 > now && $0 <= endDate }
+                .map { Int($0.timeIntervalSince1970 / 60) }
+        )
+
+        let sortedDates = minuteBuckets
+            .map { Date(timeIntervalSince1970: TimeInterval($0 * 60)) }
+            .filter { $0 > now }
+            .sorted()
+
+        return [now] + sortedDates
     }
 
     private func makeEntry(for date: Date) -> TelShevaWidgetEntry {
@@ -79,6 +110,7 @@ struct TelShevaAzanWidgetView: View {
             }
         }
         .dynamicTypeSize(.xSmall ... .large)
+        .unredacted()
     }
 
     private var isLockScreenFamily: Bool {
@@ -156,21 +188,17 @@ struct TelShevaAzanWidgetView: View {
 
     private var widgetSurfaceBackground: some View {
         ZStack {
-            Image(nabawiImageName, bundle: .main)
-                .resizable()
-                .scaledToFill()
-
             LinearGradient(
                 colors: isNight
                     ? [
-                        Color.black.opacity(0.22),
-                        Color(red: 0.00, green: 0.05, blue: 0.09).opacity(0.70),
-                        Color.black.opacity(0.90)
+                        Color(red: 0.01, green: 0.04, blue: 0.07),
+                        Color(red: 0.02, green: 0.12, blue: 0.21),
+                        Color.black
                     ]
                     : [
-                        Color.white.opacity(0.12),
-                        Color(red: 0.92, green: 0.97, blue: 1.00).opacity(0.72),
-                        Color.white.opacity(0.92)
+                        Color(red: 0.92, green: 0.97, blue: 1.00),
+                        Color(red: 0.78, green: 0.88, blue: 0.94),
+                        Color(red: 0.96, green: 0.98, blue: 1.00)
                     ],
                 startPoint: .leading,
                 endPoint: .trailing
@@ -213,6 +241,15 @@ struct TelShevaAzanWidgetView: View {
         return minutes < 100 ? "\(minutes) دقيقة" : hourMinuteText(fromMinutes: minutes)
     }
 
+    private var remainingTimerText: Text {
+        guard let nextDate = entry.nextPrayer?.date else {
+            return Text("--:--")
+        }
+
+        return Text(timerInterval: Date()...nextDate, countsDown: true)
+            .fontWeight(.black)
+    }
+
     private var nextIqamaTime: String? {
         guard let prayer = entry.nextPrayer,
               let minutes = iqamaOffsetMinutes(for: prayer.key) else {
@@ -233,10 +270,10 @@ struct TelShevaAzanWidgetView: View {
 
     private var nextMetaText: Text {
         if let iqama = nextIqamaTime {
-            return Text("الإقامة ") + Text(iqama).fontWeight(.black) + Text(" · متبقي ") + Text(remainingMinuteLabel).fontWeight(.black)
+            return Text("الإقامة ") + Text(iqama).fontWeight(.black) + Text(" · متبقي ") + remainingTimerText
         }
 
-        return Text("متبقي ") + Text(remainingMinuteLabel).fontWeight(.black)
+        return Text("متبقي ") + remainingTimerText
     }
 
     private var nextTitle: String {
@@ -349,7 +386,7 @@ struct TelShevaAzanWidgetView: View {
 
             Spacer(minLength: 0)
 
-            salatiMetaCapsule(Text("متبقي ") + Text(remainingMinuteLabel).fontWeight(.black), compact: true)
+            salatiMetaCapsule(Text("متبقي ") + remainingTimerText, compact: true)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
         .multilineTextAlignment(.trailing)
