@@ -1022,6 +1022,7 @@ private struct SalatiSunriseLockCircleWidget: Widget {
 struct TelShevaAzanWidgetBundle: WidgetBundle {
     var body: some Widget {
 #if WIDGET_V3
+        TelShevaAzanLegacyWidget()
         if #available(iOSApplicationExtension 16.0, *) {
             SalatiPrayerTimeLockCircleWidget()
             SalatiIqamaMinutesLockCircleWidget()
@@ -1066,6 +1067,20 @@ struct TelShevaAzanWidget: Widget {
             .description("يعرض الصلاة القادمة ووقت الأذان والباقي عليها في تل السبع.")
             .supportedFamilies([.systemSmall, .systemMedium])
         }
+    }
+}
+
+struct TelShevaAzanLegacyWidget: Widget {
+    let kind = "com.omaralasam.telshevaazan.nextPrayer.v3"
+
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: kind, provider: TelShevaWidgetProvider()) { entry in
+            TelShevaAzanWidgetView(entry: entry)
+                .environment(\.layoutDirection, .rightToLeft)
+        }
+        .configurationDisplayName("الصلاة القادمة الاحتياطي")
+        .description("توافق مع الودجت السابق، وتساعد iOS على إظهار مجموعة صلاتي في الاختيار.")
+        .supportedFamilies([.systemSmall, .systemMedium, .accessoryInline, .accessoryRectangular])
     }
 }
 
