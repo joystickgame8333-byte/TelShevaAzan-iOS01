@@ -320,13 +320,13 @@ jobs:
           fi
           V3_PLUGIN_PATH="$APP_PATH/PlugIns/TelShevaAzanWidgetExtensionV3.appex"
           V3_PLUGIN_EXECUTABLE="$(/usr/libexec/PlistBuddy -c "Print :CFBundleExecutable" "$V3_PLUGIN_PATH/Info.plist")"
-          /usr/bin/strings "$V3_PLUGIN_PATH/$V3_PLUGIN_EXECUTABLE" | grep -q 'com.omaralasam.telshevaazan.nextPrayer.v2'
-          /usr/bin/strings "$V3_PLUGIN_PATH/$V3_PLUGIN_EXECUTABLE" | grep -q 'com.omaralasam.telshevaazan.dailySchedule.v1'
-          /usr/bin/strings "$V3_PLUGIN_PATH/$V3_PLUGIN_EXECUTABLE" | grep -q 'com.omaralasam.telshevaazan.countdown.v1'
-          /usr/bin/strings "$V3_PLUGIN_PATH/$V3_PLUGIN_EXECUTABLE" | grep -q 'com.omaralasam.telshevaazan.lockCircle.prayerTime.v2'
-          /usr/bin/strings "$V3_PLUGIN_PATH/$V3_PLUGIN_EXECUTABLE" | grep -q 'com.omaralasam.telshevaazan.lockCircle.iqamaMinutes.v2'
-          /usr/bin/strings "$V3_PLUGIN_PATH/$V3_PLUGIN_EXECUTABLE" | grep -q 'com.omaralasam.telshevaazan.lockCircle.nextCountdown.v2'
-          /usr/bin/strings "$V3_PLUGIN_PATH/$V3_PLUGIN_EXECUTABLE" | grep -q 'com.omaralasam.telshevaazan.lockCircle.sunriseTime.v2'
+          grep -a -q 'com.omaralasam.telshevaazan.nextPrayer.v2' "$V3_PLUGIN_PATH/$V3_PLUGIN_EXECUTABLE"
+          grep -a -q 'com.omaralasam.telshevaazan.dailySchedule.v1' "$V3_PLUGIN_PATH/$V3_PLUGIN_EXECUTABLE"
+          grep -a -q 'com.omaralasam.telshevaazan.countdown.v1' "$V3_PLUGIN_PATH/$V3_PLUGIN_EXECUTABLE"
+          grep -a -q 'com.omaralasam.telshevaazan.lockCircle.prayerTime.v2' "$V3_PLUGIN_PATH/$V3_PLUGIN_EXECUTABLE"
+          grep -a -q 'com.omaralasam.telshevaazan.lockCircle.iqamaMinutes.v2' "$V3_PLUGIN_PATH/$V3_PLUGIN_EXECUTABLE"
+          grep -a -q 'com.omaralasam.telshevaazan.lockCircle.nextCountdown.v2' "$V3_PLUGIN_PATH/$V3_PLUGIN_EXECUTABLE"
+          grep -a -q 'com.omaralasam.telshevaazan.lockCircle.sunriseTime.v2' "$V3_PLUGIN_PATH/$V3_PLUGIN_EXECUTABLE"
           grep -q 'Payload/TelShevaAzan.app/Watch/TelShevaAzanWatch.app/' ipa-contents.txt
           grep -q 'Payload/TelShevaAzan.app/Watch/TelShevaAzanWatch.app/PlugIns/.*\.appex/' ipa-contents.txt
 
