@@ -1125,7 +1125,7 @@ struct TelShevaAzanWidget: Widget {
 }
 
 struct TelShevaAzanLegacyWidget: Widget {
-    let kind = "com.omaralasam.telshevaazan.nextPrayer.v3"
+    let kind = "com.omaralasam.telshevaazan.nextPrayer.clean.v4"
 
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: TelShevaWidgetProvider()) { entry in
@@ -1134,7 +1134,7 @@ struct TelShevaAzanLegacyWidget: Widget {
         }
         .configurationDisplayName("الصلاة القادمة")
         .description("يعرض الصلاة القادمة ووقت الأذان والمتبقي عليها.")
-        .supportedFamilies([.systemSmall, .systemMedium, .accessoryInline, .accessoryRectangular])
+        .supportedFamilies([.systemSmall, .systemMedium, .accessoryInline, .accessoryCircular, .accessoryRectangular])
     }
 }
 
