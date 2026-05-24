@@ -325,7 +325,6 @@ jobs:
           grep -a -q 'com.omaralasam.telshevaazan.nextPrayer.v3' "$V3_PLUGIN_PATH/$V3_PLUGIN_EXECUTABLE"
           grep -a -q 'com.omaralasam.telshevaazan.lockCircle.prayerTime.v2' "$V3_PLUGIN_PATH/$V3_PLUGIN_EXECUTABLE"
           grep -a -q 'com.omaralasam.telshevaazan.lockCircle.iqamaMinutes.v2' "$V3_PLUGIN_PATH/$V3_PLUGIN_EXECUTABLE"
-          grep -a -q 'com.omaralasam.telshevaazan.lockCircle.iqamaTime.v2' "$V3_PLUGIN_PATH/$V3_PLUGIN_EXECUTABLE"
           grep -a -q 'com.omaralasam.telshevaazan.lockCircle.nextCountdown.v2' "$V3_PLUGIN_PATH/$V3_PLUGIN_EXECUTABLE"
           grep -a -q 'com.omaralasam.telshevaazan.lockCircle.sunriseTime.v2' "$V3_PLUGIN_PATH/$V3_PLUGIN_EXECUTABLE"
           grep -q 'Payload/TelShevaAzan.app/Watch/TelShevaAzanWatch.app/' ipa-contents.txt
