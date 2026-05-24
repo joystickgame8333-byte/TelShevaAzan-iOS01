@@ -132,11 +132,6 @@ jobs:
             find "$APP_PATH" -maxdepth 5 -print
             exit 1
           fi
-          if [ "${#PLUGIN_PATHS[@]}" -lt 2 ]; then
-            echo "Expected both iOS widget extensions to be packaged, found only ${#PLUGIN_PATHS[@]}"
-            find "$APP_PATH/PlugIns" -maxdepth 2 -print
-            exit 1
-          fi
           PLUGIN_PATH="${PLUGIN_PATHS[0]}"
 
           echo "Force-copy icon PNGs into the app bundle for TrollStore icon cache:"
@@ -318,8 +313,20 @@ jobs:
           grep -q 'Payload/TelShevaAzan.app/nabawi-day.jpg' ipa-contents.txt
           grep -q 'Payload/TelShevaAzan.app/nabawi-night.jpg' ipa-contents.txt
           grep -q 'Payload/TelShevaAzan.app/PlugIns/.*\.appex/' ipa-contents.txt
-          grep -q 'Payload/TelShevaAzan.app/PlugIns/TelShevaAzanWidgetExtension.appex/TelShevaAzanWidgetExtension' ipa-contents.txt
           grep -q 'Payload/TelShevaAzan.app/PlugIns/TelShevaAzanWidgetExtensionV3.appex/TelShevaAzanWidgetExtensionV3' ipa-contents.txt
+          if grep -q 'Payload/TelShevaAzan.app/PlugIns/TelShevaAzanWidgetExtension.appex/' ipa-contents.txt; then
+            echo "Old iOS widget extension was packaged unexpectedly"
+            exit 1
+          fi
+          V3_PLUGIN_PATH="$APP_PATH/PlugIns/TelShevaAzanWidgetExtensionV3.appex"
+          V3_PLUGIN_EXECUTABLE="$(/usr/libexec/PlistBuddy -c "Print :CFBundleExecutable" "$V3_PLUGIN_PATH/Info.plist")"
+          /usr/bin/strings "$V3_PLUGIN_PATH/$V3_PLUGIN_EXECUTABLE" | grep -q 'com.omaralasam.telshevaazan.nextPrayer.v2'
+          /usr/bin/strings "$V3_PLUGIN_PATH/$V3_PLUGIN_EXECUTABLE" | grep -q 'com.omaralasam.telshevaazan.dailySchedule.v1'
+          /usr/bin/strings "$V3_PLUGIN_PATH/$V3_PLUGIN_EXECUTABLE" | grep -q 'com.omaralasam.telshevaazan.countdown.v1'
+          /usr/bin/strings "$V3_PLUGIN_PATH/$V3_PLUGIN_EXECUTABLE" | grep -q 'com.omaralasam.telshevaazan.lockCircle.prayerTime.v2'
+          /usr/bin/strings "$V3_PLUGIN_PATH/$V3_PLUGIN_EXECUTABLE" | grep -q 'com.omaralasam.telshevaazan.lockCircle.iqamaMinutes.v2'
+          /usr/bin/strings "$V3_PLUGIN_PATH/$V3_PLUGIN_EXECUTABLE" | grep -q 'com.omaralasam.telshevaazan.lockCircle.nextCountdown.v2'
+          /usr/bin/strings "$V3_PLUGIN_PATH/$V3_PLUGIN_EXECUTABLE" | grep -q 'com.omaralasam.telshevaazan.lockCircle.sunriseTime.v2'
           grep -q 'Payload/TelShevaAzan.app/Watch/TelShevaAzanWatch.app/' ipa-contents.txt
           grep -q 'Payload/TelShevaAzan.app/Watch/TelShevaAzanWatch.app/PlugIns/.*\.appex/' ipa-contents.txt
 
