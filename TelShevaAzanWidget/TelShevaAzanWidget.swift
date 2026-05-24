@@ -331,30 +331,30 @@ struct TelShevaAzanWidgetView: View {
     }
 
     private var smallHomeLayout: some View {
-        VStack(alignment: .trailing, spacing: 8) {
+        VStack(alignment: .trailing, spacing: 6) {
             salatiTopline("القادم")
 
             Spacer(minLength: 0)
 
-            VStack(alignment: .trailing, spacing: 8) {
+            VStack(alignment: .trailing, spacing: 5) {
                 Text(nextTitle)
-                    .font(.system(size: 27, weight: .black, design: .rounded))
+                    .font(.system(size: 29, weight: .black, design: .rounded))
                     .foregroundColor(primaryText)
                     .lineLimit(1)
                     .minimumScaleFactor(0.62)
 
-                salatiTimeCapsule(nextTime, fontSize: 33)
+                salatiTimeCapsule(nextTime, fontSize: 27)
             }
             .frame(maxWidth: .infinity, alignment: .trailing)
 
             Spacer(minLength: 0)
 
-            salatiMetaCapsule(Text("متبقي ") + Text(remainingMinuteLabel).fontWeight(.black))
+            salatiMetaCapsule(Text("متبقي ") + Text(remainingMinuteLabel).fontWeight(.black), compact: true)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
         .multilineTextAlignment(.trailing)
         .environment(\.layoutDirection, .leftToRight)
-        .padding(14)
+        .padding(12)
     }
 
     private var mediumHomeLayout: some View {
@@ -530,14 +530,14 @@ struct TelShevaAzanWidgetView: View {
             )
     }
 
-    private func salatiMetaCapsule(_ content: Text) -> some View {
+    private func salatiMetaCapsule(_ content: Text, compact: Bool = false) -> some View {
         content
-            .font(.system(size: 11, weight: .bold, design: .rounded).monospacedDigit())
+            .font(.system(size: compact ? 10 : 11, weight: .bold, design: .rounded).monospacedDigit())
             .foregroundColor(secondaryText)
             .lineLimit(1)
             .minimumScaleFactor(0.54)
-            .padding(.horizontal, 14)
-            .padding(.vertical, 8)
+            .padding(.horizontal, compact ? 10 : 14)
+            .padding(.vertical, compact ? 5 : 8)
             .background(
                 Capsule(style: .continuous)
                     .fill(faintCapsuleFill)
@@ -764,6 +764,10 @@ private enum SalatiLockCircleKind: String {
 
     var widgetKind: String {
         "com.omaralasam.telshevaazan.lockCircle.\(rawValue).v2"
+    }
+
+    var widgetKindV3: String {
+        "com.omaralasam.telshevaazan.lockCircle.\(rawValue).v3"
     }
 
     var displayName: String {
@@ -1077,11 +1081,80 @@ private struct SalatiSunriseLockCircleWidget: Widget {
     }
 }
 
+@available(iOSApplicationExtension 16.0, *)
+private struct SalatiPrayerTimeLockCircleWidgetV3: Widget {
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: SalatiLockCircleKind.prayerTime.widgetKindV3, provider: TelShevaWidgetProvider()) { entry in
+            SalatiLockCircleWidgetView(entry: entry, kind: .prayerTime)
+        }
+        .configurationDisplayName(SalatiLockCircleKind.prayerTime.displayName)
+        .description(SalatiLockCircleKind.prayerTime.description)
+        .supportedFamilies([.accessoryCircular])
+    }
+}
+
+@available(iOSApplicationExtension 16.0, *)
+private struct SalatiIqamaMinutesLockCircleWidgetV3: Widget {
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: SalatiLockCircleKind.iqamaMinutes.widgetKindV3, provider: TelShevaWidgetProvider()) { entry in
+            SalatiLockCircleWidgetView(entry: entry, kind: .iqamaMinutes)
+        }
+        .configurationDisplayName(SalatiLockCircleKind.iqamaMinutes.displayName)
+        .description(SalatiLockCircleKind.iqamaMinutes.description)
+        .supportedFamilies([.accessoryCircular])
+    }
+}
+
+@available(iOSApplicationExtension 16.0, *)
+private struct SalatiIqamaTimeLockCircleWidgetV3: Widget {
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: SalatiLockCircleKind.iqamaTime.widgetKindV3, provider: TelShevaWidgetProvider()) { entry in
+            SalatiLockCircleWidgetView(entry: entry, kind: .iqamaTime)
+        }
+        .configurationDisplayName(SalatiLockCircleKind.iqamaTime.displayName)
+        .description(SalatiLockCircleKind.iqamaTime.description)
+        .supportedFamilies([.accessoryCircular])
+    }
+}
+
+@available(iOSApplicationExtension 16.0, *)
+private struct SalatiNextCountdownLockCircleWidgetV3: Widget {
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: SalatiLockCircleKind.nextCountdown.widgetKindV3, provider: TelShevaWidgetProvider()) { entry in
+            SalatiLockCircleWidgetView(entry: entry, kind: .nextCountdown)
+        }
+        .configurationDisplayName(SalatiLockCircleKind.nextCountdown.displayName)
+        .description(SalatiLockCircleKind.nextCountdown.description)
+        .supportedFamilies([.accessoryCircular])
+    }
+}
+
+@available(iOSApplicationExtension 16.0, *)
+private struct SalatiSunriseLockCircleWidgetV3: Widget {
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: SalatiLockCircleKind.sunriseTime.widgetKindV3, provider: TelShevaWidgetProvider()) { entry in
+            SalatiLockCircleWidgetView(entry: entry, kind: .sunriseTime)
+        }
+        .configurationDisplayName(SalatiLockCircleKind.sunriseTime.displayName)
+        .description(SalatiLockCircleKind.sunriseTime.description)
+        .supportedFamilies([.accessoryCircular])
+    }
+}
+
 @main
 struct TelShevaAzanWidgetBundle: WidgetBundle {
     var body: some Widget {
 #if WIDGET_V3
         TelShevaAzanLegacyWidget()
+        TelShevaAzanScheduleWidgetV3()
+        TelShevaAzanCountdownWidgetV3()
+        if #available(iOSApplicationExtension 16.0, *) {
+            SalatiPrayerTimeLockCircleWidgetV3()
+            SalatiIqamaMinutesLockCircleWidgetV3()
+            SalatiIqamaTimeLockCircleWidgetV3()
+            SalatiNextCountdownLockCircleWidgetV3()
+            SalatiSunriseLockCircleWidgetV3()
+        }
         if #available(iOSApplicationExtension 16.1, *) {
             PrayerLiveActivityWidget()
         }
@@ -1132,8 +1205,8 @@ struct TelShevaAzanLegacyWidget: Widget {
             TelShevaAzanWidgetView(entry: entry)
                 .environment(\.layoutDirection, .rightToLeft)
         }
-        .configurationDisplayName("الصلاة القادمة الاحتياطي")
-        .description("توافق مع الودجت السابق مع التصميم الجديد.")
+        .configurationDisplayName("الصلاة القادمة")
+        .description("يعرض الصلاة القادمة ووقت الأذان والمتبقي عليها.")
         .supportedFamilies([.systemSmall, .systemMedium, .accessoryInline, .accessoryRectangular])
     }
 }
@@ -1162,6 +1235,34 @@ struct TelShevaAzanCountdownWidget: Widget {
         }
         .configurationDisplayName("عداد الصلاة")
         .description("ودجت زجاجي يركز على الوقت المتبقي للصلاة القادمة.")
+        .supportedFamilies([.systemSmall, .systemMedium])
+    }
+}
+
+struct TelShevaAzanScheduleWidgetV3: Widget {
+    let kind = "com.omaralasam.telshevaazan.dailySchedule.v3"
+
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: kind, provider: TelShevaWidgetProvider()) { entry in
+            TelShevaAzanWidgetView(entry: entry, presentation: .schedule)
+                .environment(\.layoutDirection, .rightToLeft)
+        }
+        .configurationDisplayName("جدول الصلاة")
+        .description("يعرض الصلوات القادمة بتصميم صلاتي الجديد.")
+        .supportedFamilies([.systemMedium, .systemLarge])
+    }
+}
+
+struct TelShevaAzanCountdownWidgetV3: Widget {
+    let kind = "com.omaralasam.telshevaazan.countdown.v3"
+
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: kind, provider: TelShevaWidgetProvider()) { entry in
+            TelShevaAzanWidgetView(entry: entry, presentation: .countdown)
+                .environment(\.layoutDirection, .rightToLeft)
+        }
+        .configurationDisplayName("عداد الصلاة")
+        .description("يعرض الأذان والإقامة والمتبقي بتصميم صلاتي الجديد.")
         .supportedFamilies([.systemSmall, .systemMedium])
     }
 }
