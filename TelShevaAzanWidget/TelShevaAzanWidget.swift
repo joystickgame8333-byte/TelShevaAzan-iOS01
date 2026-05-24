@@ -1023,12 +1023,6 @@ struct TelShevaAzanWidgetBundle: WidgetBundle {
     var body: some Widget {
 #if WIDGET_V3
         TelShevaAzanLegacyWidget()
-        if #available(iOSApplicationExtension 16.0, *) {
-            SalatiPrayerTimeLockCircleWidget()
-            SalatiIqamaMinutesLockCircleWidget()
-            SalatiNextCountdownLockCircleWidget()
-            SalatiSunriseLockCircleWidget()
-        }
         if #available(iOSApplicationExtension 16.1, *) {
             PrayerLiveActivityWidget()
         }
@@ -1079,7 +1073,7 @@ struct TelShevaAzanLegacyWidget: Widget {
                 .environment(\.layoutDirection, .rightToLeft)
         }
         .configurationDisplayName("الصلاة القادمة الاحتياطي")
-        .description("توافق مع الودجت السابق، وتساعد iOS على إظهار مجموعة صلاتي في الاختيار.")
+        .description("توافق مع الودجت السابق حتى لا يظهر الودجت القديم باللون الأسود.")
         .supportedFamilies([.systemSmall, .systemMedium, .accessoryInline, .accessoryRectangular])
     }
 }
