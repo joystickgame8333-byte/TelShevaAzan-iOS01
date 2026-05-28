@@ -833,10 +833,6 @@ private enum SalatiLockCircleKind: String {
         "com.omaralasam.telshevaazan.lockCircle.\(rawValue).v2"
     }
 
-    var cleanWidgetKind: String {
-        "com.omaralasam.telshevaazan.clean.lockCircle.\(rawValue).v1"
-    }
-
     var displayName: String {
         switch self {
         case .prayerTime:
@@ -1153,16 +1149,6 @@ struct TelShevaAzanWidgetBundle: WidgetBundle {
     var body: some Widget {
 #if WIDGET_V3
         TelShevaAzanLegacyWidget()
-        SalatiCleanNextPrayerWidget()
-        SalatiCleanScheduleWidget()
-        SalatiCleanCountdownWidget()
-        if #available(iOSApplicationExtension 16.0, *) {
-            SalatiCleanPrayerTimeLockCircleWidget()
-            SalatiCleanIqamaMinutesLockCircleWidget()
-            SalatiCleanIqamaTimeLockCircleWidget()
-            SalatiCleanNextCountdownLockCircleWidget()
-            SalatiCleanSunriseLockCircleWidget()
-        }
         if #available(iOSApplicationExtension 16.1, *) {
             PrayerLiveActivityWidget()
         }
@@ -1178,108 +1164,6 @@ struct TelShevaAzanWidgetBundle: WidgetBundle {
             SalatiSunriseLockCircleWidget()
         }
 #endif
-    }
-}
-
-struct SalatiCleanNextPrayerWidget: Widget {
-    let kind = "com.omaralasam.telshevaazan.clean.nextPrayer.v1"
-
-    var body: some WidgetConfiguration {
-        StaticConfiguration(kind: kind, provider: TelShevaWidgetProvider()) { entry in
-            TelShevaAzanWidgetView(entry: entry)
-                .environment(\.layoutDirection, .rightToLeft)
-        }
-        .configurationDisplayName("الصلاة القادمة")
-        .description("التصميم الجديد للصلاة القادمة مع عداد حي.")
-        .supportedFamilies([.systemSmall, .systemMedium, .accessoryInline, .accessoryRectangular])
-    }
-}
-
-struct SalatiCleanScheduleWidget: Widget {
-    let kind = "com.omaralasam.telshevaazan.clean.dailySchedule.v1"
-
-    var body: some WidgetConfiguration {
-        StaticConfiguration(kind: kind, provider: TelShevaWidgetProvider()) { entry in
-            TelShevaAzanWidgetView(entry: entry, presentation: .schedule)
-                .environment(\.layoutDirection, .rightToLeft)
-        }
-        .configurationDisplayName("جدول الصلاة")
-        .description("جدول اليوم بالتصميم الجديد.")
-        .supportedFamilies([.systemMedium, .systemLarge])
-    }
-}
-
-struct SalatiCleanCountdownWidget: Widget {
-    let kind = "com.omaralasam.telshevaazan.clean.countdown.v1"
-
-    var body: some WidgetConfiguration {
-        StaticConfiguration(kind: kind, provider: TelShevaWidgetProvider()) { entry in
-            TelShevaAzanWidgetView(entry: entry, presentation: .countdown)
-                .environment(\.layoutDirection, .rightToLeft)
-        }
-        .configurationDisplayName("عداد الصلاة")
-        .description("عداد الصلاة والإقامة بالتصميم الجديد.")
-        .supportedFamilies([.systemSmall, .systemMedium])
-    }
-}
-
-@available(iOSApplicationExtension 16.0, *)
-private struct SalatiCleanPrayerTimeLockCircleWidget: Widget {
-    var body: some WidgetConfiguration {
-        StaticConfiguration(kind: SalatiLockCircleKind.prayerTime.cleanWidgetKind, provider: TelShevaWidgetProvider()) { entry in
-            SalatiLockCircleWidgetView(entry: entry, kind: .prayerTime)
-        }
-        .configurationDisplayName(SalatiLockCircleKind.prayerTime.displayName)
-        .description(SalatiLockCircleKind.prayerTime.description)
-        .supportedFamilies([.accessoryCircular])
-    }
-}
-
-@available(iOSApplicationExtension 16.0, *)
-private struct SalatiCleanIqamaMinutesLockCircleWidget: Widget {
-    var body: some WidgetConfiguration {
-        StaticConfiguration(kind: SalatiLockCircleKind.iqamaMinutes.cleanWidgetKind, provider: TelShevaWidgetProvider()) { entry in
-            SalatiLockCircleWidgetView(entry: entry, kind: .iqamaMinutes)
-        }
-        .configurationDisplayName(SalatiLockCircleKind.iqamaMinutes.displayName)
-        .description(SalatiLockCircleKind.iqamaMinutes.description)
-        .supportedFamilies([.accessoryCircular])
-    }
-}
-
-@available(iOSApplicationExtension 16.0, *)
-private struct SalatiCleanIqamaTimeLockCircleWidget: Widget {
-    var body: some WidgetConfiguration {
-        StaticConfiguration(kind: SalatiLockCircleKind.iqamaTime.cleanWidgetKind, provider: TelShevaWidgetProvider()) { entry in
-            SalatiLockCircleWidgetView(entry: entry, kind: .iqamaTime)
-        }
-        .configurationDisplayName(SalatiLockCircleKind.iqamaTime.displayName)
-        .description(SalatiLockCircleKind.iqamaTime.description)
-        .supportedFamilies([.accessoryCircular])
-    }
-}
-
-@available(iOSApplicationExtension 16.0, *)
-private struct SalatiCleanNextCountdownLockCircleWidget: Widget {
-    var body: some WidgetConfiguration {
-        StaticConfiguration(kind: SalatiLockCircleKind.nextCountdown.cleanWidgetKind, provider: TelShevaWidgetProvider()) { entry in
-            SalatiLockCircleWidgetView(entry: entry, kind: .nextCountdown)
-        }
-        .configurationDisplayName(SalatiLockCircleKind.nextCountdown.displayName)
-        .description(SalatiLockCircleKind.nextCountdown.description)
-        .supportedFamilies([.accessoryCircular])
-    }
-}
-
-@available(iOSApplicationExtension 16.0, *)
-private struct SalatiCleanSunriseLockCircleWidget: Widget {
-    var body: some WidgetConfiguration {
-        StaticConfiguration(kind: SalatiLockCircleKind.sunriseTime.cleanWidgetKind, provider: TelShevaWidgetProvider()) { entry in
-            SalatiLockCircleWidgetView(entry: entry, kind: .sunriseTime)
-        }
-        .configurationDisplayName(SalatiLockCircleKind.sunriseTime.displayName)
-        .description(SalatiLockCircleKind.sunriseTime.description)
-        .supportedFamilies([.accessoryCircular])
     }
 }
 
