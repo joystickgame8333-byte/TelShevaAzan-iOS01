@@ -10,7 +10,7 @@ final class PrayerLiveActivityBackgroundScheduler {
 
     static let taskIdentifier = "com.omaralasam.telshevaazan.prayer-live-activity"
 
-    private let leadTime: TimeInterval = 5 * 60
+    private let leadTime: TimeInterval = 8 * 60 * 60
     private var didRegister = false
 
     private init() {}

@@ -15,9 +15,9 @@ final class PrayerLiveActivityCenter: ObservableObject {
     @Published private(set) var debugText = ""
 
     private let previewDuration: TimeInterval = 30
-    private let autoLeadTime: TimeInterval = 5 * 60
-    private let postPrayerDisplayDuration: TimeInterval = 45
-    private let nowDisplayDuration: TimeInterval = 0
+    private let autoLeadTime: TimeInterval = 8 * 60 * 60
+    private let postPrayerDisplayDuration: TimeInterval = 20 * 60
+    private let nowDisplayDuration: TimeInterval = 20 * 60
     private let expiredCleanupGrace: TimeInterval = 0
     private var lastSyncDate = Date.distantPast
     private var lastCleanupDate = Date.distantPast
@@ -274,11 +274,11 @@ final class PrayerLiveActivityCenter: ObservableObject {
             let activity = try requestActivity(attributes: attributes, state: state, staleDate: activityEndDate)
             keepAlive(activity, until: activityEndDate)
             statusText = "الجزيرة تعمل الآن"
-            detailText = "ظهرت Live Activity للصلاة القادمة. إذا قفلت الشاشة الآن ستظهر بطاقة شاشة القفل حتى وقت الأذان."
+            detailText = "ظهرت Live Activity للصلاة القادمة. ستبقى جاهزة وتتحول تلقائيًا عند دخول وقت الصلاة."
             debugText = ""
         } catch {
             statusText = "لم تبدأ الجزيرة تلقائيًا"
-            detailText = "النظام رفض تشغيل Live Activity في نافذة الصلاة الحالية. جرّب فتح التطبيق قبل الأذان بخمس دقائق وتأكد أن Live Activities مفعلة."
+            detailText = "النظام رفض تشغيل Live Activity الآن. افتح التطبيق مرة بعد التثبيت وتأكد أن Live Activities مفعلة."
             debugText = String(describing: error)
             return
         }

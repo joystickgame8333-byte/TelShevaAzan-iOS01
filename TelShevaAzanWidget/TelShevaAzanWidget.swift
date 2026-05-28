@@ -25,22 +25,28 @@ struct TelShevaWidgetProvider: TimelineProvider {
     func getTimeline(in context: Context, completion: @escaping (Timeline<TelShevaWidgetEntry>) -> Void) {
         let now = Date()
         let minuteStart = PrayerEngine.calendar.dateInterval(of: .minute, for: now)?.start ?? now
-        let endDate = PrayerEngine.calendar.date(byAdding: .hour, value: 24, to: minuteStart) ?? now.addingTimeInterval(24 * 60 * 60)
+        let endDate = PrayerEngine.calendar.date(byAdding: .hour, value: 36, to: minuteStart) ?? now.addingTimeInterval(36 * 60 * 60)
 
         var entryDates: [Date] = [now, minuteStart]
         var cursor = minuteStart
 
-        while let nextDate = PrayerEngine.calendar.date(byAdding: .minute, value: 15, to: cursor),
+        while let nextDate = PrayerEngine.calendar.date(byAdding: .minute, value: 5, to: cursor),
               nextDate <= endDate {
             entryDates.append(nextDate)
             cursor = nextDate
         }
 
         let todayKey = PrayerEngine.defaultDateKey(for: now)
-        let dateKeys = [todayKey, PrayerEngine.dateKey(from: todayKey, offset: 1)].compactMap { $0 }
+        let dateKeys = [
+            PrayerEngine.dateKey(from: todayKey, offset: -1),
+            todayKey,
+            PrayerEngine.dateKey(from: todayKey, offset: 1),
+            PrayerEngine.dateKey(from: todayKey, offset: 2)
+        ].compactMap { $0 }
         for dateKey in dateKeys {
             for prayer in PrayerEngine.schedule(for: dateKey).displayTimes {
                 appendTimelineDates(around: prayer.date, into: &entryDates, endDate: endDate)
+                appendTimelineDates(around: prayer.date.addingTimeInterval(TimeInterval(iqamaOffsetMinutes(for: prayer.key) ?? 0) * 60), into: &entryDates, endDate: endDate)
             }
         }
 
@@ -48,13 +54,20 @@ struct TelShevaWidgetProvider: TimelineProvider {
             appendTimelineDates(around: nextPrayer.date, into: &entryDates, endDate: endDate)
         }
 
-        let entries = uniqueMinuteDates(from: entryDates, now: now, endDate: endDate).map { makeEntry(for: $0) }
-        let refreshDate = (entries.last?.date ?? now).addingTimeInterval(15 * 60)
+        let entries = uniqueTimelineDates(from: entryDates, now: now, endDate: endDate).map { makeEntry(for: $0) }
+        let refreshDate = (entries.last?.date ?? now).addingTimeInterval(5 * 60)
         completion(Timeline(entries: entries, policy: .after(refreshDate)))
     }
 
     private func appendTimelineDates(around date: Date, into dates: inout [Date], endDate: Date) {
-        for offset in [-60, 0, 60, 5 * 60] {
+        for offset in stride(from: -3 * 60, through: 12 * 60, by: 60) {
+            let candidate = date.addingTimeInterval(TimeInterval(offset))
+            if candidate <= endDate {
+                dates.append(candidate)
+            }
+        }
+
+        for offset in [-5, 0, 5, 15, 30, 45] {
             let candidate = date.addingTimeInterval(TimeInterval(offset))
             if candidate <= endDate {
                 dates.append(candidate)
@@ -62,19 +75,36 @@ struct TelShevaWidgetProvider: TimelineProvider {
         }
     }
 
-    private func uniqueMinuteDates(from dates: [Date], now: Date, endDate: Date) -> [Date] {
-        let minuteBuckets = Set(
+    private func uniqueTimelineDates(from dates: [Date], now: Date, endDate: Date) -> [Date] {
+        let secondBuckets = Set(
             dates
                 .filter { $0 > now && $0 <= endDate }
-                .map { Int($0.timeIntervalSince1970 / 60) }
+                .map { Int($0.timeIntervalSince1970) }
         )
 
-        let sortedDates = minuteBuckets
-            .map { Date(timeIntervalSince1970: TimeInterval($0 * 60)) }
+        let sortedDates = secondBuckets
+            .map { Date(timeIntervalSince1970: TimeInterval($0)) }
             .filter { $0 > now }
             .sorted()
 
         return [now] + sortedDates
+    }
+
+    private func iqamaOffsetMinutes(for key: PrayerKey) -> Int? {
+        switch key {
+        case .fajr:
+            return 25
+        case .dhuhr:
+            return 15
+        case .asr:
+            return 17
+        case .maghrib:
+            return 8
+        case .isha:
+            return 15
+        case .sunrise:
+            return nil
+        }
     }
 
     private func makeEntry(for date: Date) -> TelShevaWidgetEntry {
@@ -803,6 +833,10 @@ private enum SalatiLockCircleKind: String {
         "com.omaralasam.telshevaazan.lockCircle.\(rawValue).v2"
     }
 
+    var cleanWidgetKind: String {
+        "com.omaralasam.telshevaazan.clean.lockCircle.\(rawValue).v1"
+    }
+
     var displayName: String {
         switch self {
         case .prayerTime:
@@ -1119,6 +1153,16 @@ struct TelShevaAzanWidgetBundle: WidgetBundle {
     var body: some Widget {
 #if WIDGET_V3
         TelShevaAzanLegacyWidget()
+        SalatiCleanNextPrayerWidget()
+        SalatiCleanScheduleWidget()
+        SalatiCleanCountdownWidget()
+        if #available(iOSApplicationExtension 16.0, *) {
+            SalatiCleanPrayerTimeLockCircleWidget()
+            SalatiCleanIqamaMinutesLockCircleWidget()
+            SalatiCleanIqamaTimeLockCircleWidget()
+            SalatiCleanNextCountdownLockCircleWidget()
+            SalatiCleanSunriseLockCircleWidget()
+        }
         if #available(iOSApplicationExtension 16.1, *) {
             PrayerLiveActivityWidget()
         }
@@ -1134,6 +1178,108 @@ struct TelShevaAzanWidgetBundle: WidgetBundle {
             SalatiSunriseLockCircleWidget()
         }
 #endif
+    }
+}
+
+struct SalatiCleanNextPrayerWidget: Widget {
+    let kind = "com.omaralasam.telshevaazan.clean.nextPrayer.v1"
+
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: kind, provider: TelShevaWidgetProvider()) { entry in
+            TelShevaAzanWidgetView(entry: entry)
+                .environment(\.layoutDirection, .rightToLeft)
+        }
+        .configurationDisplayName("الصلاة القادمة")
+        .description("التصميم الجديد للصلاة القادمة مع عداد حي.")
+        .supportedFamilies([.systemSmall, .systemMedium, .accessoryInline, .accessoryRectangular])
+    }
+}
+
+struct SalatiCleanScheduleWidget: Widget {
+    let kind = "com.omaralasam.telshevaazan.clean.dailySchedule.v1"
+
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: kind, provider: TelShevaWidgetProvider()) { entry in
+            TelShevaAzanWidgetView(entry: entry, presentation: .schedule)
+                .environment(\.layoutDirection, .rightToLeft)
+        }
+        .configurationDisplayName("جدول الصلاة")
+        .description("جدول اليوم بالتصميم الجديد.")
+        .supportedFamilies([.systemMedium, .systemLarge])
+    }
+}
+
+struct SalatiCleanCountdownWidget: Widget {
+    let kind = "com.omaralasam.telshevaazan.clean.countdown.v1"
+
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: kind, provider: TelShevaWidgetProvider()) { entry in
+            TelShevaAzanWidgetView(entry: entry, presentation: .countdown)
+                .environment(\.layoutDirection, .rightToLeft)
+        }
+        .configurationDisplayName("عداد الصلاة")
+        .description("عداد الصلاة والإقامة بالتصميم الجديد.")
+        .supportedFamilies([.systemSmall, .systemMedium])
+    }
+}
+
+@available(iOSApplicationExtension 16.0, *)
+private struct SalatiCleanPrayerTimeLockCircleWidget: Widget {
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: SalatiLockCircleKind.prayerTime.cleanWidgetKind, provider: TelShevaWidgetProvider()) { entry in
+            SalatiLockCircleWidgetView(entry: entry, kind: .prayerTime)
+        }
+        .configurationDisplayName(SalatiLockCircleKind.prayerTime.displayName)
+        .description(SalatiLockCircleKind.prayerTime.description)
+        .supportedFamilies([.accessoryCircular])
+    }
+}
+
+@available(iOSApplicationExtension 16.0, *)
+private struct SalatiCleanIqamaMinutesLockCircleWidget: Widget {
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: SalatiLockCircleKind.iqamaMinutes.cleanWidgetKind, provider: TelShevaWidgetProvider()) { entry in
+            SalatiLockCircleWidgetView(entry: entry, kind: .iqamaMinutes)
+        }
+        .configurationDisplayName(SalatiLockCircleKind.iqamaMinutes.displayName)
+        .description(SalatiLockCircleKind.iqamaMinutes.description)
+        .supportedFamilies([.accessoryCircular])
+    }
+}
+
+@available(iOSApplicationExtension 16.0, *)
+private struct SalatiCleanIqamaTimeLockCircleWidget: Widget {
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: SalatiLockCircleKind.iqamaTime.cleanWidgetKind, provider: TelShevaWidgetProvider()) { entry in
+            SalatiLockCircleWidgetView(entry: entry, kind: .iqamaTime)
+        }
+        .configurationDisplayName(SalatiLockCircleKind.iqamaTime.displayName)
+        .description(SalatiLockCircleKind.iqamaTime.description)
+        .supportedFamilies([.accessoryCircular])
+    }
+}
+
+@available(iOSApplicationExtension 16.0, *)
+private struct SalatiCleanNextCountdownLockCircleWidget: Widget {
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: SalatiLockCircleKind.nextCountdown.cleanWidgetKind, provider: TelShevaWidgetProvider()) { entry in
+            SalatiLockCircleWidgetView(entry: entry, kind: .nextCountdown)
+        }
+        .configurationDisplayName(SalatiLockCircleKind.nextCountdown.displayName)
+        .description(SalatiLockCircleKind.nextCountdown.description)
+        .supportedFamilies([.accessoryCircular])
+    }
+}
+
+@available(iOSApplicationExtension 16.0, *)
+private struct SalatiCleanSunriseLockCircleWidget: Widget {
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: SalatiLockCircleKind.sunriseTime.cleanWidgetKind, provider: TelShevaWidgetProvider()) { entry in
+            SalatiLockCircleWidgetView(entry: entry, kind: .sunriseTime)
+        }
+        .configurationDisplayName(SalatiLockCircleKind.sunriseTime.displayName)
+        .description(SalatiLockCircleKind.sunriseTime.description)
+        .supportedFamilies([.accessoryCircular])
     }
 }
 
