@@ -82,6 +82,11 @@ enum PrayerEngine {
 
     private static let telShevaOffsetMinutes = 2
     private static let daylightSavingOffsetMinutes = 60
+    private static let telShevaLatitude = 31.2463
+    private static let telShevaLongitude = 34.8409
+    private static let fajrAngle = 18.0
+    private static let ishaAngle = 17.0
+    private static let asrShadowFactor = 1.0
 
     private static let jerusalemMayWinter: [String: [PrayerKey: String]] = [
         "2026-05-01": [.fajr: "03:22", .sunrise: "04:50", .dhuhr: "11:36", .asr: "15:15", .maghrib: "18:26", .isha: "19:49"],
@@ -125,17 +130,24 @@ enum PrayerEngine {
     }()
 
     static var availableDateKeys: [String] {
-        Self.telShevaSchedule.keys.sorted()
+        let now = Date()
+        let start = Self.calendar.date(byAdding: .day, value: -7, to: now) ?? now
+
+        return (0...45).compactMap { offset in
+            guard let date = Self.calendar.date(byAdding: .day, value: offset, to: start) else {
+                return nil
+            }
+
+            return Self.dateKey(for: date)
+        }
     }
 
     static func defaultDateKey(for date: Date = Date()) -> String {
-        let key = Self.dateKey(for: date)
-        return Self.telShevaSchedule[key] == nil ? (Self.availableDateKeys.first ?? key) : key
+        Self.dateKey(for: date)
     }
 
     static func schedule(for dateKey: String) -> DaySchedule {
-        let resolvedKey = Self.telShevaSchedule[dateKey] == nil ? Self.defaultDateKey() : dateKey
-        return DaySchedule(dateKey: resolvedKey, times: Self.telShevaSchedule[resolvedKey] ?? [:])
+        DaySchedule(dateKey: dateKey, times: Self.times(for: dateKey))
     }
 
     static func nextPrayer(for dateKey: String, now: Date = Date()) -> PrayerTime? {
@@ -190,10 +202,12 @@ enum PrayerEngine {
     }
 
     static func dateKey(from dateKey: String, offset: Int) -> String? {
-        guard let index = Self.availableDateKeys.firstIndex(of: dateKey) else { return nil }
-        let nextIndex = index + offset
-        guard Self.availableDateKeys.indices.contains(nextIndex) else { return nil }
-        return Self.availableDateKeys[nextIndex]
+        guard let date = Self.date(from: dateKey, time: "12:00"),
+              let shiftedDate = Self.calendar.date(byAdding: .day, value: offset, to: date) else {
+            return nil
+        }
+
+        return Self.dateKey(for: shiftedDate)
     }
 
     static func longDateLabel(for dateKey: String) -> String {
@@ -231,6 +245,73 @@ enum PrayerEngine {
             components.month ?? 0,
             components.day ?? 0
         )
+    }
+
+    private static func times(for dateKey: String) -> [PrayerKey: String] {
+        if let fixedTimes = Self.telShevaSchedule[dateKey] {
+            return fixedTimes
+        }
+
+        return Self.calculatedTimes(for: dateKey)
+    }
+
+    private static func calculatedTimes(for dateKey: String) -> [PrayerKey: String] {
+        guard let date = Self.date(from: dateKey, time: "12:00") else { return [:] }
+
+        let dayOfYear = Double(Self.calendar.ordinality(of: .day, in: .year, for: date) ?? 1)
+        let hour = 12.0
+        let gamma = 2.0 * Double.pi / 365.0 * (dayOfYear - 1.0 + ((hour - 12.0) / 24.0))
+        let equationOfTime = 229.18 * (
+            0.000075
+            + 0.001868 * cos(gamma)
+            - 0.032077 * sin(gamma)
+            - 0.014615 * cos(2.0 * gamma)
+            - 0.040849 * sin(2.0 * gamma)
+        )
+        let declination = 0.006918
+            - 0.399912 * cos(gamma)
+            + 0.070257 * sin(gamma)
+            - 0.006758 * cos(2.0 * gamma)
+            + 0.000907 * sin(2.0 * gamma)
+            - 0.002697 * cos(3.0 * gamma)
+            + 0.00148 * sin(3.0 * gamma)
+        let timeZoneOffset = Double(Self.timeZone.secondsFromGMT(for: date)) / 60.0
+        let solarNoon = 720.0 - (4.0 * Self.telShevaLongitude) - equationOfTime + timeZoneOffset
+        let sunriseHourAngle = Self.hourAngle(forSunAltitude: -0.833, declination: declination)
+        let fajrHourAngle = Self.hourAngle(forSunAltitude: -Self.fajrAngle, declination: declination)
+        let ishaHourAngle = Self.hourAngle(forSunAltitude: -Self.ishaAngle, declination: declination)
+        let asrAltitude = Self.asrAltitude(declination: declination)
+        let asrHourAngle = Self.hourAngle(forSunAltitude: asrAltitude, declination: declination)
+
+        return [
+            .fajr: Self.clockText(fromMinutes: solarNoon - fajrHourAngle),
+            .sunrise: Self.clockText(fromMinutes: solarNoon - sunriseHourAngle),
+            .dhuhr: Self.clockText(fromMinutes: solarNoon),
+            .asr: Self.clockText(fromMinutes: solarNoon + asrHourAngle),
+            .maghrib: Self.clockText(fromMinutes: solarNoon + sunriseHourAngle),
+            .isha: Self.clockText(fromMinutes: solarNoon + ishaHourAngle)
+        ]
+    }
+
+    private static func hourAngle(forSunAltitude altitudeDegrees: Double, declination: Double) -> Double {
+        let latitude = Self.telShevaLatitude * Double.pi / 180.0
+        let altitude = altitudeDegrees * Double.pi / 180.0
+        let numerator = sin(altitude) - (sin(latitude) * sin(declination))
+        let denominator = cos(latitude) * cos(declination)
+        let value = min(max(numerator / denominator, -1.0), 1.0)
+        return acos(value) * 180.0 / Double.pi * 4.0
+    }
+
+    private static func asrAltitude(declination: Double) -> Double {
+        let latitude = Self.telShevaLatitude * Double.pi / 180.0
+        let angle = abs(latitude - declination)
+        return atan(1.0 / (Self.asrShadowFactor + tan(angle))) * 180.0 / Double.pi
+    }
+
+    private static func clockText(fromMinutes minutes: Double) -> String {
+        let rounded = Int(minutes.rounded())
+        let normalized = ((rounded % 1440) + 1440) % 1440
+        return String(format: "%02d:%02d", normalized / 60, normalized % 60)
     }
 
     private static func latinDigits(_ text: String) -> String {
