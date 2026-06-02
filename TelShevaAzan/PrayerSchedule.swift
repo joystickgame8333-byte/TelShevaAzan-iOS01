@@ -87,6 +87,14 @@ enum PrayerEngine {
     private static let fajrAngle = 18.0
     private static let ishaAngle = 17.0
     private static let asrShadowFactor = 1.0
+    private static let calculatedTimeCorrections: [PrayerKey: Int] = [
+        .fajr: -3,
+        .sunrise: -5,
+        .dhuhr: 1,
+        .asr: 2,
+        .maghrib: 9,
+        .isha: 10
+    ]
 
     private static let jerusalemMayWinter: [String: [PrayerKey: String]] = [
         "2026-05-01": [.fajr: "03:22", .sunrise: "04:50", .dhuhr: "11:36", .asr: "15:15", .maghrib: "18:26", .isha: "19:49"],
@@ -284,12 +292,12 @@ enum PrayerEngine {
         let asrHourAngle = Self.hourAngle(forSunAltitude: asrAltitude, declination: declination)
 
         return [
-            .fajr: Self.clockText(fromMinutes: solarNoon - fajrHourAngle),
-            .sunrise: Self.clockText(fromMinutes: solarNoon - sunriseHourAngle),
-            .dhuhr: Self.clockText(fromMinutes: solarNoon),
-            .asr: Self.clockText(fromMinutes: solarNoon + asrHourAngle),
-            .maghrib: Self.clockText(fromMinutes: solarNoon + sunriseHourAngle),
-            .isha: Self.clockText(fromMinutes: solarNoon + ishaHourAngle)
+            .fajr: Self.correctedClockText(for: .fajr, fromMinutes: solarNoon - fajrHourAngle),
+            .sunrise: Self.correctedClockText(for: .sunrise, fromMinutes: solarNoon - sunriseHourAngle),
+            .dhuhr: Self.correctedClockText(for: .dhuhr, fromMinutes: solarNoon),
+            .asr: Self.correctedClockText(for: .asr, fromMinutes: solarNoon + asrHourAngle),
+            .maghrib: Self.correctedClockText(for: .maghrib, fromMinutes: solarNoon + sunriseHourAngle),
+            .isha: Self.correctedClockText(for: .isha, fromMinutes: solarNoon + ishaHourAngle)
         ]
     }
 
@@ -312,6 +320,10 @@ enum PrayerEngine {
         let rounded = Int(minutes.rounded())
         let normalized = ((rounded % 1440) + 1440) % 1440
         return String(format: "%02d:%02d", normalized / 60, normalized % 60)
+    }
+
+    private static func correctedClockText(for key: PrayerKey, fromMinutes minutes: Double) -> String {
+        Self.clockText(fromMinutes: minutes + Double(Self.calculatedTimeCorrections[key] ?? 0))
     }
 
     private static func latinDigits(_ text: String) -> String {
