@@ -82,11 +82,6 @@ enum PrayerEngine {
 
     private static let telShevaOffsetMinutes = 2
     private static let daylightSavingOffsetMinutes = 60
-    private static let telShevaLatitude = 31.2463
-    private static let telShevaLongitude = 34.8409
-    private static let fajrAngle = 18.0
-    private static let ishaAngle = 17.0
-    private static let asrShadowFactor = 1.0
 
     private static let jerusalemMayWinter: [String: [PrayerKey: String]] = [
         "2026-05-01": [.fajr: "03:22", .sunrise: "04:50", .dhuhr: "11:36", .asr: "15:15", .maghrib: "18:26", .isha: "19:49"],
@@ -122,32 +117,58 @@ enum PrayerEngine {
         "2026-05-31": [.fajr: "02:56", .sunrise: "04:31", .dhuhr: "11:36", .asr: "15:17", .maghrib: "18:45", .isha: "20:16"]
     ]
 
+    private static let jerusalemJuneWinter: [String: [PrayerKey: String]] = [
+        "2026-06-01": [.fajr: "02:56", .sunrise: "04:31", .dhuhr: "11:37", .asr: "15:17", .maghrib: "18:46", .isha: "20:17"],
+        "2026-06-02": [.fajr: "02:55", .sunrise: "04:30", .dhuhr: "11:37", .asr: "15:17", .maghrib: "18:47", .isha: "20:18"],
+        "2026-06-03": [.fajr: "02:55", .sunrise: "04:30", .dhuhr: "11:37", .asr: "15:18", .maghrib: "18:47", .isha: "20:19"],
+        "2026-06-04": [.fajr: "02:55", .sunrise: "04:30", .dhuhr: "11:37", .asr: "15:18", .maghrib: "18:48", .isha: "20:19"],
+        "2026-06-05": [.fajr: "02:54", .sunrise: "04:30", .dhuhr: "11:37", .asr: "15:18", .maghrib: "18:48", .isha: "20:20"],
+        "2026-06-06": [.fajr: "02:54", .sunrise: "04:30", .dhuhr: "11:37", .asr: "15:18", .maghrib: "18:49", .isha: "20:21"],
+        "2026-06-07": [.fajr: "02:54", .sunrise: "04:30", .dhuhr: "11:38", .asr: "15:18", .maghrib: "18:49", .isha: "20:21"],
+        "2026-06-08": [.fajr: "02:54", .sunrise: "04:30", .dhuhr: "11:38", .asr: "15:18", .maghrib: "18:50", .isha: "20:22"],
+        "2026-06-09": [.fajr: "02:53", .sunrise: "04:30", .dhuhr: "11:38", .asr: "15:18", .maghrib: "18:50", .isha: "20:22"],
+        "2026-06-10": [.fajr: "02:53", .sunrise: "04:30", .dhuhr: "11:38", .asr: "15:19", .maghrib: "18:51", .isha: "20:23"],
+        "2026-06-11": [.fajr: "02:53", .sunrise: "04:30", .dhuhr: "11:38", .asr: "15:19", .maghrib: "18:51", .isha: "20:23"],
+        "2026-06-12": [.fajr: "02:53", .sunrise: "04:30", .dhuhr: "11:39", .asr: "15:19", .maghrib: "18:51", .isha: "20:24"],
+        "2026-06-13": [.fajr: "02:53", .sunrise: "04:30", .dhuhr: "11:39", .asr: "15:19", .maghrib: "18:52", .isha: "20:24"],
+        "2026-06-14": [.fajr: "02:53", .sunrise: "04:30", .dhuhr: "11:39", .asr: "15:19", .maghrib: "18:52", .isha: "20:24"],
+        "2026-06-15": [.fajr: "02:53", .sunrise: "04:30", .dhuhr: "11:39", .asr: "15:19", .maghrib: "18:52", .isha: "20:25"],
+        "2026-06-16": [.fajr: "02:53", .sunrise: "04:30", .dhuhr: "11:39", .asr: "15:19", .maghrib: "18:52", .isha: "20:25"],
+        "2026-06-17": [.fajr: "02:53", .sunrise: "04:30", .dhuhr: "11:39", .asr: "15:20", .maghrib: "18:53", .isha: "20:26"],
+        "2026-06-18": [.fajr: "02:53", .sunrise: "04:30", .dhuhr: "11:40", .asr: "15:20", .maghrib: "18:53", .isha: "20:26"],
+        "2026-06-19": [.fajr: "02:54", .sunrise: "04:31", .dhuhr: "11:40", .asr: "15:20", .maghrib: "18:53", .isha: "20:26"],
+        "2026-06-20": [.fajr: "02:54", .sunrise: "04:31", .dhuhr: "11:40", .asr: "15:20", .maghrib: "18:53", .isha: "20:26"],
+        "2026-06-21": [.fajr: "02:54", .sunrise: "04:31", .dhuhr: "11:40", .asr: "15:21", .maghrib: "18:54", .isha: "20:27"],
+        "2026-06-22": [.fajr: "02:55", .sunrise: "04:31", .dhuhr: "11:40", .asr: "15:21", .maghrib: "18:54", .isha: "20:27"],
+        "2026-06-23": [.fajr: "02:55", .sunrise: "04:31", .dhuhr: "11:40", .asr: "15:21", .maghrib: "18:54", .isha: "20:27"],
+        "2026-06-24": [.fajr: "02:55", .sunrise: "04:32", .dhuhr: "11:41", .asr: "15:21", .maghrib: "18:54", .isha: "20:27"],
+        "2026-06-25": [.fajr: "02:56", .sunrise: "04:32", .dhuhr: "11:41", .asr: "15:21", .maghrib: "18:54", .isha: "20:27"],
+        "2026-06-26": [.fajr: "02:56", .sunrise: "04:32", .dhuhr: "11:41", .asr: "15:22", .maghrib: "18:54", .isha: "20:27"],
+        "2026-06-27": [.fajr: "02:57", .sunrise: "04:33", .dhuhr: "11:41", .asr: "15:22", .maghrib: "18:54", .isha: "20:27"],
+        "2026-06-28": [.fajr: "02:57", .sunrise: "04:33", .dhuhr: "11:42", .asr: "15:22", .maghrib: "18:54", .isha: "20:27"],
+        "2026-06-29": [.fajr: "02:58", .sunrise: "04:34", .dhuhr: "11:42", .asr: "15:22", .maghrib: "18:54", .isha: "20:27"],
+        "2026-06-30": [.fajr: "02:58", .sunrise: "04:34", .dhuhr: "11:42", .asr: "15:22", .maghrib: "18:54", .isha: "20:27"]
+    ]
+
     static let telShevaSchedule: [String: [PrayerKey: String]] = {
         let totalOffset = Self.telShevaOffsetMinutes + Self.daylightSavingOffsetMinutes
-        return Self.jerusalemMayWinter.mapValues { times in
+        return Self.jerusalemMayWinter.merging(Self.jerusalemJuneWinter) { current, _ in current }.mapValues { times in
             times.mapValues { Self.addMinutes(totalOffset, to: $0) }
         }
     }()
 
     static var availableDateKeys: [String] {
-        let now = Date()
-        let start = Self.calendar.date(byAdding: .day, value: -7, to: now) ?? now
-
-        return (0...45).compactMap { offset in
-            guard let date = Self.calendar.date(byAdding: .day, value: offset, to: start) else {
-                return nil
-            }
-
-            return Self.dateKey(for: date)
-        }
+        Self.telShevaSchedule.keys.sorted()
     }
 
     static func defaultDateKey(for date: Date = Date()) -> String {
-        Self.dateKey(for: date)
+        let key = Self.dateKey(for: date)
+        return Self.telShevaSchedule[key] == nil ? (Self.availableDateKeys.first ?? key) : key
     }
 
     static func schedule(for dateKey: String) -> DaySchedule {
-        DaySchedule(dateKey: dateKey, times: Self.times(for: dateKey))
+        let resolvedKey = Self.telShevaSchedule[dateKey] == nil ? Self.defaultDateKey() : dateKey
+        return DaySchedule(dateKey: resolvedKey, times: Self.telShevaSchedule[resolvedKey] ?? [:])
     }
 
     static func nextPrayer(for dateKey: String, now: Date = Date()) -> PrayerTime? {
@@ -202,12 +223,10 @@ enum PrayerEngine {
     }
 
     static func dateKey(from dateKey: String, offset: Int) -> String? {
-        guard let date = Self.date(from: dateKey, time: "12:00"),
-              let shiftedDate = Self.calendar.date(byAdding: .day, value: offset, to: date) else {
-            return nil
-        }
-
-        return Self.dateKey(for: shiftedDate)
+        guard let index = Self.availableDateKeys.firstIndex(of: dateKey) else { return nil }
+        let nextIndex = index + offset
+        guard Self.availableDateKeys.indices.contains(nextIndex) else { return nil }
+        return Self.availableDateKeys[nextIndex]
     }
 
     static func longDateLabel(for dateKey: String) -> String {
@@ -245,73 +264,6 @@ enum PrayerEngine {
             components.month ?? 0,
             components.day ?? 0
         )
-    }
-
-    private static func times(for dateKey: String) -> [PrayerKey: String] {
-        if let fixedTimes = Self.telShevaSchedule[dateKey] {
-            return fixedTimes
-        }
-
-        return Self.calculatedTimes(for: dateKey)
-    }
-
-    private static func calculatedTimes(for dateKey: String) -> [PrayerKey: String] {
-        guard let date = Self.date(from: dateKey, time: "12:00") else { return [:] }
-
-        let dayOfYear = Double(Self.calendar.ordinality(of: .day, in: .year, for: date) ?? 1)
-        let hour = 12.0
-        let gamma = 2.0 * Double.pi / 365.0 * (dayOfYear - 1.0 + ((hour - 12.0) / 24.0))
-        let equationOfTime = 229.18 * (
-            0.000075
-            + 0.001868 * cos(gamma)
-            - 0.032077 * sin(gamma)
-            - 0.014615 * cos(2.0 * gamma)
-            - 0.040849 * sin(2.0 * gamma)
-        )
-        let declination = 0.006918
-            - 0.399912 * cos(gamma)
-            + 0.070257 * sin(gamma)
-            - 0.006758 * cos(2.0 * gamma)
-            + 0.000907 * sin(2.0 * gamma)
-            - 0.002697 * cos(3.0 * gamma)
-            + 0.00148 * sin(3.0 * gamma)
-        let timeZoneOffset = Double(Self.timeZone.secondsFromGMT(for: date)) / 60.0
-        let solarNoon = 720.0 - (4.0 * Self.telShevaLongitude) - equationOfTime + timeZoneOffset
-        let sunriseHourAngle = Self.hourAngle(forSunAltitude: -0.833, declination: declination)
-        let fajrHourAngle = Self.hourAngle(forSunAltitude: -Self.fajrAngle, declination: declination)
-        let ishaHourAngle = Self.hourAngle(forSunAltitude: -Self.ishaAngle, declination: declination)
-        let asrAltitude = Self.asrAltitude(declination: declination)
-        let asrHourAngle = Self.hourAngle(forSunAltitude: asrAltitude, declination: declination)
-
-        return [
-            .fajr: Self.clockText(fromMinutes: solarNoon - fajrHourAngle),
-            .sunrise: Self.clockText(fromMinutes: solarNoon - sunriseHourAngle),
-            .dhuhr: Self.clockText(fromMinutes: solarNoon),
-            .asr: Self.clockText(fromMinutes: solarNoon + asrHourAngle),
-            .maghrib: Self.clockText(fromMinutes: solarNoon + sunriseHourAngle),
-            .isha: Self.clockText(fromMinutes: solarNoon + ishaHourAngle)
-        ]
-    }
-
-    private static func hourAngle(forSunAltitude altitudeDegrees: Double, declination: Double) -> Double {
-        let latitude = Self.telShevaLatitude * Double.pi / 180.0
-        let altitude = altitudeDegrees * Double.pi / 180.0
-        let numerator = sin(altitude) - (sin(latitude) * sin(declination))
-        let denominator = cos(latitude) * cos(declination)
-        let value = min(max(numerator / denominator, -1.0), 1.0)
-        return acos(value) * 180.0 / Double.pi * 4.0
-    }
-
-    private static func asrAltitude(declination: Double) -> Double {
-        let latitude = Self.telShevaLatitude * Double.pi / 180.0
-        let angle = abs(latitude - declination)
-        return atan(1.0 / (Self.asrShadowFactor + tan(angle))) * 180.0 / Double.pi
-    }
-
-    private static func clockText(fromMinutes minutes: Double) -> String {
-        let rounded = Int(minutes.rounded())
-        let normalized = ((rounded % 1440) + 1440) % 1440
-        return String(format: "%02d:%02d", normalized / 60, normalized % 60)
     }
 
     private static func latinDigits(_ text: String) -> String {

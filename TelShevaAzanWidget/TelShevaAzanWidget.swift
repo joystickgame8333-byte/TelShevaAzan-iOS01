@@ -24,70 +24,25 @@ struct TelShevaWidgetProvider: TimelineProvider {
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<TelShevaWidgetEntry>) -> Void) {
         let now = Date()
+        let firstEntry = makeEntry(for: now)
         let minuteStart = PrayerEngine.calendar.dateInterval(of: .minute, for: now)?.start ?? now
-        let endDate = PrayerEngine.calendar.date(byAdding: .day, value: 10, to: minuteStart) ?? now.addingTimeInterval(10 * 24 * 60 * 60)
+        let nextPrayerDate = firstEntry.nextPrayer?.date ?? now.addingTimeInterval(60 * 60)
+        let nextIqamaDate = firstEntry.nextPrayer.flatMap { prayer -> Date? in
+            guard let offset = iqamaOffsetMinutes(for: prayer.key) else { return nil }
+            return prayer.date.addingTimeInterval(TimeInterval(offset * 60))
+        }
+        let nextEventDate = [nextPrayerDate, nextIqamaDate].compactMap { $0 }.filter { $0 > now }.min() ?? nextPrayerDate
+        let endDate = min(nextEventDate.addingTimeInterval(90), now.addingTimeInterval(3 * 60 * 60))
 
-        var entryDates: [Date] = [now, minuteStart]
-        let todayKey = PrayerEngine.defaultDateKey(for: now)
-
-        for dayOffset in -1...10 {
-            guard let dateKey = PrayerEngine.dateKey(from: todayKey, offset: dayOffset) else {
-                continue
-            }
-
-            appendDayBoundaryDates(for: dateKey, into: &entryDates, endDate: endDate)
-
-            for prayer in PrayerEngine.schedule(for: dateKey).displayTimes {
-                appendTimelineDates(around: prayer.date, into: &entryDates, endDate: endDate)
-
-                if let iqamaOffset = iqamaOffsetMinutes(for: prayer.key) {
-                    let iqamaDate = prayer.date.addingTimeInterval(TimeInterval(iqamaOffset * 60))
-                    appendTimelineDates(around: iqamaDate, into: &entryDates, endDate: endDate)
-                }
-            }
+        var entries: [TelShevaWidgetEntry] = [firstEntry]
+        var cursor = PrayerEngine.calendar.date(byAdding: .minute, value: 1, to: minuteStart) ?? now.addingTimeInterval(60)
+        while cursor <= endDate {
+            entries.append(makeEntry(for: cursor))
+            cursor = PrayerEngine.calendar.date(byAdding: .minute, value: 1, to: cursor) ?? cursor.addingTimeInterval(60)
         }
 
-        if let nextPrayer = makeEntry(for: now).nextPrayer {
-            appendTimelineDates(around: nextPrayer.date, into: &entryDates, endDate: endDate)
-        }
-
-        let entries = uniqueTimelineDates(from: entryDates, now: now, endDate: endDate).map { makeEntry(for: $0) }
-        let refreshDate = entries.last?.date ?? endDate
+        let refreshDate = entries.last?.date.addingTimeInterval(60) ?? now.addingTimeInterval(60)
         completion(Timeline(entries: entries, policy: .after(refreshDate)))
-    }
-
-    private func appendTimelineDates(around date: Date, into dates: inout [Date], endDate: Date) {
-        for offset in [-60, -5, 0, 5, 30, 60] {
-            let candidate = date.addingTimeInterval(TimeInterval(offset))
-            if candidate <= endDate {
-                dates.append(candidate)
-            }
-        }
-    }
-
-    private func appendDayBoundaryDates(for dateKey: String, into dates: inout [Date], endDate: Date) {
-        for time in ["00:00", "06:00", "12:00", "18:00"] {
-            guard let date = PrayerEngine.date(from: dateKey, time: time), date <= endDate else {
-                continue
-            }
-
-            dates.append(date)
-        }
-    }
-
-    private func uniqueTimelineDates(from dates: [Date], now: Date, endDate: Date) -> [Date] {
-        let secondBuckets = Set(
-            dates
-                .filter { $0 > now && $0 <= endDate }
-                .map { Int($0.timeIntervalSince1970) }
-        )
-
-        let sortedDates = secondBuckets
-            .map { Date(timeIntervalSince1970: TimeInterval($0)) }
-            .filter { $0 > now }
-            .sorted()
-
-        return [now] + sortedDates
     }
 
     private func iqamaOffsetMinutes(for key: PrayerKey) -> Int? {
@@ -1148,7 +1103,17 @@ private struct SalatiSunriseLockCircleWidget: Widget {
 struct TelShevaAzanWidgetBundle: WidgetBundle {
     var body: some Widget {
 #if WIDGET_V3
+        TelShevaAzanWidget()
         TelShevaAzanLegacyWidget()
+        TelShevaAzanScheduleWidget()
+        TelShevaAzanCountdownWidget()
+        if #available(iOSApplicationExtension 16.0, *) {
+            SalatiPrayerTimeLockCircleWidget()
+            SalatiIqamaMinutesLockCircleWidget()
+            SalatiIqamaTimeLockCircleWidget()
+            SalatiNextCountdownLockCircleWidget()
+            SalatiSunriseLockCircleWidget()
+        }
         if #available(iOSApplicationExtension 16.1, *) {
             PrayerLiveActivityWidget()
         }
