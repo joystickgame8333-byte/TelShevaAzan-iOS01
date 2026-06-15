@@ -25,28 +25,25 @@ struct TelShevaWidgetProvider: TimelineProvider {
     func getTimeline(in context: Context, completion: @escaping (Timeline<TelShevaWidgetEntry>) -> Void) {
         let now = Date()
         let minuteStart = PrayerEngine.calendar.dateInterval(of: .minute, for: now)?.start ?? now
-        let endDate = PrayerEngine.calendar.date(byAdding: .hour, value: 36, to: minuteStart) ?? now.addingTimeInterval(36 * 60 * 60)
+        let endDate = PrayerEngine.calendar.date(byAdding: .day, value: 10, to: minuteStart) ?? now.addingTimeInterval(10 * 24 * 60 * 60)
 
         var entryDates: [Date] = [now, minuteStart]
-        var cursor = minuteStart
-
-        while let nextDate = PrayerEngine.calendar.date(byAdding: .minute, value: 5, to: cursor),
-              nextDate <= endDate {
-            entryDates.append(nextDate)
-            cursor = nextDate
-        }
-
         let todayKey = PrayerEngine.defaultDateKey(for: now)
-        let dateKeys = [
-            PrayerEngine.dateKey(from: todayKey, offset: -1),
-            todayKey,
-            PrayerEngine.dateKey(from: todayKey, offset: 1),
-            PrayerEngine.dateKey(from: todayKey, offset: 2)
-        ].compactMap { $0 }
-        for dateKey in dateKeys {
+
+        for dayOffset in -1...10 {
+            guard let dateKey = PrayerEngine.dateKey(from: todayKey, offset: dayOffset) else {
+                continue
+            }
+
+            appendDayBoundaryDates(for: dateKey, into: &entryDates, endDate: endDate)
+
             for prayer in PrayerEngine.schedule(for: dateKey).displayTimes {
                 appendTimelineDates(around: prayer.date, into: &entryDates, endDate: endDate)
-                appendTimelineDates(around: prayer.date.addingTimeInterval(TimeInterval(iqamaOffsetMinutes(for: prayer.key) ?? 0) * 60), into: &entryDates, endDate: endDate)
+
+                if let iqamaOffset = iqamaOffsetMinutes(for: prayer.key) {
+                    let iqamaDate = prayer.date.addingTimeInterval(TimeInterval(iqamaOffset * 60))
+                    appendTimelineDates(around: iqamaDate, into: &entryDates, endDate: endDate)
+                }
             }
         }
 
@@ -55,23 +52,26 @@ struct TelShevaWidgetProvider: TimelineProvider {
         }
 
         let entries = uniqueTimelineDates(from: entryDates, now: now, endDate: endDate).map { makeEntry(for: $0) }
-        let refreshDate = (entries.last?.date ?? now).addingTimeInterval(5 * 60)
+        let refreshDate = entries.last?.date ?? endDate
         completion(Timeline(entries: entries, policy: .after(refreshDate)))
     }
 
     private func appendTimelineDates(around date: Date, into dates: inout [Date], endDate: Date) {
-        for offset in stride(from: -3 * 60, through: 12 * 60, by: 60) {
+        for offset in [-60, -5, 0, 5, 30, 60] {
             let candidate = date.addingTimeInterval(TimeInterval(offset))
             if candidate <= endDate {
                 dates.append(candidate)
             }
         }
+    }
 
-        for offset in [-5, 0, 5, 15, 30, 45] {
-            let candidate = date.addingTimeInterval(TimeInterval(offset))
-            if candidate <= endDate {
-                dates.append(candidate)
+    private func appendDayBoundaryDates(for dateKey: String, into dates: inout [Date], endDate: Date) {
+        for time in ["00:00", "06:00", "12:00", "18:00"] {
+            guard let date = PrayerEngine.date(from: dateKey, time: time), date <= endDate else {
+                continue
             }
+
+            dates.append(date)
         }
     }
 
