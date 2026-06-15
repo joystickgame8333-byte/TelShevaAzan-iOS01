@@ -1099,14 +1099,328 @@ private struct SalatiSunriseLockCircleWidget: Widget {
     }
 }
 
+private enum SalatiWidgetDateText {
+    private static let gregorianLongFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "ar")
+        formatter.timeZone = PrayerEngine.timeZone
+        formatter.dateFormat = "EEEE، d MMMM yyyy"
+        return formatter
+    }()
+
+    private static let gregorianShortFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "ar")
+        formatter.timeZone = PrayerEngine.timeZone
+        formatter.dateFormat = "d MMMM"
+        return formatter
+    }()
+
+    private static let weekdayFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "ar")
+        formatter.timeZone = PrayerEngine.timeZone
+        formatter.dateFormat = "EEEE"
+        return formatter
+    }()
+
+    private static let dayFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "ar")
+        formatter.timeZone = PrayerEngine.timeZone
+        formatter.dateFormat = "d"
+        return formatter
+    }()
+
+    private static let hijriFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "ar")
+        formatter.calendar = Calendar(identifier: .islamicUmmAlQura)
+        formatter.timeZone = PrayerEngine.timeZone
+        formatter.dateFormat = "d MMMM yyyy هـ"
+        return formatter
+    }()
+
+    static func gregorianLong(for date: Date) -> String {
+        latinDigits(gregorianLongFormatter.string(from: date))
+    }
+
+    static func gregorianShort(for date: Date) -> String {
+        latinDigits(gregorianShortFormatter.string(from: date))
+    }
+
+    static func weekday(for date: Date) -> String {
+        weekdayFormatter.string(from: date)
+    }
+
+    static func dayNumber(for date: Date) -> String {
+        latinDigits(dayFormatter.string(from: date))
+    }
+
+    static func hijri(for date: Date) -> String {
+        latinDigits(hijriFormatter.string(from: date))
+    }
+
+    private static func latinDigits(_ text: String) -> String {
+        let replacements: [Character: Character] = [
+            "٠": "0", "١": "1", "٢": "2", "٣": "3", "٤": "4",
+            "٥": "5", "٦": "6", "٧": "7", "٨": "8", "٩": "9",
+            "۰": "0", "۱": "1", "۲": "2", "۳": "3", "۴": "4",
+            "۵": "5", "۶": "6", "۷": "7", "۸": "8", "۹": "9"
+        ]
+
+        return String(text.map { replacements[$0] ?? $0 })
+    }
+}
+
+private struct SalatiDateWidgetView: View {
+    @Environment(\.widgetFamily) private var family
+    @Environment(\.colorScheme) private var colorScheme
+    let entry: TelShevaWidgetEntry
+
+    var body: some View {
+        Group {
+            if isLockScreenFamily {
+                lockScreenBody
+            } else {
+                homeBody
+            }
+        }
+        .dynamicTypeSize(.xSmall ... .large)
+        .environment(\.layoutDirection, .rightToLeft)
+    }
+
+    private var isNight: Bool {
+        colorScheme == .dark
+    }
+
+    private var accent: Color {
+        Color(red: 0.16, green: 0.53, blue: 1.0)
+    }
+
+    private var primaryText: Color {
+        isNight ? .white : Color(red: 0.02, green: 0.06, blue: 0.11)
+    }
+
+    private var secondaryText: Color {
+        isNight ? Color.white.opacity(0.72) : Color(red: 0.25, green: 0.33, blue: 0.42)
+    }
+
+    private var isLockScreenFamily: Bool {
+        if #available(iOSApplicationExtension 16.0, *) {
+            return family == .accessoryInline || family == .accessoryCircular || family == .accessoryRectangular
+        }
+
+        return false
+    }
+
+    @ViewBuilder
+    private var lockScreenBody: some View {
+        if #available(iOSApplicationExtension 16.0, *) {
+            switch family {
+            case .accessoryCircular:
+                ZStack {
+                    AccessoryWidgetBackground()
+                    VStack(spacing: 1) {
+                        Text(SalatiWidgetDateText.dayNumber(for: entry.date))
+                            .font(.system(size: 25, weight: .black, design: .rounded).monospacedDigit())
+                            .lineLimit(1)
+
+                        Text(SalatiWidgetDateText.weekday(for: entry.date))
+                            .font(.system(size: 8, weight: .bold, design: .rounded))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.55)
+                    }
+                    .padding(8)
+                }
+            case .accessoryRectangular:
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text(SalatiWidgetDateText.gregorianShort(for: entry.date))
+                        .font(.system(size: 15, weight: .black, design: .rounded))
+                        .lineLimit(1)
+                    Text(SalatiWidgetDateText.hijri(for: entry.date))
+                        .font(.system(size: 12, weight: .bold, design: .rounded))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.66)
+                        .opacity(0.74)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
+            case .accessoryInline:
+                Text("\(SalatiWidgetDateText.weekday(for: entry.date)) · \(SalatiWidgetDateText.hijri(for: entry.date))")
+                    .font(.system(size: 12, weight: .bold, design: .rounded))
+                    .lineLimit(1)
+            default:
+                homeBody
+            }
+        } else {
+            homeBody
+        }
+    }
+
+    private var homeBody: some View {
+        ZStack {
+            background
+                .ignoresSafeArea()
+
+            if family == .systemMedium {
+                mediumHomeBody
+            } else {
+                smallHomeBody
+            }
+        }
+        .widgetContainerBackground {
+            background
+        }
+    }
+
+    private var smallHomeBody: some View {
+        VStack(alignment: .trailing, spacing: 12) {
+            HStack {
+                Circle()
+                    .fill(accent)
+                    .frame(width: 12, height: 12)
+                Spacer()
+                Text("تاريخ اليوم")
+                    .font(.system(size: 15, weight: .black, design: .rounded))
+                    .foregroundStyle(secondaryText)
+            }
+
+            Spacer(minLength: 0)
+
+            VStack(alignment: .trailing, spacing: 3) {
+                Text(SalatiWidgetDateText.weekday(for: entry.date))
+                    .font(.system(size: 17, weight: .black, design: .rounded))
+                    .foregroundStyle(primaryText)
+                    .lineLimit(1)
+
+                Text(SalatiWidgetDateText.dayNumber(for: entry.date))
+                    .font(.system(size: 58, weight: .black, design: .rounded).monospacedDigit())
+                    .foregroundStyle(accent)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+            }
+            .frame(maxWidth: .infinity, alignment: .trailing)
+
+            dateCapsule(text: SalatiWidgetDateText.hijri(for: entry.date))
+        }
+        .padding(18)
+    }
+
+    private var mediumHomeBody: some View {
+        HStack(spacing: 16) {
+            VStack(spacing: 2) {
+                Text(SalatiWidgetDateText.dayNumber(for: entry.date))
+                    .font(.system(size: 64, weight: .black, design: .rounded).monospacedDigit())
+                    .foregroundStyle(accent)
+                    .lineLimit(1)
+
+                Text(SalatiWidgetDateText.weekday(for: entry.date))
+                    .font(.system(size: 16, weight: .black, design: .rounded))
+                    .foregroundStyle(primaryText)
+                    .lineLimit(1)
+            }
+            .frame(width: 104)
+            .padding(.vertical, 8)
+            .background(
+                RoundedRectangle(cornerRadius: 28, style: .continuous)
+                    .fill(isNight ? Color.white.opacity(0.06) : Color.white.opacity(0.48))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 28, style: .continuous)
+                            .stroke(Color.white.opacity(isNight ? 0.10 : 0.75), lineWidth: 1.2)
+                    )
+            )
+
+            VStack(alignment: .trailing, spacing: 11) {
+                HStack {
+                    Circle()
+                        .fill(accent)
+                        .frame(width: 10, height: 10)
+                    Spacer()
+                    Text("تاريخ اليوم")
+                        .font(.system(size: 15, weight: .black, design: .rounded))
+                        .foregroundStyle(secondaryText)
+                }
+
+                Spacer(minLength: 0)
+
+                Text(SalatiWidgetDateText.gregorianLong(for: entry.date))
+                    .font(.system(size: 20, weight: .black, design: .rounded))
+                    .foregroundStyle(primaryText)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.62)
+
+                dateCapsule(text: SalatiWidgetDateText.hijri(for: entry.date))
+            }
+            .frame(maxWidth: .infinity, alignment: .trailing)
+        }
+        .padding(18)
+    }
+
+    private func dateCapsule(text: String) -> some View {
+        Text(text)
+            .font(.system(size: 13, weight: .black, design: .rounded))
+            .foregroundStyle(secondaryText)
+            .lineLimit(1)
+            .minimumScaleFactor(0.65)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 7)
+            .frame(maxWidth: .infinity, alignment: .trailing)
+            .background(
+                Capsule()
+                    .fill(isNight ? Color.white.opacity(0.075) : Color.white.opacity(0.54))
+                    .overlay(Capsule().stroke(Color.white.opacity(isNight ? 0.10 : 0.82), lineWidth: 1))
+            )
+    }
+
+    private var background: some View {
+        ZStack {
+            LinearGradient(
+                colors: isNight
+                    ? [
+                        Color(red: 0.01, green: 0.04, blue: 0.07),
+                        Color(red: 0.02, green: 0.12, blue: 0.21),
+                        Color.black
+                    ]
+                    : [
+                        Color(red: 0.91, green: 0.97, blue: 1.0),
+                        Color(red: 0.76, green: 0.88, blue: 0.95),
+                        Color(red: 0.98, green: 0.99, blue: 1.0)
+                    ],
+                startPoint: .topTrailing,
+                endPoint: .bottomLeading
+            )
+
+            RadialGradient(
+                colors: [accent.opacity(isNight ? 0.22 : 0.18), .clear],
+                center: .topLeading,
+                startRadius: 0,
+                endRadius: 190
+            )
+        }
+    }
+}
+
+private struct SalatiDateWidget: Widget {
+    let kind = "com.omaralasam.telshevaazan.date.today.v1"
+
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: kind, provider: TelShevaWidgetProvider()) { entry in
+            SalatiDateWidgetView(entry: entry)
+        }
+        .configurationDisplayName("تاريخ اليوم")
+        .description("يعرض التاريخ الميلادي والهجري بتصميم صلاتي.")
+        .supportedFamilies([.systemSmall, .systemMedium, .accessoryInline, .accessoryCircular, .accessoryRectangular])
+    }
+}
+
 @main
 struct TelShevaAzanWidgetBundle: WidgetBundle {
     var body: some Widget {
 #if WIDGET_V3
         TelShevaAzanWidget()
-        TelShevaAzanLegacyWidget()
         TelShevaAzanScheduleWidget()
         TelShevaAzanCountdownWidget()
+        SalatiDateWidget()
         if #available(iOSApplicationExtension 16.0, *) {
             SalatiPrayerTimeLockCircleWidget()
             SalatiIqamaMinutesLockCircleWidget()
@@ -1121,6 +1435,7 @@ struct TelShevaAzanWidgetBundle: WidgetBundle {
         TelShevaAzanWidget()
         TelShevaAzanScheduleWidget()
         TelShevaAzanCountdownWidget()
+        SalatiDateWidget()
         if #available(iOSApplicationExtension 16.0, *) {
             SalatiPrayerTimeLockCircleWidget()
             SalatiIqamaMinutesLockCircleWidget()
