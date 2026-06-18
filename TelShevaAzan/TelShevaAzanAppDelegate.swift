@@ -6,6 +6,9 @@ final class TelShevaAzanAppDelegate: NSObject, UIApplicationDelegate {
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
     ) -> Bool {
         application.setMinimumBackgroundFetchInterval(UIApplication.backgroundFetchIntervalMinimum)
+        Task { @MainActor in
+            await PrayerLiveActivityCenter.shared.syncImmediately(now: Date())
+        }
         return true
     }
 

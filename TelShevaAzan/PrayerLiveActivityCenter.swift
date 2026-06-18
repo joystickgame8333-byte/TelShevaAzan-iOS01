@@ -15,9 +15,9 @@ final class PrayerLiveActivityCenter: ObservableObject {
     @Published private(set) var debugText = ""
 
     private let previewDuration: TimeInterval = 30
-    private let autoLeadTime: TimeInterval = 8 * 60 * 60
-    private let postPrayerDisplayDuration: TimeInterval = 20 * 60
-    private let nowDisplayDuration: TimeInterval = 20 * 60
+    private let autoLeadTime: TimeInterval = 5 * 60
+    private let postPrayerDisplayDuration: TimeInterval = 3 * 60
+    private let nowDisplayDuration: TimeInterval = 90
     private let expiredCleanupGrace: TimeInterval = 0
     private var lastSyncDate = Date.distantPast
     private var lastCleanupDate = Date.distantPast
@@ -83,7 +83,7 @@ final class PrayerLiveActivityCenter: ObservableObject {
     func syncWithPrayerWindow(now: Date = Date(), themeID: String? = nil) {
 #if canImport(ActivityKit)
         guard #available(iOS 16.1, *) else { return }
-        guard now.timeIntervalSince(lastSyncDate) >= 2 else { return }
+        guard now.timeIntervalSince(lastSyncDate) >= 20 else { return }
         lastSyncDate = now
         cleanupExpiredLiveActivities(now: now)
 
@@ -143,8 +143,8 @@ final class PrayerLiveActivityCenter: ObservableObject {
         guard isWidgetExtensionBundled else {
             isPreviewActive = false
             statusText = "الجزيرة غير مدمجة في هذا البناء"
-            detailText = "هذا يحدث إذا تم فتح مشروع قديم أو تثبيت IPA لا يحتوي على TelShevaAzanWidgetExtensionV3. ابنِ النسخة من GitHub Actions بعد توليد المشروع من project.yml."
-            debugText = "Missing PlugIns/TelShevaAzanWidgetExtensionV3.appex"
+            detailText = "هذا يحدث إذا تم فتح مشروع قديم أو تثبيت IPA لا يحتوي على TelShevaAzanWidgetExtension. ابنِ النسخة من GitHub Actions بعد توليد المشروع من project.yml."
+            debugText = "Missing PlugIns/TelShevaAzanWidgetExtension.appex"
             return
         }
 
@@ -198,8 +198,8 @@ final class PrayerLiveActivityCenter: ObservableObject {
         }
         guard isWidgetExtensionBundled else {
             statusText = "الجزيرة غير مدمجة في هذا البناء"
-            detailText = "ثبت نسخة تحتوي على TelShevaAzanWidgetExtensionV3 حتى تعمل الجزيرة وشاشة القفل."
-            debugText = "Missing PlugIns/TelShevaAzanWidgetExtensionV3.appex"
+            detailText = "ثبت نسخة تحتوي على TelShevaAzanWidgetExtension حتى تعمل الجزيرة وشاشة القفل."
+            debugText = "Missing PlugIns/TelShevaAzanWidgetExtension.appex"
             return
         }
         await cleanupExpiredLiveActivities(now: now, includeStalePreviews: true)
@@ -237,10 +237,14 @@ final class PrayerLiveActivityCenter: ObservableObject {
         }
 
         if secondsUntilPrayer > autoLeadTime {
+            await endActivities(where: { !$0.attributes.isPreview })
+            PrayerLiveActivityKeepAlive.shared.stop()
             return
         }
 
         if secondsUntilPrayer <= -postPrayerDisplayDuration {
+            await endActivities(where: { !$0.attributes.isPreview })
+            PrayerLiveActivityKeepAlive.shared.stop()
             return
         }
 
@@ -469,7 +473,7 @@ final class PrayerLiveActivityCenter: ObservableObject {
 
     private var isWidgetExtensionBundled: Bool {
         guard let plugInsURL = Bundle.main.builtInPlugInsURL else { return false }
-        let extensionURL = plugInsURL.appendingPathComponent("TelShevaAzanWidgetExtensionV3.appex")
+        let extensionURL = plugInsURL.appendingPathComponent("TelShevaAzanWidgetExtension.appex")
         return FileManager.default.fileExists(atPath: extensionURL.path)
     }
 
