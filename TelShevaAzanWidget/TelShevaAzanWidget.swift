@@ -1599,17 +1599,6 @@ struct TelShevaAzanWidgetBundle: WidgetBundle {
 #if WIDGET_V3
         if #available(iOSApplicationExtension 17.0, *) {
             SalatiConfigurableWidget()
-        } else {
-            TelShevaAzanWidget()
-            TelShevaAzanScheduleWidget()
-            TelShevaAzanCountdownWidget()
-            if #available(iOSApplicationExtension 16.0, *) {
-                SalatiPrayerTimeLockCircleWidget()
-                SalatiIqamaMinutesLockCircleWidget()
-                SalatiIqamaTimeLockCircleWidget()
-                SalatiNextCountdownLockCircleWidget()
-                SalatiSunriseLockCircleWidget()
-            }
         }
         if #available(iOSApplicationExtension 16.1, *) {
             PrayerLiveActivityWidget()
