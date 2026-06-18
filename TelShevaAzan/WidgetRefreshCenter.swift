@@ -9,6 +9,7 @@ enum WidgetRefreshCenter {
         "com.omaralasam.telshevaazan.nextPrayer.v2",
         "com.omaralasam.telshevaazan.nextPrayer.v3",
         "com.omaralasam.telshevaazan.nextPrayer.clean.v4",
+        "com.omaralasam.telshevaazan.configurable.v1",
         "com.omaralasam.telshevaazan.dailySchedule.v1",
         "com.omaralasam.telshevaazan.countdown.v1",
         "com.omaralasam.telshevaazan.date.today.v1",

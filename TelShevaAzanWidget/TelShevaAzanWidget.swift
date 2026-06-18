@@ -2,6 +2,9 @@
 #if canImport(ActivityKit)
 import ActivityKit
 #endif
+#if canImport(AppIntents)
+import AppIntents
+#endif
 import SwiftUI
 import WidgetKit
 
@@ -26,13 +29,7 @@ struct TelShevaWidgetProvider: TimelineProvider {
         let now = Date()
         let firstEntry = makeEntry(for: now)
         let minuteStart = PrayerEngine.calendar.dateInterval(of: .minute, for: now)?.start ?? now
-        let nextPrayerDate = firstEntry.nextPrayer?.date ?? now.addingTimeInterval(60 * 60)
-        let nextIqamaDate = firstEntry.nextPrayer.flatMap { prayer -> Date? in
-            guard let offset = iqamaOffsetMinutes(for: prayer.key) else { return nil }
-            return prayer.date.addingTimeInterval(TimeInterval(offset * 60))
-        }
-        let nextEventDate = [nextPrayerDate, nextIqamaDate].compactMap { $0 }.filter { $0 > now }.min() ?? nextPrayerDate
-        let endDate = min(nextEventDate.addingTimeInterval(90), now.addingTimeInterval(3 * 60 * 60))
+        let endDate = now.addingTimeInterval(26 * 60 * 60)
 
         var entries: [TelShevaWidgetEntry] = [firstEntry]
         var cursor = PrayerEngine.calendar.date(byAdding: .minute, value: 1, to: minuteStart) ?? now.addingTimeInterval(60)
@@ -1413,6 +1410,189 @@ private struct SalatiDateWidget: Widget {
     }
 }
 
+#if canImport(AppIntents)
+@available(iOSApplicationExtension 17.0, *)
+enum SalatiConfigurableWidgetVariant: String, AppEnum {
+    case nextPrayer
+    case schedule
+    case countdown
+    case date
+    case iqama
+    case sunrise
+
+    static var typeDisplayName: LocalizedStringResource { "نوع الودجت" }
+    static let typeDisplayRepresentation: TypeDisplayRepresentation = "نوع الودجت"
+
+    static var caseDisplayRepresentations: [Self: DisplayRepresentation] {
+        [
+            .nextPrayer: DisplayRepresentation(title: "الصلاة القادمة"),
+            .schedule: DisplayRepresentation(title: "جدول الصلاة"),
+            .countdown: DisplayRepresentation(title: "عداد الصلاة"),
+            .date: DisplayRepresentation(title: "تاريخ اليوم"),
+            .iqama: DisplayRepresentation(title: "الإقامة"),
+            .sunrise: DisplayRepresentation(title: "الشروق")
+        ]
+    }
+}
+
+@available(iOSApplicationExtension 17.0, *)
+struct SalatiWidgetConfigurationIntent: WidgetConfigurationIntent {
+    static let title: LocalizedStringResource = "تخصيص ويدجت صلاتي"
+    static let description = IntentDescription("اختر نوع ويدجت صلاتي المناسب للشاشة الرئيسية أو شاشة القفل.")
+
+    @Parameter(title: "العرض")
+    var variant: SalatiConfigurableWidgetVariant
+
+    init() {
+        self.variant = .nextPrayer
+    }
+
+    init(variant: SalatiConfigurableWidgetVariant) {
+        self.variant = variant
+    }
+}
+
+@available(iOSApplicationExtension 17.0, *)
+private struct SalatiConfiguredWidgetEntry: TimelineEntry {
+    let date: Date
+    let base: TelShevaWidgetEntry
+    let variant: SalatiConfigurableWidgetVariant
+}
+
+@available(iOSApplicationExtension 17.0, *)
+private struct SalatiAppIntentWidgetProvider: AppIntentTimelineProvider {
+    func placeholder(in context: Context) -> SalatiConfiguredWidgetEntry {
+        makeEntry(for: Date(), variant: .nextPrayer)
+    }
+
+    func snapshot(for configuration: SalatiWidgetConfigurationIntent, in context: Context) async -> SalatiConfiguredWidgetEntry {
+        makeEntry(for: Date(), variant: configuration.variant)
+    }
+
+    func timeline(for configuration: SalatiWidgetConfigurationIntent, in context: Context) async -> Timeline<SalatiConfiguredWidgetEntry> {
+        let now = Date()
+        let firstEntry = makeEntry(for: now, variant: configuration.variant)
+        let minuteStart = PrayerEngine.calendar.dateInterval(of: .minute, for: now)?.start ?? now
+        let endDate = now.addingTimeInterval(26 * 60 * 60)
+
+        var entries: [SalatiConfiguredWidgetEntry] = [firstEntry]
+        var cursor = PrayerEngine.calendar.date(byAdding: .minute, value: 1, to: minuteStart) ?? now.addingTimeInterval(60)
+        while cursor <= endDate {
+            entries.append(makeEntry(for: cursor, variant: configuration.variant))
+            cursor = PrayerEngine.calendar.date(byAdding: .minute, value: 1, to: cursor) ?? cursor.addingTimeInterval(60)
+        }
+
+        let refreshDate = entries.last?.date.addingTimeInterval(60) ?? now.addingTimeInterval(60)
+        return Timeline(entries: entries, policy: .after(refreshDate))
+    }
+
+    private func makeEntry(for date: Date, variant: SalatiConfigurableWidgetVariant) -> SalatiConfiguredWidgetEntry {
+        let dateKey = PrayerEngine.defaultDateKey(for: date)
+        let schedule = PrayerEngine.schedule(for: dateKey)
+
+        let base = TelShevaWidgetEntry(
+            date: date,
+            dateKey: dateKey,
+            nextPrayer: PrayerEngine.nextPrayer(for: dateKey, now: date),
+            previousPrayer: PrayerEngine.previousPrayer(for: dateKey, now: date),
+            times: schedule.displayTimes
+        )
+
+        return SalatiConfiguredWidgetEntry(date: date, base: base, variant: variant)
+    }
+}
+
+@available(iOSApplicationExtension 17.0, *)
+private struct SalatiConfigurableWidgetView: View {
+    @Environment(\.widgetFamily) private var family
+    let entry: SalatiConfiguredWidgetEntry
+
+    var body: some View {
+        if isLockScreenFamily {
+            lockScreenBody
+        } else {
+            homeBody
+        }
+    }
+
+    private var isLockScreenFamily: Bool {
+        family == .accessoryInline || family == .accessoryCircular || family == .accessoryRectangular
+    }
+
+    @ViewBuilder
+    private var homeBody: some View {
+        switch entry.variant {
+        case .schedule:
+            TelShevaAzanWidgetView(entry: entry.base, presentation: .schedule)
+                .environment(\.layoutDirection, .rightToLeft)
+        case .countdown:
+            TelShevaAzanWidgetView(entry: entry.base, presentation: .countdown)
+                .environment(\.layoutDirection, .rightToLeft)
+        case .date:
+            SalatiDateWidgetView(entry: entry.base)
+        case .iqama:
+            TelShevaAzanWidgetView(entry: entry.base, presentation: .countdown)
+                .environment(\.layoutDirection, .rightToLeft)
+        case .sunrise:
+            SalatiDateWidgetView(entry: entry.base)
+        case .nextPrayer:
+            TelShevaAzanWidgetView(entry: entry.base)
+                .environment(\.layoutDirection, .rightToLeft)
+        }
+    }
+
+    @ViewBuilder
+    private var lockScreenBody: some View {
+        switch entry.variant {
+        case .date:
+            SalatiDateWidgetView(entry: entry.base)
+        case .iqama:
+            if family == .accessoryCircular {
+                SalatiLockCircleWidgetView(entry: entry.base, kind: .iqamaTime)
+            } else {
+                TelShevaAzanWidgetView(entry: entry.base)
+                    .environment(\.layoutDirection, .rightToLeft)
+            }
+        case .sunrise:
+            if family == .accessoryCircular {
+                SalatiLockCircleWidgetView(entry: entry.base, kind: .sunriseTime)
+            } else {
+                TelShevaAzanWidgetView(entry: entry.base)
+                    .environment(\.layoutDirection, .rightToLeft)
+            }
+        case .countdown:
+            if family == .accessoryCircular {
+                SalatiLockCircleWidgetView(entry: entry.base, kind: .nextCountdown)
+            } else {
+                TelShevaAzanWidgetView(entry: entry.base)
+                    .environment(\.layoutDirection, .rightToLeft)
+            }
+        case .schedule, .nextPrayer:
+            if family == .accessoryCircular {
+                SalatiLockCircleWidgetView(entry: entry.base, kind: .prayerTime)
+            } else {
+                TelShevaAzanWidgetView(entry: entry.base)
+                    .environment(\.layoutDirection, .rightToLeft)
+            }
+        }
+    }
+}
+
+@available(iOSApplicationExtension 17.0, *)
+struct SalatiConfigurableWidget: Widget {
+    let kind = "com.omaralasam.telshevaazan.configurable.v1"
+
+    var body: some WidgetConfiguration {
+        AppIntentConfiguration(kind: kind, intent: SalatiWidgetConfigurationIntent.self, provider: SalatiAppIntentWidgetProvider()) { entry in
+            SalatiConfigurableWidgetView(entry: entry)
+        }
+        .configurationDisplayName("صلاتي")
+        .description("ويدجت صلاتي القابل للتخصيص للشاشة الرئيسية وشاشة القفل.")
+        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge, .accessoryInline, .accessoryCircular, .accessoryRectangular])
+    }
+}
+#endif
+
 @main
 struct TelShevaAzanWidgetBundle: WidgetBundle {
     var body: some Widget {
@@ -1420,13 +1600,15 @@ struct TelShevaAzanWidgetBundle: WidgetBundle {
         TelShevaAzanWidget()
         TelShevaAzanScheduleWidget()
         TelShevaAzanCountdownWidget()
-        SalatiDateWidget()
         if #available(iOSApplicationExtension 16.0, *) {
             SalatiPrayerTimeLockCircleWidget()
             SalatiIqamaMinutesLockCircleWidget()
             SalatiIqamaTimeLockCircleWidget()
             SalatiNextCountdownLockCircleWidget()
             SalatiSunriseLockCircleWidget()
+        }
+        if #available(iOSApplicationExtension 17.0, *) {
+            SalatiConfigurableWidget()
         }
         if #available(iOSApplicationExtension 16.1, *) {
             PrayerLiveActivityWidget()
@@ -2250,7 +2432,7 @@ private func salatiCompactTitle(for context: ActivityViewContext<PrayerLiveActiv
 @available(iOSApplicationExtension 16.1, *)
 private func salatiShouldShowIslandContent(for context: ActivityViewContext<PrayerLiveActivityAttributes>) -> Bool {
     let secondsUntilPrayer = context.attributes.prayerDate.timeIntervalSinceNow
-    return secondsUntilPrayer > -45 && secondsUntilPrayer <= 5 * 60
+    return secondsUntilPrayer > -(3 * 60) && secondsUntilPrayer <= 5 * 60
 }
 
 @available(iOSApplicationExtension 16.1, *)
