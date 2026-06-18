@@ -318,8 +318,7 @@ jobs:
           grep -q 'Payload/TelShevaAzan.app/nabawi-day.jpg' ipa-contents.txt
           grep -q 'Payload/TelShevaAzan.app/nabawi-night.jpg' ipa-contents.txt
           grep -q 'Payload/TelShevaAzan.app/PlugIns/.*\.appex/' ipa-contents.txt
-          grep -q 'Payload/TelShevaAzan.app/PlugIns/TelShevaAzanWidgetExtension.appex/TelShevaAzanWidgetExtension' ipa-contents.txt
-          grep -q 'Payload/TelShevaAzan.app/PlugIns/TelShevaAzanWidgetExtension.appex/Metadata.appintents/extract.actionsdata' ipa-contents.txt
+          grep -q 'Payload/TelShevaAzan.app/PlugIns/SalatiWidgetsExtension.appex/SalatiWidgetsExtension' ipa-contents.txt
           grep -q 'Payload/TelShevaAzan.app/Watch/TelShevaAzanWatch.app/' ipa-contents.txt
           grep -q 'Payload/TelShevaAzan.app/Watch/TelShevaAzanWatch.app/PlugIns/.*\.appex/' ipa-contents.txt
 

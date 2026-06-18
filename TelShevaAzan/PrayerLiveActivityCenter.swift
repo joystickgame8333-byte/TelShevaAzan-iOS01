@@ -144,7 +144,7 @@ final class PrayerLiveActivityCenter: ObservableObject {
             isPreviewActive = false
             statusText = "الجزيرة غير مدمجة في هذا البناء"
             detailText = "هذا يحدث إذا تم فتح مشروع قديم أو تثبيت IPA لا يحتوي على TelShevaAzanWidgetExtension. ابنِ النسخة من GitHub Actions بعد توليد المشروع من project.yml."
-            debugText = "Missing PlugIns/TelShevaAzanWidgetExtension.appex"
+            debugText = "Missing PlugIns/SalatiWidgetsExtension.appex"
             return
         }
 
@@ -199,7 +199,7 @@ final class PrayerLiveActivityCenter: ObservableObject {
         guard isWidgetExtensionBundled else {
             statusText = "الجزيرة غير مدمجة في هذا البناء"
             detailText = "ثبت نسخة تحتوي على TelShevaAzanWidgetExtension حتى تعمل الجزيرة وشاشة القفل."
-            debugText = "Missing PlugIns/TelShevaAzanWidgetExtension.appex"
+            debugText = "Missing PlugIns/SalatiWidgetsExtension.appex"
             return
         }
         await cleanupExpiredLiveActivities(now: now, includeStalePreviews: true)
@@ -473,8 +473,13 @@ final class PrayerLiveActivityCenter: ObservableObject {
 
     private var isWidgetExtensionBundled: Bool {
         guard let plugInsURL = Bundle.main.builtInPlugInsURL else { return false }
-        let extensionURL = plugInsURL.appendingPathComponent("TelShevaAzanWidgetExtension.appex")
-        return FileManager.default.fileExists(atPath: extensionURL.path)
+        let expectedExtensions = [
+            "SalatiWidgetsExtension.appex",
+            "TelShevaAzanWidgetExtension.appex"
+        ]
+        return expectedExtensions.contains { name in
+            FileManager.default.fileExists(atPath: plugInsURL.appendingPathComponent(name).path)
+        }
     }
 
     private static func timeText(for date: Date) -> String {
