@@ -14,32 +14,109 @@ struct TelShevaWidgetEntry: TimelineEntry {
 }
 
 struct TelShevaWidgetProvider: TimelineProvider {
+    private static let timelineHorizon: TimeInterval = 30 * 60 * 60
+
     func placeholder(in context: Context) -> TelShevaWidgetEntry {
-        makeEntry(for: Date())
+        Self.makeEntry(for: Date())
     }
 
     func getSnapshot(in context: Context, completion: @escaping (TelShevaWidgetEntry) -> Void) {
-        completion(makeEntry(for: Date()))
+        completion(Self.makeEntry(for: Date()))
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<TelShevaWidgetEntry>) -> Void) {
         let now = Date()
-        let firstEntry = makeEntry(for: now)
-        let minuteStart = PrayerEngine.calendar.dateInterval(of: .minute, for: now)?.start ?? now
-        let endDate = now.addingTimeInterval(26 * 60 * 60)
-
-        var entries: [TelShevaWidgetEntry] = [firstEntry]
-        var cursor = PrayerEngine.calendar.date(byAdding: .minute, value: 1, to: minuteStart) ?? now.addingTimeInterval(60)
-        while cursor <= endDate {
-            entries.append(makeEntry(for: cursor))
-            cursor = PrayerEngine.calendar.date(byAdding: .minute, value: 1, to: cursor) ?? cursor.addingTimeInterval(60)
-        }
-
-        let refreshDate = entries.last?.date.addingTimeInterval(60) ?? now.addingTimeInterval(60)
+        let dates = Self.timelineDates(startingAt: now)
+        let entries = dates.map { Self.makeEntry(for: $0) }
+        let refreshDate = dates.last?.addingTimeInterval(5 * 60) ?? now.addingTimeInterval(30 * 60)
         completion(Timeline(entries: entries, policy: .after(refreshDate)))
     }
 
-    private func iqamaOffsetMinutes(for key: PrayerKey) -> Int? {
+    static func displayEntry(from entry: TelShevaWidgetEntry, now: Date = Date()) -> TelShevaWidgetEntry {
+        guard let nextPrayer = entry.nextPrayer else {
+            return makeEntry(for: now)
+        }
+
+        if nextPrayer.date <= now || abs(entry.date.timeIntervalSince(now)) > timelineHorizon {
+            return makeEntry(for: now)
+        }
+
+        return entry
+    }
+
+    static func makeEntry(for date: Date) -> TelShevaWidgetEntry {
+        let dateKey = PrayerEngine.defaultDateKey(for: date)
+        let schedule = PrayerEngine.schedule(for: dateKey)
+
+        return TelShevaWidgetEntry(
+            date: date,
+            dateKey: dateKey,
+            nextPrayer: PrayerEngine.nextPrayer(for: dateKey, now: date),
+            previousPrayer: PrayerEngine.previousPrayer(for: dateKey, now: date),
+            times: schedule.displayTimes
+        )
+    }
+
+    private static func timelineDates(startingAt now: Date) -> [Date] {
+        let start = PrayerEngine.calendar.dateInterval(of: .minute, for: now)?.start ?? now
+        let end = now.addingTimeInterval(timelineHorizon)
+        var dates: [Date] = [now]
+
+        var cursor = PrayerEngine.calendar.date(byAdding: .minute, value: 1, to: start) ?? now.addingTimeInterval(60)
+        var minuteIndex = 1
+        while cursor <= end {
+            if minuteIndex <= 180 || minuteIndex % 5 == 0 {
+                dates.append(cursor)
+            }
+
+            cursor = PrayerEngine.calendar.date(byAdding: .minute, value: 1, to: cursor) ?? cursor.addingTimeInterval(60)
+            minuteIndex += 1
+        }
+
+        for offset in 0...2 {
+            guard let day = PrayerEngine.calendar.date(byAdding: .day, value: offset, to: start) else { continue }
+            let dateKey = PrayerEngine.defaultDateKey(for: day)
+            for prayer in PrayerEngine.schedule(for: dateKey).displayTimes {
+                appendTransitionDates(around: prayer.date, start: now, end: end, to: &dates)
+                if let iqama = iqamaDate(for: prayer) {
+                    appendTransitionDates(around: iqama, start: now, end: end, to: &dates)
+                }
+            }
+        }
+
+        if let midnight = PrayerEngine.calendar.nextDate(
+            after: now,
+            matching: DateComponents(hour: 0, minute: 0, second: 1),
+            matchingPolicy: .nextTime
+        ) {
+            appendIfInRange(midnight, start: now, end: end, to: &dates)
+        }
+
+        return Array(Set(dates.map { roundedToSecond($0) })).sorted()
+    }
+
+    private static func appendTransitionDates(around date: Date, start: Date, end: Date, to dates: inout [Date]) {
+        appendIfInRange(date.addingTimeInterval(-1), start: start, end: end, to: &dates)
+        appendIfInRange(date, start: start, end: end, to: &dates)
+        appendIfInRange(date.addingTimeInterval(1), start: start, end: end, to: &dates)
+        appendIfInRange(date.addingTimeInterval(60), start: start, end: end, to: &dates)
+    }
+
+    private static func appendIfInRange(_ date: Date, start: Date, end: Date, to dates: inout [Date]) {
+        guard date >= start && date <= end else { return }
+        dates.append(date)
+    }
+
+    private static func roundedToSecond(_ date: Date) -> Date {
+        Date(timeIntervalSince1970: date.timeIntervalSince1970.rounded())
+    }
+
+    private static func iqamaDate(for prayer: PrayerTime) -> Date? {
+        guard let minutes = iqamaOffsetMinutes(for: prayer.key) else { return nil }
+        return prayer.date.addingTimeInterval(TimeInterval(minutes * 60))
+    }
+
+    private static func iqamaOffsetMinutes(for key: PrayerKey) -> Int? {
         switch key {
         case .fajr:
             return 25
@@ -55,19 +132,6 @@ struct TelShevaWidgetProvider: TimelineProvider {
             return nil
         }
     }
-
-    private func makeEntry(for date: Date) -> TelShevaWidgetEntry {
-        let dateKey = PrayerEngine.defaultDateKey(for: date)
-        let schedule = PrayerEngine.schedule(for: dateKey)
-
-        return TelShevaWidgetEntry(
-            date: date,
-            dateKey: dateKey,
-            nextPrayer: PrayerEngine.nextPrayer(for: dateKey, now: date),
-            previousPrayer: PrayerEngine.previousPrayer(for: dateKey, now: date),
-            times: schedule.displayTimes
-        )
-    }
 }
 
 struct TelShevaAzanWidgetView: View {
@@ -75,6 +139,14 @@ struct TelShevaAzanWidgetView: View {
     @Environment(\.colorScheme) private var colorScheme
     let entry: TelShevaWidgetEntry
     var presentation: TelShevaWidgetPresentation = .nextPrayer
+
+    private var displayEntry: TelShevaWidgetEntry {
+        TelShevaWidgetProvider.displayEntry(from: entry)
+    }
+
+    private var renderDate: Date {
+        max(Date(), displayEntry.date)
+    }
 
     var body: some View {
         Group {
@@ -206,12 +278,12 @@ struct TelShevaAzanWidgetView: View {
     }
 
     private var nextAzanTitle: String {
-        entry.nextPrayer?.key == .sunrise ? nextTitle : "أذان \(nextTitle)"
+        displayEntry.nextPrayer?.key == .sunrise ? nextTitle : "أذان \(nextTitle)"
     }
 
     private var remainingMinutes: Int {
-        guard let nextDate = entry.nextPrayer?.date else { return 0 }
-        let seconds = max(Int(nextDate.timeIntervalSince(entry.date)), 0)
+        guard let nextDate = displayEntry.nextPrayer?.date else { return 0 }
+        let seconds = max(Int(nextDate.timeIntervalSince(renderDate)), 0)
         return max((seconds + 59) / 60, 1)
     }
 
@@ -221,16 +293,22 @@ struct TelShevaAzanWidgetView: View {
     }
 
     private var remainingTimerText: Text {
-        guard let nextDate = entry.nextPrayer?.date else {
+        guard let nextDate = displayEntry.nextPrayer?.date else {
             return Text("--:--")
         }
 
-        return Text(timerInterval: Date()...nextDate, countsDown: true)
+        let now = Date()
+        guard nextDate > now else {
+            return Text("0:00")
+                .fontWeight(.black)
+        }
+
+        return Text(timerInterval: now...nextDate, countsDown: true)
             .fontWeight(.black)
     }
 
     private var nextIqamaTime: String? {
-        guard let prayer = entry.nextPrayer,
+        guard let prayer = displayEntry.nextPrayer,
               let minutes = iqamaOffsetMinutes(for: prayer.key) else {
             return nil
         }
@@ -239,7 +317,7 @@ struct TelShevaAzanWidgetView: View {
     }
 
     private var nextIqamaMinutesLabel: String? {
-        guard let prayer = entry.nextPrayer,
+        guard let prayer = displayEntry.nextPrayer,
               let minutes = iqamaOffsetMinutes(for: prayer.key) else {
             return nil
         }
@@ -256,23 +334,23 @@ struct TelShevaAzanWidgetView: View {
     }
 
     private var nextTitle: String {
-        entry.nextPrayer?.title ?? "الصلاة"
+        displayEntry.nextPrayer?.title ?? "الصلاة"
     }
 
     private var nextTime: String {
-        entry.nextPrayer?.time ?? "--:--"
+        displayEntry.nextPrayer?.time ?? "--:--"
     }
 
     private var compactRemainingText: String {
-        guard let nextDate = entry.nextPrayer?.date else { return "باقي على الصلاة --:--" }
-        let seconds = max(Int(nextDate.timeIntervalSince(entry.date)), 0)
+        guard let nextDate = displayEntry.nextPrayer?.date else { return "باقي على الصلاة --:--" }
+        let seconds = max(Int(nextDate.timeIntervalSince(renderDate)), 0)
         let minutes = (seconds + 59) / 60
         return "باقي على الصلاة \(hourMinuteText(fromMinutes: minutes))"
     }
 
     private var compactElapsedText: String {
-        guard let previous = entry.previousPrayer else { return "مضى --:--" }
-        let seconds = max(Int(entry.date.timeIntervalSince(previous.date)), 0)
+        guard let previous = displayEntry.previousPrayer else { return "مضى --:--" }
+        let seconds = max(Int(renderDate.timeIntervalSince(previous.date)), 0)
         let minutes = seconds / 60
         return "مضى على \(previous.title) \(hourMinuteText(fromMinutes: minutes))"
     }
@@ -451,7 +529,7 @@ struct TelShevaAzanWidgetView: View {
             }
 
             VStack(spacing: 6) {
-                ForEach(Array(entry.times.prefix(6))) { item in
+                ForEach(Array(displayEntry.times.prefix(6))) { item in
                     schedulePrayerRow(item, height: 26)
                 }
             }
@@ -593,8 +671,8 @@ struct TelShevaAzanWidgetView: View {
     }
 
     private var upcomingPrayerRows: [PrayerTime] {
-        let upcoming = entry.times.filter { $0.date >= entry.date }
-        return upcoming.isEmpty ? Array(entry.times.prefix(3)) : Array(upcoming.prefix(3))
+        let upcoming = displayEntry.times.filter { $0.date >= renderDate }
+        return upcoming.isEmpty ? Array(displayEntry.times.prefix(3)) : Array(upcoming.prefix(3))
     }
 
     private func clockText(for date: Date) -> String {
@@ -620,17 +698,17 @@ struct TelShevaAzanWidgetView: View {
     }
 
     private var compactRemainingValue: String {
-        guard let nextDate = entry.nextPrayer?.date else { return "--" }
-        let seconds = max(Int(nextDate.timeIntervalSince(entry.date)), 0)
+        guard let nextDate = displayEntry.nextPrayer?.date else { return "--" }
+        let seconds = max(Int(nextDate.timeIntervalSince(renderDate)), 0)
         let minutes = max((seconds + 59) / 60, 1)
 
         return hourMinuteText(fromMinutes: minutes)
     }
 
     private var prayerProgress: CGFloat {
-        guard let previous = entry.previousPrayer, let next = entry.nextPrayer else { return 0 }
+        guard let previous = displayEntry.previousPrayer, let next = displayEntry.nextPrayer else { return 0 }
         let total = max(next.date.timeIntervalSince(previous.date), 1)
-        let elapsed = min(max(entry.date.timeIntervalSince(previous.date), 0), total)
+        let elapsed = min(max(renderDate.timeIntervalSince(previous.date), 0), total)
 
         return CGFloat(elapsed / total)
     }
@@ -655,7 +733,7 @@ struct TelShevaAzanWidgetView: View {
     }
 
     private func mediumPrayerRow(_ item: PrayerTime) -> some View {
-        let isActive = item.key == entry.nextPrayer?.key
+        let isActive = item.key == displayEntry.nextPrayer?.key
 
         return HStack(spacing: 6) {
             Text(item.title)
@@ -678,7 +756,7 @@ struct TelShevaAzanWidgetView: View {
     }
 
     private func schedulePrayerRow(_ item: PrayerTime, height: CGFloat) -> some View {
-        let isActive = item.key == entry.nextPrayer?.key
+        let isActive = item.key == displayEntry.nextPrayer?.key
 
         return HStack(spacing: 8) {
             Text(item.time)
@@ -818,6 +896,14 @@ private struct SalatiLockCircleWidgetView: View {
     let entry: TelShevaWidgetEntry
     let kind: SalatiLockCircleKind
 
+    private var displayEntry: TelShevaWidgetEntry {
+        TelShevaWidgetProvider.displayEntry(from: entry)
+    }
+
+    private var renderDate: Date {
+        max(Date(), displayEntry.date)
+    }
+
     var body: some View {
         ZStack {
             AccessoryWidgetBackground()
@@ -826,8 +912,8 @@ private struct SalatiLockCircleWidgetView: View {
             switch kind {
             case .prayerTime:
                 circleStack(
-                    title: entry.nextPrayer?.title ?? "الصلاة",
-                    value: entry.nextPrayer?.time ?? "--:--",
+                    title: displayEntry.nextPrayer?.title ?? "الصلاة",
+                    value: displayEntry.nextPrayer?.time ?? "--:--",
                     valueSize: 14,
                     titleSize: 9,
                     footer: "أذان"
@@ -835,7 +921,7 @@ private struct SalatiLockCircleWidgetView: View {
             case .iqamaMinutes:
                 circleStack(
                     title: nil,
-                    value: iqamaMinuteValue(for: entry.nextPrayer),
+                    value: iqamaMinuteValue(for: displayEntry.nextPrayer),
                     valueSize: 24,
                     titleSize: 10,
                     footer: "إقامة"
@@ -843,7 +929,7 @@ private struct SalatiLockCircleWidgetView: View {
             case .iqamaTime:
                 circleStack(
                     title: "الإقامة",
-                    value: iqamaTimeValue(for: entry.nextPrayer),
+                    value: iqamaTimeValue(for: displayEntry.nextPrayer),
                     valueSize: 13,
                     titleSize: 8,
                     footer: nil
@@ -851,10 +937,10 @@ private struct SalatiLockCircleWidgetView: View {
             case .nextCountdown:
                 circleStack(
                     title: nil,
-                    value: remainingValue(until: entry.nextPrayer?.date),
+                    value: remainingValue(until: displayEntry.nextPrayer?.date),
                     valueSize: 22,
                     titleSize: 10,
-                    footer: remainingUnit(until: entry.nextPrayer?.date)
+                    footer: remainingUnit(until: displayEntry.nextPrayer?.date)
                 )
             case .sunriseTime:
                 circleStack(
@@ -942,24 +1028,24 @@ private struct SalatiLockCircleWidgetView: View {
     }
 
     private var intervalProgress: CGFloat {
-        guard let previous = entry.previousPrayer,
-              let next = entry.nextPrayer else {
+        guard let previous = displayEntry.previousPrayer,
+              let next = displayEntry.nextPrayer else {
             return 0.58
         }
 
         let total = next.date.timeIntervalSince(previous.date)
         guard total > 0 else { return 0.58 }
 
-        return clampedProgress(entry.date.timeIntervalSince(previous.date) / total)
+        return clampedProgress(renderDate.timeIntervalSince(previous.date) / total)
     }
 
     private var iqamaProgress: CGFloat {
-        if let previous = entry.previousPrayer,
+        if let previous = displayEntry.previousPrayer,
            let minutes = iqamaOffsetMinutes(for: previous.key) {
             let iqamaDate = previous.date.addingTimeInterval(TimeInterval(minutes * 60))
 
-            if entry.date >= previous.date && entry.date <= iqamaDate {
-                return clampedProgress(entry.date.timeIntervalSince(previous.date) / max(iqamaDate.timeIntervalSince(previous.date), 1))
+            if renderDate >= previous.date && renderDate <= iqamaDate {
+                return clampedProgress(renderDate.timeIntervalSince(previous.date) / max(iqamaDate.timeIntervalSince(previous.date), 1))
             }
         }
 
@@ -971,12 +1057,12 @@ private struct SalatiLockCircleWidgetView: View {
     }
 
     private func prayer(_ key: PrayerKey) -> PrayerTime? {
-        entry.times.first { $0.key == key }
+        displayEntry.times.first { $0.key == key }
     }
 
     private func remainingValue(until targetDate: Date?) -> String {
         guard let targetDate else { return "--:--" }
-        let seconds = max(Int(targetDate.timeIntervalSince(entry.date)), 0)
+        let seconds = max(Int(targetDate.timeIntervalSince(renderDate)), 0)
         let minutes = (seconds + 59) / 60
 
         if minutes < 100 {
@@ -988,7 +1074,7 @@ private struct SalatiLockCircleWidgetView: View {
 
     private func remainingUnit(until targetDate: Date?) -> String {
         guard let targetDate else { return "متبقي" }
-        let seconds = max(Int(targetDate.timeIntervalSince(entry.date)), 0)
+        let seconds = max(Int(targetDate.timeIntervalSince(renderDate)), 0)
         let minutes = (seconds + 59) / 60
         return minutes < 100 ? "دقيقة" : "متبقي"
     }
@@ -1172,6 +1258,10 @@ private struct SalatiDateWidgetView: View {
     @Environment(\.colorScheme) private var colorScheme
     let entry: TelShevaWidgetEntry
 
+    private var displayEntry: TelShevaWidgetEntry {
+        TelShevaWidgetProvider.displayEntry(from: entry)
+    }
+
     var body: some View {
         Group {
             if isLockScreenFamily {
@@ -1216,11 +1306,11 @@ private struct SalatiDateWidgetView: View {
                 ZStack {
                     AccessoryWidgetBackground()
                     VStack(spacing: 1) {
-                        Text(SalatiWidgetDateText.dayNumber(for: entry.date))
+                        Text(SalatiWidgetDateText.dayNumber(for: displayEntry.date))
                             .font(.system(size: 25, weight: .black, design: .rounded).monospacedDigit())
                             .lineLimit(1)
 
-                        Text(SalatiWidgetDateText.weekday(for: entry.date))
+                        Text(SalatiWidgetDateText.weekday(for: displayEntry.date))
                             .font(.system(size: 8, weight: .bold, design: .rounded))
                             .lineLimit(1)
                             .minimumScaleFactor(0.55)
@@ -1229,10 +1319,10 @@ private struct SalatiDateWidgetView: View {
                 }
             case .accessoryRectangular:
                 VStack(alignment: .trailing, spacing: 2) {
-                    Text(SalatiWidgetDateText.gregorianShort(for: entry.date))
+                    Text(SalatiWidgetDateText.gregorianShort(for: displayEntry.date))
                         .font(.system(size: 15, weight: .black, design: .rounded))
                         .lineLimit(1)
-                    Text(SalatiWidgetDateText.hijri(for: entry.date))
+                    Text(SalatiWidgetDateText.hijri(for: displayEntry.date))
                         .font(.system(size: 12, weight: .bold, design: .rounded))
                         .lineLimit(1)
                         .minimumScaleFactor(0.66)
@@ -1240,7 +1330,7 @@ private struct SalatiDateWidgetView: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
             case .accessoryInline:
-                Text("\(SalatiWidgetDateText.weekday(for: entry.date)) · \(SalatiWidgetDateText.hijri(for: entry.date))")
+                Text("\(SalatiWidgetDateText.weekday(for: displayEntry.date)) · \(SalatiWidgetDateText.hijri(for: displayEntry.date))")
                     .font(.system(size: 12, weight: .bold, design: .rounded))
                     .lineLimit(1)
             default:
@@ -1282,12 +1372,12 @@ private struct SalatiDateWidgetView: View {
             Spacer(minLength: 0)
 
             VStack(alignment: .trailing, spacing: 3) {
-                Text(SalatiWidgetDateText.weekday(for: entry.date))
+                Text(SalatiWidgetDateText.weekday(for: displayEntry.date))
                     .font(.system(size: 17, weight: .black, design: .rounded))
                     .foregroundStyle(primaryText)
                     .lineLimit(1)
 
-                Text(SalatiWidgetDateText.dayNumber(for: entry.date))
+                Text(SalatiWidgetDateText.dayNumber(for: displayEntry.date))
                     .font(.system(size: 58, weight: .black, design: .rounded).monospacedDigit())
                     .foregroundStyle(accent)
                     .lineLimit(1)
@@ -1295,7 +1385,7 @@ private struct SalatiDateWidgetView: View {
             }
             .frame(maxWidth: .infinity, alignment: .trailing)
 
-            dateCapsule(text: SalatiWidgetDateText.hijri(for: entry.date))
+            dateCapsule(text: SalatiWidgetDateText.hijri(for: displayEntry.date))
         }
         .padding(18)
     }
@@ -1303,12 +1393,12 @@ private struct SalatiDateWidgetView: View {
     private var mediumHomeBody: some View {
         HStack(spacing: 16) {
             VStack(spacing: 2) {
-                Text(SalatiWidgetDateText.dayNumber(for: entry.date))
+                Text(SalatiWidgetDateText.dayNumber(for: displayEntry.date))
                     .font(.system(size: 64, weight: .black, design: .rounded).monospacedDigit())
                     .foregroundStyle(accent)
                     .lineLimit(1)
 
-                Text(SalatiWidgetDateText.weekday(for: entry.date))
+                Text(SalatiWidgetDateText.weekday(for: displayEntry.date))
                     .font(.system(size: 16, weight: .black, design: .rounded))
                     .foregroundStyle(primaryText)
                     .lineLimit(1)
@@ -1337,13 +1427,13 @@ private struct SalatiDateWidgetView: View {
 
                 Spacer(minLength: 0)
 
-                Text(SalatiWidgetDateText.gregorianLong(for: entry.date))
+                Text(SalatiWidgetDateText.gregorianLong(for: displayEntry.date))
                     .font(.system(size: 20, weight: .black, design: .rounded))
                     .foregroundStyle(primaryText)
                     .lineLimit(1)
                     .minimumScaleFactor(0.62)
 
-                dateCapsule(text: SalatiWidgetDateText.hijri(for: entry.date))
+                dateCapsule(text: SalatiWidgetDateText.hijri(for: displayEntry.date))
             }
             .frame(maxWidth: .infinity, alignment: .trailing)
         }
