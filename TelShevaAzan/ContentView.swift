@@ -16,7 +16,6 @@ struct ContentView: View {
     @State private var selectedPrayerDetails: PrayerTime?
     @Namespace private var dockSelectionNamespace
     @StateObject private var notifications = PrayerNotificationManager.shared
-    @StateObject private var liveActivityCenter = PrayerLiveActivityCenter.shared
 
     private static let nabawiDayImage = Self.loadNabawiImage(named: "nabawi-day")
     private static let nabawiNightImage = Self.loadNabawiImage(named: "nabawi-night")
@@ -100,7 +99,6 @@ struct ContentView: View {
             if selectedTab == .schedule {
                 updateScheduleClock(value)
             }
-            liveActivityCenter.syncWithPrayerWindow(now: value, themeID: activeTheme.rawValue)
         }
         .onChange(of: selectedNightThemeID) { _ in
             WidgetRefreshCenter.refreshAll()
@@ -112,19 +110,13 @@ struct ContentView: View {
             if phase == .active {
                 WidgetRefreshCenter.refreshAll()
                 WidgetRefreshCenter.refreshAgainSoon()
-                PrayerLiveActivityBackgroundScheduler.shared.scheduleNext()
-            } else if phase == .background {
-                PrayerLiveActivityBackgroundScheduler.shared.scheduleNext()
             }
-            liveActivityCenter.syncWithPrayerWindow(now: Date(), themeID: activeTheme.rawValue)
         }
         .onAppear {
             applyVisualRefreshThemeOnce()
             notifications.refreshIfEnabled()
             WidgetRefreshCenter.refreshAll()
             WidgetRefreshCenter.refreshAgainSoon()
-            liveActivityCenter.syncWithPrayerWindow(now: Date(), themeID: activeTheme.rawValue)
-            PrayerLiveActivityBackgroundScheduler.shared.scheduleNext()
             presentWelcomeActivationPromptIfNeeded()
         }
         .onReceive(NotificationCenter.default.publisher(for: PrayerNotificationManager.openSettingsNotification)) { _ in
@@ -186,7 +178,6 @@ struct ContentView: View {
                 VStack(spacing: 9) {
                     welcomeFeatureRow(symbol: "speaker.wave.2.fill", title: "تنبيهات الأذان", detail: "لكل الصلوات المختارة")
                     welcomeFeatureRow(symbol: "sparkles", title: "الأذكار والنفحات", detail: "تذكير هادئ بعد الصلاة وبين الأوقات")
-                    welcomeFeatureRow(symbol: "livephoto", title: "الجزيرة الحية", detail: "تظهر تلقائيًا عند قرب الصلاة")
                 }
 
                 HStack(spacing: 10) {
@@ -1085,87 +1076,6 @@ struct ContentView: View {
         .buttonStyle(.plain)
     }
 
-    private func liveActivityStatusPanel(next: PrayerTime?) -> some View {
-        HStack(spacing: 8) {
-            Image(systemName: liveActivityStatusSymbol(for: next))
-                .font(.system(size: 13, weight: .black))
-                .foregroundStyle(liveActivityStatusColor(for: next))
-                .frame(width: 22, height: 22)
-                .background(
-                    Circle()
-                        .fill(liveActivityStatusColor(for: next).opacity(activeTheme.isNightTheme ? 0.16 : 0.12))
-                )
-
-            Spacer(minLength: 8)
-
-            VStack(alignment: .trailing, spacing: 1) {
-                Text(liveActivityStatusTitle(for: next))
-                    .font(.system(size: 12.5, weight: .black, design: .rounded))
-                    .foregroundStyle(activeTheme.primaryText)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.76)
-
-                Text(liveActivityStatusSubtitle(for: next))
-                    .font(.system(size: 10.5, weight: .semibold, design: .rounded))
-                    .foregroundStyle(activeTheme.secondaryText.opacity(0.82))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.68)
-            }
-            .frame(maxWidth: .infinity, alignment: .trailing)
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
-        .background(glassSurface(activeTheme.controlBackground.opacity(activeTheme.isNightTheme ? 0.74 : 0.78), radius: 12, prominence: .quiet))
-        .overlay(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .stroke(liveActivityStatusColor(for: next).opacity(activeTheme.isNightTheme ? 0.34 : 0.28), lineWidth: 1)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .environment(\.layoutDirection, .leftToRight)
-    }
-
-    private func liveActivityStatusTitle(for next: PrayerTime?) -> String {
-        guard let next else { return "الجزيرة تنتظر جدول الصلاة" }
-        let seconds = next.date.timeIntervalSince(now)
-
-        if seconds > 5 * 60 {
-            return "الجزيرة جاهزة لصلاة \(next.title)"
-        }
-
-        if seconds > 0 {
-            return "الجزيرة تظهر الآن"
-        }
-
-        return "حان الأذان"
-    }
-
-    private func liveActivityStatusSubtitle(for next: PrayerTime?) -> String {
-        guard let next else { return "افتح التنبيهات لتجربة الجزيرة يدويًا" }
-        let seconds = next.date.timeIntervalSince(now)
-
-        if seconds > 5 * 60 {
-            return "ستظهر تلقائيًا قبل الأذان بخمس دقائق"
-        }
-
-        if seconds > 0 {
-            return "اقفل الشاشة أو ارجع للرئيسية وشاهد Dynamic Island"
-        }
-
-        return "ستختفي تلقائيًا بعد انتهاء نافذة الأذان"
-    }
-
-    private func liveActivityStatusSymbol(for next: PrayerTime?) -> String {
-        guard let next else { return "livephoto.slash" }
-        let seconds = next.date.timeIntervalSince(now)
-        return seconds <= 5 * 60 ? "livephoto" : "checkmark.seal.fill"
-    }
-
-    private func liveActivityStatusColor(for next: PrayerTime?) -> Color {
-        guard let next else { return activeTheme.secondaryText.opacity(0.72) }
-        let seconds = next.date.timeIntervalSince(now)
-        return seconds <= 5 * 60 ? activeTheme.accent : Color(red: 0.22, green: 0.74, blue: 0.46)
-    }
-
     private var isNight: Bool {
         colorScheme == .dark
     }
@@ -1612,7 +1522,7 @@ private struct PrayerDetailsSheet: View {
 
     private var detailMessage: String {
         if prayer.date > now {
-            return "تقدر تتابع الوقت من الواجهة، والجزيرة تظهر تلقائيًا عند دخول نافذة آخر خمس دقائق."
+            return "تقدر تتابع الوقت من الواجهة وتراجع صف المواقيت لمعرفة الصلاة القادمة."
         }
 
         return "بعد الصلاة خذ لحظة للأذكار، وتقدر ترجع لصف المواقيت لمتابعة الصلاة القادمة."

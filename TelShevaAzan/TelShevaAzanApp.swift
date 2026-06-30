@@ -6,7 +6,6 @@ struct TelShevaAzanApp: App {
 
     init() {
         _ = PrayerNotificationManager.shared
-        PrayerLiveActivityBackgroundScheduler.shared.register()
     }
 
     var body: some Scene {
@@ -15,7 +14,6 @@ struct TelShevaAzanApp: App {
                 .environment(\.layoutDirection, .rightToLeft)
                 .onAppear {
                     WidgetRefreshCenter.refreshAll()
-                    PrayerLiveActivityBackgroundScheduler.shared.scheduleNext()
                 }
         }
     }

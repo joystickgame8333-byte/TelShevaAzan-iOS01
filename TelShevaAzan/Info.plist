@@ -51,14 +51,7 @@
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>audio</string>
-		<string>fetch</string>
 	</array>
-	<key>BGTaskSchedulerPermittedIdentifiers</key>
-	<array>
-		<string>com.omaralasam.telshevaazan.prayer-live-activity</string>
-	</array>
-	<key>NSSupportsLiveActivities</key>
-	<true/>
 	<key>UIAppFonts</key>
 	<array>
 		<string>AmiriQuran-Regular.ttf</string>

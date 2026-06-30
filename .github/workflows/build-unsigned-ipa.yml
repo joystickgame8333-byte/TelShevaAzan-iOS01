@@ -132,8 +132,8 @@ jobs:
             find "$APP_PATH" -maxdepth 5 -print
             exit 1
           fi
-          if [ "${#PLUGIN_PATHS[@]}" -ne 1 ]; then
-            echo "Expected exactly one iOS widget extension to avoid duplicate WidgetKit registration, found ${#PLUGIN_PATHS[@]}"
+          if [ "${#PLUGIN_PATHS[@]}" -lt 2 ]; then
+            echo "Expected both iOS widget extensions to be packaged, found only ${#PLUGIN_PATHS[@]}"
             find "$APP_PATH/PlugIns" -maxdepth 2 -print
             exit 1
           fi
@@ -232,7 +232,7 @@ jobs:
           echo "Ad-hoc signing watch bundles:"
           /usr/bin/codesign --force --sign - --entitlements "TelShevaAzanWatchWidget/TelShevaAzanWatchWidget.entitlements" "$WATCH_PLUGIN_PATH"
           /usr/bin/codesign --force --sign - --entitlements "TelShevaAzanWatch/TelShevaAzanWatch.entitlements" "$WATCH_APP_IN_APP"
-          echo "Ad-hoc signing iOS widget bundles:"
+          echo "TrollStore ldid signing widgets:"
           for PLUGIN_PATH in "${PLUGIN_PATHS[@]}"; do
             PLUGIN_EXECUTABLE="$(/usr/libexec/PlistBuddy -c "Print :CFBundleExecutable" "$PLUGIN_PATH/Info.plist")"
             PLUGIN_BUNDLE_ID="$(/usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$PLUGIN_PATH/Info.plist")"
@@ -259,22 +259,22 @@ jobs:
           </dict>
           </plist>
           EOF
-            /usr/bin/codesign --force --sign - --entitlements "$PLUGIN_ENTITLEMENTS" "$PLUGIN_PATH"
+            ldid -S"$PLUGIN_ENTITLEMENTS" "$PLUGIN_PATH/$PLUGIN_EXECUTABLE"
           done
-          echo "Ad-hoc signing iOS app bundle:"
-          /usr/bin/codesign --force --sign - --entitlements "TelShevaAzan/TelShevaAzan.entitlements" "$APP_PATH"
+          echo "TrollStore ldid signing app:"
+          ldid -S"TelShevaAzan/TelShevaAzan.entitlements" "$APP_PATH/$APP_EXECUTABLE"
           echo "Watch widget entitlements after codesign:"
           /usr/bin/codesign -d --entitlements :- "$WATCH_PLUGIN_PATH" || true
           echo "Watch app entitlements after codesign:"
           /usr/bin/codesign -d --entitlements :- "$WATCH_APP_IN_APP" || true
-          echo "Widget entitlements after codesign:"
+          echo "Widget entitlements after ldid:"
           for PLUGIN_PATH in "${PLUGIN_PATHS[@]}"; do
             PLUGIN_EXECUTABLE="$(/usr/libexec/PlistBuddy -c "Print :CFBundleExecutable" "$PLUGIN_PATH/Info.plist")"
             echo "Widget executable: $PLUGIN_PATH/$PLUGIN_EXECUTABLE"
-            /usr/bin/codesign -d --entitlements :- "$PLUGIN_PATH" || true
+            ldid -e "$PLUGIN_PATH/$PLUGIN_EXECUTABLE"
           done
-          echo "App entitlements after codesign:"
-          /usr/bin/codesign -d --entitlements :- "$APP_PATH" || true
+          echo "App entitlements after ldid:"
+          ldid -e "$APP_PATH/$APP_EXECUTABLE"
           {
             echo "App bundle:"
             /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$APP_PATH/Info.plist"
@@ -318,9 +318,8 @@ jobs:
           grep -q 'Payload/TelShevaAzan.app/nabawi-day.jpg' ipa-contents.txt
           grep -q 'Payload/TelShevaAzan.app/nabawi-night.jpg' ipa-contents.txt
           grep -q 'Payload/TelShevaAzan.app/PlugIns/.*\.appex/' ipa-contents.txt
-          grep -q 'Payload/TelShevaAzan.app/PlugIns/SalatiWidgetsExtension.appex/SalatiWidgetsExtension' ipa-contents.txt
-          grep -q 'Payload/TelShevaAzan.app/PlugIns/SalatiWidgetsExtension.appex/_CodeSignature/CodeResources' ipa-contents.txt
-          grep -q 'Payload/TelShevaAzan.app/_CodeSignature/CodeResources' ipa-contents.txt
+          grep -q 'Payload/TelShevaAzan.app/PlugIns/TelShevaAzanWidgetExtension.appex/TelShevaAzanWidgetExtension' ipa-contents.txt
+          grep -q 'Payload/TelShevaAzan.app/PlugIns/TelShevaAzanWidgetExtensionV3.appex/TelShevaAzanWidgetExtensionV3' ipa-contents.txt
           grep -q 'Payload/TelShevaAzan.app/Watch/TelShevaAzanWatch.app/' ipa-contents.txt
           grep -q 'Payload/TelShevaAzan.app/Watch/TelShevaAzanWatch.app/PlugIns/.*\.appex/' ipa-contents.txt
 
