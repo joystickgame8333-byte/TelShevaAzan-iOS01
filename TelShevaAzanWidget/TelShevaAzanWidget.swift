@@ -1,7 +1,4 @@
 import Foundation
-#if canImport(AppIntents)
-import AppIntents
-#endif
 import SwiftUI
 import WidgetKit
 
@@ -32,16 +29,8 @@ struct TelShevaWidgetProvider: TimelineProvider {
         completion(Timeline(entries: entries, policy: .after(refreshDate)))
     }
 
-    static func displayEntry(from entry: TelShevaWidgetEntry, now: Date = Date()) -> TelShevaWidgetEntry {
-        guard let nextPrayer = entry.nextPrayer else {
-            return makeEntry(for: now)
-        }
-
-        if nextPrayer.date <= now || abs(entry.date.timeIntervalSince(now)) > timelineHorizon {
-            return makeEntry(for: now)
-        }
-
-        return entry
+    static func displayEntry(from entry: TelShevaWidgetEntry) -> TelShevaWidgetEntry {
+        entry
     }
 
     static func makeEntry(for date: Date) -> TelShevaWidgetEntry {
@@ -145,7 +134,7 @@ struct TelShevaAzanWidgetView: View {
     }
 
     private var renderDate: Date {
-        max(Date(), displayEntry.date)
+        displayEntry.date
     }
 
     var body: some View {
@@ -293,17 +282,7 @@ struct TelShevaAzanWidgetView: View {
     }
 
     private var remainingTimerText: Text {
-        guard let nextDate = displayEntry.nextPrayer?.date else {
-            return Text("--:--")
-        }
-
-        let now = Date()
-        guard nextDate > now else {
-            return Text("0:00")
-                .fontWeight(.black)
-        }
-
-        return Text(timerInterval: now...nextDate, countsDown: true)
+        Text(remainingMinuteLabel)
             .fontWeight(.black)
     }
 
@@ -857,7 +836,7 @@ private enum SalatiLockCircleKind: String {
     case sunriseTime
 
     var widgetKind: String {
-        "com.omaralasam.telshevaazan.lockCircle.\(rawValue).v2"
+        "com.omaralasam.telshevaazan.lockCircle.\(rawValue).v5"
     }
 
     var displayName: String {
@@ -901,7 +880,7 @@ private struct SalatiLockCircleWidgetView: View {
     }
 
     private var renderDate: Date {
-        max(Date(), displayEntry.date)
+        displayEntry.date
     }
 
     var body: some View {
@@ -1485,7 +1464,7 @@ private struct SalatiDateWidgetView: View {
 }
 
 private struct SalatiDateWidget: Widget {
-    let kind = "com.omaralasam.telshevaazan.date.today.v1"
+    let kind = "com.omaralasam.telshevaazan.date.today.v5"
 
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: TelShevaWidgetProvider()) { entry in
@@ -1496,189 +1475,6 @@ private struct SalatiDateWidget: Widget {
         .supportedFamilies([.systemSmall, .systemMedium, .accessoryInline, .accessoryCircular, .accessoryRectangular])
     }
 }
-
-#if canImport(AppIntents)
-@available(iOSApplicationExtension 17.0, *)
-enum SalatiConfigurableWidgetVariant: String, AppEnum {
-    case nextPrayer
-    case schedule
-    case countdown
-    case date
-    case iqama
-    case sunrise
-
-    static var typeDisplayName: LocalizedStringResource { "نوع الودجت" }
-    static let typeDisplayRepresentation: TypeDisplayRepresentation = "نوع الودجت"
-
-    static var caseDisplayRepresentations: [Self: DisplayRepresentation] {
-        [
-            .nextPrayer: DisplayRepresentation(title: "الصلاة القادمة"),
-            .schedule: DisplayRepresentation(title: "جدول الصلاة"),
-            .countdown: DisplayRepresentation(title: "عداد الصلاة"),
-            .date: DisplayRepresentation(title: "تاريخ اليوم"),
-            .iqama: DisplayRepresentation(title: "الإقامة"),
-            .sunrise: DisplayRepresentation(title: "الشروق")
-        ]
-    }
-}
-
-@available(iOSApplicationExtension 17.0, *)
-struct SalatiWidgetConfigurationIntent: WidgetConfigurationIntent {
-    static let title: LocalizedStringResource = "تخصيص ويدجت صلاتي"
-    static let description = IntentDescription("اختر نوع ويدجت صلاتي المناسب للشاشة الرئيسية أو شاشة القفل.")
-
-    @Parameter(title: "العرض")
-    var variant: SalatiConfigurableWidgetVariant
-
-    init() {
-        self.variant = .nextPrayer
-    }
-
-    init(variant: SalatiConfigurableWidgetVariant) {
-        self.variant = variant
-    }
-}
-
-@available(iOSApplicationExtension 17.0, *)
-private struct SalatiConfiguredWidgetEntry: TimelineEntry {
-    let date: Date
-    let base: TelShevaWidgetEntry
-    let variant: SalatiConfigurableWidgetVariant
-}
-
-@available(iOSApplicationExtension 17.0, *)
-private struct SalatiAppIntentWidgetProvider: AppIntentTimelineProvider {
-    func placeholder(in context: Context) -> SalatiConfiguredWidgetEntry {
-        makeEntry(for: Date(), variant: .nextPrayer)
-    }
-
-    func snapshot(for configuration: SalatiWidgetConfigurationIntent, in context: Context) async -> SalatiConfiguredWidgetEntry {
-        makeEntry(for: Date(), variant: configuration.variant)
-    }
-
-    func timeline(for configuration: SalatiWidgetConfigurationIntent, in context: Context) async -> Timeline<SalatiConfiguredWidgetEntry> {
-        let now = Date()
-        let firstEntry = makeEntry(for: now, variant: configuration.variant)
-        let minuteStart = PrayerEngine.calendar.dateInterval(of: .minute, for: now)?.start ?? now
-        let endDate = now.addingTimeInterval(26 * 60 * 60)
-
-        var entries: [SalatiConfiguredWidgetEntry] = [firstEntry]
-        var cursor = PrayerEngine.calendar.date(byAdding: .minute, value: 1, to: minuteStart) ?? now.addingTimeInterval(60)
-        while cursor <= endDate {
-            entries.append(makeEntry(for: cursor, variant: configuration.variant))
-            cursor = PrayerEngine.calendar.date(byAdding: .minute, value: 1, to: cursor) ?? cursor.addingTimeInterval(60)
-        }
-
-        let refreshDate = entries.last?.date.addingTimeInterval(60) ?? now.addingTimeInterval(60)
-        return Timeline(entries: entries, policy: .after(refreshDate))
-    }
-
-    private func makeEntry(for date: Date, variant: SalatiConfigurableWidgetVariant) -> SalatiConfiguredWidgetEntry {
-        let dateKey = PrayerEngine.defaultDateKey(for: date)
-        let schedule = PrayerEngine.schedule(for: dateKey)
-
-        let base = TelShevaWidgetEntry(
-            date: date,
-            dateKey: dateKey,
-            nextPrayer: PrayerEngine.nextPrayer(for: dateKey, now: date),
-            previousPrayer: PrayerEngine.previousPrayer(for: dateKey, now: date),
-            times: schedule.displayTimes
-        )
-
-        return SalatiConfiguredWidgetEntry(date: date, base: base, variant: variant)
-    }
-}
-
-@available(iOSApplicationExtension 17.0, *)
-private struct SalatiConfigurableWidgetView: View {
-    @Environment(\.widgetFamily) private var family
-    let entry: SalatiConfiguredWidgetEntry
-
-    var body: some View {
-        if isLockScreenFamily {
-            lockScreenBody
-        } else {
-            homeBody
-        }
-    }
-
-    private var isLockScreenFamily: Bool {
-        family == .accessoryInline || family == .accessoryCircular || family == .accessoryRectangular
-    }
-
-    @ViewBuilder
-    private var homeBody: some View {
-        switch entry.variant {
-        case .schedule:
-            TelShevaAzanWidgetView(entry: entry.base, presentation: .schedule)
-                .environment(\.layoutDirection, .rightToLeft)
-        case .countdown:
-            TelShevaAzanWidgetView(entry: entry.base, presentation: .countdown)
-                .environment(\.layoutDirection, .rightToLeft)
-        case .date:
-            SalatiDateWidgetView(entry: entry.base)
-        case .iqama:
-            TelShevaAzanWidgetView(entry: entry.base, presentation: .countdown)
-                .environment(\.layoutDirection, .rightToLeft)
-        case .sunrise:
-            SalatiDateWidgetView(entry: entry.base)
-        case .nextPrayer:
-            TelShevaAzanWidgetView(entry: entry.base)
-                .environment(\.layoutDirection, .rightToLeft)
-        }
-    }
-
-    @ViewBuilder
-    private var lockScreenBody: some View {
-        switch entry.variant {
-        case .date:
-            SalatiDateWidgetView(entry: entry.base)
-        case .iqama:
-            if family == .accessoryCircular {
-                SalatiLockCircleWidgetView(entry: entry.base, kind: .iqamaTime)
-            } else {
-                TelShevaAzanWidgetView(entry: entry.base)
-                    .environment(\.layoutDirection, .rightToLeft)
-            }
-        case .sunrise:
-            if family == .accessoryCircular {
-                SalatiLockCircleWidgetView(entry: entry.base, kind: .sunriseTime)
-            } else {
-                TelShevaAzanWidgetView(entry: entry.base)
-                    .environment(\.layoutDirection, .rightToLeft)
-            }
-        case .countdown:
-            if family == .accessoryCircular {
-                SalatiLockCircleWidgetView(entry: entry.base, kind: .nextCountdown)
-            } else {
-                TelShevaAzanWidgetView(entry: entry.base)
-                    .environment(\.layoutDirection, .rightToLeft)
-            }
-        case .schedule, .nextPrayer:
-            if family == .accessoryCircular {
-                SalatiLockCircleWidgetView(entry: entry.base, kind: .prayerTime)
-            } else {
-                TelShevaAzanWidgetView(entry: entry.base)
-                    .environment(\.layoutDirection, .rightToLeft)
-            }
-        }
-    }
-}
-
-@available(iOSApplicationExtension 17.0, *)
-struct SalatiConfigurableWidget: Widget {
-    let kind = "com.omaralasam.telshevaazan.configurable.v1"
-
-    var body: some WidgetConfiguration {
-        AppIntentConfiguration(kind: kind, intent: SalatiWidgetConfigurationIntent.self, provider: SalatiAppIntentWidgetProvider()) { entry in
-            SalatiConfigurableWidgetView(entry: entry)
-        }
-        .configurationDisplayName("صلاتي")
-        .description("ويدجت صلاتي القابل للتخصيص للشاشة الرئيسية وشاشة القفل.")
-        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge, .accessoryInline, .accessoryCircular, .accessoryRectangular])
-    }
-}
-#endif
 
 @main
 struct TelShevaAzanWidgetBundle: WidgetBundle {
@@ -1702,7 +1498,7 @@ struct TelShevaAzanWidgetBundle: WidgetBundle {
 }
 
 struct TelShevaAzanWidget: Widget {
-    let kind = "com.omaralasam.telshevaazan.nextPrayer.v2"
+    let kind = "com.omaralasam.telshevaazan.nextPrayer.v5"
 
     var body: some WidgetConfiguration {
         if #available(iOSApplicationExtension 16.0, *) {
@@ -1726,7 +1522,7 @@ struct TelShevaAzanWidget: Widget {
 }
 
 struct TelShevaAzanLegacyWidget: Widget {
-    let kind = "com.omaralasam.telshevaazan.nextPrayer.clean.v4"
+    let kind = "com.omaralasam.telshevaazan.nextPrayer.clean.v5"
 
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: TelShevaWidgetProvider()) { entry in
@@ -1740,7 +1536,7 @@ struct TelShevaAzanLegacyWidget: Widget {
 }
 
 struct TelShevaAzanScheduleWidget: Widget {
-    let kind = "com.omaralasam.telshevaazan.dailySchedule.v1"
+    let kind = "com.omaralasam.telshevaazan.dailySchedule.v5"
 
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: TelShevaWidgetProvider()) { entry in
@@ -1754,7 +1550,7 @@ struct TelShevaAzanScheduleWidget: Widget {
 }
 
 struct TelShevaAzanCountdownWidget: Widget {
-    let kind = "com.omaralasam.telshevaazan.countdown.v1"
+    let kind = "com.omaralasam.telshevaazan.countdown.v5"
 
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: TelShevaWidgetProvider()) { entry in

@@ -6,6 +6,16 @@ enum WidgetRefreshCenter {
     private static let minimumRefreshInterval: TimeInterval = 0.20
     private static var lastRefreshTime: TimeInterval = 0
     private static let widgetKinds = [
+        "com.omaralasam.telshevaazan.nextPrayer.v5",
+        "com.omaralasam.telshevaazan.nextPrayer.clean.v5",
+        "com.omaralasam.telshevaazan.dailySchedule.v5",
+        "com.omaralasam.telshevaazan.countdown.v5",
+        "com.omaralasam.telshevaazan.date.today.v5",
+        "com.omaralasam.telshevaazan.lockCircle.prayerTime.v5",
+        "com.omaralasam.telshevaazan.lockCircle.iqamaMinutes.v5",
+        "com.omaralasam.telshevaazan.lockCircle.iqamaTime.v5",
+        "com.omaralasam.telshevaazan.lockCircle.nextCountdown.v5",
+        "com.omaralasam.telshevaazan.lockCircle.sunriseTime.v5",
         "com.omaralasam.telshevaazan.nextPrayer.v2",
         "com.omaralasam.telshevaazan.nextPrayer.v3",
         "com.omaralasam.telshevaazan.nextPrayer.clean.v4",
