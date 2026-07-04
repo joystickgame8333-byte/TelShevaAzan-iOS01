@@ -306,10 +306,10 @@ struct TelShevaAzanWidgetView: View {
 
     private var nextMetaText: Text {
         if let iqama = nextIqamaTime {
-            return Text("الإقامة ") + Text(iqama).fontWeight(.black) + Text(" · متبقي ") + remainingTimerText
+            return Text("الإقامة ") + Text(iqama).fontWeight(.black)
         }
 
-        return Text("متبقي ") + remainingTimerText
+        return Text("وقت الأذان ") + Text(nextTime).fontWeight(.black)
     }
 
     private var nextTitle: String {
@@ -321,10 +321,7 @@ struct TelShevaAzanWidgetView: View {
     }
 
     private var compactRemainingText: String {
-        guard let nextDate = displayEntry.nextPrayer?.date else { return "باقي على الصلاة --:--" }
-        let seconds = max(Int(nextDate.timeIntervalSince(renderDate)), 0)
-        let minutes = (seconds + 59) / 60
-        return "باقي على الصلاة \(hourMinuteText(fromMinutes: minutes))"
+        "وقت الأذان \(nextTime)"
     }
 
     private var compactElapsedText: String {
@@ -422,7 +419,7 @@ struct TelShevaAzanWidgetView: View {
 
             Spacer(minLength: 0)
 
-            salatiMetaCapsule(Text("متبقي ") + remainingTimerText, compact: true)
+            salatiMetaCapsule(nextMetaText, compact: true)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
         .multilineTextAlignment(.trailing)
@@ -525,7 +522,7 @@ struct TelShevaAzanWidgetView: View {
 
     private var smallCountdownLayout: some View {
         VStack(alignment: .trailing, spacing: 8) {
-            salatiTopline("متبقي")
+            salatiTopline("الصلاة")
 
             Spacer(minLength: 0)
 
@@ -556,10 +553,10 @@ struct TelShevaAzanWidgetView: View {
 
             HStack(spacing: 10) {
                 salatiInfoPanel(title: "الإقامة", value: nextIqamaTime ?? "--:--", footer: nextIqamaMinutesLabel ?? "بعد الأذان", highlighted: false)
-                salatiInfoPanel(title: "الأذان", value: nextTime, footer: remainingMinuteLabel, highlighted: true)
+                salatiInfoPanel(title: "الأذان", value: nextTime, footer: nextIqamaTime.map { "الإقامة \($0)" } ?? "الصلاة القادمة", highlighted: true)
             }
 
-            salatiMetaCapsule(Text(nextAzanTitle) + Text(" · متبقي ") + Text(remainingMinuteLabel).fontWeight(.black))
+            salatiMetaCapsule(Text(nextAzanTitle) + Text(" · ") + nextMetaText)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
         .multilineTextAlignment(.trailing)
@@ -773,7 +770,7 @@ struct TelShevaAzanWidgetView: View {
             switch family {
             case .accessoryInline:
                 Label {
-                    Text("\(nextAzanTitle) \(nextTime) · متبقي \(remainingMinuteLabel)")
+                    Text("\(nextAzanTitle) \(nextTime)")
                 } icon: {
                     Image(systemName: "clock.fill")
                 }
@@ -797,7 +794,7 @@ struct TelShevaAzanWidgetView: View {
                             .minimumScaleFactor(0.62)
                     }
 
-                    Text("الإقامة \(nextIqamaTime ?? "--:--") · متبقي \(remainingMinuteLabel)")
+                    Text("الإقامة \(nextIqamaTime ?? "--:--")")
                         .font(.system(size: 11, weight: .black, design: .rounded).monospacedDigit())
                         .lineLimit(1)
                         .minimumScaleFactor(0.58)
@@ -836,7 +833,7 @@ private enum SalatiLockCircleKind: String {
     case sunriseTime
 
     var widgetKind: String {
-        "com.omaralasam.telshevaazan.lockCircle.\(rawValue).v5"
+        "com.omaralasam.telshevaazan.lockCircle.\(rawValue).v6"
     }
 
     var displayName: String {
@@ -915,11 +912,11 @@ private struct SalatiLockCircleWidgetView: View {
                 )
             case .nextCountdown:
                 circleStack(
-                    title: nil,
-                    value: remainingValue(until: displayEntry.nextPrayer?.date),
-                    valueSize: 22,
+                    title: displayEntry.nextPrayer?.title ?? "الصلاة",
+                    value: displayEntry.nextPrayer?.time ?? "--:--",
+                    valueSize: 13,
                     titleSize: 10,
-                    footer: remainingUnit(until: displayEntry.nextPrayer?.date)
+                    footer: "أذان"
                 )
             case .sunriseTime:
                 circleStack(
@@ -1464,7 +1461,7 @@ private struct SalatiDateWidgetView: View {
 }
 
 private struct SalatiDateWidget: Widget {
-    let kind = "com.omaralasam.telshevaazan.date.today.v5"
+    let kind = "com.omaralasam.telshevaazan.date.today.v6"
 
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: TelShevaWidgetProvider()) { entry in
@@ -1498,7 +1495,7 @@ struct TelShevaAzanWidgetBundle: WidgetBundle {
 }
 
 struct TelShevaAzanWidget: Widget {
-    let kind = "com.omaralasam.telshevaazan.nextPrayer.v5"
+    let kind = "com.omaralasam.telshevaazan.nextPrayer.v6"
 
     var body: some WidgetConfiguration {
         if #available(iOSApplicationExtension 16.0, *) {
@@ -1522,7 +1519,7 @@ struct TelShevaAzanWidget: Widget {
 }
 
 struct TelShevaAzanLegacyWidget: Widget {
-    let kind = "com.omaralasam.telshevaazan.nextPrayer.clean.v5"
+    let kind = "com.omaralasam.telshevaazan.nextPrayer.clean.v6"
 
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: TelShevaWidgetProvider()) { entry in
@@ -1536,7 +1533,7 @@ struct TelShevaAzanLegacyWidget: Widget {
 }
 
 struct TelShevaAzanScheduleWidget: Widget {
-    let kind = "com.omaralasam.telshevaazan.dailySchedule.v5"
+    let kind = "com.omaralasam.telshevaazan.dailySchedule.v6"
 
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: TelShevaWidgetProvider()) { entry in
@@ -1550,7 +1547,7 @@ struct TelShevaAzanScheduleWidget: Widget {
 }
 
 struct TelShevaAzanCountdownWidget: Widget {
-    let kind = "com.omaralasam.telshevaazan.countdown.v5"
+    let kind = "com.omaralasam.telshevaazan.countdown.v6"
 
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: TelShevaWidgetProvider()) { entry in
