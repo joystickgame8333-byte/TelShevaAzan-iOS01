@@ -11,7 +11,9 @@ struct TelShevaWidgetEntry: TimelineEntry {
 }
 
 struct TelShevaWidgetProvider: TimelineProvider {
-    private static let timelineHorizon: TimeInterval = 30 * 60 * 60
+    // WidgetKit is responsible for moving through these entries.  Keep this
+    // timeline deliberately small: one entry per real prayer transition.
+    private static let timelineDays = 7
 
     func placeholder(in context: Context) -> TelShevaWidgetEntry {
         Self.makeEntry(for: Date())
@@ -25,7 +27,7 @@ struct TelShevaWidgetProvider: TimelineProvider {
         let now = Date()
         let dates = Self.timelineDates(startingAt: now)
         let entries = dates.map { Self.makeEntry(for: $0) }
-        let refreshDate = dates.last?.addingTimeInterval(5 * 60) ?? now.addingTimeInterval(30 * 60)
+        let refreshDate = dates.last?.addingTimeInterval(60) ?? now.addingTimeInterval(60 * 60)
         completion(Timeline(entries: entries, policy: .after(refreshDate)))
     }
 
@@ -48,51 +50,25 @@ struct TelShevaWidgetProvider: TimelineProvider {
 
     private static func timelineDates(startingAt now: Date) -> [Date] {
         let start = PrayerEngine.calendar.dateInterval(of: .minute, for: now)?.start ?? now
-        let end = now.addingTimeInterval(timelineHorizon)
         var dates: [Date] = [now]
 
-        var cursor = PrayerEngine.calendar.date(byAdding: .minute, value: 1, to: start) ?? now.addingTimeInterval(60)
-        var minuteIndex = 1
-        while cursor <= end {
-            if minuteIndex <= 180 || minuteIndex % 5 == 0 {
-                dates.append(cursor)
-            }
-
-            cursor = PrayerEngine.calendar.date(byAdding: .minute, value: 1, to: cursor) ?? cursor.addingTimeInterval(60)
-            minuteIndex += 1
-        }
-
-        for offset in 0...2 {
+        for offset in 0...timelineDays {
             guard let day = PrayerEngine.calendar.date(byAdding: .day, value: offset, to: start) else { continue }
             let dateKey = PrayerEngine.defaultDateKey(for: day)
             for prayer in PrayerEngine.schedule(for: dateKey).displayTimes {
-                appendTransitionDates(around: prayer.date, start: now, end: end, to: &dates)
-                if let iqama = iqamaDate(for: prayer) {
-                    appendTransitionDates(around: iqama, start: now, end: end, to: &dates)
-                }
+                appendIfFuture(prayer.date.addingTimeInterval(1), after: now, to: &dates)
             }
-        }
 
-        if let midnight = PrayerEngine.calendar.nextDate(
-            after: now,
-            matching: DateComponents(hour: 0, minute: 0, second: 1),
-            matchingPolicy: .nextTime
-        ) {
-            appendIfInRange(midnight, start: now, end: end, to: &dates)
+            if let midnight = PrayerEngine.calendar.dateInterval(of: .day, for: day)?.end {
+                appendIfFuture(midnight.addingTimeInterval(1), after: now, to: &dates)
+            }
         }
 
         return Array(Set(dates.map { roundedToSecond($0) })).sorted()
     }
 
-    private static func appendTransitionDates(around date: Date, start: Date, end: Date, to dates: inout [Date]) {
-        appendIfInRange(date.addingTimeInterval(-1), start: start, end: end, to: &dates)
-        appendIfInRange(date, start: start, end: end, to: &dates)
-        appendIfInRange(date.addingTimeInterval(1), start: start, end: end, to: &dates)
-        appendIfInRange(date.addingTimeInterval(60), start: start, end: end, to: &dates)
-    }
-
-    private static func appendIfInRange(_ date: Date, start: Date, end: Date, to dates: inout [Date]) {
-        guard date >= start && date <= end else { return }
+    private static func appendIfFuture(_ date: Date, after now: Date, to dates: inout [Date]) {
+        guard date > now else { return }
         dates.append(date)
     }
 
@@ -100,27 +76,6 @@ struct TelShevaWidgetProvider: TimelineProvider {
         Date(timeIntervalSince1970: date.timeIntervalSince1970.rounded())
     }
 
-    private static func iqamaDate(for prayer: PrayerTime) -> Date? {
-        guard let minutes = iqamaOffsetMinutes(for: prayer.key) else { return nil }
-        return prayer.date.addingTimeInterval(TimeInterval(minutes * 60))
-    }
-
-    private static func iqamaOffsetMinutes(for key: PrayerKey) -> Int? {
-        switch key {
-        case .fajr:
-            return 25
-        case .dhuhr:
-            return 15
-        case .asr:
-            return 17
-        case .maghrib:
-            return 8
-        case .isha:
-            return 15
-        case .sunrise:
-            return nil
-        }
-    }
 }
 
 struct TelShevaAzanWidgetView: View {
@@ -1461,7 +1416,7 @@ private struct SalatiDateWidgetView: View {
 }
 
 private struct SalatiDateWidget: Widget {
-    let kind = "com.omaralasam.telshevaazan.date.today.v6"
+    let kind = "com.omaralasam.telshevaazan.date.today.v7"
 
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: TelShevaWidgetProvider()) { entry in
@@ -1476,26 +1431,14 @@ private struct SalatiDateWidget: Widget {
 @main
 struct TelShevaAzanWidgetBundle: WidgetBundle {
     var body: some Widget {
-#if WIDGET_V3
-        TelShevaAzanLegacyWidget()
-#else
         TelShevaAzanWidget()
         TelShevaAzanScheduleWidget()
-        TelShevaAzanCountdownWidget()
         SalatiDateWidget()
-        if #available(iOSApplicationExtension 16.0, *) {
-            SalatiPrayerTimeLockCircleWidget()
-            SalatiIqamaMinutesLockCircleWidget()
-            SalatiIqamaTimeLockCircleWidget()
-            SalatiNextCountdownLockCircleWidget()
-            SalatiSunriseLockCircleWidget()
-        }
-#endif
     }
 }
 
 struct TelShevaAzanWidget: Widget {
-    let kind = "com.omaralasam.telshevaazan.nextPrayer.v6"
+    let kind = "com.omaralasam.telshevaazan.nextPrayer.v7"
 
     var body: some WidgetConfiguration {
         if #available(iOSApplicationExtension 16.0, *) {
@@ -1505,7 +1448,7 @@ struct TelShevaAzanWidget: Widget {
             }
             .configurationDisplayName("الصلاة القادمة")
             .description("يعرض الصلاة القادمة ووقت الأذان والمتبقي عليها.")
-            .supportedFamilies([.systemSmall, .systemMedium, .accessoryInline, .accessoryRectangular])
+            .supportedFamilies([.systemSmall, .systemMedium, .accessoryInline, .accessoryCircular, .accessoryRectangular])
         } else {
             StaticConfiguration(kind: kind, provider: TelShevaWidgetProvider()) { entry in
                 TelShevaAzanWidgetView(entry: entry)
@@ -1533,7 +1476,7 @@ struct TelShevaAzanLegacyWidget: Widget {
 }
 
 struct TelShevaAzanScheduleWidget: Widget {
-    let kind = "com.omaralasam.telshevaazan.dailySchedule.v6"
+    let kind = "com.omaralasam.telshevaazan.dailySchedule.v7"
 
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: TelShevaWidgetProvider()) { entry in

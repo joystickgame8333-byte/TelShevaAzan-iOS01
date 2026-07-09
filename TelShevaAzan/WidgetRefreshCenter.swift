@@ -3,30 +3,12 @@ import WidgetKit
 
 enum WidgetRefreshCenter {
     private static let refreshStampKey = "widgetRefreshStamp"
-    private static let minimumRefreshInterval: TimeInterval = 0.20
+    private static let minimumRefreshInterval: TimeInterval = 15 * 60
     private static var lastRefreshTime: TimeInterval = 0
     private static let widgetKinds = [
-        "com.omaralasam.telshevaazan.nextPrayer.v6",
-        "com.omaralasam.telshevaazan.nextPrayer.clean.v6",
-        "com.omaralasam.telshevaazan.dailySchedule.v6",
-        "com.omaralasam.telshevaazan.countdown.v6",
-        "com.omaralasam.telshevaazan.date.today.v6",
-        "com.omaralasam.telshevaazan.lockCircle.prayerTime.v6",
-        "com.omaralasam.telshevaazan.lockCircle.iqamaMinutes.v6",
-        "com.omaralasam.telshevaazan.lockCircle.iqamaTime.v6",
-        "com.omaralasam.telshevaazan.lockCircle.nextCountdown.v6",
-        "com.omaralasam.telshevaazan.lockCircle.sunriseTime.v6",
-        "com.omaralasam.telshevaazan.nextPrayer.v2",
-        "com.omaralasam.telshevaazan.nextPrayer.v3",
-        "com.omaralasam.telshevaazan.nextPrayer.clean.v4",
-        "com.omaralasam.telshevaazan.dailySchedule.v1",
-        "com.omaralasam.telshevaazan.countdown.v1",
-        "com.omaralasam.telshevaazan.date.today.v1",
-        "com.omaralasam.telshevaazan.lockCircle.prayerTime.v2",
-        "com.omaralasam.telshevaazan.lockCircle.iqamaMinutes.v2",
-        "com.omaralasam.telshevaazan.lockCircle.iqamaTime.v2",
-        "com.omaralasam.telshevaazan.lockCircle.nextCountdown.v2",
-        "com.omaralasam.telshevaazan.lockCircle.sunriseTime.v2"
+        "com.omaralasam.telshevaazan.nextPrayer.v7",
+        "com.omaralasam.telshevaazan.dailySchedule.v7",
+        "com.omaralasam.telshevaazan.date.today.v7"
     ]
 
     static func refreshAll() {
@@ -40,13 +22,10 @@ enum WidgetRefreshCenter {
         for kind in widgetKinds {
             WidgetCenter.shared.reloadTimelines(ofKind: kind)
         }
-
-        WidgetCenter.shared.reloadAllTimelines()
     }
 
     static func refreshAgainSoon() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-            refreshAll()
-        }
+        // Timeline entries keep the prayer transition current; requesting a
+        // second reload immediately only burns WidgetKit's refresh budget.
     }
 }

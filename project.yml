@@ -26,7 +26,7 @@ targets:
         CFBundleDisplayName: صلاتي
         CFBundlePackageType: APPL
         CFBundleShortVersionString: "0.6.68"
-        CFBundleVersion: "159"
+        CFBundleVersion: "160"
         CFBundleURLTypes:
           - CFBundleURLName: com.omaralasam.telshevaazan
             CFBundleURLSchemes:
@@ -87,15 +87,13 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.omaralasam.telshevaazan
         PRODUCT_NAME: TelShevaAzan
         MARKETING_VERSION: 0.6.68
-        CURRENT_PROJECT_VERSION: 159
+        CURRENT_PROJECT_VERSION: 160
         TARGETED_DEVICE_FAMILY: 1
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         CODE_SIGN_STYLE: Manual
     dependencies:
       - target: TelShevaAzanWidgetExtension
-        embed: true
-      - target: TelShevaAzanWidgetExtensionV3
         embed: true
   TelShevaAzanWidgetExtension:
     type: app-extension
@@ -117,51 +115,15 @@ targets:
         CFBundleDisplayName: Salati Widget
         CFBundlePackageType: XPC!
         CFBundleShortVersionString: "0.6.68"
-        CFBundleVersion: "159"
+        CFBundleVersion: "160"
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
-        NSPrincipalClass: ""
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.omaralasam.telshevaazan.nextprayerwidget2
         PRODUCT_NAME: TelShevaAzanWidgetExtension
         MARKETING_VERSION: 0.6.68
-        CURRENT_PROJECT_VERSION: 159
-        IPHONEOS_DEPLOYMENT_TARGET: 16.0
-        TARGETED_DEVICE_FAMILY: "1,2"
-        APPLICATION_EXTENSION_API_ONLY: YES
-        CODE_SIGN_STYLE: Manual
-  TelShevaAzanWidgetExtensionV3:
-    type: app-extension
-    platform: iOS
-    sources:
-      - path: TelShevaAzanWidget
-        excludes:
-          - Info.plist
-          - "*.entitlements"
-      - path: TelShevaAzan/PrayerSchedule.swift
-      - path: TelShevaAzan/AppInfo.swift
-      - path: TelShevaAzan/AppTheme.swift
-    resources:
-      - path: TelShevaAzan/Resources/Nabawi/nabawi-day.jpg
-      - path: TelShevaAzan/Resources/Nabawi/nabawi-night.jpg
-    info:
-      path: TelShevaAzanWidget/Info.plist
-      properties:
-        CFBundleDisplayName: Salati Widget
-        CFBundlePackageType: XPC!
-        CFBundleShortVersionString: "0.6.68"
-        CFBundleVersion: "159"
-        NSExtension:
-          NSExtensionPointIdentifier: com.apple.widgetkit-extension
-        NSPrincipalClass: ""
-    settings:
-      base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.omaralasam.telshevaazan.nextprayerwidget3
-        PRODUCT_NAME: TelShevaAzanWidgetExtensionV3
-        MARKETING_VERSION: 0.6.68
-        CURRENT_PROJECT_VERSION: 159
-        OTHER_SWIFT_FLAGS: "$(inherited) -D WIDGET_V3"
+        CURRENT_PROJECT_VERSION: 160
         IPHONEOS_DEPLOYMENT_TARGET: 16.0
         TARGETED_DEVICE_FAMILY: "1,2"
         APPLICATION_EXTENSION_API_ONLY: YES
@@ -183,7 +145,7 @@ targets:
         CFBundleDisplayName: صلاتي
         CFBundlePackageType: APPL
         CFBundleShortVersionString: "0.6.68"
-        CFBundleVersion: "159"
+        CFBundleVersion: "160"
         WKApplication: true
         WKCompanionAppBundleIdentifier: com.omaralasam.telshevaazan.76XJH357A8
         WKRunsIndependentlyOfCompanionApp: true
@@ -192,7 +154,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.omaralasam.telshevaazan.76XJH357A8.watchkitapp
         PRODUCT_NAME: TelShevaAzanWatch
         MARKETING_VERSION: 0.6.68
-        CURRENT_PROJECT_VERSION: 159
+        CURRENT_PROJECT_VERSION: 160
         TARGETED_DEVICE_FAMILY: 4
         WATCHOS_DEPLOYMENT_TARGET: 9.0
         CODE_SIGN_STYLE: Manual
@@ -216,7 +178,7 @@ targets:
         CFBundleDisplayName: صلاتي
         CFBundlePackageType: XPC!
         CFBundleShortVersionString: "0.6.68"
-        CFBundleVersion: "159"
+        CFBundleVersion: "160"
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
         NSPrincipalClass: ""
@@ -225,7 +187,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.omaralasam.telshevaazan.76XJH357A8.watchkitapp.watchwidget
         PRODUCT_NAME: TelShevaAzanWatchWidgetExtension
         MARKETING_VERSION: 0.6.68
-        CURRENT_PROJECT_VERSION: 159
+        CURRENT_PROJECT_VERSION: 160
         WATCHOS_DEPLOYMENT_TARGET: 9.0
         TARGETED_DEVICE_FAMILY: 4
         APPLICATION_EXTENSION_API_ONLY: YES
@@ -236,7 +198,6 @@ schemes:
       targets:
         TelShevaAzan: all
         TelShevaAzanWidgetExtension: all
-        TelShevaAzanWidgetExtensionV3: all
     run:
       config: Debug
     archive:
