@@ -17,7 +17,7 @@ struct TelShevaWidgetProvider: TimelineProvider {
 
     func placeholder(in context: Context) -> TelShevaWidgetEntry {
         PrayerEngine.refreshAuthoritativeScheduleFromCache()
-        Self.makeEntry(for: Date())
+        return Self.makeEntry(for: Date())
     }
 
     func getSnapshot(in context: Context, completion: @escaping (TelShevaWidgetEntry) -> Void) {
