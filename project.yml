@@ -26,7 +26,7 @@ targets:
         CFBundleDisplayName: صلاتي
         CFBundlePackageType: APPL
         CFBundleShortVersionString: "0.6.68"
-        CFBundleVersion: "160"
+        CFBundleVersion: "161"
         CFBundleURLTypes:
           - CFBundleURLName: com.omaralasam.telshevaazan
             CFBundleURLSchemes:
@@ -87,7 +87,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.omaralasam.telshevaazan
         PRODUCT_NAME: TelShevaAzan
         MARKETING_VERSION: 0.6.68
-        CURRENT_PROJECT_VERSION: 160
+        CURRENT_PROJECT_VERSION: 161
         TARGETED_DEVICE_FAMILY: 1
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
@@ -115,7 +115,7 @@ targets:
         CFBundleDisplayName: Salati Widget
         CFBundlePackageType: XPC!
         CFBundleShortVersionString: "0.6.68"
-        CFBundleVersion: "160"
+        CFBundleVersion: "161"
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
     settings:
@@ -123,7 +123,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.omaralasam.telshevaazan.nextprayerwidget2
         PRODUCT_NAME: TelShevaAzanWidgetExtension
         MARKETING_VERSION: 0.6.68
-        CURRENT_PROJECT_VERSION: 160
+        CURRENT_PROJECT_VERSION: 161
         IPHONEOS_DEPLOYMENT_TARGET: 16.0
         TARGETED_DEVICE_FAMILY: "1,2"
         APPLICATION_EXTENSION_API_ONLY: YES
@@ -145,7 +145,7 @@ targets:
         CFBundleDisplayName: صلاتي
         CFBundlePackageType: APPL
         CFBundleShortVersionString: "0.6.68"
-        CFBundleVersion: "160"
+        CFBundleVersion: "161"
         WKApplication: true
         WKCompanionAppBundleIdentifier: com.omaralasam.telshevaazan.76XJH357A8
         WKRunsIndependentlyOfCompanionApp: true
@@ -154,7 +154,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.omaralasam.telshevaazan.76XJH357A8.watchkitapp
         PRODUCT_NAME: TelShevaAzanWatch
         MARKETING_VERSION: 0.6.68
-        CURRENT_PROJECT_VERSION: 160
+        CURRENT_PROJECT_VERSION: 161
         TARGETED_DEVICE_FAMILY: 4
         WATCHOS_DEPLOYMENT_TARGET: 9.0
         CODE_SIGN_STYLE: Manual
@@ -178,7 +178,7 @@ targets:
         CFBundleDisplayName: صلاتي
         CFBundlePackageType: XPC!
         CFBundleShortVersionString: "0.6.68"
-        CFBundleVersion: "160"
+        CFBundleVersion: "161"
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
         NSPrincipalClass: ""
@@ -187,7 +187,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.omaralasam.telshevaazan.76XJH357A8.watchkitapp.watchwidget
         PRODUCT_NAME: TelShevaAzanWatchWidgetExtension
         MARKETING_VERSION: 0.6.68
-        CURRENT_PROJECT_VERSION: 160
+        CURRENT_PROJECT_VERSION: 161
         WATCHOS_DEPLOYMENT_TARGET: 9.0
         TARGETED_DEVICE_FAMILY: 4
         APPLICATION_EXTENSION_API_ONLY: YES

@@ -16,14 +16,17 @@ struct TelShevaWidgetProvider: TimelineProvider {
     private static let timelineDays = 7
 
     func placeholder(in context: Context) -> TelShevaWidgetEntry {
+        PrayerEngine.refreshAuthoritativeScheduleFromCache()
         Self.makeEntry(for: Date())
     }
 
     func getSnapshot(in context: Context, completion: @escaping (TelShevaWidgetEntry) -> Void) {
+        PrayerEngine.refreshAuthoritativeScheduleFromCache()
         completion(Self.makeEntry(for: Date()))
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<TelShevaWidgetEntry>) -> Void) {
+        PrayerEngine.refreshAuthoritativeScheduleFromCache()
         let now = Date()
         let dates = Self.timelineDates(startingAt: now)
         let entries = dates.map { Self.makeEntry(for: $0) }
@@ -325,6 +328,8 @@ struct TelShevaAzanWidgetView: View {
             switch family {
             case .systemLarge:
                 largeScheduleLayout
+            case .systemSmall:
+                smallScheduleLayout
             default:
                 mediumScheduleLayout
             }
@@ -421,25 +426,24 @@ struct TelShevaAzanWidgetView: View {
     }
 
     private var mediumScheduleLayout: some View {
-        VStack(alignment: .trailing, spacing: 9) {
-            salatiTopline("باقي اليوم")
+        VStack(alignment: .trailing, spacing: 8) {
+            scheduleBoardHeader(compact: false)
 
             VStack(spacing: 7) {
-                ForEach(Array(upcomingPrayerRows.prefix(3))) { item in
-                    schedulePrayerRow(item, height: 28)
-                }
+                schedulePair(.fajr, .asr)
+                schedulePair(.sunrise, .maghrib)
+                schedulePair(.dhuhr, .isha)
             }
-            .frame(maxWidth: .infinity)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
         .multilineTextAlignment(.trailing)
-        .environment(\.layoutDirection, .leftToRight)
-        .padding(16)
+        .environment(\.layoutDirection, .rightToLeft)
+        .padding(14)
     }
 
     private var largeScheduleLayout: some View {
         VStack(alignment: .trailing, spacing: 11) {
-            salatiTopline("الأحد")
+            scheduleBoardHeader(compact: false)
 
             HStack(alignment: .center, spacing: 12) {
                 salatiTimeCapsule(nextTime, fontSize: 44)
@@ -459,10 +463,10 @@ struct TelShevaAzanWidgetView: View {
                 }
             }
 
-            VStack(spacing: 6) {
-                ForEach(Array(displayEntry.times.prefix(6))) { item in
-                    schedulePrayerRow(item, height: 26)
-                }
+            VStack(spacing: 8) {
+                schedulePair(.fajr, .asr)
+                schedulePair(.sunrise, .maghrib)
+                schedulePair(.dhuhr, .isha)
             }
 
             Spacer(minLength: 0)
@@ -471,8 +475,24 @@ struct TelShevaAzanWidgetView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
         .multilineTextAlignment(.trailing)
-        .environment(\.layoutDirection, .leftToRight)
+        .environment(\.layoutDirection, .rightToLeft)
         .padding(16)
+    }
+
+    private var smallScheduleLayout: some View {
+        VStack(alignment: .trailing, spacing: 6) {
+            scheduleBoardHeader(compact: true)
+
+            VStack(spacing: 5) {
+                schedulePair(.fajr, .asr, compact: true)
+                schedulePair(.sunrise, .maghrib, compact: true)
+                schedulePair(.dhuhr, .isha, compact: true)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+        .multilineTextAlignment(.trailing)
+        .environment(\.layoutDirection, .rightToLeft)
+        .padding(11)
     }
 
     private var smallCountdownLayout: some View {
@@ -715,6 +735,60 @@ struct TelShevaAzanWidgetView: View {
         .overlay(
             Capsule(style: .continuous)
                 .stroke(isActive ? accent.opacity(0.62) : capsuleStroke.opacity(0.76), lineWidth: 1)
+        )
+        .clipShape(Capsule(style: .continuous))
+    }
+
+    private func scheduleBoardHeader(compact: Bool) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Text(SalatiWidgetDateText.hijri(for: renderDate))
+                .font(.system(size: compact ? 9 : 11, weight: .bold, design: .rounded))
+                .foregroundColor(secondaryText)
+                .lineLimit(1)
+                .minimumScaleFactor(0.62)
+
+            Spacer(minLength: 4)
+
+            Text("مواقيت اليوم")
+                .font(.system(size: compact ? 12 : 14, weight: .black, design: .rounded))
+                .foregroundColor(primaryText)
+                .lineLimit(1)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private func schedulePair(_ first: PrayerKey, _ second: PrayerKey, compact: Bool = false) -> some View {
+        HStack(spacing: compact ? 5 : 8) {
+            scheduleBoardCell(for: first, compact: compact)
+            scheduleBoardCell(for: second, compact: compact)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private func scheduleBoardCell(for key: PrayerKey, compact: Bool) -> some View {
+        let item = displayEntry.times.first { $0.key == key }
+        let isNext = key == displayEntry.nextPrayer?.key
+
+        return HStack(spacing: compact ? 4 : 6) {
+            Text(item?.title ?? key.title)
+                .font(.system(size: compact ? 10 : 12, weight: .black, design: .rounded))
+                .lineLimit(1)
+                .minimumScaleFactor(0.58)
+
+            Spacer(minLength: 1)
+
+            Text(item?.time ?? "--:--")
+                .font(.system(size: compact ? 10 : 13, weight: .black, design: .rounded).monospacedDigit())
+                .lineLimit(1)
+                .minimumScaleFactor(0.62)
+        }
+        .foregroundColor(isNext ? .white : primaryText)
+        .padding(.horizontal, compact ? 6 : 9)
+        .frame(height: compact ? 22 : 30)
+        .background(isNext ? accent.opacity(0.90) : capsuleFill.opacity(0.76))
+        .overlay(
+            Capsule(style: .continuous)
+                .stroke(isNext ? accent.opacity(0.76) : capsuleStroke.opacity(0.70), lineWidth: 1)
         )
         .clipShape(Capsule(style: .continuous))
     }
@@ -1238,11 +1312,11 @@ private struct SalatiDateWidgetView: View {
                     AccessoryWidgetBackground()
                     VStack(spacing: 1) {
                         Text(SalatiWidgetDateText.dayNumber(for: displayEntry.date))
-                            .font(.system(size: 25, weight: .black, design: .rounded).monospacedDigit())
+                            .font(.system(size: 22, weight: .black, design: .rounded).monospacedDigit())
                             .lineLimit(1)
 
                         Text(SalatiWidgetDateText.weekday(for: displayEntry.date))
-                            .font(.system(size: 8, weight: .bold, design: .rounded))
+                            .font(.system(size: 7, weight: .bold, design: .rounded))
                             .lineLimit(1)
                             .minimumScaleFactor(0.55)
                     }
@@ -1289,14 +1363,14 @@ private struct SalatiDateWidgetView: View {
     }
 
     private var smallHomeBody: some View {
-        VStack(alignment: .trailing, spacing: 12) {
+        VStack(alignment: .trailing, spacing: 8) {
             HStack {
                 Circle()
                     .fill(accent)
                     .frame(width: 12, height: 12)
                 Spacer()
                 Text("تاريخ اليوم")
-                    .font(.system(size: 15, weight: .black, design: .rounded))
+                    .font(.system(size: 12, weight: .black, design: .rounded))
                     .foregroundStyle(secondaryText)
             }
 
@@ -1304,12 +1378,12 @@ private struct SalatiDateWidgetView: View {
 
             VStack(alignment: .trailing, spacing: 3) {
                 Text(SalatiWidgetDateText.weekday(for: displayEntry.date))
-                    .font(.system(size: 17, weight: .black, design: .rounded))
+                    .font(.system(size: 15, weight: .black, design: .rounded))
                     .foregroundStyle(primaryText)
                     .lineLimit(1)
 
                 Text(SalatiWidgetDateText.dayNumber(for: displayEntry.date))
-                    .font(.system(size: 58, weight: .black, design: .rounded).monospacedDigit())
+                    .font(.system(size: 50, weight: .black, design: .rounded).monospacedDigit())
                     .foregroundStyle(accent)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
@@ -1318,14 +1392,14 @@ private struct SalatiDateWidgetView: View {
 
             dateCapsule(text: SalatiWidgetDateText.hijri(for: displayEntry.date))
         }
-        .padding(18)
+        .padding(14)
     }
 
     private var mediumHomeBody: some View {
-        HStack(spacing: 16) {
+        HStack(spacing: 12) {
             VStack(spacing: 2) {
                 Text(SalatiWidgetDateText.dayNumber(for: displayEntry.date))
-                    .font(.system(size: 64, weight: .black, design: .rounded).monospacedDigit())
+                    .font(.system(size: 56, weight: .black, design: .rounded).monospacedDigit())
                     .foregroundStyle(accent)
                     .lineLimit(1)
 
@@ -1334,7 +1408,7 @@ private struct SalatiDateWidgetView: View {
                     .foregroundStyle(primaryText)
                     .lineLimit(1)
             }
-            .frame(width: 104)
+            .frame(width: 88)
             .padding(.vertical, 8)
             .background(
                 RoundedRectangle(cornerRadius: 28, style: .continuous)
@@ -1352,14 +1426,14 @@ private struct SalatiDateWidgetView: View {
                         .frame(width: 10, height: 10)
                     Spacer()
                     Text("تاريخ اليوم")
-                        .font(.system(size: 15, weight: .black, design: .rounded))
+                        .font(.system(size: 13, weight: .black, design: .rounded))
                         .foregroundStyle(secondaryText)
                 }
 
                 Spacer(minLength: 0)
 
                 Text(SalatiWidgetDateText.gregorianLong(for: displayEntry.date))
-                    .font(.system(size: 20, weight: .black, design: .rounded))
+                    .font(.system(size: 18, weight: .black, design: .rounded))
                     .foregroundStyle(primaryText)
                     .lineLimit(1)
                     .minimumScaleFactor(0.62)
@@ -1368,17 +1442,17 @@ private struct SalatiDateWidgetView: View {
             }
             .frame(maxWidth: .infinity, alignment: .trailing)
         }
-        .padding(18)
+        .padding(14)
     }
 
     private func dateCapsule(text: String) -> some View {
         Text(text)
-            .font(.system(size: 13, weight: .black, design: .rounded))
+            .font(.system(size: 12, weight: .black, design: .rounded))
             .foregroundStyle(secondaryText)
             .lineLimit(1)
             .minimumScaleFactor(0.65)
-            .padding(.horizontal, 14)
-            .padding(.vertical, 7)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
             .frame(maxWidth: .infinity, alignment: .trailing)
             .background(
                 Capsule()
@@ -1485,7 +1559,7 @@ struct TelShevaAzanScheduleWidget: Widget {
         }
         .configurationDisplayName("جدول الصلاة")
         .description("ودجت جديد يعرض مواقيت اليوم والصلاة القادمة.")
-        .supportedFamilies([.systemMedium, .systemLarge])
+        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
     }
 }
 

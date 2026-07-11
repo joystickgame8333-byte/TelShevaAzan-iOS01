@@ -11,9 +11,9 @@ enum WidgetRefreshCenter {
         "com.omaralasam.telshevaazan.date.today.v7"
     ]
 
-    static func refreshAll() {
+    static func refreshAll(force: Bool = false) {
         let timestamp = Date().timeIntervalSince1970
-        guard timestamp - lastRefreshTime >= minimumRefreshInterval else { return }
+        guard force || timestamp - lastRefreshTime >= minimumRefreshInterval else { return }
         lastRefreshTime = timestamp
 
         AppThemeStorage.defaults.set(timestamp, forKey: refreshStampKey)

@@ -3,8 +3,8 @@ import Foundation
 import UserNotifications
 
 enum PrayerNotificationSound: String, CaseIterable, Identifiable {
-    case bundledAdhan
     case originalAdhan
+    case bundledAdhan
     case softDhikr
     case system
 
@@ -12,10 +12,10 @@ enum PrayerNotificationSound: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .bundledAdhan:
-            return "الأذان الثاني"
         case .originalAdhan:
             return "الأذان الأول"
+        case .bundledAdhan:
+            return "الأذان الثاني"
         case .softDhikr:
             return "رسالة إشعار"
         case .system:
@@ -25,10 +25,10 @@ enum PrayerNotificationSound: String, CaseIterable, Identifiable {
 
     var subtitle: String {
         switch self {
-        case .bundledAdhan:
-            return "المقطع الذي أرسلته بصوت أعلى وبداية تدريجية"
         case .originalAdhan:
-            return "الصوت السابق رجع ضمن المجموعة"
+            return "الصوت الأساسي للأذان"
+        case .bundledAdhan:
+            return "الأذان الثاني بصوت مختلف"
         case .softDhikr:
             return "صوت هادئ لمن يريد تنبيهًا أخف"
         case .system:
@@ -38,10 +38,10 @@ enum PrayerNotificationSound: String, CaseIterable, Identifiable {
 
     var systemImage: String {
         switch self {
-        case .bundledAdhan:
-            return "waveform.circle.fill"
         case .originalAdhan:
             return "speaker.wave.2.circle.fill"
+        case .bundledAdhan:
+            return "waveform.circle.fill"
         case .softDhikr:
             return "sparkles"
         case .system:
@@ -633,7 +633,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
     private var pendingRescheduleWork: DispatchWorkItem?
 
     private var selectedSound: PrayerNotificationSound {
-        PrayerNotificationSound(rawValue: selectedSoundID) ?? .bundledAdhan
+        PrayerNotificationSound(rawValue: selectedSoundID) ?? .originalAdhan
     }
 
     private var selectedAdhkarStyle: AdhkarReminderStyle {
@@ -673,7 +673,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
         }
 
         let savedSoundID = UserDefaults.standard.string(forKey: Self.selectedSoundIDKey)
-        selectedSoundID = savedSoundID ?? PrayerNotificationSound.bundledAdhan.rawValue
+        selectedSoundID = savedSoundID ?? PrayerNotificationSound.originalAdhan.rawValue
         isAdhkarReminderEnabled = UserDefaults.standard.bool(forKey: Self.adhkarEnabledKey)
         let savedDelay = UserDefaults.standard.integer(forKey: Self.adhkarDelayMinutesKey)
         adhkarDelayMinutes = savedDelay == 0 ? 5 : savedDelay
