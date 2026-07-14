@@ -61,7 +61,6 @@ enum PrayerEngine {
         return calendar
     }()
     private static let posixLocale = Locale(identifier: "en_US_POSIX")
-    private static let sharedDefaults = UserDefaults(suiteName: "group.com.omaralasam.telshevaazan") ?? .standard
     private static let longArabicDateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "ar")
@@ -81,7 +80,7 @@ enum PrayerEngine {
     static let prayerOrder: [PrayerKey] = [.fajr, .dhuhr, .asr, .maghrib, .isha]
     static let displayOrder: [PrayerKey] = [.fajr, .sunrise, .dhuhr, .asr, .maghrib, .isha]
 
-    private static let fallbackTelShevaSchedule: [String: [PrayerKey: String]] = [
+    static let telShevaSchedule: [String: [PrayerKey: String]] = [
         "2026-01-01": [.fajr: "05:10", .sunrise: "06:35", .dhuhr: "11:44", .asr: "14:31", .maghrib: "16:57", .isha: "18:19"],
         "2026-01-02": [.fajr: "05:10", .sunrise: "06:36", .dhuhr: "11:44", .asr: "14:32", .maghrib: "16:57", .isha: "18:20"],
         "2026-01-03": [.fajr: "05:10", .sunrise: "06:36", .dhuhr: "11:45", .asr: "14:33", .maghrib: "16:58", .isha: "18:20"],
@@ -456,41 +455,8 @@ enum PrayerEngine {
         "2027-01-07": [.fajr: "05:11", .sunrise: "06:36", .dhuhr: "11:47", .asr: "14:35", .maghrib: "17:01", .isha: "18:23"]
     ]
 
-    private static let authoritativeScheduleKey = "authoritativePrayerSchedule.v1"
-
-    private static var telShevaSchedule: [String: [PrayerKey: String]] = {
-        var schedule = Self.fallbackTelShevaSchedule
-        Self.mergeCachedAuthoritativeSchedule(into: &schedule)
-        return schedule
-    }()
-
     static var availableDateKeys: [String] {
         Self.telShevaSchedule.keys.sorted()
-    }
-
-    static func refreshAuthoritativeScheduleFromCache() {
-        var schedule = Self.fallbackTelShevaSchedule
-        Self.mergeCachedAuthoritativeSchedule(into: &schedule)
-        Self.telShevaSchedule = schedule
-    }
-
-    static func applyAuthoritativeSchedule(_ days: [String: [PrayerKey: String]]) {
-        guard !days.isEmpty else { return }
-
-        var persisted: [String: [String: String]] = [:]
-        for (dateKey, times) in days {
-            persisted[dateKey] = Dictionary(uniqueKeysWithValues: times.map { ($0.key.rawValue, $0.value) })
-            Self.telShevaSchedule[dateKey] = times
-        }
-
-        var cached = Self.cachedAuthoritativeSchedule()
-        for (dateKey, times) in persisted {
-            cached[dateKey] = times
-        }
-
-        guard let data = try? JSONEncoder().encode(cached) else { return }
-        Self.sharedDefaults.set(data, forKey: Self.authoritativeScheduleKey)
-        Self.sharedDefaults.synchronize()
     }
 
     static func defaultDateKey(for date: Date = Date()) -> String {
@@ -509,33 +475,6 @@ enum PrayerEngine {
         if dateKey <= first { return first }
         if dateKey >= last { return last }
         return Self.availableDateKeys.last(where: { $0 <= dateKey }) ?? first
-    }
-
-    private static func mergeCachedAuthoritativeSchedule(into schedule: inout [String: [PrayerKey: String]]) {
-        for (dateKey, values) in Self.cachedAuthoritativeSchedule() {
-            let times = Dictionary(uniqueKeysWithValues: values.compactMap { rawKey, value -> (PrayerKey, String)? in
-                guard let key = PrayerKey(rawValue: rawKey), Self.isValidTime(value) else { return nil }
-                return (key, value)
-            })
-
-            guard times.count == Self.displayOrder.count else { continue }
-            schedule[dateKey] = times
-        }
-    }
-
-    private static func cachedAuthoritativeSchedule() -> [String: [String: String]] {
-        guard let data = Self.sharedDefaults.data(forKey: Self.authoritativeScheduleKey),
-              let cached = try? JSONDecoder().decode([String: [String: String]].self, from: data) else {
-            return [:]
-        }
-
-        return cached
-    }
-
-    private static func isValidTime(_ value: String) -> Bool {
-        let parts = value.split(separator: ":").compactMap { Int($0) }
-        guard parts.count == 2 else { return false }
-        return (0...23).contains(parts[0]) && (0...59).contains(parts[1])
     }
 
     static func nextPrayer(for dateKey: String, now: Date = Date()) -> PrayerTime? {

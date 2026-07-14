@@ -679,11 +679,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
         adhkarDelayMinutes = savedDelay == 0 ? 5 : savedDelay
 
         let savedAdhkarPrayerIDs = UserDefaults.standard.stringArray(forKey: Self.adhkarPrayerIDsKey)
-        if let savedAdhkarPrayerIDs, !savedAdhkarPrayerIDs.isEmpty {
-            enabledAdhkarPrayerIDs = Set(savedAdhkarPrayerIDs)
-        } else {
-            enabledAdhkarPrayerIDs = Set(PrayerEngine.prayerOrder.map(\.rawValue))
-        }
+        enabledAdhkarPrayerIDs = Set(savedAdhkarPrayerIDs ?? [])
 
         let savedAdhkarStyleID = UserDefaults.standard.string(forKey: Self.selectedAdhkarStyleIDKey)
         selectedAdhkarStyleID = savedAdhkarStyleID ?? AdhkarReminderStyle.tasbih.rawValue
@@ -1068,13 +1064,13 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
         enabledPrayerIDs = Set(PrayerEngine.prayerOrder.map(\.rawValue))
         persistPrayerSelection()
 
-        isAdhkarReminderEnabled = true
-        defaults.set(true, forKey: Self.adhkarEnabledKey)
-        enabledAdhkarPrayerIDs = Set(PrayerEngine.prayerOrder.map(\.rawValue))
+        isAdhkarReminderEnabled = false
+        defaults.set(false, forKey: Self.adhkarEnabledKey)
+        enabledAdhkarPrayerIDs = []
         persistAdhkarPrayerSelection()
 
-        isNafahatEnabled = true
-        defaults.set(true, forKey: Self.nafahatEnabledKey)
+        isNafahatEnabled = false
+        defaults.set(false, forKey: Self.nafahatEnabledKey)
     }
 
     private func scheduleUpcomingPrayerNotifications() {

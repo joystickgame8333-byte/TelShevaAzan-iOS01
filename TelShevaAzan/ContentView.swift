@@ -16,7 +16,6 @@ struct ContentView: View {
     @State private var selectedPrayerDetails: PrayerTime?
     @Namespace private var dockSelectionNamespace
     @StateObject private var notifications = PrayerNotificationManager.shared
-    @StateObject private var prayerTimes = PrayerTimesSyncService.shared
 
     private static let nabawiDayImage = Self.loadNabawiImage(named: "nabawi-day")
     private static let nabawiNightImage = Self.loadNabawiImage(named: "nabawi-night")
@@ -115,14 +114,10 @@ struct ContentView: View {
         }
         .onAppear {
             applyVisualRefreshThemeOnce()
-            prayerTimes.refreshIfNeeded()
             notifications.refreshIfEnabled()
             WidgetRefreshCenter.refreshAll()
             WidgetRefreshCenter.refreshAgainSoon()
             presentWelcomeActivationPromptIfNeeded()
-        }
-        .onChange(of: prayerTimes.lastUpdated) { _ in
-            selectedDateKey = PrayerEngine.defaultDateKey(for: now)
         }
         .onReceive(NotificationCenter.default.publisher(for: PrayerNotificationManager.openSettingsNotification)) { _ in
             withAnimation(.easeInOut(duration: 0.18)) {
