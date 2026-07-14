@@ -474,7 +474,7 @@ private extension View {
         if #available(iOSApplicationExtension 17.0, *) {
             containerBackground(for: .widget) { background() }
         } else {
-            background(background())
+            background(background)
         }
     }
 }
