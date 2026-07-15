@@ -6,6 +6,10 @@ on:
     branches:
       - main
 
+concurrency:
+  group: unsigned-ipa-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     # Keep the compiler image stable. `macos-latest` can change Xcode versions
