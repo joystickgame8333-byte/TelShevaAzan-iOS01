@@ -8,7 +8,9 @@ on:
 
 jobs:
   build:
-    runs-on: macos-latest
+    # Keep the compiler image stable. `macos-latest` can change Xcode versions
+    # without notice and invalidates all incremental build output.
+    runs-on: macos-15
 
     steps:
       - name: Checkout
@@ -29,6 +31,14 @@ jobs:
           rm -rf TelShevaAzan.xcodeproj
           xcodegen generate
 
+      - name: Restore Xcode build cache
+        uses: actions/cache@v4
+        with:
+          path: build
+          key: ${{ runner.os }}-xcode-16-derived-${{ hashFiles('project.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-xcode-16-derived-
+
       - name: Build app without App Store signing
         run: |
           set -euxo pipefail
@@ -40,8 +50,10 @@ jobs:
             -sdk iphoneos \
             -destination 'generic/platform=iOS' \
             -derivedDataPath build \
+            -jobs 3 \
             -quiet \
             build \
+            COMPILER_INDEX_STORE_ENABLE=NO \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY=""
@@ -56,8 +68,10 @@ jobs:
             -sdk watchos \
             -destination 'generic/platform=watchOS' \
             -derivedDataPath build \
+            -jobs 3 \
             -quiet \
             build \
+            COMPILER_INDEX_STORE_ENABLE=NO \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY=""
