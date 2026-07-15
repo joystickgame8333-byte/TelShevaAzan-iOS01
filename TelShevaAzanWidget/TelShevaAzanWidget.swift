@@ -532,11 +532,11 @@ struct TelShevaAzanWidgetBundle: WidgetBundle {
 
 private extension View {
     @ViewBuilder
-    func widgetContainerBackground<Background: View>(@ViewBuilder _ background: () -> Background) -> some View {
+    func widgetContainerBackground(_ content: () -> some View) -> some View {
         if #available(iOSApplicationExtension 17.0, *) {
-            containerBackground(for: .widget) { background() }
+            containerBackground(for: .widget) { content() }
         } else {
-            background(background())
+            background(content())
         }
     }
 }
