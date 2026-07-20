@@ -160,6 +160,24 @@ jobs:
           fi
           PLUGIN_PATH="${PLUGIN_PATHS[0]}"
 
+          echo "Force-copy the official prayer calendar into every runtime bundle:"
+          CALENDAR_RESOURCE="TelShevaAzan/Resources/PrayerCalendar/prayer-calendar-v1.json"
+          cp -f "$CALENDAR_RESOURCE" "$APP_PATH/prayer-calendar-v1.json"
+          for IOS_PLUGIN_PATH in "${PLUGIN_PATHS[@]}"; do
+            cp -f "$CALENDAR_RESOURCE" "$IOS_PLUGIN_PATH/prayer-calendar-v1.json"
+            cp -f "TelShevaAzan/Resources/Nabawi/nabawi-day.jpg" "$IOS_PLUGIN_PATH/nabawi-day.jpg"
+            cp -f "TelShevaAzan/Resources/Nabawi/nabawi-night.jpg" "$IOS_PLUGIN_PATH/nabawi-night.jpg"
+          done
+          cp -f "$CALENDAR_RESOURCE" "$WATCH_APP_IN_APP/prayer-calendar-v1.json"
+          cp -f "$CALENDAR_RESOURCE" "$WATCH_PLUGIN_PATH/prayer-calendar-v1.json"
+
+          test -f "$APP_PATH/prayer-calendar-v1.json"
+          test -f "$PLUGIN_PATH/prayer-calendar-v1.json"
+          test -f "$PLUGIN_PATH/nabawi-day.jpg"
+          test -f "$PLUGIN_PATH/nabawi-night.jpg"
+          test -f "$WATCH_APP_IN_APP/prayer-calendar-v1.json"
+          test -f "$WATCH_PLUGIN_PATH/prayer-calendar-v1.json"
+
           echo "Force-copy icon PNGs into the app bundle for TrollStore icon cache:"
           for icon in Icon-20@2x.png Icon-20@3x.png Icon-29@2x.png Icon-29@3x.png Icon-40@2x.png Icon-40@3x.png Icon-60@2x.png Icon-60@3x.png; do
             cp -f "TelShevaAzan/$icon" "$APP_PATH/$icon"
@@ -339,11 +357,17 @@ jobs:
           grep -q 'Payload/TelShevaAzan.app/fajr-alarm-02-morning-clock.wav' ipa-contents.txt
           grep -q 'Payload/TelShevaAzan.app/nabawi-day.jpg' ipa-contents.txt
           grep -q 'Payload/TelShevaAzan.app/nabawi-night.jpg' ipa-contents.txt
+          grep -q 'Payload/TelShevaAzan.app/prayer-calendar-v1.json' ipa-contents.txt
           grep -q 'Payload/TelShevaAzan.app/PlugIns/.*\.appex/' ipa-contents.txt
           grep -q 'Payload/TelShevaAzan.app/PlugIns/TelShevaAzanWidgetExtension.appex/TelShevaAzanWidgetExtension' ipa-contents.txt
+          grep -q 'Payload/TelShevaAzan.app/PlugIns/TelShevaAzanWidgetExtension.appex/prayer-calendar-v1.json' ipa-contents.txt
+          grep -q 'Payload/TelShevaAzan.app/PlugIns/TelShevaAzanWidgetExtension.appex/nabawi-day.jpg' ipa-contents.txt
+          grep -q 'Payload/TelShevaAzan.app/PlugIns/TelShevaAzanWidgetExtension.appex/nabawi-night.jpg' ipa-contents.txt
           grep -q 'Payload/TelShevaAzan.app/PlugIns/TelShevaAzanWidgetExtension.appex/_CodeSignature/CodeResources' ipa-contents.txt
           grep -q 'Payload/TelShevaAzan.app/Watch/TelShevaAzanWatch.app/' ipa-contents.txt
           grep -q 'Payload/TelShevaAzan.app/Watch/TelShevaAzanWatch.app/PlugIns/.*\.appex/' ipa-contents.txt
+          grep -q 'Payload/TelShevaAzan.app/Watch/TelShevaAzanWatch.app/prayer-calendar-v1.json' ipa-contents.txt
+          grep -q 'Payload/TelShevaAzan.app/Watch/TelShevaAzanWatch.app/PlugIns/TelShevaAzanWatchWidgetExtension.appex/prayer-calendar-v1.json' ipa-contents.txt
 
       - name: Upload IPA
         uses: actions/upload-artifact@v4

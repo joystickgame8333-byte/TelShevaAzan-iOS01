@@ -44,7 +44,7 @@ enum PalestinePrayerCalendar {
     )!
 
     private static let stateLock = NSLock()
-    private static var activePayload: PalestinePrayerCalendarPayload = loadInitialPayload()
+    private static var activePayload: PalestinePrayerCalendarPayload? = loadInitialPayload()
 
     private static let sharedDefaults: UserDefaults = {
         #if os(watchOS)
@@ -57,7 +57,7 @@ enum PalestinePrayerCalendar {
     static var dataRevision: Int {
         stateLock.lock()
         defer { stateLock.unlock() }
-        return activePayload.revision
+        return activePayload?.revision ?? 0
     }
 
     static func schedule(for date: Date, calendar: Calendar) -> [PrayerKey: String]? {
@@ -69,7 +69,8 @@ enum PalestinePrayerCalendar {
         let payload = activePayload
         stateLock.unlock()
 
-        guard let sourceDay = payload.days[dateKey],
+        guard let payload,
+              let sourceDay = payload.days[dateKey],
               let cityOffset = payload.cityOffsetsMinutes[cityKey] else {
             return nil
         }
@@ -109,7 +110,7 @@ enum PalestinePrayerCalendar {
             }
 
             stateLock.lock()
-            let shouldUpdate = remotePayload.revision > activePayload.revision
+            let shouldUpdate = remotePayload.revision > (activePayload?.revision ?? 0)
             if shouldUpdate {
                 activePayload = remotePayload
             }
@@ -122,10 +123,8 @@ enum PalestinePrayerCalendar {
         }.resume()
     }
 
-    private static func loadInitialPayload() -> PalestinePrayerCalendarPayload {
-        guard let bundledPayload = bundledPayload() else {
-            fatalError("The official Palestine prayer calendar resource is missing or invalid.")
-        }
+    private static func loadInitialPayload() -> PalestinePrayerCalendarPayload? {
+        guard let bundledPayload = bundledPayload() else { return nil }
 
         guard let cachedData = sharedDefaults.data(forKey: cacheKey),
               let cachedPayload = decodedPayload(from: cachedData),

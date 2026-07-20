@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 CALENDAR_PATH = ROOT / "TelShevaAzan" / "Resources" / "PrayerCalendar" / "prayer-calendar-v1.json"
 PROJECT_PATH = ROOT / "project.yml"
 ENGINE_PATH = ROOT / "TelShevaAzan" / "PrayerSchedule.swift"
+CALENDAR_ENGINE_PATH = ROOT / "TelShevaAzan" / "PalestinePrayerCalendar.swift"
 NOTIFICATIONS_PATH = ROOT / "TelShevaAzan" / "PrayerNotificationManager.swift"
 CONTENT_PATH = ROOT / "TelShevaAzan" / "ContentView.swift"
 WIDGET_DATA_PATH = ROOT / "TelShevaAzanWidget" / "SalatiWidgetData.swift"
@@ -163,6 +164,16 @@ assert automatic_schedule_day(datetime(2026, 7, 20, 21, 34, 55)) == date(2026, 7
 project_text = PROJECT_PATH.read_text(encoding="utf-8")
 resource_path = "TelShevaAzan/Resources/PrayerCalendar/prayer-calendar-v1.json"
 assert project_text.count(resource_path) == 4, "Calendar resource must be bundled in iPhone, widget, watch, and watch widget"
+
+widget_target = project_text.split("  TelShevaAzanWidgetExtension:", 1)[1].split("  TelShevaAzanWatch:", 1)[0]
+watch_target = project_text.split("  TelShevaAzanWatch:", 1)[1].split("  TelShevaAzanWatchWidgetExtension:", 1)[0]
+watch_widget_target = project_text.split("  TelShevaAzanWatchWidgetExtension:", 1)[1].split("schemes:", 1)[0]
+assert resource_path in widget_target and widget_target.count("buildPhase: resources") >= 3
+assert resource_path in watch_target and "buildPhase: resources" in watch_target
+assert resource_path in watch_widget_target and "buildPhase: resources" in watch_widget_target
+
+calendar_engine_text = CALENDAR_ENGINE_PATH.read_text(encoding="utf-8")
+assert 'fatalError("The official Palestine prayer calendar resource is missing or invalid.")' not in calendar_engine_text
 
 engine_text = ENGINE_PATH.read_text(encoding="utf-8")
 assert "telShevaSchedule" not in engine_text, "Legacy year-specific schedule must not return"
