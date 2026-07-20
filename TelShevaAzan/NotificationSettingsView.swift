@@ -1239,8 +1239,7 @@ struct NotificationSettingsView: View {
         }
 
         AppThemeStorage.defaults.synchronize()
-        WidgetRefreshCenter.refreshAll()
-        WidgetRefreshCenter.refreshAgainSoon()
+        WidgetRefreshCenter.refreshAll(force: true)
     }
 
     private func visualThemeSubtitle(for visualTheme: PrayerVisualTheme) -> String {

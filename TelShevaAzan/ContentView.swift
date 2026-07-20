@@ -8,7 +8,7 @@ struct ContentView: View {
     @AppStorage(AppThemeStorage.dayThemeKey, store: AppThemeStorage.defaults) private var selectedDayThemeID = PrayerVisualTheme.defaultDay.rawValue
     @AppStorage("welcomeActivationPromptCompleted") private var welcomeActivationPromptCompleted = false
     @State private var now = Date()
-    @State private var selectedDateKey = PrayerEngine.defaultDateKey()
+    @State private var selectedDateKey = PrayerEngine.automaticScheduleDateKey()
     @State private var followsToday = true
     @State private var selectedTab: HomeDockItem = .schedule
     @State private var tabTransitionEdge: Edge = .leading
@@ -101,16 +101,15 @@ struct ContentView: View {
             }
         }
         .onChange(of: selectedNightThemeID) { _ in
-            WidgetRefreshCenter.refreshAll()
+            WidgetRefreshCenter.refreshAll(force: true)
         }
         .onChange(of: selectedDayThemeID) { _ in
-            WidgetRefreshCenter.refreshAll()
+            WidgetRefreshCenter.refreshAll(force: true)
         }
         .onChange(of: scenePhase) { phase in
             if phase == .active {
                 refreshPrayerCalendarIfNeeded()
                 WidgetRefreshCenter.refreshAll()
-                WidgetRefreshCenter.refreshAgainSoon()
             }
         }
         .onAppear {
@@ -118,12 +117,18 @@ struct ContentView: View {
             refreshPrayerCalendarIfNeeded()
             notifications.refreshIfEnabled()
             WidgetRefreshCenter.refreshAll()
-            WidgetRefreshCenter.refreshAgainSoon()
             presentWelcomeActivationPromptIfNeeded()
         }
         .onReceive(NotificationCenter.default.publisher(for: PrayerNotificationManager.openSettingsNotification)) { _ in
             withAnimation(.easeInOut(duration: 0.18)) {
                 selectedTab = .notifications
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: PrayerNotificationManager.openScheduleNotification)) { _ in
+            followsToday = true
+            updateScheduleClock(Date())
+            withAnimation(.easeInOut(duration: 0.18)) {
+                selectedTab = .schedule
             }
         }
         .onOpenURL { url in
@@ -135,6 +140,7 @@ struct ContentView: View {
                 now: now,
                 theme: activeTheme,
                 iqamaTime: iqamaTime(for: prayer),
+                iqamaLocationName: IqamaSchedule.telSheva.locationName,
                 statusText: prayerDetailStatus(for: prayer)
             )
             .presentationDetents([.height(360), .medium])
@@ -311,7 +317,6 @@ struct ContentView: View {
         if activate {
             notifications.enableWelcomeDefaults()
             WidgetRefreshCenter.refreshAll()
-            WidgetRefreshCenter.refreshAgainSoon()
         }
     }
 
@@ -319,10 +324,23 @@ struct ContentView: View {
         guard url.scheme == "telshevaazan" else { return }
 
         let destination = url.host ?? url.path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
-        if destination == "qibla" {
-            tabTransitionEdge = transitionEdge(from: selectedTab, to: .qibla)
+        let targetTab: HomeDockItem
+
+        switch destination {
+        case "schedule":
+            followsToday = true
+            updateScheduleClock(Date())
+            targetTab = .schedule
+        case "qibla":
+            targetTab = .qibla
+        default:
+            return
+        }
+
+        if selectedTab != targetTab {
+            tabTransitionEdge = transitionEdge(from: selectedTab, to: targetTab)
             withAnimation(.easeInOut(duration: 0.24)) {
-                selectedTab = .qibla
+                selectedTab = targetTab
             }
         }
     }
@@ -412,7 +430,8 @@ struct ContentView: View {
     }
 
     private var header: some View {
-        let dateSummary = "\(PrayerEngine.longDateLabel(for: selectedDateKey)) · \(PrayerEngine.hijriDateLabel(for: selectedDateKey))"
+        let selectedDateSummary = "\(PrayerEngine.longDateLabel(for: selectedDateKey)) · \(PrayerEngine.hijriDateLabel(for: selectedDateKey))"
+        let dateSummary = isShowingTomorrowSchedule ? "مواقيت الغد · \(selectedDateSummary)" : selectedDateSummary
         let timeSummary = Self.timeWithSecondsFormatter.string(from: now)
 
         return VStack(alignment: .center, spacing: 5) {
@@ -746,7 +765,7 @@ struct ContentView: View {
     private func updateScheduleClock(_ value: Date) {
         now = value
         if followsToday {
-            selectedDateKey = PrayerEngine.defaultDateKey(for: value)
+            selectedDateKey = PrayerEngine.automaticScheduleDateKey(for: value)
         }
     }
 
@@ -950,8 +969,8 @@ struct ContentView: View {
             .buttonStyle(CompactButtonStyle(theme: activeTheme))
             .disabled(!PrayerEngine.canMove(from: selectedDateKey, by: 1))
 
-            Button("اليوم") {
-                selectedDateKey = PrayerEngine.defaultDateKey(for: now)
+            Button("الآن") {
+                selectedDateKey = PrayerEngine.automaticScheduleDateKey(for: now)
                 followsToday = true
             }
             .buttonStyle(CompactButtonStyle(theme: activeTheme))
@@ -1014,11 +1033,13 @@ struct ContentView: View {
                         .lineLimit(1)
                         .minimumScaleFactor(0.78)
 
-                    Text("الإقامة \(iqamaTime(for: item))")
-                        .font(.system(size: 9.5, weight: .bold, design: .rounded))
-                        .foregroundStyle(activeTheme.secondaryText.opacity(isActive ? 0.92 : 0.68))
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.70)
+                    if let iqamaTime = iqamaTime(for: item) {
+                        Text("الإقامة \(iqamaTime)")
+                            .font(.system(size: 9.5, weight: .bold, design: .rounded))
+                            .foregroundStyle(activeTheme.secondaryText.opacity(isActive ? 0.92 : 0.68))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.70)
+                    }
                 }
 
                 Spacer()
@@ -1086,6 +1107,10 @@ struct ContentView: View {
         PrayerVisualTheme.selected(isNight: isNight, nightID: selectedNightThemeID, dayID: selectedDayThemeID)
     }
 
+    private var isShowingTomorrowSchedule: Bool {
+        followsToday && selectedDateKey != PrayerEngine.defaultDateKey(for: now)
+    }
+
     private var selectedDateBinding: Binding<Date> {
         Binding<Date>(
             get: {
@@ -1094,7 +1119,7 @@ struct ContentView: View {
             set: { date in
                 let dateKey = PrayerEngine.defaultDateKey(for: date)
                 selectedDateKey = dateKey
-                followsToday = dateKey == PrayerEngine.defaultDateKey(for: now)
+                followsToday = dateKey == PrayerEngine.automaticScheduleDateKey(for: now)
             }
         )
     }
@@ -1338,24 +1363,9 @@ struct ContentView: View {
         return "مضى على \(previous.title) \(elapsedText(since: previous.date))"
     }
 
-    private func iqamaTime(for prayer: PrayerTime) -> String {
-        let date = prayer.date.addingTimeInterval(TimeInterval(iqamaDelayMinutes(for: prayer.key) * 60))
+    private func iqamaTime(for prayer: PrayerTime) -> String? {
+        guard let date = IqamaSchedule.telSheva.iqamaDate(for: prayer) else { return nil }
         return timeText(for: date)
-    }
-
-    private func iqamaDelayMinutes(for key: PrayerKey) -> Int {
-        switch key {
-        case .fajr:
-            return 25
-        case .dhuhr, .sunrise:
-            return 15
-        case .asr:
-            return 17
-        case .maghrib:
-            return 8
-        case .isha:
-            return 15
-        }
     }
 
     private func prayerDetailStatus(for prayer: PrayerTime) -> String {
@@ -1426,8 +1436,7 @@ struct ContentView: View {
         AppThemeStorage.defaults.set(selectedDayThemeID, forKey: AppThemeStorage.dayThemeKey)
         AppThemeStorage.defaults.set(true, forKey: visualRefreshKey)
         AppThemeStorage.defaults.synchronize()
-        WidgetRefreshCenter.refreshAll()
-        WidgetRefreshCenter.refreshAgainSoon()
+        WidgetRefreshCenter.refreshAll(force: true)
     }
 
     private func refreshPrayerCalendarIfNeeded() {
@@ -1436,7 +1445,6 @@ struct ContentView: View {
             now = Date()
             notifications.refreshIfEnabled()
             WidgetRefreshCenter.refreshAll(force: true)
-            WidgetRefreshCenter.refreshAgainSoon()
         }
     }
 }
@@ -1445,7 +1453,8 @@ private struct PrayerDetailsSheet: View {
     let prayer: PrayerTime
     let now: Date
     let theme: PrayerVisualTheme
-    let iqamaTime: String
+    let iqamaTime: String?
+    let iqamaLocationName: String
     let statusText: String
 
     var body: some View {
@@ -1463,11 +1472,11 @@ private struct PrayerDetailsSheet: View {
                     Spacer()
 
                     VStack(alignment: .trailing, spacing: 4) {
-                        Text("تفاصيل الصلاة")
+                        Text(prayer.key == .sunrise ? "تفاصيل الشروق" : "تفاصيل الصلاة")
                             .font(.caption.weight(.black))
                             .foregroundStyle(theme.accent)
 
-                        Text("صلاة \(prayer.title)")
+                        Text(prayer.key == .sunrise ? "وقت الشروق" : "صلاة \(prayer.title)")
                             .font(.system(size: 30, weight: .black, design: .rounded))
                             .foregroundStyle(theme.primaryText)
                             .lineLimit(1)
@@ -1475,8 +1484,12 @@ private struct PrayerDetailsSheet: View {
                 }
 
                 HStack(spacing: 10) {
-                    detailTile(title: "الإقامة", value: iqamaTime, highlighted: true)
-                    detailTile(title: "الأذان", value: prayer.time, highlighted: false)
+                    if let iqamaTime {
+                        detailTile(title: "إقامة \(iqamaLocationName)", value: iqamaTime, highlighted: true)
+                        detailTile(title: "الأذان", value: prayer.time, highlighted: false)
+                    } else {
+                        detailTile(title: "وقت الشروق", value: prayer.time, highlighted: true)
+                    }
                 }
 
                 VStack(alignment: .trailing, spacing: 8) {
@@ -1529,6 +1542,14 @@ private struct PrayerDetailsSheet: View {
     }
 
     private var detailMessage: String {
+        if prayer.key == .sunrise {
+            if prayer.date > now {
+                return "هذا وقت شروق الشمس، ولا توجد له إقامة أو أذان صلاة."
+            }
+
+            return "مضى وقت شروق الشمس، ويمكنك متابعة موعد الصلاة القادمة من جدول المواقيت."
+        }
+
         if prayer.date > now {
             return "تقدر تتابع الوقت من الواجهة وتراجع صف المواقيت لمعرفة الصلاة القادمة."
         }

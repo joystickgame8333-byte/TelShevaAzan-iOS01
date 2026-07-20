@@ -53,6 +53,29 @@ struct DaySchedule {
     }
 }
 
+struct IqamaSchedule {
+    let locationID: String
+    let locationName: String
+    private let delaysMinutes: [PrayerKey: Int]
+
+    static let telSheva = IqamaSchedule(
+        locationID: "telSheva",
+        locationName: "تل السبع",
+        delaysMinutes: [
+            .fajr: 25,
+            .dhuhr: 15,
+            .asr: 17,
+            .maghrib: 8,
+            .isha: 15
+        ]
+    )
+
+    func iqamaDate(for prayer: PrayerTime) -> Date? {
+        guard let delayMinutes = delaysMinutes[prayer.key] else { return nil }
+        return prayer.date.addingTimeInterval(TimeInterval(delayMinutes * 60))
+    }
+}
+
 enum PrayerEngine {
     static let timeZone = TimeZone(identifier: "Asia/Jerusalem")!
     static let calendar: Calendar = {
@@ -151,9 +174,27 @@ enum PrayerEngine {
         return events.first
     }
 
+    static func automaticScheduleDateKey(for date: Date = Date()) -> String {
+        let todayKey = Self.dateKey(for: date)
+        let todaySchedule = Self.schedule(for: todayKey)
+
+        guard let ishaTime = todaySchedule.times[.isha],
+              let ishaDate = Self.date(from: todayKey, time: ishaTime),
+              date >= ishaDate,
+              let tomorrowKey = Self.dateKey(from: todayKey, offset: 1) else {
+            return todayKey
+        }
+
+        return tomorrowKey
+    }
+
     static func previousPrayer(for dateKey: String, now: Date = Date()) -> PrayerTime? {
         let daySchedule = Self.schedule(for: dateKey)
         let events = Self.prayerEvents(for: daySchedule.dateKey)
+
+        if daySchedule.dateKey > Self.dateKey(for: now) {
+            return nil
+        }
 
         if daySchedule.dateKey == Self.dateKey(for: now) {
             if let previous = events.last(where: { $0.date <= now }) {

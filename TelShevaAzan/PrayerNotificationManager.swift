@@ -580,6 +580,7 @@ enum NafahatQuietWindow: String, CaseIterable, Identifiable {
 
 final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotificationCenterDelegate {
     static let openSettingsNotification = Notification.Name("PrayerNotificationManagerOpenSettings")
+    static let openScheduleNotification = Notification.Name("PrayerNotificationManagerOpenSchedule")
     static let presentFajrAlarmNotification = Notification.Name("PrayerNotificationManagerPresentFajrAlarm")
 
     private static let enabledKey = "prayer_notifications_enabled"
@@ -626,11 +627,14 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
     @Published private(set) var pendingFajrAlarmPresentation: FajrAlarmPresentation?
 
     private let center = UNUserNotificationCenter.current()
-    private let notificationPrefix = "tel-sheva-prayer-"
+    private let legacyNotificationPrefix = "tel-sheva-prayer-"
+    private let scheduledNotificationPrefix = "tel-sheva-prayer-scheduled-"
+    private let previewNotificationPrefix = "tel-sheva-prayer-preview"
     private let previewNotificationIdentifier = "tel-sheva-prayer-preview"
     private let maxPendingNotifications = 60
     private let defaults = UserDefaults.standard
     private var pendingRescheduleWork: DispatchWorkItem?
+    private var schedulingGeneration = 0
 
     private var selectedSound: PrayerNotificationSound {
         PrayerNotificationSound(rawValue: selectedSoundID) ?? .originalAdhan
@@ -666,7 +670,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
 
     private override init() {
         let savedPrayerIDs = UserDefaults.standard.stringArray(forKey: Self.enabledPrayerIDsKey)
-        if let savedPrayerIDs, !savedPrayerIDs.isEmpty {
+        if let savedPrayerIDs {
             enabledPrayerIDs = Set(savedPrayerIDs)
         } else {
             enabledPrayerIDs = Set(PrayerEngine.prayerOrder.map(\.rawValue))
@@ -769,6 +773,9 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
     }
 
     func disable() {
+        pendingRescheduleWork?.cancel()
+        pendingRescheduleWork = nil
+        schedulingGeneration &+= 1
         isEnabled = false
         defaults.set(false, forKey: Self.enabledKey)
         removeScheduledPrayerNotifications()
@@ -1074,19 +1081,47 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
     }
 
     private func scheduleUpcomingPrayerNotifications() {
+        schedulingGeneration &+= 1
+        let generation = schedulingGeneration
         let events = upcomingNotificationEvents()
-        removeScheduledPrayerNotifications {
-            for event in events {
-                self.center.add(self.request(for: event))
-            }
 
+        removeScheduledPrayerNotifications {
             DispatchQueue.main.async {
-                if self.enabledPrayerIDs.isEmpty && !self.isNafahatEnabled {
-                    self.statusText = "اختر صلاة واحدة على الأقل للتنبيه"
-                } else {
-                    self.statusText = events.isEmpty ? "لا توجد صلوات قادمة في الجدول" : "التنبيهات مفعلة للصلوات المختارة"
-                }
+                guard self.isEnabled, self.schedulingGeneration == generation else { return }
+                self.addScheduledEvents(events, generation: generation)
             }
+        }
+    }
+
+    private func addScheduledEvents(_ events: [ScheduledPrayerNotification], generation: Int) {
+        guard !events.isEmpty else {
+            statusText = enabledPrayerIDs.isEmpty && !isNafahatEnabled
+                ? "اختر صلاة واحدة على الأقل للتنبيه"
+                : "لا توجد صلوات قادمة في الجدول"
+            return
+        }
+
+        let group = DispatchGroup()
+        let failureLock = NSLock()
+        var failureCount = 0
+
+        for event in events {
+            group.enter()
+            center.add(request(for: event)) { error in
+                if error != nil {
+                    failureLock.lock()
+                    failureCount += 1
+                    failureLock.unlock()
+                }
+                group.leave()
+            }
+        }
+
+        group.notify(queue: .main) {
+            guard self.isEnabled, self.schedulingGeneration == generation else { return }
+            self.statusText = failureCount == 0
+                ? "تم جدولة \(events.count) تنبيهًا للصلوات المختارة"
+                : "تعذر جدولة \(failureCount) من أصل \(events.count) تنبيهًا"
         }
     }
 
@@ -1135,12 +1170,19 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
         content.title = "حان وقت صلاة \(prayer.title)"
         content.body = "صلاتي • \(prayer.time)"
         content.sound = notificationSound
+        content.interruptionLevel = .timeSensitive
+        content.threadIdentifier = "tel-sheva-adhan"
+        content.userInfo = [
+            "notificationKind": "adhan",
+            "prayerKey": prayer.key.rawValue,
+            "dateKey": PrayerEngine.defaultDateKey(for: prayer.date)
+        ]
 
         var components = PrayerEngine.calendar.dateComponents([.year, .month, .day, .hour, .minute], from: date)
         components.timeZone = PrayerEngine.timeZone
 
         let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
-        let identifier = notificationPrefix + PrayerEngine.calendarIdentifier(for: date) + "-adhan-" + prayer.key.rawValue
+        let identifier = scheduledNotificationPrefix + PrayerEngine.calendarIdentifier(for: date) + "-adhan-" + prayer.key.rawValue
         return UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
     }
 
@@ -1160,7 +1202,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
         components.timeZone = PrayerEngine.timeZone
 
         let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
-        let identifier = notificationPrefix + PrayerEngine.calendarIdentifier(for: date) + "-fajr-alarm-" + (isWakeBefore ? "before" : prayer.key.rawValue)
+        let identifier = scheduledNotificationPrefix + PrayerEngine.calendarIdentifier(for: date) + "-fajr-alarm-" + (isWakeBefore ? "before" : prayer.key.rawValue)
         return UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
     }
 
@@ -1174,7 +1216,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
         components.timeZone = PrayerEngine.timeZone
 
         let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
-        let identifier = notificationPrefix + PrayerEngine.calendarIdentifier(for: date) + "-adhkar-" + prayer.key.rawValue
+        let identifier = scheduledNotificationPrefix + PrayerEngine.calendarIdentifier(for: date) + "-adhkar-" + prayer.key.rawValue
         return UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
     }
 
@@ -1188,7 +1230,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
         components.timeZone = PrayerEngine.timeZone
 
         let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
-        let identifier = notificationPrefix + PrayerEngine.calendarIdentifier(for: date) + "-nafahat"
+        let identifier = scheduledNotificationPrefix + PrayerEngine.calendarIdentifier(for: date) + "-nafahat"
         return UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
     }
 
@@ -1376,7 +1418,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
         }
 
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: TimeInterval(max(fajrAlarmSnoozeMinutes, 1) * 60), repeats: false)
-        let identifier = notificationPrefix + "fajr-alarm-snooze-" + PrayerEngine.calendarIdentifier(for: Date())
+        let identifier = legacyNotificationPrefix + "fajr-alarm-snooze-" + PrayerEngine.calendarIdentifier(for: Date())
         let request = UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
 
         center.add(request) { [weak self] error in
@@ -1457,10 +1499,23 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
 
             let identifiers = requests
                 .map(\.identifier)
-                .filter { $0.hasPrefix(self.notificationPrefix) }
+                .filter { self.isManagedScheduledIdentifier($0) }
             self.center.removePendingNotificationRequests(withIdentifiers: identifiers)
             completion?()
         }
+    }
+
+    private func isManagedScheduledIdentifier(_ identifier: String) -> Bool {
+        if identifier.hasPrefix(scheduledNotificationPrefix) {
+            return true
+        }
+
+        guard identifier.hasPrefix(legacyNotificationPrefix),
+              !identifier.hasPrefix(previewNotificationPrefix),
+              !identifier.contains("-snooze-") else {
+            return false
+        }
+        return true
     }
 
     private func removePendingFajrAlarmNotifications(for dateKey: String?) {
@@ -1469,7 +1524,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
 
             let identifiers = requests
                 .filter { request in
-                    guard request.identifier.hasPrefix(self.notificationPrefix),
+                    guard request.identifier.hasPrefix(self.legacyNotificationPrefix),
                           request.identifier.contains("fajr-alarm") else {
                         return false
                     }
@@ -1506,8 +1561,12 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
     }
 
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse) async {
+        let notificationKind = response.notification.request.content.userInfo["notificationKind"] as? String
         await MainActor.run {
-            NotificationCenter.default.post(name: Self.openSettingsNotification, object: nil)
+            let notificationName = notificationKind == "adhan"
+                ? Self.openScheduleNotification
+                : Self.openSettingsNotification
+            NotificationCenter.default.post(name: notificationName, object: nil)
         }
     }
 

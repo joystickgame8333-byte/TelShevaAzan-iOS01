@@ -8,6 +8,14 @@ enum AppThemeStorage {
     static let defaults = UserDefaults(suiteName: groupIdentifier) ?? .standard
 }
 
+enum SalatiWidgetKind {
+    static let nextPrayer = "com.omaralasam.telshevaazan.widget.nextPrayer"
+    static let dailySchedule = "com.omaralasam.telshevaazan.widget.dailySchedule"
+    static let iqama = "com.omaralasam.telshevaazan.widget.iqama"
+
+    static let all = [nextPrayer, dailySchedule, iqama]
+}
+
 enum ArabicDisplay {
     static func rtl(_ text: String) -> String {
         "\u{202B}\(text)\u{202C}"

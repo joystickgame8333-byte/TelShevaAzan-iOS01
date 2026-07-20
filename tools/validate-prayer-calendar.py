@@ -14,6 +14,11 @@ PROJECT_PATH = ROOT / "project.yml"
 ENGINE_PATH = ROOT / "TelShevaAzan" / "PrayerSchedule.swift"
 NOTIFICATIONS_PATH = ROOT / "TelShevaAzan" / "PrayerNotificationManager.swift"
 CONTENT_PATH = ROOT / "TelShevaAzan" / "ContentView.swift"
+WIDGET_DATA_PATH = ROOT / "TelShevaAzanWidget" / "SalatiWidgetData.swift"
+WIDGET_BUNDLE_PATH = ROOT / "TelShevaAzanWidget" / "TelShevaAzanWidget.swift"
+WIDGET_VIEWS_PATH = ROOT / "TelShevaAzanWidget" / "SalatiWidgetViews.swift"
+WIDGET_REFRESH_PATH = ROOT / "TelShevaAzan" / "WidgetRefreshCenter.swift"
+THEME_PATH = ROOT / "TelShevaAzan" / "AppTheme.swift"
 PRAYERS = ("fajr", "sunrise", "dhuhr", "asr", "maghrib", "isha")
 EXPECTED_DAYS_SHA256 = "85406025fe86fcc9be99e3797d6b2f9215575887eaa9826542442d8077c1a7d9"
 
@@ -72,6 +77,16 @@ assert summer_july_20 == {
     "isha": "21:21",
 }, "July 20 must match the verified Tel Sheva reference app screenshot"
 
+summer_july_21 = {prayer: offset(days["07-21"][prayer], 62) for prayer in PRAYERS}
+assert summer_july_21 == {
+    "fajr": "04:14",
+    "sunrise": "05:47",
+    "dhuhr": "12:47",
+    "asr": "16:27",
+    "maghrib": "19:51",
+    "isha": "21:20",
+}, "After Isha, the July 21 schedule must match the Palestine reference screenshot"
+
 
 def prayer_events(day: date, total_offset_minutes: int = 62) -> list[tuple[str, datetime]]:
     values = days[day.strftime("%m-%d")]
@@ -92,6 +107,25 @@ def live_prayer_pair(now: datetime) -> tuple[tuple[str, datetime], tuple[str, da
     if upcoming is None:
         upcoming = prayer_events(today + timedelta(days=1))[0]
     return previous, upcoming
+
+
+def next_iqama(now: datetime) -> tuple[str, datetime]:
+    delays = {"fajr": 25, "dhuhr": 15, "asr": 17, "maghrib": 8, "isha": 15}
+    for day_offset in (0, 1):
+        events = prayer_events(now.date() + timedelta(days=day_offset))
+        upcoming_iqamas = [
+            (prayer, adhan + timedelta(minutes=delays[prayer]))
+            for prayer, adhan in events
+            if adhan + timedelta(minutes=delays[prayer]) > now
+        ]
+        if upcoming_iqamas:
+            return min(upcoming_iqamas, key=lambda event: event[1])
+    raise AssertionError("Expected an iqama event within two calendar days")
+
+
+def automatic_schedule_day(now: datetime) -> date:
+    isha = next(event_time for prayer, event_time in prayer_events(now.date()) if prayer == "isha")
+    return now.date() + timedelta(days=1) if now >= isha else now.date()
 
 
 screenshot_now = datetime(2026, 7, 20, 20, 42, 10, 250000)
@@ -115,6 +149,17 @@ previous, upcoming = live_prayer_pair(exact_fajr)
 assert previous[0] == "fajr" and previous[1] == exact_fajr
 assert upcoming[0] == "dhuhr" and upcoming[1].date() == date(2026, 7, 21)
 
+prayer, iqama = next_iqama(datetime(2026, 7, 20, 19, 55))
+assert prayer == "maghrib" and iqama.strftime("%H:%M") == "20:00"
+prayer, iqama = next_iqama(datetime(2026, 7, 20, 20, 1))
+assert prayer == "isha" and iqama.strftime("%H:%M") == "21:36"
+prayer, iqama = next_iqama(datetime(2026, 7, 20, 21, 22))
+assert prayer == "isha" and iqama.strftime("%H:%M") == "21:36"
+
+assert automatic_schedule_day(datetime(2026, 7, 20, 21, 20, 59)) == date(2026, 7, 20)
+assert automatic_schedule_day(datetime(2026, 7, 20, 21, 21)) == date(2026, 7, 21)
+assert automatic_schedule_day(datetime(2026, 7, 20, 21, 34, 55)) == date(2026, 7, 21)
+
 project_text = PROJECT_PATH.read_text(encoding="utf-8")
 resource_path = "TelShevaAzan/Resources/PrayerCalendar/prayer-calendar-v1.json"
 assert project_text.count(resource_path) == 4, "Calendar resource must be bundled in iPhone, widget, watch, and watch widget"
@@ -125,11 +170,54 @@ assert "availableDateKeys" not in engine_text, "Date availability must not depen
 
 notifications_text = NOTIFICATIONS_PATH.read_text(encoding="utf-8")
 assert notifications_text.count("PrayerEngine.upcomingDateKeys(from: now, count: 60)") == 2
+assert "if let savedPrayerIDs {" in notifications_text, "An intentionally empty prayer selection must survive app relaunch"
+assert 'scheduledNotificationPrefix = "tel-sheva-prayer-scheduled-"' in notifications_text
+assert "!identifier.hasPrefix(previewNotificationPrefix)" in notifications_text
+assert '!identifier.contains("-snooze-")' in notifications_text
+assert "schedulingGeneration == generation" in notifications_text
+assert "تعذر جدولة" in notifications_text
+assert "content.interruptionLevel = .timeSensitive" in notifications_text
+assert '"notificationKind": "adhan"' in notifications_text
+assert "openScheduleNotification" in notifications_text
 
 content_text = CONTENT_PATH.read_text(encoding="utf-8")
 assert "PrayerEngine.remainingSeconds(until: next.date, now: now)" in content_text
 assert "PrayerEngine.elapsedSeconds(since: date, now: now)" in content_text
+assert "PrayerNotificationManager.openScheduleNotification" in content_text
+assert 'detailTile(title: "وقت الشروق", value: prayer.time, highlighted: true)' in content_text
+assert "IqamaSchedule.telSheva.iqamaDate(for: prayer)" in content_text
 assert ".rounded(.up)" in engine_text, "Remaining time must round up to match the displayed wall clock second"
+
+tel_sheva_iqama_delays = {
+    ".fajr": 25,
+    ".dhuhr": 15,
+    ".asr": 17,
+    ".maghrib": 8,
+    ".isha": 15,
+}
+for prayer_key, delay in tel_sheva_iqama_delays.items():
+    assert f"{prayer_key}: {delay}" in engine_text
+assert ".sunrise:" not in engine_text.split("static let telSheva = IqamaSchedule(", 1)[1].split("]", 1)[0]
+
+widget_data_text = WIDGET_DATA_PATH.read_text(encoding="utf-8")
+widget_bundle_text = WIDGET_BUNDLE_PATH.read_text(encoding="utf-8")
+widget_views_text = WIDGET_VIEWS_PATH.read_text(encoding="utf-8")
+widget_refresh_text = WIDGET_REFRESH_PATH.read_text(encoding="utf-8")
+theme_text = THEME_PATH.read_text(encoding="utf-8")
+assert "IqamaSchedule.telSheva.iqamaDate(for: prayer)" in widget_data_text
+assert "prayer.key != .sunrise" in widget_data_text
+assert "PrayerEngine.automaticScheduleDateKey(for: date)" in widget_data_text
+assert "entry.scheduleDate" in widget_views_text
+assert "SalatiText.tomorrowTimes" in widget_views_text
+assert "SalatiDateWidget" not in widget_bundle_text
+assert widget_bundle_text.count("struct Salati") == 3
+assert "SalatiWidgetKind.all" in widget_refresh_text
+for kind in ("nextPrayer", "dailySchedule", "iqama"):
+    assert f"static let {kind}" in theme_text
+assert not re.search(r"telshevaazan\.(?:nextPrayer|dailySchedule|date\.today|iqama)\.v\d+", theme_text + widget_bundle_text)
+assert "static func automaticScheduleDateKey(for date: Date = Date())" in engine_text
+assert "PrayerEngine.automaticScheduleDateKey(for: value)" in content_text
+assert 'dateSummary = isShowingTomorrowSchedule ? "مواقيت الغد' in content_text
 
 print("Prayer calendar validation passed")
 print(f"  days: {len(days)}")
@@ -137,3 +225,6 @@ print(f"  prayer values: {len(days) * len(PRAYERS)}")
 print(f"  revision: {payload['revision']}")
 print(f"  canonical SHA-256: {actual_hash}")
 print("  prayer transitions: before Isha, exact Isha, midnight, and exact Fajr passed")
+print("  iqama transitions: Maghrib and Isha post-adhan windows passed")
+print("  automatic schedule: today before Isha and tomorrow from exact Isha passed")
+print("  widget structure: stable kinds, shared iqama source, and three widgets passed")
