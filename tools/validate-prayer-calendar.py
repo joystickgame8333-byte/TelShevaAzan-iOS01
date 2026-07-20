@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import re
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 
@@ -12,6 +13,7 @@ CALENDAR_PATH = ROOT / "TelShevaAzan" / "Resources" / "PrayerCalendar" / "prayer
 PROJECT_PATH = ROOT / "project.yml"
 ENGINE_PATH = ROOT / "TelShevaAzan" / "PrayerSchedule.swift"
 NOTIFICATIONS_PATH = ROOT / "TelShevaAzan" / "PrayerNotificationManager.swift"
+CONTENT_PATH = ROOT / "TelShevaAzan" / "ContentView.swift"
 PRAYERS = ("fajr", "sunrise", "dhuhr", "asr", "maghrib", "isha")
 EXPECTED_DAYS_SHA256 = "85406025fe86fcc9be99e3797d6b2f9215575887eaa9826542442d8077c1a7d9"
 
@@ -70,6 +72,49 @@ assert summer_july_20 == {
     "isha": "21:21",
 }, "July 20 must match the verified Tel Sheva reference app screenshot"
 
+
+def prayer_events(day: date, total_offset_minutes: int = 62) -> list[tuple[str, datetime]]:
+    values = days[day.strftime("%m-%d")]
+    events: list[tuple[str, datetime]] = []
+    for prayer in ("fajr", "dhuhr", "asr", "maghrib", "isha"):
+        hour, minute = map(int, offset(values[prayer], total_offset_minutes).split(":"))
+        events.append((prayer, datetime(day.year, day.month, day.day, hour, minute)))
+    return events
+
+
+def live_prayer_pair(now: datetime) -> tuple[tuple[str, datetime], tuple[str, datetime]]:
+    today = now.date()
+    today_events = prayer_events(today)
+    previous = next((event for event in reversed(today_events) if event[1] <= now), None)
+    upcoming = next((event for event in today_events if event[1] > now), None)
+    if previous is None:
+        previous = prayer_events(today - timedelta(days=1))[-1]
+    if upcoming is None:
+        upcoming = prayer_events(today + timedelta(days=1))[0]
+    return previous, upcoming
+
+
+screenshot_now = datetime(2026, 7, 20, 20, 42, 10, 250000)
+previous, upcoming = live_prayer_pair(screenshot_now)
+assert previous[0] == "maghrib" and previous[1].strftime("%H:%M") == "19:52"
+assert upcoming[0] == "isha" and upcoming[1].strftime("%H:%M") == "21:21"
+assert math.ceil((upcoming[1] - screenshot_now).total_seconds()) == 38 * 60 + 50
+
+exact_isha = datetime(2026, 7, 20, 21, 21)
+previous, upcoming = live_prayer_pair(exact_isha)
+assert previous[0] == "isha" and previous[1] == exact_isha
+assert upcoming[0] == "fajr" and upcoming[1].date() == date(2026, 7, 21)
+
+after_midnight = datetime(2026, 7, 21, 0, 0)
+previous, upcoming = live_prayer_pair(after_midnight)
+assert previous[0] == "isha" and previous[1].date() == date(2026, 7, 20)
+assert upcoming[0] == "fajr" and upcoming[1].date() == date(2026, 7, 21)
+
+exact_fajr = upcoming[1]
+previous, upcoming = live_prayer_pair(exact_fajr)
+assert previous[0] == "fajr" and previous[1] == exact_fajr
+assert upcoming[0] == "dhuhr" and upcoming[1].date() == date(2026, 7, 21)
+
 project_text = PROJECT_PATH.read_text(encoding="utf-8")
 resource_path = "TelShevaAzan/Resources/PrayerCalendar/prayer-calendar-v1.json"
 assert project_text.count(resource_path) == 4, "Calendar resource must be bundled in iPhone, widget, watch, and watch widget"
@@ -81,8 +126,14 @@ assert "availableDateKeys" not in engine_text, "Date availability must not depen
 notifications_text = NOTIFICATIONS_PATH.read_text(encoding="utf-8")
 assert notifications_text.count("PrayerEngine.upcomingDateKeys(from: now, count: 60)") == 2
 
+content_text = CONTENT_PATH.read_text(encoding="utf-8")
+assert "PrayerEngine.remainingSeconds(until: next.date, now: now)" in content_text
+assert "PrayerEngine.elapsedSeconds(since: date, now: now)" in content_text
+assert ".rounded(.up)" in engine_text, "Remaining time must round up to match the displayed wall clock second"
+
 print("Prayer calendar validation passed")
 print(f"  days: {len(days)}")
 print(f"  prayer values: {len(days) * len(PRAYERS)}")
 print(f"  revision: {payload['revision']}")
 print(f"  canonical SHA-256: {actual_hash}")
+print("  prayer transitions: before Isha, exact Isha, midnight, and exact Fajr passed")

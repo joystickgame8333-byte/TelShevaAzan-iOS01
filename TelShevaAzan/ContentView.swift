@@ -1319,7 +1319,7 @@ struct ContentView: View {
 
     private func countdownText(for next: PrayerTime?) -> String {
         guard let next else { return "--:--:--" }
-        let seconds = Int(next.date.timeIntervalSince(now))
+        let seconds = PrayerEngine.remainingSeconds(until: next.date, now: now)
         guard seconds > 0 else { return "--:--:--" }
 
         let hours = seconds / 3600
@@ -1377,7 +1377,7 @@ struct ContentView: View {
     }
 
     private func elapsedText(since date: Date) -> String {
-        let seconds = max(0, Int(now.timeIntervalSince(date)))
+        let seconds = PrayerEngine.elapsedSeconds(since: date, now: now)
         let hours = seconds / 3600
         let minutes = (seconds % 3600) / 60
         let remainingSeconds = seconds % 60

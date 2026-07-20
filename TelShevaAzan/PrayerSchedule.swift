@@ -126,6 +126,14 @@ enum PrayerEngine {
         }
     }
 
+    static func remainingSeconds(until date: Date, now: Date = Date()) -> Int {
+        max(0, Int(date.timeIntervalSince(now).rounded(.up)))
+    }
+
+    static func elapsedSeconds(since date: Date, now: Date = Date()) -> Int {
+        max(0, Int(now.timeIntervalSince(date).rounded(.down)))
+    }
+
     static func nextPrayer(for dateKey: String, now: Date = Date()) -> PrayerTime? {
         let daySchedule = Self.schedule(for: dateKey)
         let events = Self.prayerEvents(for: dateKey)
