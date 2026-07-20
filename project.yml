@@ -82,6 +82,7 @@ targets:
       - path: TelShevaAzan/Sounds/fajr-alarm-10-hall-alert.wav
       - path: TelShevaAzan/Resources/Nabawi/nabawi-day.jpg
       - path: TelShevaAzan/Resources/Nabawi/nabawi-night.jpg
+      - path: TelShevaAzan/Resources/PrayerCalendar/prayer-calendar-v1.json
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.omaralasam.telshevaazan
@@ -104,11 +105,13 @@ targets:
           - Info.plist
           - "*.entitlements"
       - path: TelShevaAzan/PrayerSchedule.swift
+      - path: TelShevaAzan/PalestinePrayerCalendar.swift
       - path: TelShevaAzan/AppInfo.swift
       - path: TelShevaAzan/AppTheme.swift
     resources:
       - path: TelShevaAzan/Resources/Nabawi/nabawi-day.jpg
       - path: TelShevaAzan/Resources/Nabawi/nabawi-night.jpg
+      - path: TelShevaAzan/Resources/PrayerCalendar/prayer-calendar-v1.json
     info:
       path: TelShevaAzanWidget/Info.plist
       properties:
@@ -138,7 +141,10 @@ targets:
           - Info.plist
           - "*.entitlements"
       - path: TelShevaAzan/PrayerSchedule.swift
+      - path: TelShevaAzan/PalestinePrayerCalendar.swift
       - path: TelShevaAzan/AppInfo.swift
+    resources:
+      - path: TelShevaAzan/Resources/PrayerCalendar/prayer-calendar-v1.json
     info:
       path: TelShevaAzanWatch/Info.plist
       properties:
@@ -171,7 +177,10 @@ targets:
           - Info.plist
           - "*.entitlements"
       - path: TelShevaAzan/PrayerSchedule.swift
+      - path: TelShevaAzan/PalestinePrayerCalendar.swift
       - path: TelShevaAzan/AppInfo.swift
+    resources:
+      - path: TelShevaAzan/Resources/PrayerCalendar/prayer-calendar-v1.json
     info:
       path: TelShevaAzanWatchWidget/Info.plist
       properties:

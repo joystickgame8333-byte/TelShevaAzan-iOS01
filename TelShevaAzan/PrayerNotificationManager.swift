@@ -1092,7 +1092,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
 
     private func upcomingNotificationEvents() -> [ScheduledPrayerNotification] {
         let now = Date()
-        var events = PrayerEngine.availableDateKeys.flatMap { dateKey in
+        var events = PrayerEngine.upcomingDateKeys(from: now, count: 60).flatMap { dateKey in
             PrayerEngine.prayerOrder.flatMap { key -> [ScheduledPrayerNotification] in
                 guard let time = PrayerEngine.schedule(for: dateKey).times[key],
                       let date = PrayerEngine.date(from: dateKey, time: time) else {
@@ -1222,7 +1222,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
     private func upcomingFajrAlarmEvents(now: Date) -> [ScheduledPrayerNotification] {
         guard isFajrAlarmEnabled else { return [] }
 
-        return PrayerEngine.availableDateKeys.flatMap { dateKey -> [ScheduledPrayerNotification] in
+        return PrayerEngine.upcomingDateKeys(from: now, count: 60).flatMap { dateKey -> [ScheduledPrayerNotification] in
             guard let time = PrayerEngine.schedule(for: dateKey).times[.fajr],
                   let fajrDate = PrayerEngine.date(from: dateKey, time: time) else {
                 return []

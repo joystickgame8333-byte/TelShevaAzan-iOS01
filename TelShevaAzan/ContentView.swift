@@ -108,12 +108,14 @@ struct ContentView: View {
         }
         .onChange(of: scenePhase) { phase in
             if phase == .active {
+                refreshPrayerCalendarIfNeeded()
                 WidgetRefreshCenter.refreshAll()
                 WidgetRefreshCenter.refreshAgainSoon()
             }
         }
         .onAppear {
             applyVisualRefreshThemeOnce()
+            refreshPrayerCalendarIfNeeded()
             notifications.refreshIfEnabled()
             WidgetRefreshCenter.refreshAll()
             WidgetRefreshCenter.refreshAgainSoon()
@@ -1098,11 +1100,7 @@ struct ContentView: View {
     }
 
     private var datePickerRange: ClosedRange<Date> {
-        let firstKey = PrayerEngine.availableDateKeys.first ?? selectedDateKey
-        let lastKey = PrayerEngine.availableDateKeys.last ?? selectedDateKey
-        let start = PrayerEngine.date(from: firstKey, time: "00:00") ?? now
-        let end = PrayerEngine.date(from: lastKey, time: "23:59") ?? now
-        return start...end
+        PrayerEngine.supportedDateRange(around: now)
     }
 
     private func prayerSymbol(for key: PrayerKey) -> String {
@@ -1430,6 +1428,16 @@ struct ContentView: View {
         AppThemeStorage.defaults.synchronize()
         WidgetRefreshCenter.refreshAll()
         WidgetRefreshCenter.refreshAgainSoon()
+    }
+
+    private func refreshPrayerCalendarIfNeeded() {
+        PalestinePrayerCalendar.refreshRemoteIfNeeded { didUpdate in
+            guard didUpdate else { return }
+            now = Date()
+            notifications.refreshIfEnabled()
+            WidgetRefreshCenter.refreshAll(force: true)
+            WidgetRefreshCenter.refreshAgainSoon()
+        }
     }
 }
 

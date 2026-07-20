@@ -20,6 +20,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Validate official prayer calendar
+        run: python3 tools/validate-prayer-calendar.py
+
       - name: Show Xcode version
         run: |
           set -euxo pipefail
