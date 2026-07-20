@@ -14,26 +14,32 @@ import WidgetKit
     SalatiWidgetEntry.preview
 }
 
-#Preview("مواقيت اليوم — كبير", as: .systemLarge) {
-    SalatiPrayerScheduleWidget()
-} timeline: {
-    SalatiWidgetEntry.preview
-}
-
 #Preview("مواقيت اليوم — متوسط", as: .systemMedium) {
     SalatiPrayerScheduleWidget()
 } timeline: {
     SalatiWidgetEntry.preview
 }
 
-#Preview("شاشة القفل — مستطيل", as: .accessoryRectangular) {
-    SalatiNextPrayerWidget()
+#Preview("مواقيت اليوم — كبير", as: .systemLarge) {
+    SalatiPrayerScheduleWidget()
 } timeline: {
     SalatiWidgetEntry.preview
 }
 
 #Preview("الإقامة — صغير", as: .systemSmall) {
     SalatiIqamaWidget()
+} timeline: {
+    SalatiWidgetEntry.preview
+}
+
+#Preview("الإقامة — متوسط", as: .systemMedium) {
+    SalatiIqamaWidget()
+} timeline: {
+    SalatiWidgetEntry.preview
+}
+
+#Preview("شاشة القفل — مستطيل", as: .accessoryRectangular) {
+    SalatiNextPrayerWidget()
 } timeline: {
     SalatiWidgetEntry.preview
 }
@@ -46,12 +52,6 @@ import WidgetKit
 
 #Preview("شاشة القفل — سطر", as: .accessoryInline) {
     SalatiNextPrayerWidget()
-} timeline: {
-    SalatiWidgetEntry.preview
-}
-
-#Preview("الإقامة — مستطيل", as: .accessoryRectangular) {
-    SalatiIqamaWidget()
 } timeline: {
     SalatiWidgetEntry.preview
 }

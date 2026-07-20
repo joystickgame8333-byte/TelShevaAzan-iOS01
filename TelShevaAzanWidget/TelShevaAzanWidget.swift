@@ -13,7 +13,6 @@ struct SalatiNextPrayerWidget: Widget {
         .supportedFamilies([
             .systemSmall,
             .systemMedium,
-            .systemLarge,
             .accessoryInline,
             .accessoryCircular,
             .accessoryRectangular
@@ -43,13 +42,7 @@ struct SalatiIqamaWidget: Widget {
         }
         .configurationDisplayName(SalatiText.nextIqama)
         .description(SalatiText.nextIqamaDescription)
-        .supportedFamilies([
-            .systemSmall,
-            .systemMedium,
-            .accessoryInline,
-            .accessoryCircular,
-            .accessoryRectangular
-        ])
+        .supportedFamilies([.systemSmall, .systemMedium])
     }
 }
 

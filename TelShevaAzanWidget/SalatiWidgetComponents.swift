@@ -9,10 +9,8 @@ enum SalatiText {
     static let tomorrowTimes = "مواقيت الغد"
     static let nextIqama = "الإقامة القادمة"
     static let nextIqamaDescription = "موعد الإقامة القادمة في تل السبع"
-    static let remaining = "متبقي"
-    static let until = "لـ"
-    static let adhan = "الأذان"
-    static let iqama = "الإقامة"
+    static let remainingUntilAdhan = "متبقي حتى الأذان"
+    static let remainingUntilIqama = "متبقي للإقامة"
     static let prayer = "الصلاة"
     static let noTime = "--:--"
 
@@ -23,12 +21,21 @@ enum SalatiText {
     static func prayerAndTime(prayer: String, time: String) -> String {
         "\(prayer)  \(isolatedTime(time))"
     }
+
+    static func nextPrayerSummary(_ prayer: String) -> String {
+        "الصلاة القادمة: \(prayer)"
+    }
+
+    static func iqamaAfterAdhan(prayer: String, minutes: Int) -> String {
+        "إقامة \(prayer) بعد الأذان بـ\(minutes) دقيقة"
+    }
 }
 
 struct SalatiWidgetHeader: View {
     let title: String
     let symbol: String
     let theme: SalatiWidgetTheme
+    var showsLocation = true
 
     var body: some View {
         HStack(spacing: 6) {
@@ -41,11 +48,15 @@ struct SalatiWidgetHeader: View {
                 .font(.system(size: 12, weight: .black, design: .rounded))
                 .foregroundStyle(theme.secondaryText)
                 .lineLimit(1)
+                .minimumScaleFactor(0.76)
+                .layoutPriority(1)
 
-            Spacer(minLength: 4)
-
-            SalatiLocationLabel(theme: theme)
+            if showsLocation {
+                Spacer(minLength: 4)
+                SalatiLocationLabel(theme: theme)
+            }
         }
+        .frame(maxWidth: .infinity, alignment: .trailing)
         .accessibilityElement(children: .combine)
     }
 }
@@ -80,7 +91,8 @@ struct SalatiTimeText: View {
             .monospacedDigit()
             .foregroundStyle(color ?? .primary)
             .lineLimit(1)
-            .minimumScaleFactor(0.72)
+            .minimumScaleFactor(0.68)
+            .fixedSize(horizontal: true, vertical: false)
             .environment(\.layoutDirection, .leftToRight)
             .environment(\.locale, Locale(identifier: "en_US_POSIX"))
     }
@@ -104,9 +116,43 @@ struct SalatiCountdownText: View {
         .monospacedDigit()
         .foregroundStyle(color)
         .lineLimit(1)
-        .minimumScaleFactor(0.58)
+        .minimumScaleFactor(0.54)
         .environment(\.layoutDirection, .leftToRight)
         .environment(\.locale, Locale(identifier: "en_US_POSIX"))
+    }
+}
+
+struct SalatiCountdownRow: View {
+    let label: String
+    let from: Date
+    let target: Date?
+    let theme: SalatiWidgetTheme
+    var compact = false
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Text(label)
+                .font(.system(size: compact ? 9 : 11, weight: .bold, design: .rounded))
+                .foregroundStyle(theme.mutedText)
+                .lineLimit(1)
+                .minimumScaleFactor(0.72)
+
+            Spacer(minLength: 4)
+
+            SalatiCountdownText(
+                from: from,
+                target: target,
+                size: compact ? 13 : 16,
+                color: theme.primaryText
+            )
+        }
+        .padding(.horizontal, compact ? 8 : 10)
+        .padding(.vertical, compact ? 5 : 7)
+        .background(theme.panel, in: RoundedRectangle(cornerRadius: SalatiWidgetMetrics.compactCornerRadius, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: SalatiWidgetMetrics.compactCornerRadius, style: .continuous)
+                .stroke(theme.border, lineWidth: 0.75)
+        }
     }
 }
 
@@ -116,15 +162,15 @@ struct SalatiPrayerColumns: View {
     let theme: SalatiWidgetTheme
     var expanded = false
 
-    private var firstColumn: [PrayerTime] { Array(times.prefix(3)) }
-    private var secondColumn: [PrayerTime] { Array(times.dropFirst(3).prefix(3)) }
+    private var rightColumn: [PrayerTime] { Array(times.prefix(3)) }
+    private var leftColumn: [PrayerTime] { Array(times.dropFirst(3).prefix(3)) }
 
     var body: some View {
         HStack(alignment: .top, spacing: expanded ? 10 : 7) {
-            column(firstColumn)
-            column(secondColumn)
+            column(leftColumn)
+            column(rightColumn)
         }
-        .environment(\.layoutDirection, .rightToLeft)
+        .environment(\.layoutDirection, .leftToRight)
     }
 
     private func column(_ prayers: [PrayerTime]) -> some View {
@@ -139,6 +185,7 @@ struct SalatiPrayerColumns: View {
             }
         }
         .frame(maxWidth: .infinity)
+        .environment(\.layoutDirection, .rightToLeft)
     }
 }
 
@@ -172,13 +219,13 @@ private struct SalatiPrayerCell: View {
             RoundedRectangle(cornerRadius: SalatiWidgetMetrics.compactCornerRadius, style: .continuous)
                 .stroke(isActive ? theme.activeBorder : theme.border, lineWidth: isActive ? 1.1 : 0.7)
         }
-        .overlay(alignment: .trailing) {
+        .overlay(alignment: .leading) {
             if isActive {
                 Capsule()
                     .fill(theme.accent)
                     .frame(width: 3)
                     .padding(.vertical, 6)
-                    .padding(.trailing, 1)
+                    .padding(.leading, 1)
             }
         }
         .accessibilityElement(children: .combine)
