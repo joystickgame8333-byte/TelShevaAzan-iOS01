@@ -271,6 +271,21 @@ struct FajrAlarmPresentation: Identifiable, Equatable {
     let snoozeMinutes: Int
 }
 
+struct PrayerNotificationDiagnostics: Equatable {
+    var permissionText = "جاري فحص الإذن..."
+    var isAuthorized = false
+    var alertsEnabled = false
+    var soundsEnabled = false
+    var lockScreenEnabled = false
+    var timeSensitiveEnabled = false
+    var selectedSoundAvailable = false
+    var scheduledPrayerCount = 0
+    var scheduledNafahatCount = 0
+    var firstPrayerDate: Date?
+    var lastPrayerDate: Date?
+    var checkedAt = Date()
+}
+
 enum AdhkarReminderStyle: String, CaseIterable, Identifiable {
     case tasbih
     case istighfar
@@ -625,6 +640,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
     @Published private(set) var fajrAlarmWakeBeforeMinutes: Int
     @Published private(set) var fajrAlarmSnoozeMinutes: Int
     @Published private(set) var pendingFajrAlarmPresentation: FajrAlarmPresentation?
+    @Published private(set) var diagnostics = PrayerNotificationDiagnostics()
 
     private let center = UNUserNotificationCenter.current()
     private let legacyNotificationPrefix = "tel-sheva-prayer-"
@@ -632,6 +648,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
     private let previewNotificationPrefix = "tel-sheva-prayer-preview"
     private let previewNotificationIdentifier = "tel-sheva-prayer-preview"
     private let maxPendingNotifications = 60
+    private let prayerSlotsWhenNafahatEnabled = 50
     private let defaults = UserDefaults.standard
     private var pendingRescheduleWork: DispatchWorkItem?
     private var schedulingGeneration = 0
@@ -712,6 +729,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
         registerNotificationCategories()
         removePendingFajrAlarmNotifications(for: nil)
         refreshStatus()
+        refreshDiagnostics()
     }
 
     private func registerNotificationCategories() {
@@ -719,9 +737,17 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
     }
 
     func enable() {
-        center.requestAuthorization(options: [.alert, .sound, .timeSensitive, .criticalAlert]) { [weak self] granted, _ in
+        center.requestAuthorization(options: [.alert, .sound, .timeSensitive]) { [weak self] granted, error in
             DispatchQueue.main.async {
                 guard let self else { return }
+
+                if error != nil {
+                    self.isEnabled = false
+                    self.defaults.set(false, forKey: Self.enabledKey)
+                    self.statusText = "تعذر طلب إذن التنبيهات"
+                    self.refreshDiagnostics()
+                    return
+                }
 
                 self.isEnabled = granted
                 self.defaults.set(granted, forKey: Self.enabledKey)
@@ -748,12 +774,15 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
                     self.scheduleUpcomingPrayerNotifications()
                 }
             case .notDetermined:
-                self.center.requestAuthorization(options: [.alert, .sound, .timeSensitive, .criticalAlert]) { [weak self] granted, _ in
+                self.center.requestAuthorization(options: [.alert, .sound, .timeSensitive]) { [weak self] granted, error in
                     DispatchQueue.main.async {
                         guard let self else { return }
 
-                        guard granted else {
-                            self.statusText = "اسمح بالإشعارات من إعدادات الآيفون"
+                        guard error == nil, granted else {
+                            self.statusText = error == nil
+                                ? "اسمح بالإشعارات من إعدادات الآيفون"
+                                : "تعذر طلب إذن التنبيهات"
+                            self.refreshDiagnostics()
                             return
                         }
 
@@ -778,13 +807,16 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
         schedulingGeneration &+= 1
         isEnabled = false
         defaults.set(false, forKey: Self.enabledKey)
-        removeScheduledPrayerNotifications()
+        removeScheduledPrayerNotifications { [weak self] in
+            self?.refreshDiagnostics()
+        }
         statusText = "التنبيهات غير مفعلة"
     }
 
     func refreshIfEnabled() {
         guard isEnabled else {
             refreshStatus()
+            refreshDiagnostics()
             return
         }
 
@@ -797,6 +829,9 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
                     self.isEnabled = false
                     self.defaults.set(false, forKey: Self.enabledKey)
                     self.statusText = "اسمح بالإشعارات من إعدادات الآيفون"
+                    self.removeScheduledPrayerNotifications { [weak self] in
+                        self?.refreshDiagnostics()
+                    }
                 }
             }
         }
@@ -957,11 +992,14 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
             case .authorized, .provisional:
                 self.schedulePreviewNotification()
             case .notDetermined:
-                self.center.requestAuthorization(options: [.alert, .sound, .timeSensitive, .criticalAlert]) { [weak self] granted, _ in
+                self.center.requestAuthorization(options: [.alert, .sound, .timeSensitive]) { [weak self] granted, error in
                     guard let self else { return }
                     DispatchQueue.main.async {
-                        guard granted else {
-                            self.statusText = "اسمح بالإشعارات من إعدادات الآيفون"
+                        guard error == nil, granted else {
+                            self.statusText = error == nil
+                                ? "اسمح بالإشعارات من إعدادات الآيفون"
+                                : "تعذر طلب إذن التنبيهات"
+                            self.refreshDiagnostics()
                             return
                         }
 
@@ -991,11 +1029,14 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
             case .authorized, .provisional:
                 self.scheduleNafahatPreviewNotification()
             case .notDetermined:
-                self.center.requestAuthorization(options: [.alert, .sound, .timeSensitive, .criticalAlert]) { [weak self] granted, _ in
+                self.center.requestAuthorization(options: [.alert, .sound, .timeSensitive]) { [weak self] granted, error in
                     guard let self else { return }
                     DispatchQueue.main.async {
-                        guard granted else {
-                            self.statusText = "اسمح بالإشعارات من إعدادات الآيفون"
+                        guard error == nil, granted else {
+                            self.statusText = error == nil
+                                ? "اسمح بالإشعارات من إعدادات الآيفون"
+                                : "تعذر طلب إذن التنبيهات"
+                            self.refreshDiagnostics()
                             return
                         }
 
@@ -1098,6 +1139,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
             statusText = enabledPrayerIDs.isEmpty && !isNafahatEnabled
                 ? "اختر صلاة واحدة على الأقل للتنبيه"
                 : "لا توجد صلوات قادمة في الجدول"
+            refreshDiagnostics()
             return
         }
 
@@ -1119,15 +1161,18 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
 
         group.notify(queue: .main) {
             guard self.isEnabled, self.schedulingGeneration == generation else { return }
-            self.statusText = failureCount == 0
-                ? "تم جدولة \(events.count) تنبيهًا للصلوات المختارة"
-                : "تعذر جدولة \(failureCount) من أصل \(events.count) تنبيهًا"
+            if failureCount == 0 {
+                self.refreshStatus()
+            } else {
+                self.statusText = "تعذر جدولة \(failureCount) من أصل \(events.count) تنبيهًا"
+            }
+            self.refreshDiagnostics()
         }
     }
 
     private func upcomingNotificationEvents() -> [ScheduledPrayerNotification] {
         let now = Date()
-        var events = PrayerEngine.upcomingDateKeys(from: now, count: 60).flatMap { dateKey in
+        let prayerEvents = PrayerEngine.upcomingDateKeys(from: now, count: 60).flatMap { dateKey in
             PrayerEngine.prayerOrder.flatMap { key -> [ScheduledPrayerNotification] in
                 guard let time = PrayerEngine.schedule(for: dateKey).times[key],
                       let date = PrayerEngine.date(from: dateKey, time: time) else {
@@ -1145,11 +1190,18 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
             }
         }
 
-        events.append(contentsOf: upcomingNafahatEvents(now: now))
-        return events
+        let sortedPrayerEvents = prayerEvents.sorted { $0.date < $1.date }
+        guard isNafahatEnabled else {
+            return Array(sortedPrayerEvents.prefix(maxPendingNotifications))
+        }
+
+        let protectedPrayerEvents = Array(sortedPrayerEvents.prefix(prayerSlotsWhenNafahatEnabled))
+        let availableNafahatSlots = max(0, maxPendingNotifications - protectedPrayerEvents.count)
+        let nafahatEvents = Array(upcomingNafahatEvents(now: now)
             .sorted { $0.date < $1.date }
-            .prefix(maxPendingNotifications)
-            .map { $0 }
+            .prefix(availableNafahatSlots))
+
+        return (protectedPrayerEvents + nafahatEvents).sorted { $0.date < $1.date }
     }
 
     private func request(for event: ScheduledPrayerNotification) -> UNNotificationRequest {
@@ -1505,6 +1557,26 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
         }
     }
 
+    private var selectedPrayerSoundIsAvailable: Bool {
+        let fileNames: [String]
+        switch selectedSound {
+        case .system:
+            return true
+        case .bundledAdhan:
+            fileNames = ["adhan-mohamed-jazi.caf", "adhan-mohamed-jazi.wav", "adhan-mohamed-jazi.aiff"]
+        case .originalAdhan:
+            fileNames = ["adhan.caf", "adhan.wav", "adhan.aiff"]
+        case .softDhikr:
+            fileNames = ["notification-soft-01.wav", "nafahat.wav", "nafahat.caf"]
+        }
+
+        return fileNames.contains { fileName in
+            let parts = fileName.split(separator: ".", maxSplits: 1).map(String.init)
+            guard parts.count == 2 else { return false }
+            return Bundle.main.url(forResource: parts[0], withExtension: parts[1]) != nil
+        }
+    }
+
     private func isManagedScheduledIdentifier(_ identifier: String) -> Bool {
         if identifier.hasPrefix(scheduledNotificationPrefix) {
             return true
@@ -1546,11 +1618,81 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
             DispatchQueue.main.async {
                 guard let self else { return }
                 if self.isEnabled && (settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional) {
-                    self.statusText = self.enabledPrayerIDs.isEmpty && !self.isNafahatEnabled ? "اختر صلاة واحدة على الأقل للتنبيه" : "التنبيهات مفعلة"
+                    if self.enabledPrayerIDs.isEmpty && !self.isNafahatEnabled {
+                        self.statusText = "اختر صلاة واحدة على الأقل للتنبيه"
+                    } else if settings.alertSetting != .enabled {
+                        self.statusText = "التنبيهات مفعلة لكن ظهورها مغلق من إعدادات الآيفون"
+                    } else if settings.soundSetting != .enabled {
+                        self.statusText = "التنبيهات مفعلة لكن الصوت مغلق من إعدادات الآيفون"
+                    } else if settings.lockScreenSetting != .enabled {
+                        self.statusText = "التنبيهات مفعلة لكن ظهور شاشة القفل مغلق"
+                    } else if settings.timeSensitiveSetting != .enabled {
+                        self.statusText = "فعّل الإشعارات الحساسة للوقت لضمان وصول الأذان"
+                    } else {
+                        self.statusText = "التنبيهات مفعلة"
+                    }
                 } else if settings.authorizationStatus == .denied {
                     self.statusText = "اسمح بالإشعارات من إعدادات الآيفون"
                 } else {
                     self.statusText = "التنبيهات غير مفعلة"
+                }
+            }
+        }
+    }
+
+    func refreshDiagnostics() {
+        center.getNotificationSettings { [weak self] settings in
+            guard let self else { return }
+
+            self.center.getPendingNotificationRequests { [weak self] requests in
+                guard let self else { return }
+
+                let prayerRequests = requests.filter {
+                    $0.identifier.hasPrefix(self.scheduledNotificationPrefix)
+                        && $0.identifier.contains("-adhan-")
+                }
+                let nafahatRequests = requests.filter {
+                    $0.identifier.hasPrefix(self.scheduledNotificationPrefix)
+                        && $0.identifier.hasSuffix("-nafahat")
+                }
+                let prayerDates = prayerRequests
+                    .compactMap { ($0.trigger as? UNCalendarNotificationTrigger)?.nextTriggerDate() }
+                    .sorted()
+
+                let permissionText: String
+                switch settings.authorizationStatus {
+                case .authorized:
+                    permissionText = "مسموح"
+                case .provisional:
+                    permissionText = "مسموح بهدوء"
+                case .denied:
+                    permissionText = "مرفوض"
+                case .notDetermined:
+                    permissionText = "لم يُطلب بعد"
+                case .ephemeral:
+                    permissionText = "مؤقت"
+                @unknown default:
+                    permissionText = "غير معروف"
+                }
+
+                let isAuthorized = settings.authorizationStatus == .authorized
+                    || settings.authorizationStatus == .provisional
+
+                DispatchQueue.main.async {
+                    self.diagnostics = PrayerNotificationDiagnostics(
+                        permissionText: permissionText,
+                        isAuthorized: isAuthorized,
+                        alertsEnabled: settings.alertSetting == .enabled,
+                        soundsEnabled: settings.soundSetting == .enabled,
+                        lockScreenEnabled: settings.lockScreenSetting == .enabled,
+                        timeSensitiveEnabled: settings.timeSensitiveSetting == .enabled,
+                        selectedSoundAvailable: self.selectedPrayerSoundIsAvailable,
+                        scheduledPrayerCount: prayerRequests.count,
+                        scheduledNafahatCount: nafahatRequests.count,
+                        firstPrayerDate: prayerDates.first,
+                        lastPrayerDate: prayerDates.last,
+                        checkedAt: Date()
+                    )
                 }
             }
         }

@@ -109,6 +109,7 @@ struct ContentView: View {
         .onChange(of: scenePhase) { phase in
             if phase == .active {
                 refreshPrayerCalendarIfNeeded()
+                notifications.refreshIfEnabled()
                 WidgetRefreshCenter.refreshAll()
             }
         }

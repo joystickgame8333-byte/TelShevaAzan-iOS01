@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 enum NotificationSettingsMode {
     case full
@@ -14,6 +15,15 @@ struct NotificationSettingsView: View {
     @AppStorage("adhkar.miniKhatmah.enabled") private var isMiniKhatmahEnabled = false
     @AppStorage("adhkar.miniKhatmah.dailyPortion") private var miniKhatmahDailyPortion = MiniKhatmahPortion.halfPage.rawValue
     @AppStorage("adhkar.miniKhatmah.startDate") private var miniKhatmahStartDate: Double = 0
+
+    private static let notificationCoverageDateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "ar")
+        formatter.calendar = PrayerEngine.calendar
+        formatter.timeZone = PrayerEngine.timeZone
+        formatter.setLocalizedDateFormatFromTemplate("dMMM")
+        return formatter
+    }()
 
     let theme: PrayerVisualTheme
     var mode: NotificationSettingsMode = .full
@@ -42,6 +52,9 @@ struct NotificationSettingsView: View {
         .foregroundStyle(theme.primaryText)
         .environment(\.layoutDirection, .leftToRight)
         .multilineTextAlignment(.trailing)
+        .onAppear {
+            notifications.refreshDiagnostics()
+        }
     }
 
     private var header: some View {
@@ -168,6 +181,7 @@ struct NotificationSettingsView: View {
     private var adhanSettings: some View {
         VStack(alignment: .trailing, spacing: 16) {
             masterPanel
+            notificationDiagnosticsPanel
             soundPanel
             prayerPanel
         }
@@ -221,6 +235,165 @@ struct NotificationSettingsView: View {
                 }
             )
         )
+    }
+
+    private var notificationDiagnosticsPanel: some View {
+        let diagnostics = notifications.diagnostics
+
+        return panel(title: "فحص وصول الأذان") {
+            VStack(spacing: 0) {
+                diagnosticStatusRow(
+                    title: "إذن التنبيهات",
+                    value: diagnostics.permissionText,
+                    symbol: "bell.badge.fill",
+                    isHealthy: diagnostics.isAuthorized
+                )
+                diagnosticDivider
+                diagnosticStatusRow(
+                    title: "ظهور التنبيه",
+                    value: diagnostics.alertsEnabled ? "مسموح" : "مغلق",
+                    symbol: "bell.fill",
+                    isHealthy: diagnostics.alertsEnabled
+                )
+                diagnosticDivider
+                diagnosticStatusRow(
+                    title: "الصوت",
+                    value: diagnostics.soundsEnabled ? "مسموح" : "مغلق",
+                    symbol: "speaker.wave.2.fill",
+                    isHealthy: diagnostics.soundsEnabled
+                )
+                diagnosticDivider
+                diagnosticStatusRow(
+                    title: "شاشة القفل",
+                    value: diagnostics.lockScreenEnabled ? "مسموح" : "مغلق",
+                    symbol: "lock.fill",
+                    isHealthy: diagnostics.lockScreenEnabled
+                )
+                diagnosticDivider
+                diagnosticStatusRow(
+                    title: "حساس للوقت",
+                    value: diagnostics.timeSensitiveEnabled ? "مسموح" : "مغلق",
+                    symbol: "clock.fill",
+                    isHealthy: diagnostics.timeSensitiveEnabled
+                )
+                diagnosticDivider
+                diagnosticStatusRow(
+                    title: "ملف الصوت المختار",
+                    value: diagnostics.selectedSoundAvailable ? "سليم" : "غير موجود",
+                    symbol: "waveform",
+                    isHealthy: diagnostics.selectedSoundAvailable
+                )
+                diagnosticDivider
+                diagnosticStatusRow(
+                    title: "جدول الأذان",
+                    value: notificationCoverageText,
+                    symbol: "calendar",
+                    isHealthy: diagnostics.scheduledPrayerCount > 0
+                )
+
+                HStack(spacing: 10) {
+                    Button {
+                        openNotificationSettings()
+                    } label: {
+                        diagnosticActionLabel(title: "إعدادات الآيفون", symbol: "gearshape.fill")
+                    }
+
+                    Button {
+                        notifications.refreshDiagnostics()
+                    } label: {
+                        diagnosticActionLabel(title: "تحديث الفحص", symbol: "arrow.clockwise")
+                    }
+                }
+                .buttonStyle(.plain)
+                .padding(.top, 12)
+            }
+        }
+    }
+
+    private var notificationCoverageText: String {
+        let diagnostics = notifications.diagnostics
+        guard diagnostics.scheduledPrayerCount > 0,
+              let firstDate = diagnostics.firstPrayerDate,
+              let lastDate = diagnostics.lastPrayerDate else {
+            return "لا توجد مواعيد"
+        }
+
+        let firstText = notificationLatinDigits(Self.notificationCoverageDateFormatter.string(from: firstDate))
+        let lastText = notificationLatinDigits(Self.notificationCoverageDateFormatter.string(from: lastDate))
+        return "\(diagnostics.scheduledPrayerCount) تنبيه • من \(firstText) حتى \(lastText)"
+    }
+
+    private func notificationLatinDigits(_ text: String) -> String {
+        let replacements: [Character: Character] = [
+            "٠": "0", "١": "1", "٢": "2", "٣": "3", "٤": "4",
+            "٥": "5", "٦": "6", "٧": "7", "٨": "8", "٩": "9"
+        ]
+        return String(text.map { replacements[$0] ?? $0 })
+    }
+
+    private var diagnosticDivider: some View {
+        Divider()
+            .background(theme.controlBorder)
+            .padding(.vertical, 2)
+    }
+
+    private func diagnosticStatusRow(title: String, value: String, symbol: String, isHealthy: Bool) -> some View {
+        HStack(spacing: 10) {
+            HStack(spacing: 6) {
+                Image(systemName: isHealthy ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
+                    .foregroundStyle(isHealthy ? theme.accent : Color.orange)
+
+                Text(value)
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(isHealthy ? theme.secondaryText : Color.orange)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.72)
+                    .multilineTextAlignment(.leading)
+            }
+
+            Spacer(minLength: 10)
+
+            HStack(spacing: 7) {
+                Text(title)
+                    .font(.caption.weight(.bold))
+                    .multilineTextAlignment(.trailing)
+
+                Image(systemName: symbol)
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(theme.accent)
+                    .frame(width: 20)
+            }
+        }
+        .environment(\.layoutDirection, .leftToRight)
+        .padding(.vertical, 10)
+        .frame(maxWidth: .infinity)
+    }
+
+    private func diagnosticActionLabel(title: String, symbol: String) -> some View {
+        HStack(spacing: 6) {
+            Text(title)
+                .font(.caption.weight(.black))
+                .lineLimit(1)
+                .minimumScaleFactor(0.76)
+
+            Image(systemName: symbol)
+                .font(.caption.weight(.black))
+        }
+        .environment(\.layoutDirection, .rightToLeft)
+        .foregroundStyle(theme.accent)
+        .padding(.horizontal, 10)
+        .frame(maxWidth: .infinity, minHeight: 40)
+        .background(lightRowSurface(settingsRowFill, radius: 8))
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(theme.controlBorder)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+    }
+
+    private func openNotificationSettings() {
+        guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+        UIApplication.shared.open(url)
     }
 
     private var adhkarMasterPanel: some View {

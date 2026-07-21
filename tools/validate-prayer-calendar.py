@@ -14,6 +14,7 @@ PROJECT_PATH = ROOT / "project.yml"
 ENGINE_PATH = ROOT / "TelShevaAzan" / "PrayerSchedule.swift"
 CALENDAR_ENGINE_PATH = ROOT / "TelShevaAzan" / "PalestinePrayerCalendar.swift"
 NOTIFICATIONS_PATH = ROOT / "TelShevaAzan" / "PrayerNotificationManager.swift"
+NOTIFICATION_SETTINGS_PATH = ROOT / "TelShevaAzan" / "NotificationSettingsView.swift"
 CONTENT_PATH = ROOT / "TelShevaAzan" / "ContentView.swift"
 WIDGET_DATA_PATH = ROOT / "TelShevaAzanWidget" / "SalatiWidgetData.swift"
 WIDGET_BUNDLE_PATH = ROOT / "TelShevaAzanWidget" / "TelShevaAzanWidget.swift"
@@ -193,6 +194,13 @@ assert "تعذر جدولة" in notifications_text
 assert "content.interruptionLevel = .timeSensitive" in notifications_text
 assert '"notificationKind": "adhan"' in notifications_text
 assert "openScheduleNotification" in notifications_text
+assert notifications_text.count("requestAuthorization(options: [.alert, .sound, .timeSensitive])") == 4
+assert "prayerSlotsWhenNafahatEnabled = 50" in notifications_text
+assert "protectedPrayerEvents" in notifications_text
+assert "refreshDiagnostics()" in notifications_text
+assert "settings.soundSetting != .enabled" in notifications_text
+assert "settings.lockScreenSetting != .enabled" in notifications_text
+assert "settings.timeSensitiveSetting != .enabled" in notifications_text
 
 content_text = CONTENT_PATH.read_text(encoding="utf-8")
 assert "PrayerEngine.remainingSeconds(until: next.date, now: now)" in content_text
@@ -200,7 +208,14 @@ assert "PrayerEngine.elapsedSeconds(since: date, now: now)" in content_text
 assert "PrayerNotificationManager.openScheduleNotification" in content_text
 assert 'detailTile(title: "وقت الشروق", value: prayer.time, highlighted: true)' in content_text
 assert "IqamaSchedule.telSheva.iqamaDate(for: prayer)" in content_text
+active_scene_block = content_text.split(".onChange(of: scenePhase)", 1)[1].split(".onAppear", 1)[0]
+assert "notifications.refreshIfEnabled()" in active_scene_block
 assert ".rounded(.up)" in engine_text, "Remaining time must round up to match the displayed wall clock second"
+
+notification_settings_text = NOTIFICATION_SETTINGS_PATH.read_text(encoding="utf-8")
+assert "notificationDiagnosticsPanel" in notification_settings_text
+assert 'panel(title: "فحص وصول الأذان")' in notification_settings_text
+assert 'diagnosticActionLabel(title: "تحديث الفحص"' in notification_settings_text
 
 tel_sheva_iqama_delays = {
     ".fajr": 25,
