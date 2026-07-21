@@ -29,20 +29,7 @@ struct SalatiPrayerScheduleWidget: Widget {
         }
         .configurationDisplayName(SalatiText.todayTimes)
         .description(SalatiText.todayTimesDescription)
-        .supportedFamilies([.systemMedium, .systemLarge])
-    }
-}
-
-struct SalatiIqamaWidget: Widget {
-    let kind = SalatiWidgetKind.iqama
-
-    var body: some WidgetConfiguration {
-        StaticConfiguration(kind: kind, provider: SalatiWidgetProvider()) { entry in
-            SalatiIqamaWidgetView(entry: entry)
-        }
-        .configurationDisplayName(SalatiText.nextIqama)
-        .description(SalatiText.nextIqamaDescription)
-        .supportedFamilies([.systemSmall, .systemMedium])
+        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
     }
 }
 
@@ -51,6 +38,5 @@ struct TelShevaAzanWidgetBundle: WidgetBundle {
     var body: some Widget {
         SalatiNextPrayerWidget()
         SalatiPrayerScheduleWidget()
-        SalatiIqamaWidget()
     }
 }

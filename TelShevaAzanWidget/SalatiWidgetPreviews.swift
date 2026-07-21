@@ -20,20 +20,14 @@ import WidgetKit
     SalatiWidgetEntry.preview
 }
 
-#Preview("مواقيت اليوم — كبير", as: .systemLarge) {
+#Preview("مواقيت اليوم — صغير", as: .systemSmall) {
     SalatiPrayerScheduleWidget()
 } timeline: {
     SalatiWidgetEntry.preview
 }
 
-#Preview("الإقامة — صغير", as: .systemSmall) {
-    SalatiIqamaWidget()
-} timeline: {
-    SalatiWidgetEntry.preview
-}
-
-#Preview("الإقامة — متوسط", as: .systemMedium) {
-    SalatiIqamaWidget()
+#Preview("مواقيت اليوم — كبير", as: .systemLarge) {
+    SalatiPrayerScheduleWidget()
 } timeline: {
     SalatiWidgetEntry.preview
 }

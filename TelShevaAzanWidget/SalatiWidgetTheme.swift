@@ -37,7 +37,7 @@ struct SalatiWidgetSurface<Content: View>: View {
 
     var body: some View {
         content(theme)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             .foregroundStyle(theme.primaryText)
             .environment(\.layoutDirection, .rightToLeft)
             .salatiWidgetContainerBackground {

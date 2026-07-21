@@ -219,25 +219,29 @@ widget_components_text = WIDGET_COMPONENTS_PATH.read_text(encoding="utf-8")
 widget_theme_text = WIDGET_THEME_PATH.read_text(encoding="utf-8")
 widget_refresh_text = WIDGET_REFRESH_PATH.read_text(encoding="utf-8")
 theme_text = THEME_PATH.read_text(encoding="utf-8")
-assert "IqamaSchedule.telSheva.iqamaDate(for: prayer)" in widget_data_text
+assert "nextIqama" not in widget_data_text, "Removed iqama widget must not keep a private timeline"
 assert "prayer.key != .sunrise" in widget_data_text
 assert "PrayerEngine.automaticScheduleDateKey(for: date)" in widget_data_text
 assert "entry.scheduleDate" in widget_views_text
 assert "SalatiText.tomorrowTimes" in widget_views_text
 assert "SalatiDateWidget" not in widget_bundle_text
-assert widget_bundle_text.count("struct Salati") == 3
+assert widget_bundle_text.count("struct Salati") == 2
+assert "SalatiIqamaWidget" not in widget_bundle_text
+assert "SalatiIqamaWidgetView" not in widget_views_text
 next_prayer_widget = widget_bundle_text.split("struct SalatiNextPrayerWidget", 1)[1].split("struct SalatiPrayerScheduleWidget", 1)[0]
-iqama_widget = widget_bundle_text.split("struct SalatiIqamaWidget", 1)[1].split("@main", 1)[0]
+schedule_widget = widget_bundle_text.split("struct SalatiPrayerScheduleWidget", 1)[1].split("@main", 1)[0]
 assert ".systemLarge" not in next_prayer_widget, "Next-prayer large must not duplicate the schedule widget"
-assert ".accessory" not in iqama_widget, "Lock screen must expose one clear next-prayer set"
+assert ".systemSmall" in schedule_widget and ".systemLarge" in schedule_widget
 assert widget_views_text.count("SalatiPrayerColumns(") == 1, "Prayer tables belong only to the schedule widget"
+assert widget_views_text.count("SalatiPrayerList(") == 2, "Small and large schedules need dedicated vertical layouts"
 assert ".overlay(alignment: .trailing)" in widget_components_text, "Active stripe must stay on the physical right"
 assert "SalatiText.nextPrayerShort" in widget_views_text, "Compact families must use short Arabic labels"
-assert "SalatiText.iqamaShort" in widget_views_text, "Compact iqama must not truncate its heading"
-assert widget_theme_text.count(".frame(maxWidth: .infinity, maxHeight: .infinity)") >= 2, "Widget content and background must fill the family canvas"
+assert ".frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)" in widget_theme_text
+assert ".frame(maxWidth: .infinity, maxHeight: .infinity)" in widget_theme_text
 assert "SalatiWidgetKind.all" in widget_refresh_text
-for kind in ("nextPrayer", "dailySchedule", "iqama"):
+for kind in ("nextPrayer", "dailySchedule"):
     assert f"static let {kind}" in theme_text
+assert "static let iqama" not in theme_text
 assert not re.search(r"telshevaazan\.(?:nextPrayer|dailySchedule|date\.today|iqama)\.v\d+", theme_text + widget_bundle_text)
 assert "static func automaticScheduleDateKey(for date: Date = Date())" in engine_text
 assert "PrayerEngine.automaticScheduleDateKey(for: value)" in content_text
@@ -251,4 +255,4 @@ print(f"  canonical SHA-256: {actual_hash}")
 print("  prayer transitions: before Isha, exact Isha, midnight, and exact Fajr passed")
 print("  iqama transitions: Maghrib and Isha post-adhan windows passed")
 print("  automatic schedule: today before Isha and tomorrow from exact Isha passed")
-print("  widget structure: stable kinds, RTL layout, full background, and deduplicated families passed")
+print("  widget structure: two useful widgets, compact schedule, and full-height large layout passed")

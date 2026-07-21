@@ -8,11 +8,7 @@ enum SalatiText {
     static let todayTimes = "مواقيت اليوم"
     static let todayTimesDescription = "مواقيت الصلاة اليومية في تل السبع"
     static let tomorrowTimes = "مواقيت الغد"
-    static let nextIqama = "الإقامة القادمة"
-    static let iqamaShort = "الإقامة"
-    static let nextIqamaDescription = "موعد الإقامة القادمة في تل السبع"
     static let remainingUntilAdhan = "متبقي حتى الأذان"
-    static let remainingUntilIqama = "متبقي للإقامة"
     static let remaining = "متبقي"
     static let prayer = "الصلاة"
     static let noTime = "--:--"
@@ -29,13 +25,6 @@ enum SalatiText {
         "الصلاة القادمة: \(prayer)"
     }
 
-    static func iqamaAfterAdhan(prayer: String, minutes: Int) -> String {
-        "إقامة \(prayer) بعد الأذان بـ\(minutes) دقيقة"
-    }
-
-    static func iqamaDelay(minutes: Int) -> String {
-        "بعد الأذان بـ\(minutes) دقيقة"
-    }
 }
 
 struct SalatiWidgetHeader: View {
@@ -195,6 +184,26 @@ struct SalatiPrayerColumns: View {
         }
         .frame(maxWidth: .infinity)
         .environment(\.layoutDirection, .rightToLeft)
+    }
+}
+
+struct SalatiPrayerList: View {
+    let times: [PrayerTime]
+    let highlightedPrayer: PrayerKey?
+    let theme: SalatiWidgetTheme
+    var expanded = false
+
+    var body: some View {
+        VStack(spacing: expanded ? 6 : 4) {
+            ForEach(times) { prayer in
+                SalatiPrayerCell(
+                    prayer: prayer,
+                    isActive: prayer.key == highlightedPrayer,
+                    theme: theme,
+                    expanded: expanded
+                )
+            }
+        }
     }
 }
 

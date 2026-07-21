@@ -1,16 +1,10 @@
 import Foundation
 import WidgetKit
 
-struct SalatiIqamaEvent {
-    let prayer: PrayerTime
-    let date: Date
-}
-
 struct SalatiWidgetEntry: TimelineEntry {
     let date: Date
     let dateKey: String
     let nextPrayer: PrayerTime?
-    let nextIqama: SalatiIqamaEvent?
     let times: [PrayerTime]
 
     var highlightedPrayer: PrayerKey? {
@@ -68,32 +62,8 @@ struct SalatiWidgetProvider: TimelineProvider {
             date: date,
             dateKey: dateKey,
             nextPrayer: PrayerEngine.nextPrayer(for: dateKey, now: date),
-            nextIqama: nextIqama(after: date),
             times: PrayerEngine.schedule(for: dateKey).displayTimes
         )
-    }
-
-    private static func nextIqama(after now: Date) -> SalatiIqamaEvent? {
-        let start = PrayerEngine.calendar.startOfDay(for: now)
-
-        for offset in 0...1 {
-            guard let day = PrayerEngine.calendar.date(byAdding: .day, value: offset, to: start) else {
-                continue
-            }
-            let dateKey = PrayerEngine.defaultDateKey(for: day)
-            let events = PrayerEngine.schedule(for: dateKey).displayTimes.compactMap { prayer -> SalatiIqamaEvent? in
-                guard let iqamaDate = IqamaSchedule.telSheva.iqamaDate(for: prayer), iqamaDate > now else {
-                    return nil
-                }
-                return SalatiIqamaEvent(prayer: prayer, date: iqamaDate)
-            }
-
-            if let event = events.min(by: { $0.date < $1.date }) {
-                return event
-            }
-        }
-
-        return nil
     }
 
     private static func transitionDates(after now: Date) -> [Date] {
@@ -108,9 +78,6 @@ struct SalatiWidgetProvider: TimelineProvider {
 
             for prayer in PrayerEngine.schedule(for: dateKey).displayTimes where prayer.key != .sunrise {
                 Self.insertTransition(after: prayer.date, now: now, into: &dates)
-                if let iqamaDate = IqamaSchedule.telSheva.iqamaDate(for: prayer) {
-                    Self.insertTransition(after: iqamaDate, now: now, into: &dates)
-                }
             }
 
             if let nextDay = PrayerEngine.calendar.date(byAdding: .day, value: 1, to: day) {

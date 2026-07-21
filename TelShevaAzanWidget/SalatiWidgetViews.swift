@@ -45,8 +45,7 @@ struct SalatiNextPrayerView: View {
                 SalatiTimeText(value: prayerTime, size: 17, weight: .black)
                 Text(prayerName)
                     .font(.system(size: 10, weight: .bold, design: .rounded))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.72)
+                    .fixedSize(horizontal: true, vertical: false)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(AccessoryWidgetBackground())
@@ -78,7 +77,7 @@ struct SalatiNextPrayerView: View {
     }
 
     private func smallBody(theme: SalatiWidgetTheme) -> some View {
-        VStack(alignment: .leading, spacing: 7) {
+        VStack(spacing: 5) {
             SalatiWidgetHeader(
                 title: SalatiText.nextPrayerShort,
                 symbol: SalatiPrayerSymbol.value(for: entry.nextPrayer?.key),
@@ -88,18 +87,15 @@ struct SalatiNextPrayerView: View {
 
             Spacer(minLength: 0)
 
-            HStack(alignment: .firstTextBaseline, spacing: 7) {
-                SalatiTimeText(value: prayerTime, size: 25, weight: .black, color: theme.accent)
+            Text(prayerName)
+                .font(.system(size: 23, weight: .black, design: .rounded))
+                .fixedSize(horizontal: true, vertical: false)
+                .frame(maxWidth: .infinity, alignment: .center)
 
-                Spacer(minLength: 3)
+            SalatiTimeText(value: prayerTime, size: 31, weight: .black, color: theme.accent)
+                .frame(maxWidth: .infinity, alignment: .center)
 
-                Text(prayerName)
-                    .font(.system(size: 25, weight: .black, design: .rounded))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.68)
-                    .multilineTextAlignment(.trailing)
-            }
-            .environment(\.layoutDirection, .leftToRight)
+            Spacer(minLength: 0)
 
             SalatiCountdownRow(
                 label: SalatiText.remaining,
@@ -108,7 +104,6 @@ struct SalatiNextPrayerView: View {
                 theme: theme,
                 compact: true
             )
-
         }
         .salatiHomeWidgetPadding()
     }
@@ -127,7 +122,7 @@ struct SalatiNextPrayerView: View {
                 VStack(alignment: .trailing, spacing: 3) {
                     Text(prayerName)
                         .font(.system(size: 26, weight: .black, design: .rounded))
-                        .lineLimit(1)
+                        .fixedSize(horizontal: true, vertical: false)
                     Text(SalatiWidgetDateText.compact(for: entry.scheduleDate))
                         .font(.system(size: 10, weight: .bold, design: .rounded))
                         .foregroundStyle(theme.mutedText)
@@ -157,119 +152,46 @@ struct SalatiPrayerScheduleView: View {
         entry.isTomorrowSchedule ? SalatiText.tomorrowTimes : SalatiText.todayTimes
     }
 
-    var body: some View {
-        SalatiWidgetSurface { theme in
-            VStack(alignment: .leading, spacing: family == .systemLarge ? 12 : 8) {
-                SalatiWidgetHeader(title: title, symbol: "calendar", theme: theme)
-
-                if family == .systemLarge, let nextPrayer = entry.nextPrayer {
-                    HStack(spacing: 8) {
-                    Text(SalatiWidgetDateText.compact(for: entry.scheduleDate))
-                            .font(.system(size: 13, weight: .bold, design: .rounded))
-                        .foregroundStyle(theme.mutedText)
-                        .lineLimit(1)
-
-                        Spacer(minLength: 4)
-                        Text(SalatiText.nextPrayerSummary(nextPrayer.title))
-                            .font(.system(size: 13, weight: .black, design: .rounded))
-                            .foregroundStyle(theme.secondaryText)
-                            .lineLimit(1)
-                    }
-                    .environment(\.layoutDirection, .leftToRight)
-                } else {
-                    Text(SalatiWidgetDateText.compact(for: entry.scheduleDate))
-                        .font(.system(size: 11, weight: .bold, design: .rounded))
-                        .foregroundStyle(theme.mutedText)
-                        .lineLimit(1)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
-
-                SalatiPrayerColumns(
-                    times: entry.times,
-                    highlightedPrayer: entry.highlightedPrayer,
-                    theme: theme,
-                    expanded: family == .systemLarge
-                )
-            }
-            .salatiHomeWidgetPadding()
+    private var compactTimes: [PrayerTime] {
+        guard let highlightedPrayer = entry.highlightedPrayer,
+              let index = entry.times.firstIndex(where: { $0.key == highlightedPrayer }) else {
+            return Array(entry.times.prefix(3))
         }
-        .environment(\.layoutDirection, .rightToLeft)
-        .widgetURL(URL(string: "telshevaazan://schedule"))
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(title)
+        return Array(entry.times[index...].prefix(3))
     }
-}
-
-struct SalatiIqamaWidgetView: View {
-    @Environment(\.widgetFamily) private var family
-    let entry: SalatiWidgetEntry
-
-    private var prayerName: String { entry.nextIqama?.prayer.title ?? SalatiText.prayer }
-    private var iqamaTime: String { entry.nextIqama.map { Self.timeFormatter.string(from: $0.date) } ?? SalatiText.noTime }
-    private var iqamaDate: Date? { entry.nextIqama?.date }
-    private var iqamaDelayMinutes: Int {
-        guard let event = entry.nextIqama else { return 0 }
-        return max(0, Int(event.date.timeIntervalSince(event.prayer.date).rounded() / 60))
-    }
-
-    private static let timeFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.calendar = PrayerEngine.calendar
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.timeZone = PrayerEngine.timeZone
-        formatter.dateFormat = "HH:mm"
-        return formatter
-    }()
 
     var body: some View {
         SalatiWidgetSurface { theme in
-            if family == .systemSmall {
+            switch family {
+            case .systemSmall:
                 smallBody(theme: theme)
-            } else {
+            case .systemLarge:
+                largeBody(theme: theme)
+            default:
                 mediumBody(theme: theme)
             }
         }
         .environment(\.layoutDirection, .rightToLeft)
         .widgetURL(URL(string: "telshevaazan://schedule"))
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("الإقامة \(prayerName)، \(iqamaTime)")
+        .accessibilityLabel(title)
     }
 
     private func smallBody(theme: SalatiWidgetTheme) -> some View {
-        VStack(alignment: .leading, spacing: 7) {
-            SalatiWidgetHeader(
-                title: SalatiText.iqamaShort,
-                symbol: "person.2.fill",
-                theme: theme,
-                showsLocation: false
-            )
+        VStack(alignment: .leading, spacing: 6) {
+            SalatiWidgetHeader(title: title, symbol: "calendar", theme: theme, showsLocation: false)
 
-            Spacer(minLength: 0)
-
-            HStack(alignment: .firstTextBaseline, spacing: 7) {
-                SalatiTimeText(value: iqamaTime, size: 24, weight: .black, color: theme.accent)
-
-                Spacer(minLength: 3)
-
-                Text(prayerName)
-                    .font(.system(size: 24, weight: .black, design: .rounded))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.7)
-                    .multilineTextAlignment(.trailing)
-            }
-            .environment(\.layoutDirection, .leftToRight)
-
-            Text(SalatiText.iqamaDelay(minutes: iqamaDelayMinutes))
+            Text(SalatiWidgetDateText.compact(for: entry.scheduleDate))
                 .font(.system(size: 9, weight: .bold, design: .rounded))
                 .foregroundStyle(theme.mutedText)
-                .fixedSize(horizontal: true, vertical: false)
+                .lineLimit(1)
+                .minimumScaleFactor(0.68)
+                .frame(maxWidth: .infinity, alignment: .leading)
 
-            SalatiCountdownRow(
-                label: SalatiText.remaining,
-                from: entry.date,
-                target: iqamaDate,
-                theme: theme,
-                compact: true
+            SalatiPrayerList(
+                times: compactTimes,
+                highlightedPrayer: entry.highlightedPrayer,
+                theme: theme
             )
         }
         .salatiHomeWidgetPadding()
@@ -277,31 +199,51 @@ struct SalatiIqamaWidgetView: View {
 
     private func mediumBody(theme: SalatiWidgetTheme) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            SalatiWidgetHeader(title: SalatiText.nextIqama, symbol: "person.2.fill", theme: theme)
+            SalatiWidgetHeader(title: title, symbol: "calendar", theme: theme)
 
-            HStack(alignment: .center, spacing: 10) {
-                SalatiTimeText(value: iqamaTime, size: 32, weight: .black, color: theme.accent)
+            Text(SalatiWidgetDateText.compact(for: entry.scheduleDate))
+                .font(.system(size: 11, weight: .bold, design: .rounded))
+                .foregroundStyle(theme.mutedText)
+                .lineLimit(1)
+                .frame(maxWidth: .infinity, alignment: .leading)
 
-                VStack(alignment: .trailing, spacing: 3) {
-                    Text(prayerName)
-                        .font(.system(size: 26, weight: .black, design: .rounded))
-                        .lineLimit(1)
-                    Text(SalatiText.iqamaAfterAdhan(prayer: prayerName, minutes: iqamaDelayMinutes))
-                        .font(.system(size: 10, weight: .bold, design: .rounded))
-                        .foregroundStyle(theme.mutedText)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.72)
+            SalatiPrayerColumns(
+                times: entry.times,
+                highlightedPrayer: entry.highlightedPrayer,
+                theme: theme
+            )
+        }
+        .salatiHomeWidgetPadding()
+    }
+
+    private func largeBody(theme: SalatiWidgetTheme) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            SalatiWidgetHeader(title: title, symbol: "calendar", theme: theme)
+
+            HStack(spacing: 8) {
+                Text(SalatiWidgetDateText.compact(for: entry.scheduleDate))
+                    .font(.system(size: 12, weight: .bold, design: .rounded))
+                    .foregroundStyle(theme.mutedText)
+                    .lineLimit(1)
+
+                Spacer(minLength: 4)
+
+                if let nextPrayer = entry.nextPrayer {
+                    Text(SalatiText.nextPrayerSummary(nextPrayer.title))
+                        .font(.system(size: 12, weight: .black, design: .rounded))
+                        .foregroundStyle(theme.secondaryText)
+                        .fixedSize(horizontal: true, vertical: false)
                 }
-                .frame(maxWidth: .infinity, alignment: .trailing)
             }
             .environment(\.layoutDirection, .leftToRight)
 
-            SalatiCountdownRow(
-                label: SalatiText.remainingUntilIqama,
-                from: entry.date,
-                target: iqamaDate,
-                theme: theme
+            SalatiPrayerList(
+                times: entry.times,
+                highlightedPrayer: entry.highlightedPrayer,
+                theme: theme,
+                expanded: true
             )
+            .frame(maxHeight: .infinity, alignment: .top)
         }
         .salatiHomeWidgetPadding()
     }
