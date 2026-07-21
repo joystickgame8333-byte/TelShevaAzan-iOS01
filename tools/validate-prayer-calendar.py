@@ -19,6 +19,7 @@ WIDGET_DATA_PATH = ROOT / "TelShevaAzanWidget" / "SalatiWidgetData.swift"
 WIDGET_BUNDLE_PATH = ROOT / "TelShevaAzanWidget" / "TelShevaAzanWidget.swift"
 WIDGET_VIEWS_PATH = ROOT / "TelShevaAzanWidget" / "SalatiWidgetViews.swift"
 WIDGET_COMPONENTS_PATH = ROOT / "TelShevaAzanWidget" / "SalatiWidgetComponents.swift"
+WIDGET_LOCK_SCREEN_PATH = ROOT / "TelShevaAzanWidget" / "SalatiLockScreenViews.swift"
 WIDGET_THEME_PATH = ROOT / "TelShevaAzanWidget" / "SalatiWidgetTheme.swift"
 WIDGET_REFRESH_PATH = ROOT / "TelShevaAzan" / "WidgetRefreshCenter.swift"
 THEME_PATH = ROOT / "TelShevaAzan" / "AppTheme.swift"
@@ -216,6 +217,7 @@ widget_data_text = WIDGET_DATA_PATH.read_text(encoding="utf-8")
 widget_bundle_text = WIDGET_BUNDLE_PATH.read_text(encoding="utf-8")
 widget_views_text = WIDGET_VIEWS_PATH.read_text(encoding="utf-8")
 widget_components_text = WIDGET_COMPONENTS_PATH.read_text(encoding="utf-8")
+widget_lock_screen_text = WIDGET_LOCK_SCREEN_PATH.read_text(encoding="utf-8")
 widget_theme_text = WIDGET_THEME_PATH.read_text(encoding="utf-8")
 widget_refresh_text = WIDGET_REFRESH_PATH.read_text(encoding="utf-8")
 theme_text = THEME_PATH.read_text(encoding="utf-8")
@@ -236,6 +238,10 @@ assert widget_views_text.count("SalatiPrayerColumns(") == 1, "Prayer tables belo
 assert widget_views_text.count("SalatiPrayerList(") == 2, "Small and large schedules need dedicated vertical layouts"
 assert ".overlay(alignment: .trailing)" in widget_components_text, "Active stripe must stay on the physical right"
 assert "SalatiText.nextPrayerShort" in widget_views_text, "Compact families must use short Arabic labels"
+for lock_view in ("SalatiAccessoryInlineView", "SalatiAccessoryCircularView", "SalatiAccessoryRectangularView"):
+    assert f"struct {lock_view}" in widget_lock_screen_text
+    assert lock_view in widget_views_text
+assert "SalatiCountdownText" in widget_lock_screen_text, "Lock screen must label and show a live countdown"
 assert ".frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)" in widget_theme_text
 assert ".frame(maxWidth: .infinity, maxHeight: .infinity)" in widget_theme_text
 assert "SalatiWidgetKind.all" in widget_refresh_text

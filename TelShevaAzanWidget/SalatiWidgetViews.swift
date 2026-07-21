@@ -37,42 +37,23 @@ struct SalatiNextPrayerView: View {
     private var accessoryBody: some View {
         switch family {
         case .accessoryInline:
-            Text(SalatiText.prayerAndTime(prayer: prayerName, time: prayerTime))
-                .fixedSize(horizontal: true, vertical: false)
+            SalatiAccessoryInlineView(prayerName: prayerName, prayerTime: prayerTime)
 
         case .accessoryCircular:
-            VStack(spacing: 1) {
-                SalatiTimeText(value: prayerTime, size: 17, weight: .black)
-                Text(prayerName)
-                    .font(.system(size: 10, weight: .bold, design: .rounded))
-                    .fixedSize(horizontal: true, vertical: false)
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(AccessoryWidgetBackground())
+            SalatiAccessoryCircularView(
+                prayerName: prayerName,
+                from: entry.date,
+                target: prayerDate
+            )
 
         default:
-            VStack(spacing: 4) {
-                HStack(spacing: 5) {
-                    SalatiTimeText(value: prayerTime, size: 15, weight: .black)
-                    Spacer(minLength: 4)
-                    Text(SalatiText.nextPrayerShort)
-                        .font(.caption2.weight(.bold))
-                        .fixedSize(horizontal: true, vertical: false)
-                    Image(systemName: SalatiPrayerSymbol.value(for: entry.nextPrayer?.key))
-                        .widgetAccentable()
-                }
-                .environment(\.layoutDirection, .leftToRight)
-
-                HStack(spacing: 5) {
-                    SalatiCountdownText(from: entry.date, target: prayerDate, size: 12, color: .primary)
-                        .frame(maxWidth: 72, alignment: .leading)
-                    Spacer(minLength: 4)
-                    Text(prayerName)
-                        .font(.headline.weight(.bold))
-                        .fixedSize(horizontal: true, vertical: false)
-                }
-                .environment(\.layoutDirection, .leftToRight)
-            }
+            SalatiAccessoryRectangularView(
+                prayerName: prayerName,
+                prayerTime: prayerTime,
+                prayerSymbol: SalatiPrayerSymbol.value(for: entry.nextPrayer?.key),
+                from: entry.date,
+                target: prayerDate
+            )
         }
     }
 
