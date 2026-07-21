@@ -231,7 +231,9 @@ iqama_widget = widget_bundle_text.split("struct SalatiIqamaWidget", 1)[1].split(
 assert ".systemLarge" not in next_prayer_widget, "Next-prayer large must not duplicate the schedule widget"
 assert ".accessory" not in iqama_widget, "Lock screen must expose one clear next-prayer set"
 assert widget_views_text.count("SalatiPrayerColumns(") == 1, "Prayer tables belong only to the schedule widget"
-assert ".overlay(alignment: .leading)" in widget_components_text, "Active RTL stripe must stay on the right"
+assert ".overlay(alignment: .trailing)" in widget_components_text, "Active stripe must stay on the physical right"
+assert "SalatiText.nextPrayerShort" in widget_views_text, "Compact families must use short Arabic labels"
+assert "SalatiText.iqamaShort" in widget_views_text, "Compact iqama must not truncate its heading"
 assert widget_theme_text.count(".frame(maxWidth: .infinity, maxHeight: .infinity)") >= 2, "Widget content and background must fill the family canvas"
 assert "SalatiWidgetKind.all" in widget_refresh_text
 for kind in ("nextPrayer", "dailySchedule", "iqama"):
