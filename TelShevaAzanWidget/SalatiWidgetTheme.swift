@@ -3,6 +3,7 @@ import WidgetKit
 
 struct SalatiWidgetTheme {
     let visualTheme: PrayerVisualTheme
+    let ambientAccent: Color
 
     var accent: Color { visualTheme.accent }
     var primaryText: Color { visualTheme.primaryText }
@@ -29,9 +30,14 @@ struct SalatiWidgetSurface<Content: View>: View {
     @AppStorage(AppThemeStorage.dayThemeKey, store: AppThemeStorage.defaults)
     private var selectedDayThemeID = PrayerVisualTheme.defaultDay.rawValue
 
+    private let prayerKey: PrayerKey?
     private let content: (SalatiWidgetTheme) -> Content
 
-    init(@ViewBuilder content: @escaping (SalatiWidgetTheme) -> Content) {
+    init(
+        prayerKey: PrayerKey? = nil,
+        @ViewBuilder content: @escaping (SalatiWidgetTheme) -> Content
+    ) {
+        self.prayerKey = prayerKey
         self.content = content
     }
 
@@ -51,6 +57,10 @@ struct SalatiWidgetSurface<Content: View>: View {
                 isNight: colorScheme == .dark,
                 nightID: selectedNightThemeID,
                 dayID: selectedDayThemeID
+            ),
+            ambientAccent: SalatiWidgetAmbient.accent(
+                for: prayerKey,
+                colorScheme: colorScheme
             )
         )
     }
@@ -64,7 +74,7 @@ struct SalatiWidgetSurface<Content: View>: View {
             )
 
             RadialGradient(
-                colors: [theme.accent.opacity(colorScheme == .dark ? 0.22 : 0.14), .clear],
+                colors: [theme.ambientAccent.opacity(colorScheme == .dark ? 0.24 : 0.16), .clear],
                 center: .topLeading,
                 startRadius: 0,
                 endRadius: 220
@@ -77,6 +87,35 @@ struct SalatiWidgetSurface<Content: View>: View {
             )
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+private enum SalatiWidgetAmbient {
+    static func accent(for prayer: PrayerKey?, colorScheme: ColorScheme) -> Color {
+        let isDark = colorScheme == .dark
+
+        switch prayer {
+        case .fajr:
+            return isDark
+                ? Color(red: 0.40, green: 0.60, blue: 1.00)
+                : Color(red: 0.33, green: 0.42, blue: 0.92)
+        case .sunrise:
+            return Color(red: 0.98, green: 0.61, blue: 0.18)
+        case .dhuhr:
+            return Color(red: 0.00, green: 0.55, blue: 0.96)
+        case .asr:
+            return isDark
+                ? Color(red: 0.95, green: 0.66, blue: 0.22)
+                : Color(red: 0.84, green: 0.50, blue: 0.08)
+        case .maghrib:
+            return Color(red: 0.96, green: 0.39, blue: 0.18)
+        case .isha:
+            return isDark
+                ? Color(red: 0.33, green: 0.53, blue: 1.00)
+                : Color(red: 0.20, green: 0.36, blue: 0.88)
+        case nil:
+            return Color(red: 0.00, green: 0.48, blue: 1.00)
+        }
     }
 }
 

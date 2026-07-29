@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - codex/widget-smart-experiment
 
 concurrency:
   group: unsigned-ipa-${{ github.ref }}

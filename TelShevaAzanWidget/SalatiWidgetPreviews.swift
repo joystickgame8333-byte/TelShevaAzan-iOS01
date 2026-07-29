@@ -73,4 +73,22 @@ import WidgetKit
 } timeline: {
     SalatiWidgetEntry.preview
 }
+
+#Preview("الصلاة القادمة — الحالات الذكية", as: .systemMedium) {
+    SalatiNextPrayerWidget()
+} timeline: {
+    SalatiWidgetEntry.previewApproaching
+    SalatiWidgetEntry.previewAdhan
+    SalatiWidgetEntry.previewIqama
+    SalatiWidgetEntry.previewTomorrow
+}
+
+#Preview("شاشة القفل — الحالات الذكية", as: .accessoryRectangular) {
+    SalatiLockNextPrayerWidget()
+} timeline: {
+    SalatiWidgetEntry.previewApproaching
+    SalatiWidgetEntry.previewAdhan
+    SalatiWidgetEntry.previewIqama
+    SalatiWidgetEntry.previewTomorrow
+}
 #endif

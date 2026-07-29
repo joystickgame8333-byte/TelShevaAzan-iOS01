@@ -9,7 +9,7 @@ struct SalatiPrayerPathView: View {
     }
 
     var body: some View {
-        SalatiWidgetSurface { theme in
+        SalatiWidgetSurface(prayerKey: entry.highlightedPrayerKey) { theme in
             VStack(alignment: .trailing, spacing: 12) {
                 SalatiWidgetHeader(
                     title: title,
@@ -22,7 +22,7 @@ struct SalatiPrayerPathView: View {
                         prayerMilestone(
                             prayer: prayer,
                             theme: theme,
-                            isActive: entry.highlightedPrayer == prayer.key
+                            isActive: entry.highlightedPrayerKey == prayer.key
                         )
                     }
                 }

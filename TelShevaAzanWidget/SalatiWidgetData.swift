@@ -1,6 +1,14 @@
 import Foundation
 import WidgetKit
 
+enum SalatiWidgetMoment: Equatable {
+    case upcoming
+    case approaching
+    case adhan
+    case iqama
+    case tomorrow
+}
+
 struct SalatiWidgetEntry: TimelineEntry {
     let date: Date
     let dateKey: String
@@ -31,6 +39,24 @@ struct SalatiWidgetEntry: TimelineEntry {
         IqamaSchedule.telSheva.activeEvent(at: date)
     }
 
+    var moment: SalatiWidgetMoment {
+        if let activeIqama {
+            let elapsed = date.timeIntervalSince(activeIqama.prayer.date)
+            return elapsed < 3 * 60 ? .adhan : .iqama
+        }
+
+        if isTomorrowSchedule {
+            return .tomorrow
+        }
+
+        if let nextPrayer,
+           nextPrayer.date.timeIntervalSince(date) <= 10 * 60 {
+            return .approaching
+        }
+
+        return .upcoming
+    }
+
     var focusedPrayer: PrayerTime? {
         activeIqama?.prayer ?? nextPrayer
     }
@@ -39,19 +65,77 @@ struct SalatiWidgetEntry: TimelineEntry {
         activeIqama?.date ?? nextPrayer?.date
     }
 
-    var focusedTime: String {
+    var focusedStart: Date? {
         if let activeIqama {
+            return activeIqama.prayer.date
+        }
+
+        let todayKey = PrayerEngine.defaultDateKey(for: date)
+        return PrayerEngine.previousPrayer(for: todayKey, now: date)?.date
+    }
+
+    var focusedProgress: Double {
+        guard let start = focusedStart,
+              let target = focusedTarget,
+              target > start else {
+            return 0
+        }
+
+        let duration = target.timeIntervalSince(start)
+        let elapsed = date.timeIntervalSince(start)
+        return min(1, max(0, elapsed / duration))
+    }
+
+    var focusedTime: String {
+        if let activeIqama, moment != .adhan {
             return SalatiWidgetDateText.clock(for: activeIqama.date)
+        }
+        if let activeIqama {
+            return activeIqama.prayer.time
         }
         return nextPrayer?.time ?? SalatiText.noTime
     }
 
     var focusedTitle: String {
-        activeIqama == nil ? SalatiText.nextPrayer : SalatiText.nextIqama
+        switch moment {
+        case .upcoming:
+            return SalatiText.nextPrayer
+        case .approaching:
+            return SalatiText.adhanApproaching
+        case .adhan:
+            return SalatiText.adhanNow
+        case .iqama:
+            return SalatiText.nextIqama
+        case .tomorrow:
+            return SalatiText.tomorrowFajr
+        }
+    }
+
+    var focusedShortTitle: String {
+        switch moment {
+        case .upcoming:
+            return SalatiText.nextPrayerShort
+        case .approaching:
+            return SalatiText.soon
+        case .adhan:
+            return SalatiText.now
+        case .iqama:
+            return SalatiText.iqama
+        case .tomorrow:
+            return SalatiText.tomorrow
+        }
     }
 
     var focusedCountdownLabel: String {
-        activeIqama == nil ? SalatiText.remaining : SalatiText.remainingUntilIqama
+        activeIqama == nil ? SalatiText.remainingUntilAdhan : SalatiText.remainingUntilIqama
+    }
+
+    var highlightedPrayerKey: PrayerKey? {
+        if let activeIqama,
+           PrayerEngine.defaultDateKey(for: activeIqama.prayer.date) == dateKey {
+            return activeIqama.prayer.key
+        }
+        return highlightedPrayer
     }
 
     var followingPrayer: PrayerTime? {
@@ -82,6 +166,35 @@ struct SalatiWidgetEntry: TimelineEntry {
             minute: 42
         )
         return SalatiWidgetProvider.makeEntry(for: PrayerEngine.calendar.date(from: components) ?? Date())
+    }
+
+    static var previewApproaching: SalatiWidgetEntry {
+        previewEntry(around: .maghrib, offset: -5 * 60)
+    }
+
+    static var previewAdhan: SalatiWidgetEntry {
+        previewEntry(around: .maghrib, offset: 30)
+    }
+
+    static var previewIqama: SalatiWidgetEntry {
+        previewEntry(around: .maghrib, offset: 4 * 60)
+    }
+
+    static var previewTomorrow: SalatiWidgetEntry {
+        previewEntry(around: .isha, offset: 20 * 60)
+    }
+
+    private static func previewEntry(
+        around prayerKey: PrayerKey,
+        offset: TimeInterval
+    ) -> SalatiWidgetEntry {
+        let dateKey = "2026-07-20"
+        let prayer = PrayerEngine.schedule(for: dateKey).displayTimes.first {
+            $0.key == prayerKey
+        }
+        return SalatiWidgetProvider.makeEntry(
+            for: prayer?.date.addingTimeInterval(offset) ?? Date()
+        )
     }
 }
 
@@ -118,24 +231,37 @@ struct SalatiWidgetProvider: TimelineProvider {
         let dateKey = PrayerEngine.defaultDateKey(for: start)
 
         for prayer in PrayerEngine.schedule(for: dateKey).displayTimes where prayer.key != .sunrise {
-            Self.insertTransition(after: prayer.date, now: now, into: &dates)
+            Self.insertTransition(
+                at: prayer.date.addingTimeInterval(-10 * 60),
+                now: now,
+                into: &dates
+            )
+            Self.insertTransition(at: prayer.date, now: now, into: &dates)
+            Self.insertTransition(
+                at: prayer.date.addingTimeInterval(3 * 60),
+                now: now,
+                into: &dates
+            )
 
             if let iqamaDate = IqamaSchedule.telSheva.iqamaDate(for: prayer) {
-                Self.insertTransition(after: iqamaDate, now: now, into: &dates)
+                Self.insertTransition(
+                    at: iqamaDate.addingTimeInterval(1),
+                    now: now,
+                    into: &dates
+                )
             }
         }
 
         if let nextDay = PrayerEngine.calendar.date(byAdding: .day, value: 1, to: start) {
-            Self.insertTransition(after: nextDay, now: now, into: &dates)
+            Self.insertTransition(at: nextDay, now: now, into: &dates)
         }
 
         return dates.sorted()
     }
 
-    private static func insertTransition(after eventDate: Date, now: Date, into dates: inout Set<Date>) {
-        let transition = eventDate.addingTimeInterval(1)
-        guard transition > now else { return }
-        dates.insert(Date(timeIntervalSince1970: transition.timeIntervalSince1970.rounded()))
+    private static func insertTransition(at date: Date, now: Date, into dates: inout Set<Date>) {
+        guard date > now else { return }
+        dates.insert(Date(timeIntervalSince1970: date.timeIntervalSince1970.rounded()))
     }
 }
 

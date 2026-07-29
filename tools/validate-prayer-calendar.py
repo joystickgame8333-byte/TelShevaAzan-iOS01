@@ -306,8 +306,12 @@ assert widget_views_text.count("SalatiPrayerList(") == 2, "Small and large sched
 assert "Spacer(minLength: 0)" in widget_components_text
 assert ".environment(\\.layoutDirection, .leftToRight)" in widget_components_text
 assert widget_views_text.count("SalatiCountdownRow(") == 3
-assert "SalatiText.nextPrayerShort" in widget_views_text, "Compact families must use short Arabic labels"
+assert "entry.focusedShortTitle" in widget_views_text, "Compact families must use the short smart-state label"
 assert "SalatiText.remainingUntilAdhan" not in widget_views_text
+for smart_moment in (".upcoming", ".approaching", ".adhan", ".iqama", ".tomorrow"):
+    assert smart_moment in widget_data_text
+assert "SalatiPrayerProgress(" in widget_views_text
+assert "SalatiPrayerRing(" in widget_views_text
 small_next_prayer_view = widget_views_text.split("private func smallBody(theme: SalatiWidgetTheme)", 1)[1].split("private func mediumBody", 1)[0]
 assert "SalatiWidgetHeader(" not in small_next_prayer_view
 schedule_small_view = widget_views_text.split("struct SalatiPrayerScheduleView", 1)[1].split("private func mediumBody", 1)[0]

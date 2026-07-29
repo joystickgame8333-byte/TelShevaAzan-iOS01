@@ -44,7 +44,18 @@ struct SalatiLockInlineView: View {
     }
 
     private var shortName: String {
-        entry.activeIqama == nil ? prayerName : "إقامة \(prayerName)"
+        switch entry.moment {
+        case .upcoming:
+            return prayerName
+        case .approaching:
+            return "اقترب \(prayerName)"
+        case .adhan:
+            return "الآن \(prayerName)"
+        case .iqama:
+            return "إقامة \(prayerName)"
+        case .tomorrow:
+            return "فجر الغد"
+        }
     }
 
     var body: some View {
@@ -86,9 +97,7 @@ struct SalatiLockInlineView: View {
     }
 
     private var symbol: String {
-        entry.activeIqama == nil
-            ? SalatiPrayerSymbol.value(for: entry.focusedPrayer?.key)
-            : "person.2.fill"
+        SalatiLockSymbol.value(for: entry)
     }
 
     private var accessibilityText: String {
@@ -109,6 +118,15 @@ struct SalatiLockPrayerTimeView: View {
 
             Circle()
                 .stroke(.primary.opacity(0.24), lineWidth: 2)
+
+            Circle()
+                .trim(from: 0, to: max(0.035, min(1, entry.focusedProgress)))
+                .stroke(
+                    .primary,
+                    style: StrokeStyle(lineWidth: 2.5, lineCap: .round)
+                )
+                .rotationEffect(.degrees(-90))
+                .widgetAccentable()
 
             VStack(spacing: 0) {
                 Image(systemName: symbol)
@@ -133,9 +151,7 @@ struct SalatiLockPrayerTimeView: View {
     }
 
     private var symbol: String {
-        entry.activeIqama == nil
-            ? SalatiPrayerSymbol.value(for: entry.focusedPrayer?.key)
-            : "person.2.fill"
+        SalatiLockSymbol.value(for: entry)
     }
 }
 
@@ -152,6 +168,14 @@ struct SalatiLockCountdownView: View {
 
             Circle()
                 .stroke(.primary.opacity(0.26), lineWidth: 2.5)
+
+            Circle()
+                .trim(from: 0, to: max(0.035, min(1, entry.focusedProgress)))
+                .stroke(
+                    .primary,
+                    style: StrokeStyle(lineWidth: 3, lineCap: .round)
+                )
+                .rotationEffect(.degrees(-90))
 
             VStack(spacing: 1) {
                 SalatiCountdownText(
@@ -234,19 +258,26 @@ struct SalatiLockNextPrayerView: View {
     }
 
     private var symbol: String {
-        entry.activeIqama == nil
-            ? SalatiPrayerSymbol.value(for: entry.focusedPrayer?.key)
-            : "person.2.fill"
+        SalatiLockSymbol.value(for: entry)
     }
 }
 
 struct SalatiLockFollowingPrayersView: View {
     let entry: SalatiWidgetEntry
 
+    private var headerTitle: String {
+        switch entry.moment {
+        case .adhan, .iqama:
+            return entry.focusedTitle
+        case .upcoming, .approaching, .tomorrow:
+            return SalatiText.nextAndFollowing
+        }
+    }
+
     var body: some View {
         VStack(alignment: .trailing, spacing: 4) {
             HStack(spacing: 4) {
-                Text(SalatiText.nextAndFollowing)
+                Text(headerTitle)
                     .font(.system(size: 9, weight: .bold, design: .rounded))
                     .lineLimit(1)
 
@@ -270,7 +301,7 @@ struct SalatiLockFollowingPrayersView: View {
                 prayerBlock(
                     title: entry.focusedPrayer?.title ?? SalatiText.prayer,
                     time: entry.focusedTime,
-                    caption: entry.activeIqama == nil ? "القادمة" : "الإقامة",
+                    caption: entry.focusedShortTitle,
                     emphasized: true
                 )
             }
@@ -341,7 +372,7 @@ struct SalatiLockScheduleView: View {
                     Text(prayer.title)
                         .font(.system(
                             size: 9.5,
-                            weight: prayer.key == entry.highlightedPrayer ? .black : .bold,
+                            weight: prayer.key == entry.highlightedPrayerKey ? .black : .bold,
                             design: .rounded
                         ))
                         .lineLimit(1)
@@ -350,18 +381,18 @@ struct SalatiLockScheduleView: View {
                     SalatiTimeText(
                         value: prayer.time,
                         size: 13,
-                        weight: prayer.key == entry.highlightedPrayer ? .black : .bold
+                        weight: prayer.key == entry.highlightedPrayerKey ? .black : .bold
                     )
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 2)
                 .background {
-                    if prayer.key == entry.highlightedPrayer {
+                    if prayer.key == entry.highlightedPrayerKey {
                         RoundedRectangle(cornerRadius: 5, style: .continuous)
                             .fill(.primary.opacity(0.12))
                     }
                 }
-                .widgetAccentable(prayer.key == entry.highlightedPrayer)
+                .widgetAccentable(prayer.key == entry.highlightedPrayerKey)
             }
         }
         .environment(\.layoutDirection, .leftToRight)
@@ -371,5 +402,18 @@ struct SalatiLockScheduleView: View {
         entry.times
             .map { SalatiText.prayerAndTime(prayer: $0.title, time: $0.time) }
             .joined(separator: "، ")
+    }
+}
+
+private enum SalatiLockSymbol {
+    static func value(for entry: SalatiWidgetEntry) -> String {
+        switch entry.moment {
+        case .adhan:
+            return "speaker.wave.2.fill"
+        case .iqama:
+            return "person.2.fill"
+        case .upcoming, .approaching, .tomorrow:
+            return SalatiPrayerSymbol.value(for: entry.focusedPrayer?.key)
+        }
     }
 }

@@ -16,6 +16,14 @@ enum SalatiText {
     static let prayerPathDescription = "تابع ترتيب الصلوات المفروضة وموضع الصلاة القادمة"
     static let nextIqama = "الإقامة القادمة"
     static let remainingUntilIqama = "متبقي للإقامة"
+    static let remainingUntilAdhan = "متبقي للأذان"
+    static let adhanApproaching = "اقترب الأذان"
+    static let adhanNow = "حان الآن الأذان"
+    static let tomorrowFajr = "فجر الغد"
+    static let soon = "قريبًا"
+    static let now = "الآن"
+    static let iqama = "الإقامة"
+    static let tomorrow = "غدًا"
     static let nextAndFollowing = "القادمة وبعدها"
     static let lockInlineTitle = "الصلاة والإقامة"
     static let lockInlineDescription = "حالة الصلاة أو الإقامة في السطر أعلى ساعة القفل"
@@ -166,6 +174,72 @@ struct SalatiCountdownRow: View {
         .overlay {
             RoundedRectangle(cornerRadius: SalatiWidgetMetrics.compactCornerRadius, style: .continuous)
                 .stroke(theme.border, lineWidth: 0.75)
+        }
+    }
+}
+
+struct SalatiPrayerProgress: View {
+    let start: Date?
+    let target: Date?
+    let fallbackProgress: Double
+    let theme: SalatiWidgetTheme
+
+    var body: some View {
+        Group {
+            if let start,
+               let target,
+               target > start {
+                ProgressView(
+                    timerInterval: start...target,
+                    countsDown: false
+                ) {
+                    EmptyView()
+                } currentValueLabel: {
+                    EmptyView()
+                }
+            } else {
+                ProgressView(value: fallbackProgress)
+            }
+        }
+        .tint(theme.ambientAccent)
+        .scaleEffect(x: 1, y: 0.72, anchor: .center)
+        .accessibilityHidden(true)
+    }
+}
+
+struct SalatiPrayerRing<Content: View>: View {
+    let progress: Double
+    let theme: SalatiWidgetTheme
+    let lineWidth: CGFloat
+    private let content: Content
+
+    init(
+        progress: Double,
+        theme: SalatiWidgetTheme,
+        lineWidth: CGFloat = 3,
+        @ViewBuilder content: () -> Content
+    ) {
+        self.progress = progress
+        self.theme = theme
+        self.lineWidth = lineWidth
+        self.content = content()
+    }
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .stroke(theme.border.opacity(0.9), lineWidth: lineWidth)
+
+            Circle()
+                .trim(from: 0, to: max(0.035, min(1, progress)))
+                .stroke(
+                    theme.ambientAccent,
+                    style: StrokeStyle(lineWidth: lineWidth, lineCap: .round)
+                )
+                .rotationEffect(.degrees(-90))
+                .widgetAccentable()
+
+            content
         }
     }
 }

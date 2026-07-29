@@ -5,12 +5,12 @@ struct SalatiNextPrayerView: View {
     @Environment(\.widgetFamily) private var family
     let entry: SalatiWidgetEntry
 
-    private var prayerName: String { entry.nextPrayer?.title ?? SalatiText.prayer }
-    private var prayerTime: String { entry.nextPrayer?.time ?? SalatiText.noTime }
-    private var prayerDate: Date? { entry.nextPrayer?.date }
+    private var prayerName: String { entry.focusedPrayer?.title ?? SalatiText.prayer }
+    private var prayerTime: String { entry.focusedTime }
+    private var prayerDate: Date? { entry.focusedTarget }
 
     var body: some View {
-        SalatiWidgetSurface { theme in
+        SalatiWidgetSurface(prayerKey: entry.focusedPrayer?.key) { theme in
             if family == .systemSmall {
                 smallBody(theme: theme)
             } else {
@@ -20,7 +20,7 @@ struct SalatiNextPrayerView: View {
         .environment(\.layoutDirection, .rightToLeft)
         .widgetURL(URL(string: "telshevaazan://schedule"))
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(SalatiText.nextPrayer)، \(prayerName)، \(prayerTime)")
+        .accessibilityLabel("\(entry.focusedTitle)، \(prayerName)، \(prayerTime)")
     }
 
     private func smallBody(theme: SalatiWidgetTheme) -> some View {
@@ -48,11 +48,18 @@ struct SalatiNextPrayerView: View {
             .environment(\.layoutDirection, .leftToRight)
 
             SalatiCountdownRow(
-                label: SalatiText.remaining,
+                label: entry.focusedCountdownLabel,
                 from: entry.date,
                 target: prayerDate,
                 theme: theme,
                 compact: true
+            )
+
+            SalatiPrayerProgress(
+                start: entry.focusedStart,
+                target: prayerDate,
+                fallbackProgress: entry.focusedProgress,
+                theme: theme
             )
         }
         .salatiHomeWidgetPadding()
@@ -61,8 +68,8 @@ struct SalatiNextPrayerView: View {
     private func mediumBody(theme: SalatiWidgetTheme) -> some View {
         VStack(alignment: .trailing, spacing: 9) {
             SalatiWidgetHeader(
-                title: SalatiText.nextPrayer,
-                symbol: SalatiPrayerSymbol.value(for: entry.nextPrayer?.key),
+                title: entry.focusedTitle,
+                symbol: momentSymbol,
                 theme: theme
             )
 
@@ -76,7 +83,7 @@ struct SalatiNextPrayerView: View {
                     )
 
                     SalatiCountdownRow(
-                        label: SalatiText.remaining,
+                        label: entry.focusedCountdownLabel,
                         from: entry.date,
                         target: prayerDate,
                         theme: theme,
@@ -102,24 +109,39 @@ struct SalatiNextPrayerView: View {
             }
             .environment(\.layoutDirection, .leftToRight)
             .frame(maxHeight: .infinity)
+
+            SalatiPrayerProgress(
+                start: entry.focusedStart,
+                target: prayerDate,
+                fallbackProgress: entry.focusedProgress,
+                theme: theme
+            )
         }
         .salatiHomeWidgetPadding()
     }
 
     private func prayerSymbol(theme: SalatiWidgetTheme, size: CGFloat) -> some View {
-        ZStack {
+        SalatiPrayerRing(
+            progress: entry.focusedProgress,
+            theme: theme,
+            lineWidth: 2.5
+        ) {
             Circle()
                 .fill(theme.activePanel)
+                .padding(4)
 
-            Image(systemName: SalatiPrayerSymbol.value(for: entry.nextPrayer?.key))
+            Image(systemName: momentSymbol)
                 .font(.system(size: size * 0.42, weight: .black))
                 .foregroundStyle(theme.accent)
                 .widgetAccentable()
         }
         .frame(width: size, height: size)
-        .overlay {
-            Circle().stroke(theme.activeBorder, lineWidth: 1)
-        }
+    }
+
+    private var momentSymbol: String {
+        entry.moment == .adhan
+            ? "speaker.wave.2.fill"
+            : SalatiPrayerSymbol.value(for: entry.focusedPrayer?.key)
     }
 }
 
@@ -132,7 +154,7 @@ struct SalatiPrayerScheduleView: View {
     }
 
     var body: some View {
-        SalatiWidgetSurface { theme in
+        SalatiWidgetSurface(prayerKey: entry.highlightedPrayerKey) { theme in
             switch family {
             case .systemSmall:
                 smallBody(theme: theme)
@@ -152,7 +174,7 @@ struct SalatiPrayerScheduleView: View {
         VStack(alignment: .trailing, spacing: 3) {
             SalatiPrayerList(
                 times: entry.obligatoryTimes,
-                highlightedPrayer: entry.highlightedPrayer,
+                highlightedPrayer: entry.highlightedPrayerKey,
                 theme: theme,
                 compact: true
             )
@@ -173,7 +195,7 @@ struct SalatiPrayerScheduleView: View {
 
             SalatiPrayerColumns(
                 times: entry.times,
-                highlightedPrayer: entry.highlightedPrayer,
+                highlightedPrayer: entry.highlightedPrayerKey,
                 theme: theme
             )
         }
@@ -195,7 +217,7 @@ struct SalatiPrayerScheduleView: View {
 
             SalatiPrayerList(
                 times: entry.times,
-                highlightedPrayer: entry.highlightedPrayer,
+                highlightedPrayer: entry.highlightedPrayerKey,
                 theme: theme,
                 expanded: true,
                 compact: true
@@ -209,16 +231,16 @@ struct SalatiPrayerScheduleView: View {
         HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 4) {
                 SalatiTimeText(
-                    value: entry.nextPrayer?.time ?? SalatiText.noTime,
+                    value: entry.focusedTime,
                     size: 30,
                     weight: .black,
                     color: theme.accent
                 )
 
                 SalatiCountdownRow(
-                    label: SalatiText.remaining,
+                    label: entry.focusedCountdownLabel,
                     from: entry.date,
-                    target: entry.nextPrayer?.date,
+                    target: entry.focusedTarget,
                     theme: theme,
                     compact: true
                 )
@@ -227,11 +249,11 @@ struct SalatiPrayerScheduleView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
 
             VStack(alignment: .trailing, spacing: 3) {
-                Text(SalatiText.nextPrayerShort)
+                Text(entry.focusedShortTitle)
                     .font(.system(size: 11, weight: .bold, design: .rounded))
                     .foregroundStyle(theme.mutedText)
 
-                Text(entry.nextPrayer?.title ?? SalatiText.prayer)
+                Text(entry.focusedPrayer?.title ?? SalatiText.prayer)
                     .font(.system(size: 25, weight: .black, design: .rounded))
                     .foregroundStyle(theme.primaryText)
                     .lineLimit(1)
@@ -245,6 +267,16 @@ struct SalatiPrayerScheduleView: View {
         .overlay {
             RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .stroke(theme.activeBorder.opacity(0.72), lineWidth: 0.9)
+        }
+        .overlay(alignment: .bottom) {
+            SalatiPrayerProgress(
+                start: entry.focusedStart,
+                target: entry.focusedTarget,
+                fallbackProgress: entry.focusedProgress,
+                theme: theme
+            )
+            .padding(.horizontal, 13)
+            .offset(y: 5)
         }
     }
 }
