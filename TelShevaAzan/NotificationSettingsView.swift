@@ -209,7 +209,6 @@ struct NotificationSettingsView: View {
         VStack(alignment: .trailing, spacing: 16) {
             nafahatMasterPanel
             miniKhatmahPanel
-            adhkarSoundPanel
             nafahatPreviewPanel
             nafahatIntervalPanel
             nafahatTextPanel
@@ -573,7 +572,7 @@ struct NotificationSettingsView: View {
                             .minimumScaleFactor(0.84)
                             .fixedSize(horizontal: false, vertical: true)
 
-                        Text("يوصل تذكير روحي تجريبي بعد ثانيتين")
+                        Text("يوصل تذكير صامت تجريبي بعد ثانيتين")
                             .font(.caption2.weight(.semibold))
                             .foregroundStyle(theme.secondaryText.opacity(0.82))
                             .lineLimit(2)
@@ -820,32 +819,6 @@ struct NotificationSettingsView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
                 .buttonStyle(.plain)
-            }
-        }
-    }
-
-    private var adhkarSoundPanel: some View {
-        panel(title: "صوت الأذكار") {
-            VStack(spacing: 0) {
-                ForEach(Array(AdhkarNotificationSound.allCases.enumerated()), id: \.element.id) { index, sound in
-                    Button {
-                        notifications.selectAdhkarSound(sound)
-                        notifications.sendNafahatPreviewNotification()
-                    } label: {
-                        optionRow(
-                            title: sound.title,
-                            subtitle: sound.subtitle,
-                            symbol: sound.systemImage,
-                            selected: notifications.selectedAdhkarSoundID == sound.rawValue
-                        )
-                    }
-                    .buttonStyle(.plain)
-
-                    if index < AdhkarNotificationSound.allCases.count - 1 {
-                        Divider()
-                            .background(theme.controlBorder)
-                    }
-                }
             }
         }
     }
