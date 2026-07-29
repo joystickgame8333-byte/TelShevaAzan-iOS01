@@ -269,6 +269,9 @@ assert "prayer.key != .sunrise" in widget_data_text
 assert "PrayerEngine.automaticScheduleDateKey(for: date)" in widget_data_text
 assert "IqamaSchedule.telSheva.activeEvent(at: date)" in widget_data_text
 assert "IqamaSchedule.telSheva.iqamaDate(for: prayer)" in widget_data_text
+assert "timelineDays" not in widget_data_text
+assert "for offset in 0..." not in widget_data_text
+assert "PrayerEngine.calendar.date(byAdding: .day, value: 1, to: start)" in widget_data_text
 assert "entry.scheduleDate" in widget_views_text
 assert "SalatiText.tomorrowTimes" in widget_views_text
 assert "SalatiDateWidget" not in widget_bundle_text

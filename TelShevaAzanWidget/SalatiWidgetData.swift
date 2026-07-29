@@ -86,8 +86,6 @@ struct SalatiWidgetEntry: TimelineEntry {
 }
 
 struct SalatiWidgetProvider: TimelineProvider {
-    private static let timelineDays = 7
-
     func placeholder(in context: Context) -> SalatiWidgetEntry {
         Self.makeEntry(for: Date())
     }
@@ -117,24 +115,18 @@ struct SalatiWidgetProvider: TimelineProvider {
     private static func transitionDates(after now: Date) -> [Date] {
         let start = PrayerEngine.calendar.startOfDay(for: now)
         var dates: Set<Date> = [now]
+        let dateKey = PrayerEngine.defaultDateKey(for: start)
 
-        for offset in 0...timelineDays {
-            guard let day = PrayerEngine.calendar.date(byAdding: .day, value: offset, to: start) else {
-                continue
+        for prayer in PrayerEngine.schedule(for: dateKey).displayTimes where prayer.key != .sunrise {
+            Self.insertTransition(after: prayer.date, now: now, into: &dates)
+
+            if let iqamaDate = IqamaSchedule.telSheva.iqamaDate(for: prayer) {
+                Self.insertTransition(after: iqamaDate, now: now, into: &dates)
             }
-            let dateKey = PrayerEngine.defaultDateKey(for: day)
+        }
 
-            for prayer in PrayerEngine.schedule(for: dateKey).displayTimes where prayer.key != .sunrise {
-                Self.insertTransition(after: prayer.date, now: now, into: &dates)
-
-                if let iqamaDate = IqamaSchedule.telSheva.iqamaDate(for: prayer) {
-                    Self.insertTransition(after: iqamaDate, now: now, into: &dates)
-                }
-            }
-
-            if let nextDay = PrayerEngine.calendar.date(byAdding: .day, value: 1, to: day) {
-                Self.insertTransition(after: nextDay, now: now, into: &dates)
-            }
+        if let nextDay = PrayerEngine.calendar.date(byAdding: .day, value: 1, to: start) {
+            Self.insertTransition(after: nextDay, now: now, into: &dates)
         }
 
         return dates.sorted()
