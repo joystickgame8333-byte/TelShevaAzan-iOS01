@@ -95,11 +95,65 @@ struct IqamaSchedule {
 struct IqamaEvent {
     let prayer: PrayerTime
     let date: Date
+    var isPreview = false
+
+    func phase(at currentDate: Date) -> IqamaEventPhase {
+        if isPreview {
+            return .countdown
+        }
+
+        let elapsed = currentDate.timeIntervalSince(prayer.date)
+        return elapsed < 3 * 60 ? .adhan : .countdown
+    }
+}
+
+enum IqamaEventPhase: Equatable {
+    case adhan
+    case countdown
 }
 
 enum IqamaPreviewStorage {
     static let expirationKey = "iqama_countdown_preview_expiration"
+    static let prayerKey = "iqama_countdown_preview_prayer"
     static let duration: TimeInterval = 2 * 60
+    static let defaults = UserDefaults(
+        suiteName: "group.com.omaralasam.telshevaazan"
+    ) ?? .standard
+
+    @discardableResult
+    static func start(
+        prayer: PrayerKey = .dhuhr,
+        at date: Date = Date()
+    ) -> Date {
+        let expiration = date.addingTimeInterval(duration)
+        defaults.set(expiration.timeIntervalSince1970, forKey: expirationKey)
+        defaults.set(prayer.rawValue, forKey: prayerKey)
+        defaults.synchronize()
+        return expiration
+    }
+
+    static func activeEvent(
+        at date: Date = Date(),
+        dateKey: String? = nil
+    ) -> IqamaEvent? {
+        let expiration = expirationDate
+        guard expiration > date else { return nil }
+
+        let selectedKey = defaults.string(forKey: prayerKey)
+            .flatMap(PrayerKey.init(rawValue:)) ?? .dhuhr
+        let scheduleKey = dateKey ?? PrayerEngine.automaticScheduleDateKey(for: date)
+        let prayer = PrayerEngine.schedule(for: scheduleKey).displayTimes.first {
+            $0.key == selectedKey
+        }
+
+        return prayer.map {
+            IqamaEvent(prayer: $0, date: expiration, isPreview: true)
+        }
+    }
+
+    static var expirationDate: Date {
+        Date(timeIntervalSince1970: defaults.double(forKey: expirationKey))
+    }
 }
 
 enum PrayerEngine {

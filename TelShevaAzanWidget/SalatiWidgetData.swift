@@ -37,12 +37,12 @@ struct SalatiWidgetEntry: TimelineEntry {
 
     var activeIqama: IqamaEvent? {
         IqamaSchedule.telSheva.activeEvent(at: date)
+            ?? IqamaPreviewStorage.activeEvent(at: date, dateKey: dateKey)
     }
 
     var moment: SalatiWidgetMoment {
         if let activeIqama {
-            let elapsed = date.timeIntervalSince(activeIqama.prayer.date)
-            return elapsed < 3 * 60 ? .adhan : .iqama
+            return activeIqama.phase(at: date) == .adhan ? .adhan : .iqama
         }
 
         if isTomorrowSchedule {
@@ -67,6 +67,9 @@ struct SalatiWidgetEntry: TimelineEntry {
 
     var focusedStart: Date? {
         if let activeIqama {
+            if activeIqama.isPreview {
+                return activeIqama.date.addingTimeInterval(-IqamaPreviewStorage.duration)
+            }
             return activeIqama.prayer.date
         }
 
@@ -255,6 +258,13 @@ struct SalatiWidgetProvider: TimelineProvider {
         if let nextDay = PrayerEngine.calendar.date(byAdding: .day, value: 1, to: start) {
             Self.insertTransition(at: nextDay, now: now, into: &dates)
         }
+
+        let previewExpiration = IqamaPreviewStorage.expirationDate
+        Self.insertTransition(
+            at: previewExpiration.addingTimeInterval(1),
+            now: now,
+            into: &dates
+        )
 
         return dates.sorted()
     }

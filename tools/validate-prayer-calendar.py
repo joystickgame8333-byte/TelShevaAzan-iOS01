@@ -232,6 +232,9 @@ assert 'detailTile(title: "وقت الشروق", value: prayer.time, highlighted
 assert "IqamaSchedule.telSheva.iqamaDate(for: prayer)" in content_text
 assert "IqamaSchedule.telSheva.activeEvent(at: date)" in content_text
 assert '"الإقامة القادمة"' in content_text
+assert '"حان الآن الأذان"' in content_text
+assert "iqamaStatusBand(event:" in content_text
+assert "activeIqama.phase(at: now)" in content_text
 assert '"متبقي للإقامة' in content_text
 active_scene_block = content_text.split(".onChange(of: scenePhase)", 1)[1].split(".onAppear", 1)[0]
 assert "notifications.refreshIfEnabled()" in active_scene_block
@@ -244,6 +247,8 @@ assert 'diagnosticActionLabel(title: "تحديث الفحص"' in notification_se
 assert '"تنبيهات الإقامة"' in notification_settings_text
 assert '"معاينة عدّاد الإقامة"' in notification_settings_text
 assert '"اختبار تنبيه الإقامة"' in notification_settings_text
+assert "IqamaPreviewStorage.start(prayer: .dhuhr)" in notification_settings_text
+assert "WidgetRefreshCenter.refreshAll(force: true)" in notification_settings_text
 
 tel_sheva_iqama_delays = {
     ".fajr": 25,
@@ -269,6 +274,8 @@ assert "prayer.key != .sunrise" in widget_data_text
 assert "PrayerEngine.automaticScheduleDateKey(for: date)" in widget_data_text
 assert "IqamaSchedule.telSheva.activeEvent(at: date)" in widget_data_text
 assert "IqamaSchedule.telSheva.iqamaDate(for: prayer)" in widget_data_text
+assert "IqamaPreviewStorage.activeEvent(at: date, dateKey: dateKey)" in widget_data_text
+assert "activeIqama.phase(at: date)" in widget_data_text
 assert "timelineDays" not in widget_data_text
 assert "for offset in 0..." not in widget_data_text
 assert "PrayerEngine.calendar.date(byAdding: .day, value: 1, to: start)" in widget_data_text

@@ -7,7 +7,10 @@ struct ContentView: View {
     @AppStorage(AppThemeStorage.nightThemeKey, store: AppThemeStorage.defaults) private var selectedNightThemeID = PrayerVisualTheme.defaultNight.rawValue
     @AppStorage(AppThemeStorage.dayThemeKey, store: AppThemeStorage.defaults) private var selectedDayThemeID = PrayerVisualTheme.defaultDay.rawValue
     @AppStorage("welcomeActivationPromptCompleted") private var welcomeActivationPromptCompleted = false
-    @AppStorage(IqamaPreviewStorage.expirationKey) private var iqamaPreviewExpiration: Double = 0
+    @AppStorage(
+        IqamaPreviewStorage.expirationKey,
+        store: IqamaPreviewStorage.defaults
+    ) private var iqamaPreviewExpiration: Double = 0
     @State private var now = Date()
     @State private var selectedDateKey = PrayerEngine.automaticScheduleDateKey()
     @State private var followsToday = true
@@ -854,21 +857,17 @@ struct ContentView: View {
         activeIqama: IqamaEvent?,
         compact: Bool
     ) -> some View {
-        let displayedPrayer = activeIqama?.prayer ?? next
-        let displayedTime = activeIqama.map { timeText(for: $0.date) } ?? next?.time ?? "--:--"
-        let panelTitle = activeIqama == nil ? "الصلاة القادمة" : "الإقامة القادمة"
-        let countdownTitle = activeIqama == nil ? "باقي على الصلاة" : "باقي على الإقامة"
-        let countdownTarget = activeIqama?.date ?? next?.date
+        let presentation = prayerPanelPresentation(next: next, activeIqama: activeIqama)
 
         return HStack(alignment: .center, spacing: 12) {
             VStack(alignment: .leading, spacing: 5) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(countdownTitle)
+                    Text(presentation.countdownTitle)
                         .font(.caption2.weight(.black))
                         .lineLimit(1)
                         .minimumScaleFactor(0.72)
 
-                    Text(countdownText(until: countdownTarget))
+                    Text(countdownText(until: presentation.countdownTarget))
                         .font(.subheadline.monospacedDigit().weight(.bold))
                         .lineLimit(1)
                 }
@@ -882,17 +881,17 @@ struct ContentView: View {
             Spacer(minLength: 0)
 
             VStack(alignment: .trailing, spacing: 2) {
-                Text(panelTitle)
+                Text(presentation.title)
                     .font(.system(size: 10.5, weight: .bold, design: .rounded))
                     .foregroundStyle(activeTheme.accent)
                     .lineLimit(1)
 
-                Text(displayedPrayer?.title ?? "--")
+                Text(presentation.prayer?.title ?? "--")
                     .font(.system(size: compact ? 29 : 32, weight: .black, design: .rounded))
                     .lineLimit(1)
                     .minimumScaleFactor(0.72)
 
-                Text(displayedTime)
+                Text(presentation.time)
                     .font(.system(size: compact ? 35 : 40, weight: .black, design: .rounded))
                     .foregroundStyle(activeTheme.accent)
                     .lineLimit(1)
@@ -906,6 +905,45 @@ struct ContentView: View {
         .shadow(color: .black.opacity(isNight ? 0.22 : 0.06), radius: 12, y: 6)
     }
 
+    private func prayerPanelPresentation(
+        next: PrayerTime?,
+        activeIqama: IqamaEvent?
+    ) -> (
+        prayer: PrayerTime?,
+        time: String,
+        title: String,
+        countdownTitle: String,
+        countdownTarget: Date?
+    ) {
+        guard let activeIqama else {
+            return (
+                prayer: next,
+                time: next?.time ?? "--:--",
+                title: "الصلاة القادمة",
+                countdownTitle: "باقي على الصلاة",
+                countdownTarget: next?.date
+            )
+        }
+
+        if activeIqama.phase(at: now) == .adhan {
+            return (
+                prayer: activeIqama.prayer,
+                time: activeIqama.prayer.time,
+                title: "حان الآن الأذان",
+                countdownTitle: "متبقي للإقامة",
+                countdownTarget: activeIqama.date
+            )
+        }
+
+        return (
+            prayer: activeIqama.prayer,
+            time: timeText(for: activeIqama.date),
+            title: "الإقامة القادمة",
+            countdownTitle: "متبقي للإقامة",
+            countdownTarget: activeIqama.date
+        )
+    }
+
     private func nabawiNextPrayerPanel(
         next: PrayerTime?,
         previous: PrayerTime?,
@@ -915,35 +953,28 @@ struct ContentView: View {
         let cornerRadius: CGFloat = compact ? 20 : 22
         let cardHeight: CGFloat = compact ? 184 : 214
         let isNightCard = activeTheme.isNightTheme
-        let displayedPrayer = activeIqama?.prayer ?? next
-        let displayedTime = activeIqama.map { timeText(for: $0.date) } ?? next?.time ?? "--:--"
-        let panelTitle = activeIqama == nil ? "الصلاة القادمة" : "الإقامة القادمة"
+        let presentation = prayerPanelPresentation(next: next, activeIqama: activeIqama)
 
         return ZStack {
             nabawiCardBackground(height: cardHeight, isNight: isNightCard)
 
             VStack(alignment: .trailing, spacing: compact ? 6 : 7) {
                 HStack(alignment: .top, spacing: 0) {
-                    if let activeIqama {
-                        iqamaCountdownBadge(event: activeIqama, compact: compact, isNight: isNightCard)
-                            .padding(.top, compact ? 12 : 18)
-                    }
-
                     Spacer(minLength: compact ? 14 : 20)
 
                     VStack(alignment: .trailing, spacing: 3) {
-                        Text(panelTitle)
+                        Text(presentation.title)
                             .font(.system(size: compact ? 10.5 : 11.5, weight: .black, design: .rounded))
                             .foregroundStyle(activeTheme.accent)
                             .lineLimit(1)
 
-                        Text(displayedPrayer?.title ?? "--")
+                        Text(presentation.prayer?.title ?? "--")
                             .font(.system(size: compact ? 24 : 29, weight: .black, design: .rounded))
                             .foregroundStyle(nabawiPrimaryText)
                             .lineLimit(1)
                             .minimumScaleFactor(0.72)
 
-                        Text(displayedTime)
+                        Text(presentation.time)
                             .font(.system(size: compact ? 36 : 46, weight: .black, design: .rounded))
                             .foregroundStyle(activeTheme.accent)
                             .monospacedDigit()
@@ -954,6 +985,10 @@ struct ContentView: View {
                 }
 
                 Spacer(minLength: compact ? 2 : 4)
+
+                if let activeIqama {
+                    iqamaStatusBand(event: activeIqama, compact: compact, isNight: isNightCard)
+                }
             }
             .padding(.horizontal, compact ? 14 : 16)
             .padding(.top, compact ? 10 : 12)
@@ -969,21 +1004,37 @@ struct ContentView: View {
         .shadow(color: .black.opacity(isNightCard ? 0.16 : 0.06), radius: 8, y: 4)
     }
 
-    private func iqamaCountdownBadge(event: IqamaEvent, compact: Bool, isNight: Bool) -> some View {
-        VStack(spacing: 5) {
-            Text("متبقي للإقامة")
-                .font(.caption2.weight(.black))
-                .foregroundStyle(nabawiSecondaryText)
-                .lineLimit(1)
-
+    private func iqamaStatusBand(event: IqamaEvent, compact: Bool, isNight: Bool) -> some View {
+        HStack(spacing: 10) {
             Text(countdownText(until: event.date))
-                .font(.system(size: compact ? 16 : 19, weight: .black, design: .rounded))
+                .font(.system(size: compact ? 15 : 17, weight: .black, design: .rounded))
                 .monospacedDigit()
                 .foregroundStyle(nabawiPrimaryText)
                 .lineLimit(1)
                 .minimumScaleFactor(0.68)
+
+            Spacer(minLength: 8)
+
+            VStack(alignment: .trailing, spacing: 2) {
+                Text(event.phase(at: now) == .adhan ? "الإقامة بعد قليل" : "متبقي للإقامة")
+                    .font(.caption2.weight(.black))
+                    .foregroundStyle(nabawiSecondaryText)
+                    .lineLimit(1)
+
+                Text("مسجد \(IqamaSchedule.telSheva.locationName) · \(timeText(for: event.date))")
+                    .font(.system(size: 9, weight: .bold, design: .rounded))
+                    .foregroundStyle(nabawiSecondaryText.opacity(0.82))
+                    .lineLimit(1)
+            }
+
+            Image(systemName: "person.2.fill")
+                .font(.system(size: 14, weight: .black))
+                .foregroundStyle(activeTheme.accent)
         }
-        .frame(width: compact ? 106 : 122, height: compact ? 62 : 70)
+        .environment(\.layoutDirection, .leftToRight)
+        .padding(.horizontal, 11)
+        .frame(maxWidth: .infinity)
+        .frame(height: compact ? 43 : 48)
         .background(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .fill(isNight ? Color.black.opacity(0.46) : Color.white.opacity(0.74))
@@ -1117,7 +1168,7 @@ struct ContentView: View {
                         .minimumScaleFactor(0.74)
 
                     if isIqamaActive, let activeIqama {
-                        Text(remainingIqamaText(for: activeIqama))
+                        Text(iqamaRowStatusText(for: activeIqama))
                             .font(.system(size: 10.5, weight: .bold, design: .rounded))
                             .foregroundStyle(activeTheme.secondaryText.opacity(0.88))
                             .lineLimit(1)
@@ -1437,6 +1488,13 @@ struct ContentView: View {
         "متبقي للإقامة \(countdownText(until: event.date))"
     }
 
+    private func iqamaRowStatusText(for event: IqamaEvent) -> String {
+        if event.phase(at: now) == .adhan {
+            return "حان الأذان · الإقامة بعد \(countdownText(until: event.date))"
+        }
+        return remainingIqamaText(for: event)
+    }
+
     private func elapsedPrayerText(for previous: PrayerTime?) -> String {
         guard let previous else { return "مضى على الصلاة --:--:--" }
         return "مضى على \(previous.title) \(elapsedText(since: previous.date))"
@@ -1497,14 +1555,8 @@ struct ContentView: View {
             return realEvent
         }
 
-        let previewDate = Date(timeIntervalSince1970: iqamaPreviewExpiration)
-        guard previewDate > date else { return nil }
-
-        let dateKey = PrayerEngine.defaultDateKey(for: date)
-        let prayer = PrayerEngine.schedule(for: dateKey).displayTimes.first {
-            $0.key == .dhuhr
-        }
-        return prayer.map { IqamaEvent(prayer: $0, date: previewDate) }
+        guard iqamaPreviewExpiration > date.timeIntervalSince1970 else { return nil }
+        return IqamaPreviewStorage.activeEvent(at: date, dateKey: selectedDateKey)
     }
 
     private func remainingPrayerTarget(for key: PrayerKey) -> String {

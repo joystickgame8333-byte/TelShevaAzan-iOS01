@@ -15,7 +15,10 @@ struct NotificationSettingsView: View {
     @AppStorage("adhkar.miniKhatmah.enabled") private var isMiniKhatmahEnabled = false
     @AppStorage("adhkar.miniKhatmah.dailyPortion") private var miniKhatmahDailyPortion = MiniKhatmahPortion.halfPage.rawValue
     @AppStorage("adhkar.miniKhatmah.startDate") private var miniKhatmahStartDate: Double = 0
-    @AppStorage(IqamaPreviewStorage.expirationKey) private var iqamaPreviewExpiration: Double = 0
+    @AppStorage(
+        IqamaPreviewStorage.expirationKey,
+        store: IqamaPreviewStorage.defaults
+    ) private var iqamaPreviewExpiration: Double = 0
 
     private static let notificationCoverageDateFormatter: DateFormatter = {
         let formatter = DateFormatter()
@@ -901,24 +904,26 @@ struct NotificationSettingsView: View {
                 )
             )
 
-            if notifications.isIqamaNotificationEnabled {
-                Button {
-                    iqamaPreviewExpiration = Date()
-                        .addingTimeInterval(IqamaPreviewStorage.duration)
-                        .timeIntervalSince1970
-                    NotificationCenter.default.post(
-                        name: PrayerNotificationManager.openScheduleNotification,
-                        object: nil
-                    )
-                } label: {
-                    iqamaTestButtonLabel(
-                        title: "معاينة عدّاد الإقامة",
-                        subtitle: "يظهر داخل المواقيت لمدة دقيقتين",
-                        symbol: "timer"
-                    )
-                }
-                .buttonStyle(.plain)
+            Button {
+                let expiration = IqamaPreviewStorage.start(prayer: .dhuhr)
+                iqamaPreviewExpiration = expiration.timeIntervalSince1970
+                WidgetRefreshCenter.refreshAll(force: true)
+                NotificationCenter.default.post(
+                    name: PrayerNotificationManager.openScheduleNotification,
+                    object: nil
+                )
+            } label: {
+                iqamaTestButtonLabel(
+                    title: "معاينة عدّاد الإقامة",
+                    subtitle: iqamaPreviewExpiration > Date().timeIntervalSince1970
+                        ? "المعاينة تعمل الآن في التطبيق والويجت"
+                        : "تظهر في التطبيق والويجت لمدة دقيقتين",
+                    symbol: "timer"
+                )
+            }
+            .buttonStyle(.plain)
 
+            if notifications.isIqamaNotificationEnabled {
                 Button {
                     notifications.sendIqamaPreviewNotification()
                 } label: {
