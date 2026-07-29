@@ -16,6 +16,9 @@ CALENDAR_ENGINE_PATH = ROOT / "TelShevaAzan" / "PalestinePrayerCalendar.swift"
 NOTIFICATIONS_PATH = ROOT / "TelShevaAzan" / "PrayerNotificationManager.swift"
 NOTIFICATION_SETTINGS_PATH = ROOT / "TelShevaAzan" / "NotificationSettingsView.swift"
 CONTENT_PATH = ROOT / "TelShevaAzan" / "ContentView.swift"
+ADHKAR_VIEW_PATH = ROOT / "TelShevaAzan" / "AdhkarView.swift"
+ADHKAR_LIBRARY_PATH = ROOT / "TelShevaAzan" / "AdhkarLibrary.swift"
+ADHKAR_PROGRESS_PATH = ROOT / "TelShevaAzan" / "AdhkarProgressStore.swift"
 WIDGET_DATA_PATH = ROOT / "TelShevaAzanWidget" / "SalatiWidgetData.swift"
 WIDGET_BUNDLE_PATH = ROOT / "TelShevaAzanWidget" / "TelShevaAzanWidget.swift"
 WIDGET_VIEWS_PATH = ROOT / "TelShevaAzanWidget" / "SalatiWidgetViews.swift"
@@ -239,6 +242,24 @@ assert '"متبقي للإقامة' in content_text
 active_scene_block = content_text.split(".onChange(of: scenePhase)", 1)[1].split(".onAppear", 1)[0]
 assert "notifications.refreshIfEnabled()" in active_scene_block
 assert ".rounded(.up)" in engine_text, "Remaining time must round up to match the displayed wall clock second"
+assert "AdhkarView(" in content_text, "The Adhkar tab must open the dedicated reader"
+
+adhkar_view_text = ADHKAR_VIEW_PATH.read_text(encoding="utf-8")
+adhkar_library_text = ADHKAR_LIBRARY_PATH.read_text(encoding="utf-8")
+adhkar_progress_text = ADHKAR_PROGRESS_PATH.read_text(encoding="utf-8")
+assert ".environment(\\.layoutDirection, .rightToLeft)" in adhkar_view_text
+assert "NotificationSettingsView(" in adhkar_view_text
+assert "mode: .adhkarOnly" in adhkar_view_text
+assert "UIActivityViewController" in adhkar_view_text
+assert "AdhkarProgressStore()" in adhkar_view_text
+assert "refreshDayIfNeeded()" in adhkar_progress_text
+assert "PrayerEngine.calendar.dateComponents" in adhkar_progress_text
+assert "tasbihCounts" in adhkar_progress_text
+for category in ("morning", "evening", "afterPrayer", "sleep", "waking"):
+    assert f"static let {category}" in adhkar_library_text
+adhkar_item_ids = re.findall(r'AdhkarItem\(\s*id: "([^"]+)"', adhkar_library_text)
+assert len(adhkar_item_ids) >= 25, "The offline Adhkar library is unexpectedly incomplete"
+assert len(adhkar_item_ids) == len(set(adhkar_item_ids)), "Adhkar item identifiers must be unique"
 
 notification_settings_text = NOTIFICATION_SETTINGS_PATH.read_text(encoding="utf-8")
 assert "notificationDiagnosticsPanel" in notification_settings_text
@@ -381,3 +402,4 @@ print("  prayer transitions: before Isha, exact Isha, midnight, and exact Fajr p
 print("  iqama transitions: Maghrib and Isha post-adhan windows passed")
 print("  automatic schedule: today before Isha and tomorrow from exact Isha passed")
 print("  widget structure: home widgets and six focused Lock Screen widgets passed")
+print("  adhkar experience: offline library, daily progress, RTL reader, and persistent tasbih passed")

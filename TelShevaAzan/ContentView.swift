@@ -63,9 +63,8 @@ struct ContentView: View {
                             bottomReservedHeight: dockReservedHeight
                         )
                     case .adhkar:
-                        NotificationSettingsView(
+                        AdhkarView(
                             theme: activeTheme,
-                            mode: .adhkarOnly,
                             isEmbedded: true,
                             bottomReservedHeight: dockReservedHeight
                         )
