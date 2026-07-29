@@ -11,17 +11,11 @@ enum AppThemeStorage {
 enum SalatiWidgetKind {
     static let nextPrayer = "com.omaralasam.telshevaazan.widget.nextPrayer"
     static let dailySchedule = "com.omaralasam.telshevaazan.widget.dailySchedule"
-    static let nextTwoPrayers = "com.omaralasam.telshevaazan.widget.nextTwoPrayers"
-    static let dawn = "com.omaralasam.telshevaazan.widget.dawn"
     static let prayerPath = "com.omaralasam.telshevaazan.widget.prayerPath"
-    static let tomorrowSchedule = "com.omaralasam.telshevaazan.widget.tomorrowSchedule"
     static let all = [
         nextPrayer,
         dailySchedule,
-        nextTwoPrayers,
-        dawn,
-        prayerPath,
-        tomorrowSchedule
+        prayerPath
     ]
 }
 

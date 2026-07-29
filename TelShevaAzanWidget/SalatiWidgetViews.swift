@@ -58,7 +58,7 @@ struct SalatiNextPrayerView: View {
     }
 
     private func smallBody(theme: SalatiWidgetTheme) -> some View {
-        VStack(spacing: 5) {
+        VStack(spacing: 7) {
             SalatiWidgetHeader(
                 title: SalatiText.nextPrayerShort,
                 symbol: SalatiPrayerSymbol.value(for: entry.nextPrayer?.key),
@@ -66,17 +66,27 @@ struct SalatiNextPrayerView: View {
                 showsLocation: false
             )
 
-            Spacer(minLength: 0)
+            HStack(spacing: 8) {
+                prayerSymbol(theme: theme, size: 39)
 
-            Text(prayerName)
-                .font(.system(size: 23, weight: .black, design: .rounded))
-                .fixedSize(horizontal: true, vertical: false)
-                .frame(maxWidth: .infinity, alignment: .center)
+                Spacer(minLength: 2)
 
-            SalatiTimeText(value: prayerTime, size: 31, weight: .black, color: theme.accent)
-                .frame(maxWidth: .infinity, alignment: .center)
+                VStack(alignment: .trailing, spacing: 1) {
+                    Text(prayerName)
+                        .font(.system(size: 21, weight: .black, design: .rounded))
+                        .foregroundStyle(theme.primaryText)
+                        .lineLimit(1)
 
-            Spacer(minLength: 0)
+                    SalatiTimeText(
+                        value: prayerTime,
+                        size: 29,
+                        weight: .black,
+                        color: theme.accent
+                    )
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .trailing)
+            .environment(\.layoutDirection, .leftToRight)
 
             SalatiCountdownRow(
                 label: SalatiText.remaining,
@@ -90,20 +100,48 @@ struct SalatiNextPrayerView: View {
     }
 
     private func mediumBody(theme: SalatiWidgetTheme) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .trailing, spacing: 9) {
             SalatiWidgetHeader(
                 title: SalatiText.nextPrayer,
                 symbol: SalatiPrayerSymbol.value(for: entry.nextPrayer?.key),
                 theme: theme
             )
 
-            HStack(alignment: .center, spacing: 10) {
-                SalatiTimeText(value: prayerTime, size: 32, weight: .black, color: theme.accent)
+            HStack(alignment: .center, spacing: 12) {
+                VStack(alignment: .leading, spacing: 7) {
+                    SalatiTimeText(
+                        value: prayerTime,
+                        size: 36,
+                        weight: .black,
+                        color: theme.accent
+                    )
 
-                VStack(alignment: .trailing, spacing: 3) {
+                    SalatiCountdownText(
+                        from: entry.date,
+                        target: prayerDate,
+                        size: 15,
+                        color: theme.primaryText
+                    )
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(theme.panel, in: Capsule())
+                    .overlay {
+                        Capsule().stroke(theme.border, lineWidth: 0.8)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                VStack(alignment: .trailing, spacing: 5) {
                     Text(prayerName)
-                        .font(.system(size: 26, weight: .black, design: .rounded))
-                        .fixedSize(horizontal: true, vertical: false)
+                        .font(.system(size: 30, weight: .black, design: .rounded))
+                        .foregroundStyle(theme.primaryText)
+                        .lineLimit(1)
+
+                    Text(SalatiText.remainingUntilAdhan)
+                        .font(.system(size: 11, weight: .bold, design: .rounded))
+                        .foregroundStyle(theme.mutedText)
+                        .lineLimit(1)
+
                     Text(SalatiWidgetDateText.compact(for: entry.scheduleDate))
                         .font(.system(size: 10, weight: .bold, design: .rounded))
                         .foregroundStyle(theme.mutedText)
@@ -113,15 +151,25 @@ struct SalatiNextPrayerView: View {
                 .frame(maxWidth: .infinity, alignment: .trailing)
             }
             .environment(\.layoutDirection, .leftToRight)
-
-            SalatiCountdownRow(
-                label: SalatiText.remainingUntilAdhan,
-                from: entry.date,
-                target: prayerDate,
-                theme: theme
-            )
+            .frame(maxHeight: .infinity)
         }
         .salatiHomeWidgetPadding()
+    }
+
+    private func prayerSymbol(theme: SalatiWidgetTheme, size: CGFloat) -> some View {
+        ZStack {
+            Circle()
+                .fill(theme.activePanel)
+
+            Image(systemName: SalatiPrayerSymbol.value(for: entry.nextPrayer?.key))
+                .font(.system(size: size * 0.42, weight: .black))
+                .foregroundStyle(theme.accent)
+                .widgetAccentable()
+        }
+        .frame(width: size, height: size)
+        .overlay {
+            Circle().stroke(theme.activeBorder, lineWidth: 1)
+        }
     }
 }
 
@@ -131,14 +179,6 @@ struct SalatiPrayerScheduleView: View {
 
     private var title: String {
         entry.isTomorrowSchedule ? SalatiText.tomorrowTimes : SalatiText.todayTimes
-    }
-
-    private var compactTimes: [PrayerTime] {
-        guard let highlightedPrayer = entry.highlightedPrayer,
-              let index = entry.times.firstIndex(where: { $0.key == highlightedPrayer }) else {
-            return Array(entry.times.prefix(3))
-        }
-        return Array(entry.times[index...].prefix(3))
     }
 
     var body: some View {
@@ -159,23 +199,23 @@ struct SalatiPrayerScheduleView: View {
     }
 
     private func smallBody(theme: SalatiWidgetTheme) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            SalatiWidgetHeader(title: title, symbol: "calendar", theme: theme, showsLocation: false)
-
-            Text(SalatiWidgetDateText.compact(for: entry.scheduleDate))
-                .font(.system(size: 9, weight: .bold, design: .rounded))
-                .foregroundStyle(theme.mutedText)
-                .lineLimit(1)
-                .minimumScaleFactor(0.68)
-                .frame(maxWidth: .infinity, alignment: .leading)
+        VStack(alignment: .trailing, spacing: 6) {
+            SalatiWidgetHeader(
+                title: SalatiText.obligatoryPrayers,
+                symbol: "calendar",
+                theme: theme,
+                showsLocation: false
+            )
 
             SalatiPrayerList(
-                times: compactTimes,
+                times: entry.obligatoryTimes,
                 highlightedPrayer: entry.highlightedPrayer,
-                theme: theme
+                theme: theme,
+                compact: true
             )
+            .frame(maxHeight: .infinity, alignment: .top)
         }
-        .salatiHomeWidgetPadding()
+        .salatiHomeWidgetPadding(12)
     }
 
     private func mediumBody(theme: SalatiWidgetTheme) -> some View {
@@ -198,23 +238,22 @@ struct SalatiPrayerScheduleView: View {
     }
 
     private func largeBody(theme: SalatiWidgetTheme) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .trailing, spacing: 9) {
             SalatiWidgetHeader(title: title, symbol: "calendar", theme: theme)
 
-            HStack(spacing: 8) {
+            nextPrayerSummaryCard(theme: theme)
+
+            HStack(spacing: 6) {
                 Text(SalatiWidgetDateText.compact(for: entry.scheduleDate))
-                    .font(.system(size: 12, weight: .bold, design: .rounded))
+                    .font(.system(size: 11, weight: .bold, design: .rounded))
                     .foregroundStyle(theme.mutedText)
                     .lineLimit(1)
 
                 Spacer(minLength: 4)
 
-                if let nextPrayer = entry.nextPrayer {
-                    Text(SalatiText.nextPrayerSummary(nextPrayer.title))
-                        .font(.system(size: 12, weight: .black, design: .rounded))
-                        .foregroundStyle(theme.secondaryText)
-                        .fixedSize(horizontal: true, vertical: false)
-                }
+                Text(SalatiText.allPrayerTimes)
+                    .font(.system(size: 12, weight: .black, design: .rounded))
+                    .foregroundStyle(theme.secondaryText)
             }
             .environment(\.layoutDirection, .leftToRight)
 
@@ -222,10 +261,52 @@ struct SalatiPrayerScheduleView: View {
                 times: entry.times,
                 highlightedPrayer: entry.highlightedPrayer,
                 theme: theme,
-                expanded: true
+                expanded: true,
+                compact: true
             )
             .frame(maxHeight: .infinity, alignment: .top)
         }
         .salatiHomeWidgetPadding()
+    }
+
+    private func nextPrayerSummaryCard(theme: SalatiWidgetTheme) -> some View {
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
+                SalatiTimeText(
+                    value: entry.nextPrayer?.time ?? SalatiText.noTime,
+                    size: 30,
+                    weight: .black,
+                    color: theme.accent
+                )
+
+                SalatiCountdownText(
+                    from: entry.date,
+                    target: entry.nextPrayer?.date,
+                    size: 13,
+                    color: theme.primaryText
+                )
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            VStack(alignment: .trailing, spacing: 3) {
+                Text(SalatiText.nextPrayerShort)
+                    .font(.system(size: 11, weight: .bold, design: .rounded))
+                    .foregroundStyle(theme.mutedText)
+
+                Text(entry.nextPrayer?.title ?? SalatiText.prayer)
+                    .font(.system(size: 25, weight: .black, design: .rounded))
+                    .foregroundStyle(theme.primaryText)
+                    .lineLimit(1)
+            }
+            .frame(maxWidth: .infinity, alignment: .trailing)
+        }
+        .environment(\.layoutDirection, .leftToRight)
+        .padding(.horizontal, 13)
+        .padding(.vertical, 10)
+        .background(theme.activePanel, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .stroke(theme.activeBorder, lineWidth: 1)
+        }
     }
 }

@@ -19,7 +19,7 @@ CONTENT_PATH = ROOT / "TelShevaAzan" / "ContentView.swift"
 WIDGET_DATA_PATH = ROOT / "TelShevaAzanWidget" / "SalatiWidgetData.swift"
 WIDGET_BUNDLE_PATH = ROOT / "TelShevaAzanWidget" / "TelShevaAzanWidget.swift"
 WIDGET_VIEWS_PATH = ROOT / "TelShevaAzanWidget" / "SalatiWidgetViews.swift"
-WIDGET_PROFESSIONAL_VIEWS_PATH = ROOT / "TelShevaAzanWidget" / "SalatiProfessionalWidgetViews.swift"
+WIDGET_PRAYER_PATH_PATH = ROOT / "TelShevaAzanWidget" / "SalatiPrayerPathView.swift"
 WIDGET_COMPONENTS_PATH = ROOT / "TelShevaAzanWidget" / "SalatiWidgetComponents.swift"
 WIDGET_LOCK_SCREEN_PATH = ROOT / "TelShevaAzanWidget" / "SalatiLockScreenViews.swift"
 WIDGET_THEME_PATH = ROOT / "TelShevaAzanWidget" / "SalatiWidgetTheme.swift"
@@ -259,7 +259,7 @@ assert ".sunrise:" not in engine_text.split("static let telSheva = IqamaSchedule
 widget_data_text = WIDGET_DATA_PATH.read_text(encoding="utf-8")
 widget_bundle_text = WIDGET_BUNDLE_PATH.read_text(encoding="utf-8")
 widget_views_text = WIDGET_VIEWS_PATH.read_text(encoding="utf-8")
-widget_professional_views_text = WIDGET_PROFESSIONAL_VIEWS_PATH.read_text(encoding="utf-8")
+widget_prayer_path_text = WIDGET_PRAYER_PATH_PATH.read_text(encoding="utf-8")
 widget_components_text = WIDGET_COMPONENTS_PATH.read_text(encoding="utf-8")
 widget_lock_screen_text = WIDGET_LOCK_SCREEN_PATH.read_text(encoding="utf-8")
 widget_theme_text = WIDGET_THEME_PATH.read_text(encoding="utf-8")
@@ -274,16 +274,19 @@ assert "SalatiDateWidget" not in widget_bundle_text
 widget_names = (
     "SalatiNextPrayerWidget",
     "SalatiPrayerScheduleWidget",
-    "SalatiNextTwoPrayersWidget",
-    "SalatiDawnWidget",
     "SalatiPrayerPathWidget",
-    "SalatiTomorrowScheduleWidget",
 )
 for widget_name in widget_names:
     assert f"struct {widget_name}: Widget" in widget_bundle_text
     assert f"{widget_name}()" in widget_bundle_text
 assert "SalatiIqamaWidget" not in widget_bundle_text
 assert "SalatiIqamaWidgetView" not in widget_views_text
+for removed_widget in (
+    "SalatiNextTwoPrayersWidget",
+    "SalatiDawnWidget",
+    "SalatiTomorrowScheduleWidget",
+):
+    assert removed_widget not in widget_bundle_text
 next_prayer_widget = widget_bundle_text.split("struct SalatiNextPrayerWidget", 1)[1].split("struct SalatiPrayerScheduleWidget", 1)[0]
 schedule_widget = widget_bundle_text.split("struct SalatiPrayerScheduleWidget", 1)[1].split("@main", 1)[0]
 assert ".systemLarge" not in next_prayer_widget, "Next-prayer large must not duplicate the schedule widget"
@@ -292,17 +295,11 @@ assert widget_views_text.count("SalatiPrayerColumns(") == 1, "Prayer tables belo
 assert widget_views_text.count("SalatiPrayerList(") == 2, "Small and large schedules need dedicated vertical layouts"
 assert ".overlay(alignment: .trailing)" in widget_components_text, "Active stripe must stay on the physical right"
 assert "SalatiText.nextPrayerShort" in widget_views_text, "Compact families must use short Arabic labels"
-for professional_view in (
-    "SalatiNextTwoPrayersView",
-    "SalatiDawnView",
-    "SalatiPrayerPathView",
-    "SalatiTomorrowScheduleView",
-):
-    assert f"struct {professional_view}: View" in widget_professional_views_text
-assert "entry.upcomingPrayers" in widget_professional_views_text
-assert "entry.dawnTimes" in widget_professional_views_text
-assert "entry.obligatoryTimes" in widget_professional_views_text
-assert "entry.tomorrowTimes" in widget_professional_views_text
+assert "struct SalatiPrayerPathView: View" in widget_prayer_path_text
+assert "entry.obligatoryTimes" in widget_prayer_path_text
+assert "isCompleted: prayer.date < entry.date" in widget_prayer_path_text
+assert "SalatiText.obligatoryPrayers" in widget_views_text
+assert "nextPrayerSummaryCard(theme: theme)" in widget_views_text
 for lock_view in ("SalatiAccessoryInlineView", "SalatiAccessoryCircularView", "SalatiAccessoryRectangularView"):
     assert f"struct {lock_view}" in widget_lock_screen_text
     assert lock_view in widget_views_text
@@ -313,12 +310,11 @@ assert "SalatiWidgetKind.all" in widget_refresh_text
 for kind in (
     "nextPrayer",
     "dailySchedule",
-    "nextTwoPrayers",
-    "dawn",
     "prayerPath",
-    "tomorrowSchedule",
 ):
     assert f"static let {kind}" in theme_text
+for removed_kind in ("nextTwoPrayers", "dawn", "tomorrowSchedule"):
+    assert f"static let {removed_kind}" not in theme_text
 assert "static let iqama" not in theme_text
 assert not re.search(r"telshevaazan\.(?:nextPrayer|dailySchedule|date\.today|iqama)\.v\d+", theme_text + widget_bundle_text)
 assert "static func automaticScheduleDateKey(for date: Date = Date())" in engine_text
@@ -333,4 +329,4 @@ print(f"  canonical SHA-256: {actual_hash}")
 print("  prayer transitions: before Isha, exact Isha, midnight, and exact Fajr passed")
 print("  iqama transitions: Maghrib and Isha post-adhan windows passed")
 print("  automatic schedule: today before Isha and tomorrow from exact Isha passed")
-print("  widget structure: two existing widgets plus four focused professional widgets passed")
+print("  widget structure: focused next-prayer, daily schedule, and prayer-path widgets passed")

@@ -12,17 +12,11 @@ enum SalatiText {
     static let remaining = "متبقي"
     static let prayer = "الصلاة"
     static let noTime = "--:--"
-    static let nextAndFollowing = "القادمة وبعدها"
-    static let nextAndFollowingDescription = "تابع الصلاة القادمة والتي تليها مع عدّاد حي"
-    static let followingPrayer = "بعدها"
-    static let dawnAndSunrise = "الفجر والشروق"
-    static let dawnAndSunriseDescription = "شاهد وقت الفجر والشروق والفاصل بينهما"
-    static let betweenThem = "بينهما"
     static let prayerPath = "مسار الصلوات"
     static let prayerPathTomorrow = "مسار صلوات الغد"
     static let prayerPathDescription = "تابع ترتيب الصلوات المفروضة وموضع الصلاة القادمة"
-    static let tomorrowScheduleDescription = "خطط ليومك بمشاهدة مواقيت صلاة الغد"
-    static let tomorrowPlan = "خطة الغد"
+    static let obligatoryPrayers = "الصلوات المفروضة"
+    static let allPrayerTimes = "جميع المواقيت"
 
     static func isolatedTime(_ value: String) -> String {
         "\u{2066}\(value)\u{2069}"
@@ -30,10 +24,6 @@ enum SalatiText {
 
     static func prayerAndTime(prayer: String, time: String) -> String {
         "\(prayer)  \(isolatedTime(time))"
-    }
-
-    static func nextPrayerSummary(_ prayer: String) -> String {
-        "الصلاة القادمة: \(prayer)"
     }
 
 }
@@ -203,15 +193,17 @@ struct SalatiPrayerList: View {
     let highlightedPrayer: PrayerKey?
     let theme: SalatiWidgetTheme
     var expanded = false
+    var compact = false
 
     var body: some View {
-        VStack(spacing: expanded ? 6 : 4) {
+        VStack(spacing: compact ? 3 : (expanded ? 6 : 4)) {
             ForEach(times) { prayer in
                 SalatiPrayerCell(
                     prayer: prayer,
                     isActive: prayer.key == highlightedPrayer,
                     theme: theme,
-                    expanded: expanded
+                    expanded: expanded,
+                    compact: compact
                 )
             }
         }
@@ -223,12 +215,13 @@ private struct SalatiPrayerCell: View {
     let isActive: Bool
     let theme: SalatiWidgetTheme
     let expanded: Bool
+    var compact = false
 
     var body: some View {
         HStack(spacing: 5) {
             SalatiTimeText(
                 value: prayer.time,
-                size: expanded ? 15 : 13,
+                size: compact ? (expanded ? 12 : 11) : (expanded ? 15 : 13),
                 weight: isActive ? .black : .bold,
                 color: isActive ? theme.accent : theme.primaryText
             )
@@ -236,15 +229,19 @@ private struct SalatiPrayerCell: View {
             Spacer(minLength: 3)
 
             Text(prayer.title)
-                .font(.system(size: expanded ? 13 : 11, weight: isActive ? .black : .bold, design: .rounded))
+                .font(.system(
+                    size: compact ? (expanded ? 10.5 : 10) : (expanded ? 13 : 11),
+                    weight: isActive ? .black : .bold,
+                    design: .rounded
+                ))
                 .lineLimit(1)
                 .minimumScaleFactor(0.72)
                 .multilineTextAlignment(.trailing)
         }
         .environment(\.layoutDirection, .leftToRight)
         .foregroundStyle(isActive ? theme.accent : theme.primaryText)
-        .padding(.horizontal, expanded ? 9 : 7)
-        .frame(height: expanded ? 34 : 26)
+        .padding(.horizontal, compact ? 6 : (expanded ? 9 : 7))
+        .frame(height: compact ? (expanded ? 29 : 18) : (expanded ? 34 : 26))
         .background(isActive ? theme.activePanel : theme.panel, in: RoundedRectangle(cornerRadius: SalatiWidgetMetrics.compactCornerRadius, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: SalatiWidgetMetrics.compactCornerRadius, style: .continuous)
