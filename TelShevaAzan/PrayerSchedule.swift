@@ -74,6 +74,32 @@ struct IqamaSchedule {
         guard let delayMinutes = delaysMinutes[prayer.key] else { return nil }
         return prayer.date.addingTimeInterval(TimeInterval(delayMinutes * 60))
     }
+
+    func activeEvent(at date: Date = Date()) -> IqamaEvent? {
+        let dateKey = PrayerEngine.defaultDateKey(for: date)
+
+        return PrayerEngine.schedule(for: dateKey).displayTimes.compactMap { prayer in
+            guard prayer.key != .sunrise,
+                  prayer.date <= date,
+                  let iqamaDate = iqamaDate(for: prayer),
+                  date < iqamaDate else {
+                return nil
+            }
+
+            return IqamaEvent(prayer: prayer, date: iqamaDate)
+        }
+        .first
+    }
+}
+
+struct IqamaEvent {
+    let prayer: PrayerTime
+    let date: Date
+}
+
+enum IqamaPreviewStorage {
+    static let expirationKey = "iqama_countdown_preview_expiration"
+    static let duration: TimeInterval = 2 * 60
 }
 
 enum PrayerEngine {

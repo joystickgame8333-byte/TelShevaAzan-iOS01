@@ -12,6 +12,17 @@ enum SalatiText {
     static let remaining = "متبقي"
     static let prayer = "الصلاة"
     static let noTime = "--:--"
+    static let nextAndFollowing = "القادمة وبعدها"
+    static let nextAndFollowingDescription = "تابع الصلاة القادمة والتي تليها مع عدّاد حي"
+    static let followingPrayer = "بعدها"
+    static let dawnAndSunrise = "الفجر والشروق"
+    static let dawnAndSunriseDescription = "شاهد وقت الفجر والشروق والفاصل بينهما"
+    static let betweenThem = "بينهما"
+    static let prayerPath = "مسار الصلوات"
+    static let prayerPathTomorrow = "مسار صلوات الغد"
+    static let prayerPathDescription = "تابع ترتيب الصلوات المفروضة وموضع الصلاة القادمة"
+    static let tomorrowScheduleDescription = "خطط ليومك بمشاهدة مواقيت صلاة الغد"
+    static let tomorrowPlan = "خطة الغد"
 
     static func isolatedTime(_ value: String) -> String {
         "\u{2066}\(value)\u{2069}"

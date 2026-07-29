@@ -601,6 +601,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
     private static let enabledKey = "prayer_notifications_enabled"
     private static let enabledPrayerIDsKey = "prayer_notifications_enabled_prayers"
     private static let selectedSoundIDKey = "prayer_notifications_selected_sound"
+    private static let iqamaEnabledKey = "prayer_notifications_iqama_enabled"
     private static let adhkarEnabledKey = "prayer_notifications_adhkar_enabled"
     private static let adhkarDelayMinutesKey = "prayer_notifications_adhkar_delay_minutes"
     private static let adhkarPrayerIDsKey = "prayer_notifications_adhkar_prayers"
@@ -625,6 +626,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
     @Published private(set) var statusText = "التنبيهات غير مفعلة"
     @Published private(set) var enabledPrayerIDs: Set<String>
     @Published private(set) var selectedSoundID: String
+    @Published private(set) var isIqamaNotificationEnabled: Bool
     @Published private(set) var isAdhkarReminderEnabled: Bool
     @Published private(set) var adhkarDelayMinutes: Int
     @Published private(set) var enabledAdhkarPrayerIDs: Set<String>
@@ -695,6 +697,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
 
         let savedSoundID = UserDefaults.standard.string(forKey: Self.selectedSoundIDKey)
         selectedSoundID = savedSoundID ?? PrayerNotificationSound.originalAdhan.rawValue
+        isIqamaNotificationEnabled = UserDefaults.standard.bool(forKey: Self.iqamaEnabledKey)
         isAdhkarReminderEnabled = UserDefaults.standard.bool(forKey: Self.adhkarEnabledKey)
         let savedDelay = UserDefaults.standard.integer(forKey: Self.adhkarDelayMinutesKey)
         adhkarDelayMinutes = savedDelay == 0 ? 5 : savedDelay
@@ -862,6 +865,17 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
         rescheduleIfEnabled()
     }
 
+    func setIqamaNotificationEnabled(_ enabled: Bool) {
+        isIqamaNotificationEnabled = enabled
+        defaults.set(enabled, forKey: Self.iqamaEnabledKey)
+
+        if enabled && !isEnabled {
+            enable()
+        } else {
+            rescheduleIfEnabled()
+        }
+    }
+
     func setAdhkarReminderEnabled(_ enabled: Bool) {
         isAdhkarReminderEnabled = enabled
         defaults.set(enabled, forKey: Self.adhkarEnabledKey)
@@ -1021,6 +1035,39 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
         sendPreviewNotification()
     }
 
+    func sendIqamaPreviewNotification() {
+        center.getNotificationSettings { [weak self] settings in
+            guard let self else { return }
+
+            switch settings.authorizationStatus {
+            case .authorized, .provisional:
+                self.scheduleIqamaPreviewNotification()
+            case .notDetermined:
+                self.center.requestAuthorization(options: [.alert, .sound, .timeSensitive]) { [weak self] granted, error in
+                    guard let self else { return }
+                    DispatchQueue.main.async {
+                        guard error == nil, granted else {
+                            self.statusText = error == nil
+                                ? "اسمح بالإشعارات من إعدادات الآيفون"
+                                : "تعذر طلب إذن التنبيهات"
+                            self.refreshDiagnostics()
+                            return
+                        }
+
+                        self.isEnabled = true
+                        self.defaults.set(true, forKey: Self.enabledKey)
+                        self.scheduleIqamaPreviewNotification()
+                        self.scheduleUpcomingPrayerNotifications()
+                    }
+                }
+            default:
+                DispatchQueue.main.async {
+                    self.statusText = "اسمح بالإشعارات من إعدادات الآيفون"
+                }
+            }
+        }
+    }
+
     func sendNafahatPreviewNotification() {
         center.getNotificationSettings { [weak self] settings in
             guard let self else { return }
@@ -1119,6 +1166,9 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
 
         isNafahatEnabled = false
         defaults.set(false, forKey: Self.nafahatEnabledKey)
+
+        isIqamaNotificationEnabled = false
+        defaults.set(false, forKey: Self.iqamaEnabledKey)
     }
 
     private func scheduleUpcomingPrayerNotifications() {
@@ -1186,6 +1236,13 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
                     result.append(ScheduledPrayerNotification(kind: .adhan, prayer: prayer, date: date))
                 }
 
+                if isIqamaNotificationEnabled,
+                   enabledPrayerIDs.contains(key.rawValue),
+                   let iqamaDate = IqamaSchedule.telSheva.iqamaDate(for: prayer),
+                   iqamaDate > now {
+                    result.append(ScheduledPrayerNotification(kind: .iqama, prayer: prayer, date: iqamaDate))
+                }
+
                 return result
             }
         }
@@ -1208,6 +1265,8 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
         switch event.kind {
         case .adhan:
             return adhanRequest(for: event.prayer, date: event.date)
+        case .iqama:
+            return iqamaRequest(for: event.prayer, date: event.date)
         case .adhkar:
             return adhkarRequest(for: event.prayer, date: event.date)
         case .nafahat:
@@ -1235,6 +1294,27 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
 
         let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
         let identifier = scheduledNotificationPrefix + PrayerEngine.calendarIdentifier(for: date) + "-adhan-" + prayer.key.rawValue
+        return UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
+    }
+
+    private func iqamaRequest(for prayer: PrayerTime, date: Date) -> UNNotificationRequest {
+        let content = UNMutableNotificationContent()
+        content.title = "الآن تقام صلاة \(prayer.title)"
+        content.body = "إقامة مسجد \(IqamaSchedule.telSheva.locationName) • \(clockText(for: date))"
+        content.sound = .default
+        content.interruptionLevel = .timeSensitive
+        content.threadIdentifier = "tel-sheva-iqama"
+        content.userInfo = [
+            "notificationKind": "iqama",
+            "prayerKey": prayer.key.rawValue,
+            "dateKey": PrayerEngine.defaultDateKey(for: prayer.date)
+        ]
+
+        var components = PrayerEngine.calendar.dateComponents([.year, .month, .day, .hour, .minute], from: date)
+        components.timeZone = PrayerEngine.timeZone
+
+        let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
+        let identifier = scheduledNotificationPrefix + PrayerEngine.calendarIdentifier(for: date) + "-iqama-" + prayer.key.rawValue
         return UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
     }
 
@@ -1557,6 +1637,40 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
         }
     }
 
+    private func scheduleIqamaPreviewNotification() {
+        let content = UNMutableNotificationContent()
+        content.title = "الآن تقام صلاة الظهر"
+        content.body = "اختبار تنبيه الإقامة • مسجد \(IqamaSchedule.telSheva.locationName)"
+        content.sound = .default
+        content.interruptionLevel = .timeSensitive
+        content.threadIdentifier = "tel-sheva-iqama"
+        content.userInfo = ["notificationKind": "iqama"]
+
+        let identifier = previewNotificationIdentifier + "-iqama"
+        center.removePendingNotificationRequests(withIdentifiers: [identifier])
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 5, repeats: false)
+        let request = UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
+
+        center.add(request) { [weak self] error in
+            DispatchQueue.main.async {
+                guard let self else { return }
+                self.statusText = error == nil
+                    ? "سيصلك اختبار الإقامة بعد 5 ثواني"
+                    : "تعذر إرسال اختبار الإقامة"
+            }
+        }
+    }
+
+    private func clockText(for date: Date) -> String {
+        let components = PrayerEngine.calendar.dateComponents([.hour, .minute], from: date)
+        return String(
+            format: "%02d:%02d",
+            locale: Locale(identifier: "en_US_POSIX"),
+            components.hour ?? 0,
+            components.minute ?? 0
+        )
+    }
+
     private var selectedPrayerSoundIsAvailable: Bool {
         let fileNames: [String]
         switch selectedSound {
@@ -1705,7 +1819,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse) async {
         let notificationKind = response.notification.request.content.userInfo["notificationKind"] as? String
         await MainActor.run {
-            let notificationName = notificationKind == "adhan"
+            let notificationName = notificationKind == "adhan" || notificationKind == "iqama"
                 ? Self.openScheduleNotification
                 : Self.openSettingsNotification
             NotificationCenter.default.post(name: notificationName, object: nil)
@@ -1735,6 +1849,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
 private struct ScheduledPrayerNotification {
     enum Kind {
         case adhan
+        case iqama
         case adhkar
         case nafahat
         case fajrAlarm

@@ -19,6 +19,7 @@ CONTENT_PATH = ROOT / "TelShevaAzan" / "ContentView.swift"
 WIDGET_DATA_PATH = ROOT / "TelShevaAzanWidget" / "SalatiWidgetData.swift"
 WIDGET_BUNDLE_PATH = ROOT / "TelShevaAzanWidget" / "TelShevaAzanWidget.swift"
 WIDGET_VIEWS_PATH = ROOT / "TelShevaAzanWidget" / "SalatiWidgetViews.swift"
+WIDGET_PROFESSIONAL_VIEWS_PATH = ROOT / "TelShevaAzanWidget" / "SalatiProfessionalWidgetViews.swift"
 WIDGET_COMPONENTS_PATH = ROOT / "TelShevaAzanWidget" / "SalatiWidgetComponents.swift"
 WIDGET_LOCK_SCREEN_PATH = ROOT / "TelShevaAzanWidget" / "SalatiLockScreenViews.swift"
 WIDGET_THEME_PATH = ROOT / "TelShevaAzanWidget" / "SalatiWidgetTheme.swift"
@@ -128,6 +129,15 @@ def next_iqama(now: datetime) -> tuple[str, datetime]:
     raise AssertionError("Expected an iqama event within two calendar days")
 
 
+def active_iqama(now: datetime) -> tuple[str, datetime] | None:
+    delays = {"fajr": 25, "dhuhr": 15, "asr": 17, "maghrib": 8, "isha": 15}
+    for prayer, adhan in prayer_events(now.date()):
+        iqama = adhan + timedelta(minutes=delays[prayer])
+        if adhan <= now < iqama:
+            return prayer, iqama
+    return None
+
+
 def automatic_schedule_day(now: datetime) -> date:
     isha = next(event_time for prayer, event_time in prayer_events(now.date()) if prayer == "isha")
     return now.date() + timedelta(days=1) if now >= isha else now.date()
@@ -160,6 +170,12 @@ prayer, iqama = next_iqama(datetime(2026, 7, 20, 20, 1))
 assert prayer == "isha" and iqama.strftime("%H:%M") == "21:36"
 prayer, iqama = next_iqama(datetime(2026, 7, 20, 21, 22))
 assert prayer == "isha" and iqama.strftime("%H:%M") == "21:36"
+active = active_iqama(datetime(2026, 7, 20, 19, 55))
+assert active is not None and active[0] == "maghrib" and active[1].strftime("%H:%M") == "20:00"
+assert active_iqama(datetime(2026, 7, 20, 20, 0)) is None
+active = active_iqama(datetime(2026, 7, 20, 21, 22))
+assert active is not None and active[0] == "isha" and active[1].strftime("%H:%M") == "21:36"
+assert active_iqama(datetime(2026, 7, 20, 21, 36)) is None
 
 assert automatic_schedule_day(datetime(2026, 7, 20, 21, 20, 59)) == date(2026, 7, 20)
 assert automatic_schedule_day(datetime(2026, 7, 20, 21, 21)) == date(2026, 7, 21)
@@ -193,8 +209,14 @@ assert "schedulingGeneration == generation" in notifications_text
 assert "تعذر جدولة" in notifications_text
 assert "content.interruptionLevel = .timeSensitive" in notifications_text
 assert '"notificationKind": "adhan"' in notifications_text
+assert '"notificationKind": "iqama"' in notifications_text
 assert "openScheduleNotification" in notifications_text
-assert notifications_text.count("requestAuthorization(options: [.alert, .sound, .timeSensitive])") == 4
+assert notifications_text.count("requestAuthorization(options: [.alert, .sound, .timeSensitive])") == 5
+assert "isIqamaNotificationEnabled" in notifications_text
+assert "IqamaSchedule.telSheva.iqamaDate(for: prayer)" in notifications_text
+assert "private func iqamaRequest(" in notifications_text
+assert "private func scheduleIqamaPreviewNotification()" in notifications_text
+assert "case iqama" in notifications_text
 assert "prayerSlotsWhenNafahatEnabled = 50" in notifications_text
 assert "protectedPrayerEvents" in notifications_text
 assert "refreshDiagnostics()" in notifications_text
@@ -203,11 +225,14 @@ assert "settings.lockScreenSetting != .enabled" in notifications_text
 assert "settings.timeSensitiveSetting != .enabled" in notifications_text
 
 content_text = CONTENT_PATH.read_text(encoding="utf-8")
-assert "PrayerEngine.remainingSeconds(until: next.date, now: now)" in content_text
+assert "PrayerEngine.remainingSeconds(until: date, now: now)" in content_text
 assert "PrayerEngine.elapsedSeconds(since: date, now: now)" in content_text
 assert "PrayerNotificationManager.openScheduleNotification" in content_text
 assert 'detailTile(title: "وقت الشروق", value: prayer.time, highlighted: true)' in content_text
 assert "IqamaSchedule.telSheva.iqamaDate(for: prayer)" in content_text
+assert "IqamaSchedule.telSheva.activeEvent(at: date)" in content_text
+assert '"الإقامة القادمة"' in content_text
+assert '"متبقي للإقامة' in content_text
 active_scene_block = content_text.split(".onChange(of: scenePhase)", 1)[1].split(".onAppear", 1)[0]
 assert "notifications.refreshIfEnabled()" in active_scene_block
 assert ".rounded(.up)" in engine_text, "Remaining time must round up to match the displayed wall clock second"
@@ -216,6 +241,9 @@ notification_settings_text = NOTIFICATION_SETTINGS_PATH.read_text(encoding="utf-
 assert "notificationDiagnosticsPanel" in notification_settings_text
 assert 'panel(title: "فحص وصول الأذان")' in notification_settings_text
 assert 'diagnosticActionLabel(title: "تحديث الفحص"' in notification_settings_text
+assert '"تنبيهات الإقامة"' in notification_settings_text
+assert '"معاينة عدّاد الإقامة"' in notification_settings_text
+assert '"اختبار تنبيه الإقامة"' in notification_settings_text
 
 tel_sheva_iqama_delays = {
     ".fajr": 25,
@@ -231,6 +259,7 @@ assert ".sunrise:" not in engine_text.split("static let telSheva = IqamaSchedule
 widget_data_text = WIDGET_DATA_PATH.read_text(encoding="utf-8")
 widget_bundle_text = WIDGET_BUNDLE_PATH.read_text(encoding="utf-8")
 widget_views_text = WIDGET_VIEWS_PATH.read_text(encoding="utf-8")
+widget_professional_views_text = WIDGET_PROFESSIONAL_VIEWS_PATH.read_text(encoding="utf-8")
 widget_components_text = WIDGET_COMPONENTS_PATH.read_text(encoding="utf-8")
 widget_lock_screen_text = WIDGET_LOCK_SCREEN_PATH.read_text(encoding="utf-8")
 widget_theme_text = WIDGET_THEME_PATH.read_text(encoding="utf-8")
@@ -242,7 +271,17 @@ assert "PrayerEngine.automaticScheduleDateKey(for: date)" in widget_data_text
 assert "entry.scheduleDate" in widget_views_text
 assert "SalatiText.tomorrowTimes" in widget_views_text
 assert "SalatiDateWidget" not in widget_bundle_text
-assert widget_bundle_text.count("struct Salati") == 2
+widget_names = (
+    "SalatiNextPrayerWidget",
+    "SalatiPrayerScheduleWidget",
+    "SalatiNextTwoPrayersWidget",
+    "SalatiDawnWidget",
+    "SalatiPrayerPathWidget",
+    "SalatiTomorrowScheduleWidget",
+)
+for widget_name in widget_names:
+    assert f"struct {widget_name}: Widget" in widget_bundle_text
+    assert f"{widget_name}()" in widget_bundle_text
 assert "SalatiIqamaWidget" not in widget_bundle_text
 assert "SalatiIqamaWidgetView" not in widget_views_text
 next_prayer_widget = widget_bundle_text.split("struct SalatiNextPrayerWidget", 1)[1].split("struct SalatiPrayerScheduleWidget", 1)[0]
@@ -253,6 +292,17 @@ assert widget_views_text.count("SalatiPrayerColumns(") == 1, "Prayer tables belo
 assert widget_views_text.count("SalatiPrayerList(") == 2, "Small and large schedules need dedicated vertical layouts"
 assert ".overlay(alignment: .trailing)" in widget_components_text, "Active stripe must stay on the physical right"
 assert "SalatiText.nextPrayerShort" in widget_views_text, "Compact families must use short Arabic labels"
+for professional_view in (
+    "SalatiNextTwoPrayersView",
+    "SalatiDawnView",
+    "SalatiPrayerPathView",
+    "SalatiTomorrowScheduleView",
+):
+    assert f"struct {professional_view}: View" in widget_professional_views_text
+assert "entry.upcomingPrayers" in widget_professional_views_text
+assert "entry.dawnTimes" in widget_professional_views_text
+assert "entry.obligatoryTimes" in widget_professional_views_text
+assert "entry.tomorrowTimes" in widget_professional_views_text
 for lock_view in ("SalatiAccessoryInlineView", "SalatiAccessoryCircularView", "SalatiAccessoryRectangularView"):
     assert f"struct {lock_view}" in widget_lock_screen_text
     assert lock_view in widget_views_text
@@ -260,7 +310,14 @@ assert "SalatiCountdownText" in widget_lock_screen_text, "Lock screen must label
 assert ".frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)" in widget_theme_text
 assert ".frame(maxWidth: .infinity, maxHeight: .infinity)" in widget_theme_text
 assert "SalatiWidgetKind.all" in widget_refresh_text
-for kind in ("nextPrayer", "dailySchedule"):
+for kind in (
+    "nextPrayer",
+    "dailySchedule",
+    "nextTwoPrayers",
+    "dawn",
+    "prayerPath",
+    "tomorrowSchedule",
+):
     assert f"static let {kind}" in theme_text
 assert "static let iqama" not in theme_text
 assert not re.search(r"telshevaazan\.(?:nextPrayer|dailySchedule|date\.today|iqama)\.v\d+", theme_text + widget_bundle_text)
@@ -276,4 +333,4 @@ print(f"  canonical SHA-256: {actual_hash}")
 print("  prayer transitions: before Isha, exact Isha, midnight, and exact Fajr passed")
 print("  iqama transitions: Maghrib and Isha post-adhan windows passed")
 print("  automatic schedule: today before Isha and tomorrow from exact Isha passed")
-print("  widget structure: two useful widgets, compact schedule, and full-height large layout passed")
+print("  widget structure: two existing widgets plus four focused professional widgets passed")

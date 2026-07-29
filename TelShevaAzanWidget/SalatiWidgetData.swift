@@ -6,6 +6,9 @@ struct SalatiWidgetEntry: TimelineEntry {
     let dateKey: String
     let nextPrayer: PrayerTime?
     let times: [PrayerTime]
+    let upcomingPrayers: [PrayerTime]
+    let tomorrowDateKey: String
+    let tomorrowTimes: [PrayerTime]
 
     var highlightedPrayer: PrayerKey? {
         guard let nextPrayer,
@@ -21,6 +24,18 @@ struct SalatiWidgetEntry: TimelineEntry {
 
     var isTomorrowSchedule: Bool {
         dateKey != PrayerEngine.defaultDateKey(for: date)
+    }
+
+    var obligatoryTimes: [PrayerTime] {
+        times.filter { $0.key != .sunrise }
+    }
+
+    var dawnTimes: [PrayerTime] {
+        times.filter { $0.key == .fajr || $0.key == .sunrise }
+    }
+
+    var tomorrowScheduleDate: Date {
+        PrayerEngine.date(from: tomorrowDateKey, time: "12:00") ?? date
     }
 
     static var preview: SalatiWidgetEntry {
@@ -58,12 +73,42 @@ struct SalatiWidgetProvider: TimelineProvider {
 
     static func makeEntry(for date: Date) -> SalatiWidgetEntry {
         let dateKey = PrayerEngine.automaticScheduleDateKey(for: date)
+        let actualDateKey = PrayerEngine.defaultDateKey(for: date)
+        let tomorrowDateKey = PrayerEngine.dateKey(from: actualDateKey, offset: 1) ?? dateKey
         return SalatiWidgetEntry(
             date: date,
             dateKey: dateKey,
             nextPrayer: PrayerEngine.nextPrayer(for: dateKey, now: date),
-            times: PrayerEngine.schedule(for: dateKey).displayTimes
+            times: PrayerEngine.schedule(for: dateKey).displayTimes,
+            upcomingPrayers: upcomingPrayers(from: date, startingAt: dateKey, count: 3),
+            tomorrowDateKey: tomorrowDateKey,
+            tomorrowTimes: PrayerEngine.schedule(for: tomorrowDateKey).displayTimes
         )
+    }
+
+    private static func upcomingPrayers(
+        from date: Date,
+        startingAt dateKey: String,
+        count: Int
+    ) -> [PrayerTime] {
+        var result: [PrayerTime] = []
+
+        for offset in 0...2 {
+            guard let candidateKey = PrayerEngine.dateKey(from: dateKey, offset: offset) else {
+                continue
+            }
+
+            let candidates = PrayerEngine.schedule(for: candidateKey).displayTimes.filter {
+                $0.key != .sunrise && $0.date > date
+            }
+            result.append(contentsOf: candidates)
+
+            if result.count >= count {
+                break
+            }
+        }
+
+        return Array(result.prefix(count))
     }
 
     private static func transitionDates(after now: Date) -> [Date] {

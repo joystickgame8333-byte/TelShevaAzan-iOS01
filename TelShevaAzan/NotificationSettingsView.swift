@@ -15,6 +15,7 @@ struct NotificationSettingsView: View {
     @AppStorage("adhkar.miniKhatmah.enabled") private var isMiniKhatmahEnabled = false
     @AppStorage("adhkar.miniKhatmah.dailyPortion") private var miniKhatmahDailyPortion = MiniKhatmahPortion.halfPage.rawValue
     @AppStorage("adhkar.miniKhatmah.startDate") private var miniKhatmahStartDate: Double = 0
+    @AppStorage(IqamaPreviewStorage.expirationKey) private var iqamaPreviewExpiration: Double = 0
 
     private static let notificationCoverageDateFormatter: DateFormatter = {
         let formatter = DateFormatter()
@@ -184,6 +185,7 @@ struct NotificationSettingsView: View {
             notificationDiagnosticsPanel
             soundPanel
             prayerPanel
+            iqamaNotificationPanel
         }
         .transition(.opacity)
     }
@@ -884,6 +886,87 @@ struct NotificationSettingsView: View {
                 }
             }
         }
+    }
+
+    private var iqamaNotificationPanel: some View {
+        VStack(alignment: .trailing, spacing: 10) {
+            toggleSummaryPanel(
+                title: "تنبيهات الإقامة",
+                subtitle: notifications.isIqamaNotificationEnabled
+                    ? "يظهر تنبيه عند إقامة الصلوات المفعّلة أعلاه"
+                    : "تنبيهات الإقامة متوقفة",
+                isOn: Binding(
+                    get: { notifications.isIqamaNotificationEnabled },
+                    set: { notifications.setIqamaNotificationEnabled($0) }
+                )
+            )
+
+            if notifications.isIqamaNotificationEnabled {
+                Button {
+                    iqamaPreviewExpiration = Date()
+                        .addingTimeInterval(IqamaPreviewStorage.duration)
+                        .timeIntervalSince1970
+                    NotificationCenter.default.post(
+                        name: PrayerNotificationManager.openScheduleNotification,
+                        object: nil
+                    )
+                } label: {
+                    iqamaTestButtonLabel(
+                        title: "معاينة عدّاد الإقامة",
+                        subtitle: "يظهر داخل المواقيت لمدة دقيقتين",
+                        symbol: "timer"
+                    )
+                }
+                .buttonStyle(.plain)
+
+                Button {
+                    notifications.sendIqamaPreviewNotification()
+                } label: {
+                    iqamaTestButtonLabel(
+                        title: "اختبار تنبيه الإقامة",
+                        subtitle: "يصلك تنبيه تجريبي بعد 5 ثواني",
+                        symbol: "person.2.fill"
+                    )
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
+    private func iqamaTestButtonLabel(
+        title: String,
+        subtitle: String,
+        symbol: String
+    ) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: symbol)
+                .font(.system(size: 19, weight: .black))
+                .foregroundStyle(theme.accent)
+                .frame(width: 34, alignment: .leading)
+
+            Spacer(minLength: 10)
+
+            VStack(alignment: .trailing, spacing: 4) {
+                Text(title)
+                    .font(.subheadline.weight(.black))
+                    .lineLimit(1)
+
+                Text(subtitle)
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(theme.secondaryText.opacity(0.82))
+                    .lineLimit(1)
+            }
+            .frame(maxWidth: .infinity, alignment: .trailing)
+        }
+        .padding(.vertical, 12)
+        .padding(.horizontal, 12)
+        .frame(maxWidth: .infinity, alignment: .trailing)
+        .background(glassSurface(theme.countdownBackground, radius: 8, prominence: .strong))
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(theme.activeRowBorder)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 8))
     }
 
     private var enabledPrayerCount: Int {

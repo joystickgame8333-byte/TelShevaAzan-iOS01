@@ -49,4 +49,28 @@ import WidgetKit
 } timeline: {
     SalatiWidgetEntry.preview
 }
+
+#Preview("القادمة وبعدها", as: .systemMedium) {
+    SalatiNextTwoPrayersWidget()
+} timeline: {
+    SalatiWidgetEntry.preview
+}
+
+#Preview("الفجر والشروق", as: .systemSmall) {
+    SalatiDawnWidget()
+} timeline: {
+    SalatiWidgetEntry.preview
+}
+
+#Preview("مسار الصلوات", as: .systemMedium) {
+    SalatiPrayerPathWidget()
+} timeline: {
+    SalatiWidgetEntry.preview
+}
+
+#Preview("خطة الغد", as: .systemMedium) {
+    SalatiTomorrowScheduleWidget()
+} timeline: {
+    SalatiWidgetEntry.preview
+}
 #endif
