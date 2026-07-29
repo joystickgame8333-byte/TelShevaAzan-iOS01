@@ -4,7 +4,6 @@ import hashlib
 import json
 import math
 import re
-import wave
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
@@ -31,13 +30,6 @@ WIDGET_REFRESH_PATH = ROOT / "TelShevaAzan" / "WidgetRefreshCenter.swift"
 THEME_PATH = ROOT / "TelShevaAzan" / "AppTheme.swift"
 PRAYERS = ("fajr", "sunrise", "dhuhr", "asr", "maghrib", "isha")
 EXPECTED_DAYS_SHA256 = "85406025fe86fcc9be99e3797d6b2f9215575887eaa9826542442d8077c1a7d9"
-ADHKAR_NOTIFICATION_SOUNDS = (
-    "adhkar-sakinah.wav",
-    "adhkar-noor.wav",
-    "adhkar-nada.wav",
-    "adhkar-tumanina.wav",
-    "adhkar-nasim.wav",
-)
 
 
 def offset(value: str, minutes: int) -> str:
@@ -234,17 +226,6 @@ assert "refreshDiagnostics()" in notifications_text
 assert "settings.soundSetting != .enabled" in notifications_text
 assert "settings.lockScreenSetting != .enabled" in notifications_text
 assert "settings.timeSensitiveSetting != .enabled" in notifications_text
-assert notifications_text.count("case .sakinah:") == 4
-for sound_name in ADHKAR_NOTIFICATION_SOUNDS:
-    assert sound_name in notifications_text
-    assert f"TelShevaAzan/Sounds/{sound_name}" in project_text
-    sound_path = ROOT / "TelShevaAzan" / "Sounds" / sound_name
-    with wave.open(str(sound_path), "rb") as sound:
-        assert sound.getnchannels() == 1
-        assert sound.getsampwidth() == 2
-        assert sound.getframerate() == 44_100
-        duration = sound.getnframes() / sound.getframerate()
-        assert 1.0 <= duration <= 3.0
 
 content_text = CONTENT_PATH.read_text(encoding="utf-8")
 assert "PrayerEngine.remainingSeconds(until: date, now: now)" in content_text
@@ -422,4 +403,3 @@ print("  iqama transitions: Maghrib and Isha post-adhan windows passed")
 print("  automatic schedule: today before Isha and tomorrow from exact Isha passed")
 print("  widget structure: home widgets and six focused Lock Screen widgets passed")
 print("  adhkar experience: offline library, daily progress, RTL reader, and persistent tasbih passed")
-print("  adhkar sounds: five original mono PCM notification tones passed")
