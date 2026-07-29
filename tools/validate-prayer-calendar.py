@@ -265,9 +265,10 @@ widget_lock_screen_text = WIDGET_LOCK_SCREEN_PATH.read_text(encoding="utf-8")
 widget_theme_text = WIDGET_THEME_PATH.read_text(encoding="utf-8")
 widget_refresh_text = WIDGET_REFRESH_PATH.read_text(encoding="utf-8")
 theme_text = THEME_PATH.read_text(encoding="utf-8")
-assert "nextIqama" not in widget_data_text, "Removed iqama widget must not keep a private timeline"
 assert "prayer.key != .sunrise" in widget_data_text
 assert "PrayerEngine.automaticScheduleDateKey(for: date)" in widget_data_text
+assert "IqamaSchedule.telSheva.activeEvent(at: date)" in widget_data_text
+assert "IqamaSchedule.telSheva.iqamaDate(for: prayer)" in widget_data_text
 assert "entry.scheduleDate" in widget_views_text
 assert "SalatiText.tomorrowTimes" in widget_views_text
 assert "SalatiDateWidget" not in widget_bundle_text
@@ -275,6 +276,12 @@ widget_names = (
     "SalatiNextPrayerWidget",
     "SalatiPrayerScheduleWidget",
     "SalatiPrayerPathWidget",
+    "SalatiLockInlineWidget",
+    "SalatiLockPrayerTimeWidget",
+    "SalatiLockCountdownWidget",
+    "SalatiLockNextPrayerWidget",
+    "SalatiLockFollowingPrayersWidget",
+    "SalatiLockScheduleWidget",
 )
 for widget_name in widget_names:
     assert f"struct {widget_name}: Widget" in widget_bundle_text
@@ -293,17 +300,30 @@ assert ".systemLarge" not in next_prayer_widget, "Next-prayer large must not dup
 assert ".systemSmall" in schedule_widget and ".systemLarge" in schedule_widget
 assert widget_views_text.count("SalatiPrayerColumns(") == 1, "Prayer tables belong only to the schedule widget"
 assert widget_views_text.count("SalatiPrayerList(") == 2, "Small and large schedules need dedicated vertical layouts"
-assert ".overlay(alignment: .trailing)" in widget_components_text, "Active stripe must stay on the physical right"
+assert "Spacer(minLength: 0)" in widget_components_text
+assert ".environment(\\.layoutDirection, .leftToRight)" in widget_components_text
+assert "SalatiCompactCountdownBadge" in widget_components_text
 assert "SalatiText.nextPrayerShort" in widget_views_text, "Compact families must use short Arabic labels"
 assert "struct SalatiPrayerPathView: View" in widget_prayer_path_text
 assert "entry.obligatoryTimes" in widget_prayer_path_text
-assert "isCompleted: prayer.date < entry.date" in widget_prayer_path_text
+assert '"checkmark"' not in widget_prayer_path_text
 assert "SalatiText.obligatoryPrayers" in widget_views_text
 assert "nextPrayerSummaryCard(theme: theme)" in widget_views_text
-for lock_view in ("SalatiAccessoryInlineView", "SalatiAccessoryCircularView", "SalatiAccessoryRectangularView"):
+for lock_view in (
+    "SalatiLockInlineView",
+    "SalatiLockPrayerTimeView",
+    "SalatiLockCountdownView",
+    "SalatiLockNextPrayerView",
+    "SalatiLockFollowingPrayersView",
+    "SalatiLockScheduleView",
+):
     assert f"struct {lock_view}" in widget_lock_screen_text
-    assert lock_view in widget_views_text
 assert "SalatiCountdownText" in widget_lock_screen_text, "Lock screen must label and show a live countdown"
+assert "Array(entry.times.prefix(3))" in widget_lock_screen_text
+assert "Array(entry.times.dropFirst(3).prefix(3))" in widget_lock_screen_text
+assert ".accessoryInline" in widget_bundle_text
+assert widget_bundle_text.count(".accessoryCircular") == 2
+assert widget_bundle_text.count(".accessoryRectangular") == 3
 assert ".frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)" in widget_theme_text
 assert ".frame(maxWidth: .infinity, maxHeight: .infinity)" in widget_theme_text
 assert "SalatiWidgetKind.all" in widget_refresh_text
@@ -311,6 +331,12 @@ for kind in (
     "nextPrayer",
     "dailySchedule",
     "prayerPath",
+    "lockInline",
+    "lockPrayerTime",
+    "lockCountdown",
+    "lockNextPrayer",
+    "lockFollowingPrayers",
+    "lockDailySchedule",
 ):
     assert f"static let {kind}" in theme_text
 for removed_kind in ("nextTwoPrayers", "dawn", "tomorrowSchedule"):
@@ -329,4 +355,4 @@ print(f"  canonical SHA-256: {actual_hash}")
 print("  prayer transitions: before Isha, exact Isha, midnight, and exact Fajr passed")
 print("  iqama transitions: Maghrib and Isha post-adhan windows passed")
 print("  automatic schedule: today before Isha and tomorrow from exact Isha passed")
-print("  widget structure: focused next-prayer, daily schedule, and prayer-path widgets passed")
+print("  widget structure: home widgets and six focused Lock Screen widgets passed")

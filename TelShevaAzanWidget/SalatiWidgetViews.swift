@@ -10,17 +10,11 @@ struct SalatiNextPrayerView: View {
     private var prayerDate: Date? { entry.nextPrayer?.date }
 
     var body: some View {
-        Group {
-            if isAccessoryFamily {
-                accessoryBody
+        SalatiWidgetSurface { theme in
+            if family == .systemSmall {
+                smallBody(theme: theme)
             } else {
-                SalatiWidgetSurface { theme in
-                    if family == .systemSmall {
-                        smallBody(theme: theme)
-                    } else {
-                        mediumBody(theme: theme)
-                    }
-                }
+                mediumBody(theme: theme)
             }
         }
         .environment(\.layoutDirection, .rightToLeft)
@@ -29,40 +23,13 @@ struct SalatiNextPrayerView: View {
         .accessibilityLabel("\(SalatiText.nextPrayer)، \(prayerName)، \(prayerTime)")
     }
 
-    private var isAccessoryFamily: Bool {
-        family == .accessoryInline || family == .accessoryCircular || family == .accessoryRectangular
-    }
-
-    @ViewBuilder
-    private var accessoryBody: some View {
-        switch family {
-        case .accessoryInline:
-            SalatiAccessoryInlineView(prayerName: prayerName, prayerTime: prayerTime)
-
-        case .accessoryCircular:
-            SalatiAccessoryCircularView(
-                prayerName: prayerName,
-                from: entry.date,
-                target: prayerDate
-            )
-
-        default:
-            SalatiAccessoryRectangularView(
-                prayerName: prayerName,
-                prayerTime: prayerTime,
-                prayerSymbol: SalatiPrayerSymbol.value(for: entry.nextPrayer?.key),
-                from: entry.date,
-                target: prayerDate
-            )
-        }
-    }
-
     private func smallBody(theme: SalatiWidgetTheme) -> some View {
         VStack(spacing: 7) {
             SalatiWidgetHeader(
                 title: SalatiText.nextPrayerShort,
                 symbol: SalatiPrayerSymbol.value(for: entry.nextPrayer?.key),
                 theme: theme,
+                showsSymbol: false,
                 showsLocation: false
             )
 
@@ -116,18 +83,12 @@ struct SalatiNextPrayerView: View {
                         color: theme.accent
                     )
 
-                    SalatiCountdownText(
+                    SalatiCompactCountdownBadge(
                         from: entry.date,
                         target: prayerDate,
-                        size: 15,
-                        color: theme.primaryText
+                        theme: theme,
+                        textSize: 14
                     )
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(theme.panel, in: Capsule())
-                    .overlay {
-                        Capsule().stroke(theme.border, lineWidth: 0.8)
-                    }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -279,11 +240,11 @@ struct SalatiPrayerScheduleView: View {
                     color: theme.accent
                 )
 
-                SalatiCountdownText(
+                SalatiCompactCountdownBadge(
                     from: entry.date,
                     target: entry.nextPrayer?.date,
-                    size: 13,
-                    color: theme.primaryText
+                    theme: theme,
+                    textSize: 12
                 )
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -302,11 +263,11 @@ struct SalatiPrayerScheduleView: View {
         }
         .environment(\.layoutDirection, .leftToRight)
         .padding(.horizontal, 13)
-        .padding(.vertical, 10)
+        .padding(.vertical, 8)
         .background(theme.activePanel, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .stroke(theme.activeBorder, lineWidth: 1)
+                .stroke(theme.activeBorder.opacity(0.72), lineWidth: 0.9)
         }
     }
 }

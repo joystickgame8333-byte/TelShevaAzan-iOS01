@@ -12,10 +12,22 @@ enum SalatiWidgetKind {
     static let nextPrayer = "com.omaralasam.telshevaazan.widget.nextPrayer"
     static let dailySchedule = "com.omaralasam.telshevaazan.widget.dailySchedule"
     static let prayerPath = "com.omaralasam.telshevaazan.widget.prayerPath"
+    static let lockInline = "com.omaralasam.telshevaazan.widget.lock.inline"
+    static let lockPrayerTime = "com.omaralasam.telshevaazan.widget.lock.prayerTime"
+    static let lockCountdown = "com.omaralasam.telshevaazan.widget.lock.countdown"
+    static let lockNextPrayer = "com.omaralasam.telshevaazan.widget.lock.nextPrayer"
+    static let lockFollowingPrayers = "com.omaralasam.telshevaazan.widget.lock.followingPrayers"
+    static let lockDailySchedule = "com.omaralasam.telshevaazan.widget.lock.dailySchedule"
     static let all = [
         nextPrayer,
         dailySchedule,
-        prayerPath
+        prayerPath,
+        lockInline,
+        lockPrayerTime,
+        lockCountdown,
+        lockNextPrayer,
+        lockFollowingPrayers,
+        lockDailySchedule
     ]
 }
 

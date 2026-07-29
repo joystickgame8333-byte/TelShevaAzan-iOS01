@@ -22,16 +22,15 @@ struct SalatiPrayerPathView: View {
                         prayerMilestone(
                             prayer: prayer,
                             theme: theme,
-                            isActive: entry.highlightedPrayer == prayer.key,
-                            isCompleted: prayer.date < entry.date
+                            isActive: entry.highlightedPrayer == prayer.key
                         )
                     }
                 }
                 .frame(maxHeight: .infinity)
                 .background(alignment: .center) {
                     Capsule()
-                        .fill(theme.border)
-                        .frame(height: 2)
+                        .fill(theme.secondaryText.opacity(0.20))
+                        .frame(height: 1.5)
                         .padding(.horizontal, 24)
                         .offset(y: -12)
                 }
@@ -47,21 +46,17 @@ struct SalatiPrayerPathView: View {
     private func prayerMilestone(
         prayer: PrayerTime,
         theme: SalatiWidgetTheme,
-        isActive: Bool,
-        isCompleted: Bool
+        isActive: Bool
     ) -> some View {
         VStack(spacing: 5) {
             ZStack {
                 Circle()
-                    .fill(milestoneBackground(theme: theme, isActive: isActive, isCompleted: isCompleted))
+                    .fill(isActive ? theme.accent : theme.panel)
                     .frame(width: isActive ? 27 : 21, height: isActive ? 27 : 21)
 
-                Image(systemName: isCompleted && !isActive
-                    ? "checkmark"
-                    : SalatiPrayerSymbol.value(for: prayer.key)
-                )
-                .font(.system(size: isActive ? 11 : 9, weight: .black))
-                .foregroundStyle(isActive ? theme.activePanel : theme.secondaryText)
+                Image(systemName: SalatiPrayerSymbol.value(for: prayer.key))
+                    .font(.system(size: isActive ? 11 : 9, weight: .black))
+                    .foregroundStyle(isActive ? theme.activePanel : theme.secondaryText)
             }
 
             Text(prayer.title)
@@ -88,16 +83,5 @@ struct SalatiPrayerPathView: View {
                     }
             }
         }
-    }
-
-    private func milestoneBackground(
-        theme: SalatiWidgetTheme,
-        isActive: Bool,
-        isCompleted: Bool
-    ) -> Color {
-        if isActive {
-            return theme.accent
-        }
-        return isCompleted ? theme.activePanel : theme.panel
     }
 }

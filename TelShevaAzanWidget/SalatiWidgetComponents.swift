@@ -17,6 +17,21 @@ enum SalatiText {
     static let prayerPathDescription = "تابع ترتيب الصلوات المفروضة وموضع الصلاة القادمة"
     static let obligatoryPrayers = "الصلوات المفروضة"
     static let allPrayerTimes = "جميع المواقيت"
+    static let nextIqama = "الإقامة القادمة"
+    static let remainingUntilIqama = "متبقي للإقامة"
+    static let nextAndFollowing = "القادمة وبعدها"
+    static let lockInlineTitle = "الصلاة والإقامة"
+    static let lockInlineDescription = "حالة الصلاة أو الإقامة في السطر أعلى ساعة القفل"
+    static let lockPrayerTimeTitle = "موعد الصلاة"
+    static let lockPrayerTimeDescription = "اسم الصلاة القادمة وموعدها في دائرة"
+    static let lockCountdownTitle = "عداد الصلاة"
+    static let lockCountdownDescription = "عداد حي للصلاة أو الإقامة القادمة"
+    static let lockNextPrayerTitle = "الصلاة القادمة — مفصل"
+    static let lockNextPrayerDescription = "اسم الصلاة وموعدها والوقت المتبقي لها"
+    static let lockFollowingPrayersTitle = "الصلاتان القادمتان"
+    static let lockFollowingPrayersDescription = "الصلاة القادمة والتي تليها في شاشة القفل"
+    static let lockScheduleTitle = "كل مواقيت الصلاة"
+    static let lockScheduleDescription = "المواقيت الستة مرتبة في أكبر مساحة لشاشة القفل"
 
     static func isolatedTime(_ value: String) -> String {
         "\u{2066}\(value)\u{2069}"
@@ -32,14 +47,17 @@ struct SalatiWidgetHeader: View {
     let title: String
     let symbol: String
     let theme: SalatiWidgetTheme
+    var showsSymbol = true
     var showsLocation = true
 
     var body: some View {
         HStack(spacing: 6) {
-            Image(systemName: symbol)
-                .font(.caption.weight(.black))
-                .foregroundStyle(theme.accent)
-                .widgetAccentable()
+            if showsSymbol {
+                Image(systemName: symbol)
+                    .font(.caption.weight(.black))
+                    .foregroundStyle(theme.accent)
+                    .widgetAccentable()
+            }
 
             Text(title)
                 .font(.system(size: 12, weight: .black, design: .rounded))
@@ -155,6 +173,42 @@ struct SalatiCountdownRow: View {
     }
 }
 
+struct SalatiCompactCountdownBadge: View {
+    let from: Date
+    let target: Date?
+    let theme: SalatiWidgetTheme
+    var textSize: CGFloat = 13
+
+    var body: some View {
+        HStack(spacing: 5) {
+            SalatiCountdownText(
+                from: from,
+                target: target,
+                size: textSize,
+                color: theme.primaryText
+            )
+
+            Text(SalatiText.remaining)
+                .font(.system(size: 10, weight: .bold, design: .rounded))
+                .foregroundStyle(theme.mutedText)
+                .lineLimit(1)
+
+            Image(systemName: "hourglass")
+                .font(.system(size: 9, weight: .black))
+                .foregroundStyle(theme.accent)
+        }
+        .environment(\.layoutDirection, .leftToRight)
+        .fixedSize(horizontal: true, vertical: false)
+        .padding(.horizontal, 9)
+        .padding(.vertical, 5)
+        .background(theme.panel, in: Capsule())
+        .overlay {
+            Capsule().stroke(theme.border, lineWidth: 0.7)
+        }
+        .accessibilityElement(children: .combine)
+    }
+}
+
 struct SalatiPrayerColumns: View {
     let times: [PrayerTime]
     let highlightedPrayer: PrayerKey?
@@ -247,14 +301,19 @@ private struct SalatiPrayerCell: View {
             RoundedRectangle(cornerRadius: SalatiWidgetMetrics.compactCornerRadius, style: .continuous)
                 .stroke(isActive ? theme.activeBorder : theme.border, lineWidth: isActive ? 1.1 : 0.7)
         }
-        .overlay(alignment: .trailing) {
-            if isActive {
-                Capsule()
-                    .fill(theme.accent)
-                    .frame(width: 3)
-                    .padding(.vertical, 6)
-                    .padding(.trailing, 1)
+        .overlay {
+            HStack(spacing: 0) {
+                Spacer(minLength: 0)
+
+                if isActive {
+                    Capsule()
+                        .fill(theme.accent)
+                        .frame(width: 3)
+                        .padding(.vertical, 5)
+                        .padding(.trailing, 1)
+                }
             }
+            .environment(\.layoutDirection, .leftToRight)
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel(SalatiText.prayerAndTime(prayer: prayer.title, time: prayer.time))

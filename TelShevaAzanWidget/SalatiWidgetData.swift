@@ -27,6 +27,50 @@ struct SalatiWidgetEntry: TimelineEntry {
         times.filter { $0.key != .sunrise }
     }
 
+    var activeIqama: IqamaEvent? {
+        IqamaSchedule.telSheva.activeEvent(at: date)
+    }
+
+    var focusedPrayer: PrayerTime? {
+        activeIqama?.prayer ?? nextPrayer
+    }
+
+    var focusedTarget: Date? {
+        activeIqama?.date ?? nextPrayer?.date
+    }
+
+    var focusedTime: String {
+        if let activeIqama {
+            return SalatiWidgetDateText.clock(for: activeIqama.date)
+        }
+        return nextPrayer?.time ?? SalatiText.noTime
+    }
+
+    var focusedTitle: String {
+        activeIqama == nil ? SalatiText.nextPrayer : SalatiText.nextIqama
+    }
+
+    var focusedCountdownLabel: String {
+        activeIqama == nil ? SalatiText.remaining : SalatiText.remainingUntilIqama
+    }
+
+    var followingPrayer: PrayerTime? {
+        if activeIqama != nil {
+            return nextPrayer
+        }
+
+        guard let nextPrayer else { return nil }
+
+        if let following = obligatoryTimes.first(where: { $0.date > nextPrayer.date }) {
+            return following
+        }
+
+        guard let nextDateKey = PrayerEngine.dateKey(from: dateKey, offset: 1) else {
+            return nil
+        }
+        return PrayerEngine.schedule(for: nextDateKey).displayTimes.first { $0.key != .sunrise }
+    }
+
     static var preview: SalatiWidgetEntry {
         let components = DateComponents(
             calendar: PrayerEngine.calendar,
@@ -82,6 +126,10 @@ struct SalatiWidgetProvider: TimelineProvider {
 
             for prayer in PrayerEngine.schedule(for: dateKey).displayTimes where prayer.key != .sunrise {
                 Self.insertTransition(after: prayer.date, now: now, into: &dates)
+
+                if let iqamaDate = IqamaSchedule.telSheva.iqamaDate(for: prayer) {
+                    Self.insertTransition(after: iqamaDate, now: now, into: &dates)
+                }
             }
 
             if let nextDay = PrayerEngine.calendar.date(byAdding: .day, value: 1, to: day) {
@@ -120,6 +168,16 @@ enum SalatiWidgetDateText {
 
     static func compact(for date: Date) -> String {
         "\(latinDigits(gregorianFormatter.string(from: date)))  •  \(latinDigits(hijriFormatter.string(from: date)))"
+    }
+
+    static func clock(for date: Date) -> String {
+        let components = PrayerEngine.calendar.dateComponents([.hour, .minute], from: date)
+        return String(
+            format: "%02d:%02d",
+            locale: Locale(identifier: "en_US_POSIX"),
+            components.hour ?? 0,
+            components.minute ?? 0
+        )
     }
 
     private static func latinDigits(_ text: String) -> String {

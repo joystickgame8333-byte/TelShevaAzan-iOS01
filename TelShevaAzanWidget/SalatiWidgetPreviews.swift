@@ -32,20 +32,38 @@ import WidgetKit
     SalatiWidgetEntry.preview
 }
 
-#Preview("شاشة القفل — مستطيل", as: .accessoryRectangular) {
-    SalatiNextPrayerWidget()
+#Preview("شاشة القفل — السطر الذكي", as: .accessoryInline) {
+    SalatiLockInlineWidget()
 } timeline: {
     SalatiWidgetEntry.preview
 }
 
-#Preview("شاشة القفل — دائري", as: .accessoryCircular) {
-    SalatiNextPrayerWidget()
+#Preview("شاشة القفل — موعد الصلاة", as: .accessoryCircular) {
+    SalatiLockPrayerTimeWidget()
 } timeline: {
     SalatiWidgetEntry.preview
 }
 
-#Preview("شاشة القفل — سطر", as: .accessoryInline) {
-    SalatiNextPrayerWidget()
+#Preview("شاشة القفل — العد التنازلي", as: .accessoryCircular) {
+    SalatiLockCountdownWidget()
+} timeline: {
+    SalatiWidgetEntry.preview
+}
+
+#Preview("شاشة القفل — الصلاة القادمة", as: .accessoryRectangular) {
+    SalatiLockNextPrayerWidget()
+} timeline: {
+    SalatiWidgetEntry.preview
+}
+
+#Preview("شاشة القفل — القادمة وبعدها", as: .accessoryRectangular) {
+    SalatiLockFollowingPrayersWidget()
+} timeline: {
+    SalatiWidgetEntry.preview
+}
+
+#Preview("شاشة القفل — كل المواقيت", as: .accessoryRectangular) {
+    SalatiLockScheduleWidget()
 } timeline: {
     SalatiWidgetEntry.preview
 }
