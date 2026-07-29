@@ -173,42 +173,6 @@ struct SalatiCountdownRow: View {
     }
 }
 
-struct SalatiCompactCountdownBadge: View {
-    let from: Date
-    let target: Date?
-    let theme: SalatiWidgetTheme
-    var textSize: CGFloat = 13
-
-    var body: some View {
-        HStack(spacing: 5) {
-            SalatiCountdownText(
-                from: from,
-                target: target,
-                size: textSize,
-                color: theme.primaryText
-            )
-
-            Text(SalatiText.remaining)
-                .font(.system(size: 10, weight: .bold, design: .rounded))
-                .foregroundStyle(theme.mutedText)
-                .lineLimit(1)
-
-            Image(systemName: "hourglass")
-                .font(.system(size: 9, weight: .black))
-                .foregroundStyle(theme.accent)
-        }
-        .environment(\.layoutDirection, .leftToRight)
-        .fixedSize(horizontal: true, vertical: false)
-        .padding(.horizontal, 9)
-        .padding(.vertical, 5)
-        .background(theme.panel, in: Capsule())
-        .overlay {
-            Capsule().stroke(theme.border, lineWidth: 0.7)
-        }
-        .accessibilityElement(children: .combine)
-    }
-}
-
 struct SalatiPrayerColumns: View {
     let times: [PrayerTime]
     let highlightedPrayer: PrayerKey?

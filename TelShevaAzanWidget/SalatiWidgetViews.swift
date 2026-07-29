@@ -83,12 +83,14 @@ struct SalatiNextPrayerView: View {
                         color: theme.accent
                     )
 
-                    SalatiCompactCountdownBadge(
+                    SalatiCountdownRow(
+                        label: SalatiText.remaining,
                         from: entry.date,
                         target: prayerDate,
                         theme: theme,
-                        textSize: 14
+                        compact: true
                     )
+                    .frame(maxWidth: 128)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -240,12 +242,14 @@ struct SalatiPrayerScheduleView: View {
                     color: theme.accent
                 )
 
-                SalatiCompactCountdownBadge(
+                SalatiCountdownRow(
+                    label: SalatiText.remaining,
                     from: entry.date,
                     target: entry.nextPrayer?.date,
                     theme: theme,
-                    textSize: 12
+                    compact: true
                 )
+                .frame(maxWidth: 124)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 

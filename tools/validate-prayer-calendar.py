@@ -302,7 +302,7 @@ assert widget_views_text.count("SalatiPrayerColumns(") == 1, "Prayer tables belo
 assert widget_views_text.count("SalatiPrayerList(") == 2, "Small and large schedules need dedicated vertical layouts"
 assert "Spacer(minLength: 0)" in widget_components_text
 assert ".environment(\\.layoutDirection, .leftToRight)" in widget_components_text
-assert "SalatiCompactCountdownBadge" in widget_components_text
+assert widget_views_text.count("SalatiCountdownRow(") == 3
 assert "SalatiText.nextPrayerShort" in widget_views_text, "Compact families must use short Arabic labels"
 assert "struct SalatiPrayerPathView: View" in widget_prayer_path_text
 assert "entry.obligatoryTimes" in widget_prayer_path_text
@@ -321,6 +321,9 @@ for lock_view in (
 assert "SalatiCountdownText" in widget_lock_screen_text, "Lock screen must label and show a live countdown"
 assert "Array(entry.times.prefix(3))" in widget_lock_screen_text
 assert "Array(entry.times.dropFirst(3).prefix(3))" in widget_lock_screen_text
+lock_schedule_view = widget_lock_screen_text.split("struct SalatiLockScheduleView", 1)[1]
+assert "SalatiText.todayTimes" not in lock_schedule_view
+assert "size: 13" in lock_schedule_view
 assert ".accessoryInline" in widget_bundle_text
 assert widget_bundle_text.count(".accessoryCircular") == 2
 assert widget_bundle_text.count(".accessoryRectangular") == 3

@@ -322,20 +322,11 @@ struct SalatiLockScheduleView: View {
     }
 
     var body: some View {
-        VStack(alignment: .trailing, spacing: 2) {
-            HStack(spacing: 4) {
-                Text(entry.isTomorrowSchedule ? SalatiText.tomorrowTimes : SalatiText.todayTimes)
-                    .font(.system(size: 8, weight: .bold, design: .rounded))
-                    .lineLimit(1)
-
-                Image(systemName: "calendar")
-                    .font(.system(size: 7, weight: .black))
-                    .widgetAccentable()
-            }
-
+        VStack(spacing: 4) {
             scheduleRow(firstRow)
             scheduleRow(secondRow)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(scheduleAccessibilityText)
     }
@@ -346,7 +337,7 @@ struct SalatiLockScheduleView: View {
                 VStack(spacing: 0) {
                     Text(prayer.title)
                         .font(.system(
-                            size: 7.5,
+                            size: 9.5,
                             weight: prayer.key == entry.highlightedPrayer ? .black : .bold,
                             design: .rounded
                         ))
@@ -355,12 +346,12 @@ struct SalatiLockScheduleView: View {
 
                     SalatiTimeText(
                         value: prayer.time,
-                        size: 10.5,
+                        size: 13,
                         weight: prayer.key == entry.highlightedPrayer ? .black : .bold
                     )
                 }
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 1)
+                .padding(.vertical, 2)
                 .background {
                     if prayer.key == entry.highlightedPrayer {
                         RoundedRectangle(cornerRadius: 5, style: .continuous)
