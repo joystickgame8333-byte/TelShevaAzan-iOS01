@@ -1,9 +1,11 @@
+import CoreLocation
 import Foundation
 import SwiftUI
 import UIKit
 
 struct QiblaView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.openURL) private var openURL
     @StateObject private var compass = QiblaCompassManager()
     @State private var wasAlignedWithQibla = false
     @State private var lastAlignmentHaptic = Date.distantPast
@@ -12,7 +14,16 @@ struct QiblaView: View {
     var isEmbedded = false
     var bottomReservedHeight: CGFloat = 0
 
-    private let qiblaBearing = QiblaCalculator.telShevaBearing
+    private let successColor = Color(red: 0.10, green: 0.72, blue: 0.40)
+    private let warmGold = Color(red: 0.96, green: 0.68, blue: 0.20)
+
+    private var qiblaBearing: Double {
+        guard let location = compass.currentLocation else {
+            return QiblaCalculator.telShevaBearing
+        }
+
+        return QiblaCalculator.bearing(from: location)
+    }
 
     private var delta: Double? {
         guard let heading = compass.heading else { return nil }
@@ -21,39 +32,45 @@ struct QiblaView: View {
 
     var body: some View {
         GeometryReader { proxy in
-            let compactHeight = proxy.size.height < 720
-            let circleSize = min(proxy.size.width - 54, compactHeight ? 250 : 300)
+            let availableHeight = max(500, proxy.size.height - bottomReservedHeight)
+            let compactHeight = availableHeight < 650
+            let compassSize = min(
+                proxy.size.width - (compactHeight ? 58 : 44),
+                compactHeight ? 266 : 326
+            )
 
             ZStack {
                 if !isEmbedded {
                     ThemeBackdrop(theme: theme)
                 }
 
-                VStack(alignment: .trailing, spacing: compactHeight ? 12 : 16) {
+                ambientBackground
+
+                VStack(alignment: .trailing, spacing: compactHeight ? 10 : 14) {
                     header
 
-                    Spacer(minLength: 4)
+                    Spacer(minLength: compactHeight ? 0 : 4)
 
-                    VStack(spacing: compactHeight ? 6 : 8) {
-                        compassFace(size: circleSize)
-                            .frame(maxWidth: .infinity, alignment: .center)
+                    compassFace(size: compassSize, compact: compactHeight)
+                        .frame(maxWidth: .infinity, alignment: .center)
 
-                        compassHint
-                    }
+                    guidanceCard(compact: compactHeight)
 
-                    directionReadout
-
-                    accuracyPanel
+                    qualityBar
 
                     Spacer(minLength: 0)
                 }
                 .padding(.horizontal, 18)
-                .padding(.top, 14)
-                .padding(.bottom, 18 + bottomReservedHeight)
-                .frame(width: proxy.size.width, height: proxy.size.height, alignment: .topTrailing)
+                .padding(.top, 12)
+                .padding(.bottom, 12 + bottomReservedHeight)
+                .frame(
+                    width: proxy.size.width,
+                    height: proxy.size.height,
+                    alignment: .topTrailing
+                )
                 .foregroundStyle(theme.primaryText)
-                .environment(\.layoutDirection, .leftToRight)
                 .multilineTextAlignment(.trailing)
+                .environment(\.layoutDirection, .rightToLeft)
             }
         }
         .onAppear {
@@ -68,237 +85,356 @@ struct QiblaView: View {
         }
     }
 
+    private var ambientBackground: some View {
+        ZStack {
+            Circle()
+                .fill(directionColor.opacity(alignmentIsGood ? 0.14 : 0.08))
+                .frame(width: 360, height: 360)
+                .blur(radius: 80)
+                .offset(x: -130, y: -170)
+
+            Circle()
+                .fill(warmGold.opacity(theme.isNightTheme ? 0.08 : 0.05))
+                .frame(width: 280, height: 280)
+                .blur(radius: 90)
+                .offset(x: 150, y: 180)
+        }
+        .allowsHitTesting(false)
+        .animation(.easeInOut(duration: 0.45), value: alignmentIsGood)
+    }
+
     private var header: some View {
-        HStack(alignment: .top) {
+        HStack(alignment: .center, spacing: 12) {
+            VStack(alignment: .trailing, spacing: 4) {
+                Text("القبلة")
+                    .font(.system(size: 34, weight: .black, design: .rounded))
+                    .lineLimit(1)
+
+                HStack(spacing: 5) {
+                    Image(systemName: compass.currentLocation == nil ? "mappin" : "location.fill")
+                        .font(.caption2.weight(.black))
+
+                    Text(locationCaption)
+                        .font(.caption.weight(.bold))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.74)
+                }
+                .foregroundStyle(theme.secondaryText)
+            }
+
+            Spacer(minLength: 8)
+
             if !isEmbedded {
                 Button {
                     dismiss()
                 } label: {
                     Image(systemName: "xmark")
                         .font(.system(size: 16, weight: .black))
-                        .frame(width: 38, height: 38)
-                        .background(glassSurface(theme.controlBackground, radius: 8))
+                        .frame(width: 40, height: 40)
+                        .background(glassSurface(theme.controlBackground, radius: 13))
                         .overlay(
-                            RoundedRectangle(cornerRadius: 8)
+                            RoundedRectangle(cornerRadius: 13, style: .continuous)
                                 .stroke(theme.controlBorder)
                         )
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("إغلاق")
             } else {
-                QiblaNeedleMarker(size: 24, theme: theme, aligned: alignmentIsGood, compact: true)
-                    .frame(width: 38, height: 38)
-                    .background(glassSurface(theme.controlBackground, radius: 8))
+                Image(systemName: "location.north.line.fill")
+                    .font(.system(size: 19, weight: .black))
+                    .foregroundStyle(directionColor)
+                    .frame(width: 42, height: 42)
+                    .background(glassSurface(theme.controlBackground, radius: 13))
                     .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(theme.controlBorder)
+                        RoundedRectangle(cornerRadius: 13, style: .continuous)
+                            .stroke(directionColor.opacity(alignmentIsGood ? 0.62 : 0.22))
                     )
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-            }
-
-            Spacer()
-
-            VStack(alignment: .trailing, spacing: 4) {
-                Text("القبلة")
-                    .font(.system(size: 34, weight: .black, design: .rounded))
-                    .lineLimit(1)
-
-                Text("اتجاه مكة من تل السبع · \(bearingText(qiblaBearing))")
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(theme.accent)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.72)
+                    .animation(.easeInOut(duration: 0.3), value: alignmentIsGood)
             }
         }
     }
 
-    private func compassFace(size: CGFloat) -> some View {
+    private func compassFace(size: CGFloat, compact: Bool) -> some View {
         ZStack {
             Circle()
                 .fill(
                     LinearGradient(
-                        colors: [
-                            theme.panelBackground.opacity(theme.isNightTheme ? 0.98 : 0.92),
-                            theme.controlBackground.opacity(theme.isNightTheme ? 0.72 : 0.84)
-                        ],
+                        colors: compassSurfaceColors,
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
                 )
                 .overlay(
                     Circle()
-                        .stroke(theme.controlBorder.opacity(0.82), lineWidth: 1)
+                        .stroke(
+                            directionColor.opacity(alignmentIsGood ? 0.72 : 0.18),
+                            lineWidth: alignmentIsGood ? 3 : 1
+                        )
                 )
-                .shadow(color: .black.opacity(0.24), radius: 18, y: 8)
+                .shadow(
+                    color: directionColor.opacity(alignmentIsGood ? 0.26 : 0.10),
+                    radius: alignmentIsGood ? 26 : 18,
+                    y: 10
+                )
 
             Circle()
-                .stroke(
-                    AngularGradient(
-                        colors: [
-                            theme.accent.opacity(0.95),
-                            theme.secondaryText.opacity(0.18),
-                            theme.secondaryText.opacity(0.12),
-                            theme.accent.opacity(0.72),
-                            theme.secondaryText.opacity(0.16),
-                            theme.accent.opacity(0.95)
-                        ],
-                        center: .center
-                    ),
-                    lineWidth: 3
-                )
+                .stroke(theme.controlBorder.opacity(0.74), lineWidth: 1)
                 .padding(size * 0.055)
 
-            ForEach(0..<36, id: \.self) { index in
-                Rectangle()
-                    .fill(index % 3 == 0 ? theme.accent.opacity(0.95) : theme.secondaryText.opacity(0.30))
-                    .frame(width: index % 3 == 0 ? 3 : 1.6, height: index % 3 == 0 ? 17 : 8)
-                    .offset(y: -(size / 2) + 24)
-                    .rotationEffect(.degrees(Double(index) * 10))
-            }
+            compassTicks(size: size)
 
-            Circle()
-                .fill(theme.accent.opacity(theme.isNightTheme ? 0.10 : 0.12))
-                .frame(width: size * 0.52, height: size * 0.52)
-                .blur(radius: 16)
+            QiblaTargetArc()
+                .stroke(
+                    directionColor,
+                    style: StrokeStyle(lineWidth: 6, lineCap: .round)
+                )
+                .padding(size * 0.028)
+                .shadow(color: directionColor.opacity(0.46), radius: 8)
 
-            VStack(spacing: 3) {
-                Text("مكة")
-                    .font(.system(size: 15, weight: .black, design: .rounded))
-                    .foregroundStyle(theme.accent)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 5)
-                    .background(
-                        Capsule(style: .continuous)
-                            .fill(theme.controlBackground.opacity(theme.isNightTheme ? 0.58 : 0.78))
-                    )
+            VStack(spacing: 4) {
+                KaabaMark(
+                    size: compact ? 42 : 48,
+                    foreground: alignmentIsGood ? .white : warmGold,
+                    background: alignmentIsGood ? successColor : theme.controlBackground
+                )
 
-                Spacer()
-
-                Text(alignmentIsGood ? "الاتجاه صحيح" : "حرّك الهاتف بهدوء")
+                Text("مكة المكرمة")
                     .font(.caption.weight(.black))
-                    .foregroundStyle(alignmentIsGood ? Color(red: 0.34, green: 0.92, blue: 0.48) : theme.secondaryText.opacity(0.78))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.72)
+                    .foregroundStyle(alignmentIsGood ? successColor : theme.secondaryText)
             }
-            .padding(.vertical, size * 0.13)
-            .frame(width: size * 0.78, height: size * 0.78)
-
-            QiblaNeedleMarker(size: size * 0.50, theme: theme, aligned: alignmentIsGood, compact: false)
-                .shadow(color: theme.accent.opacity(alignmentIsGood ? 0.55 : 0.32), radius: alignmentIsGood ? 16 : 10)
-                .rotationEffect(.degrees(delta ?? 0))
-                .animation(.easeOut(duration: 0.18), value: delta ?? 0)
+            .offset(y: -(size * 0.31))
 
             Circle()
-                .fill(alignmentIsGood ? Color(red: 0.34, green: 0.92, blue: 0.48) : theme.accent)
-                .frame(width: 10, height: 10)
-                .shadow(color: directionColor.opacity(0.55), radius: 8)
+                .fill(directionColor.opacity(alignmentIsGood ? 0.16 : 0.08))
+                .frame(width: size * 0.55, height: size * 0.55)
+                .blur(radius: alignmentIsGood ? 10 : 18)
 
+            QiblaDirectionNeedle(
+                size: size * 0.55,
+                accent: directionColor,
+                gold: warmGold,
+                isNight: theme.isNightTheme,
+                aligned: alignmentIsGood
+            )
+            .rotationEffect(.degrees(delta ?? 0))
+            .animation(.easeOut(duration: 0.18), value: delta ?? 0)
+
+            centerStatus(size: size, compact: compact)
         }
         .frame(width: size, height: size)
+        .animation(.easeInOut(duration: 0.38), value: alignmentIsGood)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessibilityCompassText)
     }
 
-    private var compassHint: some View {
-        HStack(spacing: 6) {
-            Image(systemName: alignmentIsGood ? "checkmark.seal.fill" : "location.north.fill")
-                .font(.caption.weight(.black))
-
-            Text(alignmentIsGood ? "أنت على اتجاه القبلة" : "المؤشر المضيء يشير للقبلة")
-                .font(.caption.weight(.black))
-                .lineLimit(1)
-                .minimumScaleFactor(0.72)
+    private func compassTicks(size: CGFloat) -> some View {
+        ForEach(0..<72, id: \.self) { index in
+            Capsule(style: .continuous)
+                .fill(tickColor(for: index))
+                .frame(
+                    width: index.isMultiple(of: 6) ? 3 : 1.4,
+                    height: index.isMultiple(of: 6) ? 16 : 7
+                )
+                .offset(y: -(size / 2) + 25)
+                .rotationEffect(.degrees(Double(index) * 5))
         }
-        .foregroundStyle(directionColor)
-        .frame(maxWidth: .infinity, alignment: .center)
-        .environment(\.layoutDirection, .rightToLeft)
     }
 
-    private var directionReadout: some View {
-        VStack(alignment: .trailing, spacing: 6) {
-            Text(instructionText)
-                .font(.system(size: 24, weight: .black, design: .rounded))
-                .foregroundStyle(directionColor)
-                .lineLimit(1)
-                .minimumScaleFactor(0.68)
+    private func centerStatus(size: CGFloat, compact: Bool) -> some View {
+        VStack(spacing: compact ? 2 : 4) {
+            if alignmentIsGood {
+                Image(systemName: "checkmark")
+                    .font(.system(size: compact ? 22 : 26, weight: .black))
+                    .foregroundStyle(.white)
 
-            HStack(spacing: 10) {
-                metricTile(title: "الفرق المتبقي", value: differenceText, highlighted: true)
-                metricTile(title: "اتجاه الهاتف", value: compass.heading.map { bearingText($0) } ?? "--")
+                Text("الاتجاه صحيح")
+                    .font(.system(size: compact ? 15 : 17, weight: .black, design: .rounded))
+                    .foregroundStyle(.white)
+            } else {
+                Text(differenceText)
+                    .font(
+                        .system(
+                            size: compact ? 30 : 36,
+                            weight: .black,
+                            design: .rounded
+                        )
+                        .monospacedDigit()
+                    )
+                    .foregroundStyle(theme.primaryText)
+                    .environment(\.layoutDirection, .leftToRight)
+
+                Text(delta == nil ? "انتظر القراءة" : "متبقي للمحاذاة")
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(theme.secondaryText)
             }
         }
-    }
-
-    private var accuracyPanel: some View {
-        VStack(alignment: .trailing, spacing: 7) {
-            HStack(alignment: .top, spacing: 8) {
-                Image(systemName: accuracySymbol)
-                    .foregroundStyle(theme.accent)
-                    .padding(.top, 2)
-
-                Text(compass.statusMessage)
-                    .font(.headline.weight(.bold))
-                    .lineLimit(2)
-                    .minimumScaleFactor(0.78)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            .frame(maxWidth: .infinity, alignment: .trailing)
-
-            Text("الدقة: \(accuracyText) · \(compass.usesTrueNorth ? "الشمال الحقيقي" : "الشمال المغناطيسي")")
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(theme.secondaryText.opacity(0.82))
-                .lineLimit(2)
-                .minimumScaleFactor(0.72)
-                .fixedSize(horizontal: false, vertical: true)
-
-            Text("لأفضل نتيجة أبعد الهاتف عن السماعات والمغناطيس وامسكه بشكل أفقي.")
-                .font(.caption2.weight(.semibold))
-                .foregroundStyle(theme.secondaryText.opacity(0.72))
-                .lineLimit(3)
-                .minimumScaleFactor(0.76)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .frame(maxWidth: .infinity, alignment: .trailing)
-        .padding(14)
-        .background(glassSurface(theme.panelBackground, radius: 8, prominence: .strong))
-        .overlay(
-            RoundedRectangle(cornerRadius: 8)
-                .stroke(theme.controlBorder)
+        .frame(width: size * 0.38, height: size * 0.38)
+        .background(
+            Circle()
+                .fill(
+                    alignmentIsGood
+                        ? successColor
+                        : theme.controlBackground.opacity(theme.isNightTheme ? 0.88 : 0.94)
+                )
         )
-        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .overlay(
+            Circle()
+                .stroke(
+                    alignmentIsGood ? Color.white.opacity(0.48) : theme.controlBorder,
+                    lineWidth: 1
+                )
+        )
+        .shadow(color: directionColor.opacity(0.24), radius: 12)
     }
 
-    private func metricTile(title: String, value: String, highlighted: Bool = false) -> some View {
-        VStack(alignment: .trailing, spacing: 3) {
+    private func guidanceCard(compact: Bool) -> some View {
+        HStack(spacing: 12) {
+            VStack(alignment: .trailing, spacing: 3) {
+                Text(instructionTitle)
+                    .font(
+                        .system(
+                            size: compact ? 21 : 24,
+                            weight: .black,
+                            design: .rounded
+                        )
+                    )
+                    .foregroundStyle(directionColor)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.68)
+
+                Text(instructionSubtitle)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(theme.secondaryText)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.74)
+            }
+
+            Spacer(minLength: 6)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text("اتجاه القبلة")
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(theme.secondaryText)
+
+                Text(bearingText(qiblaBearing))
+                    .font(.title3.monospacedDigit().weight(.black))
+                    .foregroundStyle(theme.primaryText)
+                    .environment(\.layoutDirection, .leftToRight)
+            }
+        }
+        .padding(.horizontal, 15)
+        .padding(.vertical, compact ? 11 : 13)
+        .background(glassSurface(theme.panelBackground, radius: 18, prominence: .strong))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(directionColor.opacity(alignmentIsGood ? 0.50 : 0.14))
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+    }
+
+    @ViewBuilder
+    private var qualityBar: some View {
+        if needsLocationPermission {
+            Button {
+                guard let settingsURL = URL(string: UIApplication.openSettingsURLString) else {
+                    return
+                }
+                openURL(settingsURL)
+            } label: {
+                statusBar(
+                    symbol: "location.slash.fill",
+                    title: "فعّل الموقع لدقة أعلى",
+                    detail: "الإعدادات",
+                    color: warmGold
+                )
+            }
+            .buttonStyle(.plain)
+            .accessibilityHint("يفتح إعدادات الموقع للتطبيق")
+        } else {
+            statusBar(
+                symbol: accuracySymbol,
+                title: compass.statusMessage,
+                detail: accuracyDetail,
+                color: accuracyColor
+            )
+        }
+    }
+
+    private func statusBar(
+        symbol: String,
+        title: String,
+        detail: String,
+        color: Color
+    ) -> some View {
+        HStack(spacing: 9) {
+            Image(systemName: symbol)
+                .font(.subheadline.weight(.black))
+                .foregroundStyle(color)
+                .frame(width: 28, height: 28)
+                .background(
+                    Circle()
+                        .fill(color.opacity(theme.isNightTheme ? 0.16 : 0.12))
+                )
+
             Text(title)
-                .font(.caption2.weight(.bold))
-                .foregroundStyle(theme.secondaryText.opacity(0.82))
+                .font(.caption.weight(.bold))
+                .foregroundStyle(theme.primaryText)
                 .lineLimit(1)
+                .minimumScaleFactor(0.72)
 
-            Text(value)
-                .font(.title3.monospacedDigit().weight(.black))
-                .foregroundStyle(highlighted ? directionColor : theme.primaryText)
+            Spacer(minLength: 6)
+
+            Text(detail)
+                .font(.caption2.weight(.bold))
+                .foregroundStyle(theme.secondaryText)
                 .lineLimit(1)
+                .environment(\.layoutDirection, .leftToRight)
         }
-        .frame(maxWidth: .infinity, alignment: .trailing)
         .padding(.horizontal, 12)
-        .padding(.vertical, 10)
-        .background(glassSurface(theme.controlBackground, radius: 8))
+        .padding(.vertical, 9)
+        .background(glassSurface(theme.controlBackground, radius: 15))
         .overlay(
-            RoundedRectangle(cornerRadius: 8)
+            RoundedRectangle(cornerRadius: 15, style: .continuous)
                 .stroke(theme.controlBorder)
         )
-        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
     }
 
-    private var instructionText: String {
-        guard let delta else { return "انتظر قراءة البوصلة" }
-        let absDelta = abs(delta)
+    private var locationCaption: String {
+        let source = compass.currentLocation == nil ? "تل السبع" : "موقعك الحالي"
+        return "اتجاه مكة من \(source)"
+    }
 
-        if absDelta <= 3 {
+    private var instructionTitle: String {
+        guard let delta else { return "ثبّت الهاتف بشكل أفقي" }
+        let absoluteDelta = abs(delta)
+
+        if alignmentIsGood {
             return "أنت على اتجاه القبلة"
         }
 
-        let direction = delta > 0 ? "يمين" : "يسار"
-        return "لف \(direction) \(Int(absDelta.rounded()))° للوصول للقبلة"
+        if absoluteDelta <= 8 {
+            return "اقتربت، حرّك قليلًا \(turnDirection)"
+        }
+
+        return "اتجه \(turnDirection) \(Int(absoluteDelta.rounded()))°"
+    }
+
+    private var instructionSubtitle: String {
+        if alignmentIsGood {
+            return "يمكنك الآن بدء الصلاة"
+        }
+
+        if compass.accuracy < 0 {
+            return "أبعد الهاتف عن المعادن وحرّكه على شكل 8"
+        }
+
+        return "حرّك أعلى الهاتف بهدوء نحو المؤشر"
+    }
+
+    private var turnDirection: String {
+        guard let delta else { return "" }
+        return delta > 0 ? "يمينًا" : "يسارًا"
     }
 
     private var differenceText: String {
@@ -308,22 +444,87 @@ struct QiblaView: View {
 
     private var alignmentIsGood: Bool {
         guard let delta else { return false }
-        let accuracyIsUsable = compass.accuracy < 0 || compass.accuracy <= 25
-        return abs(delta) <= 3 && accuracyIsUsable
+        return abs(delta) <= 3 && compass.accuracy >= 0 && compass.accuracy <= 25
     }
 
     private var directionColor: Color {
-        alignmentIsGood ? Color(red: 0.34, green: 0.92, blue: 0.48) : theme.accent
+        alignmentIsGood ? successColor : theme.accent
+    }
+
+    private var compassSurfaceColors: [Color] {
+        if alignmentIsGood {
+            return [
+                successColor.opacity(theme.isNightTheme ? 0.20 : 0.12),
+                theme.panelBackground.opacity(0.96),
+                successColor.opacity(theme.isNightTheme ? 0.12 : 0.07)
+            ]
+        }
+
+        return [
+            theme.panelBackground.opacity(theme.isNightTheme ? 0.98 : 0.94),
+            theme.controlBackground.opacity(theme.isNightTheme ? 0.80 : 0.88)
+        ]
+    }
+
+    private var needsLocationPermission: Bool {
+        compass.authorizationStatus == .denied || compass.authorizationStatus == .restricted
+    }
+
+    private var accuracyDetail: String {
+        guard compass.accuracy >= 0 else { return "تحتاج معايرة" }
+        return "\(Int(compass.accuracy.rounded()))° · \(compass.usesTrueNorth ? "شمال حقيقي" : "شمال مغناطيسي")"
+    }
+
+    private var accuracyColor: Color {
+        if compass.accuracy < 0 || compass.accuracy > 25 {
+            return warmGold
+        }
+
+        if compass.accuracy > 10 {
+            return theme.accent
+        }
+
+        return successColor
+    }
+
+    private var accuracySymbol: String {
+        if compass.accuracy < 0 || compass.accuracy > 25 {
+            return "exclamationmark.triangle.fill"
+        }
+
+        if compass.accuracy > 10 {
+            return "scope"
+        }
+
+        return "checkmark.seal.fill"
+    }
+
+    private var accessibilityCompassText: String {
+        guard let delta else {
+            return "بانتظار قراءة البوصلة"
+        }
+
+        if alignmentIsGood {
+            return "تمت محاذاة الهاتف مع اتجاه القبلة"
+        }
+
+        return "اتجه \(turnDirection) \(Int(abs(delta).rounded())) درجة للوصول إلى القبلة"
+    }
+
+    private func tickColor(for index: Int) -> Color {
+        if alignmentIsGood {
+            return index.isMultiple(of: 6)
+                ? successColor.opacity(0.92)
+                : successColor.opacity(0.26)
+        }
+
+        return index.isMultiple(of: 6)
+            ? theme.secondaryText.opacity(0.64)
+            : theme.secondaryText.opacity(0.20)
     }
 
     private func updateAlignmentHaptic() {
-        guard let delta else {
-            wasAlignedWithQibla = false
-            return
-        }
-
-        let accuracyIsUsable = compass.accuracy < 0 || compass.accuracy <= 25
-        let isAligned = abs(delta) <= 3 && accuracyIsUsable
+        let isAligned = alignmentIsGood
 
         if isAligned && !wasAlignedWithQibla {
             let now = Date()
@@ -338,29 +539,10 @@ struct QiblaView: View {
         wasAlignedWithQibla = isAligned
     }
 
-    private var accuracyText: String {
-        if compass.accuracy < 0 {
-            return "غير معروفة"
-        }
-
-        return "\(Int(compass.accuracy.rounded()))°"
-    }
-
-    private var accuracySymbol: String {
-        if compass.accuracy < 0 || compass.accuracy > 25 {
-            return "exclamationmark.triangle.fill"
-        }
-
-        if compass.accuracy > 10 {
-            return "checkmark.circle"
-        }
-
-        return "checkmark.seal.fill"
-    }
-
     private func bearingText(_ value: Double) -> String {
-        "\(String(format: "%.1f", value))°"
+        "\(Int(value.rounded()))°"
     }
+
     private func glassSurface(
         _ base: Color,
         radius: CGFloat,
@@ -375,53 +557,33 @@ struct QiblaView: View {
     }
 }
 
-private struct QiblaNeedleMarker: View {
+private struct QiblaDirectionNeedle: View {
     let size: CGFloat
-    let theme: PrayerVisualTheme
+    let accent: Color
+    let gold: Color
+    let isNight: Bool
     let aligned: Bool
-    var compact = false
-
-    private var gold: Color {
-        Color(red: 1.00, green: 0.72, blue: 0.28)
-    }
-
-    private var glow: Color {
-        aligned ? Color(red: 0.34, green: 0.92, blue: 0.48) : theme.accent
-    }
 
     var body: some View {
         ZStack {
-            if !compact {
-                Circle()
-                    .stroke(glow.opacity(0.18), lineWidth: size * 0.05)
-                    .frame(width: size * 0.72, height: size * 0.72)
-                    .blur(radius: size * 0.025)
-            }
-
-            RoundedRectangle(cornerRadius: size * 0.10, style: .continuous)
-                .fill(theme.isNightTheme ? Color.black.opacity(0.28) : Color.white.opacity(0.34))
-                .frame(width: compact ? size * 0.34 : size * 0.30, height: compact ? size * 0.82 : size * 0.86)
-                .blur(radius: compact ? 0 : size * 0.045)
+            Capsule(style: .continuous)
+                .fill(accent.opacity(aligned ? 0.24 : 0.12))
+                .frame(width: size * 0.18, height: size * 0.94)
+                .blur(radius: size * 0.035)
 
             Path { path in
-                path.move(to: CGPoint(x: size * 0.50, y: size * 0.00))
-                path.addLine(to: CGPoint(x: size * 0.66, y: size * 0.44))
-                path.addQuadCurve(
-                    to: CGPoint(x: size * 0.50, y: size * 0.94),
-                    control: CGPoint(x: size * 0.59, y: size * 0.70)
-                )
-                path.addQuadCurve(
-                    to: CGPoint(x: size * 0.34, y: size * 0.44),
-                    control: CGPoint(x: size * 0.41, y: size * 0.70)
-                )
+                path.move(to: CGPoint(x: size * 0.50, y: 0))
+                path.addLine(to: CGPoint(x: size * 0.66, y: size * 0.48))
+                path.addLine(to: CGPoint(x: size * 0.50, y: size * 0.42))
+                path.addLine(to: CGPoint(x: size * 0.34, y: size * 0.48))
                 path.closeSubpath()
             }
             .fill(
                 LinearGradient(
                     colors: [
-                        gold,
-                        glow.opacity(aligned ? 0.92 : 0.72),
-                        theme.isNightTheme ? Color.white.opacity(0.86) : Color.white.opacity(0.96)
+                        aligned ? accent : gold,
+                        aligned ? accent.opacity(0.92) : accent,
+                        Color.white.opacity(isNight ? 0.72 : 0.92)
                     ],
                     startPoint: .top,
                     endPoint: .bottom
@@ -429,22 +591,72 @@ private struct QiblaNeedleMarker: View {
             )
             .overlay(
                 Path { path in
-                    path.move(to: CGPoint(x: size * 0.50, y: size * 0.04))
-                    path.addLine(to: CGPoint(x: size * 0.50, y: size * 0.82))
+                    path.move(to: CGPoint(x: size * 0.50, y: size * 0.05))
+                    path.addLine(to: CGPoint(x: size * 0.50, y: size * 0.40))
                 }
-                .stroke(Color.white.opacity(theme.isNightTheme ? 0.42 : 0.72), lineWidth: compact ? 1 : 1.4)
+                .stroke(Color.white.opacity(0.62), lineWidth: 1.4)
             )
 
             Circle()
-                .fill(theme.isNightTheme ? Color.black.opacity(0.52) : Color.white.opacity(0.82))
-                .frame(width: compact ? size * 0.24 : size * 0.22, height: compact ? size * 0.24 : size * 0.22)
+                .fill(isNight ? Color.black.opacity(0.76) : Color.white.opacity(0.92))
+                .frame(width: size * 0.25, height: size * 0.25)
                 .overlay(
                     Circle()
-                        .stroke(glow.opacity(0.92), lineWidth: compact ? 2 : 3)
+                        .stroke(accent.opacity(0.82), lineWidth: 3)
                 )
-                .shadow(color: glow.opacity(0.44), radius: compact ? 3 : 8)
+                .shadow(color: accent.opacity(0.32), radius: 8)
         }
         .frame(width: size, height: size)
-        .accessibilityLabel("مؤشر القبلة")
+    }
+}
+
+private struct KaabaMark: View {
+    let size: CGFloat
+    let foreground: Color
+    let background: Color
+
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: size * 0.23, style: .continuous)
+                .fill(background)
+
+            VStack(spacing: size * 0.07) {
+                Rectangle()
+                    .fill(foreground)
+                    .frame(width: size * 0.48, height: size * 0.08)
+
+                RoundedRectangle(cornerRadius: size * 0.035, style: .continuous)
+                    .fill(foreground)
+                    .frame(width: size * 0.46, height: size * 0.27)
+                    .overlay(alignment: .bottomTrailing) {
+                        Rectangle()
+                            .fill(background.opacity(0.90))
+                            .frame(width: size * 0.09, height: size * 0.15)
+                            .padding(.trailing, size * 0.08)
+                    }
+            }
+        }
+        .frame(width: size, height: size)
+        .overlay(
+            RoundedRectangle(cornerRadius: size * 0.23, style: .continuous)
+                .stroke(foreground.opacity(0.30))
+        )
+        .shadow(color: foreground.opacity(0.20), radius: 6)
+        .accessibilityHidden(true)
+    }
+}
+
+private struct QiblaTargetArc: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let radius = min(rect.width, rect.height) / 2
+        path.addArc(
+            center: CGPoint(x: rect.midX, y: rect.midY),
+            radius: radius,
+            startAngle: .degrees(-112),
+            endAngle: .degrees(-68),
+            clockwise: false
+        )
+        return path
     }
 }
