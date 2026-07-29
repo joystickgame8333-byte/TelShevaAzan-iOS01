@@ -8,15 +8,12 @@ enum SalatiText {
     static let todayTimes = "مواقيت اليوم"
     static let todayTimesDescription = "مواقيت الصلاة اليومية في تل السبع"
     static let tomorrowTimes = "مواقيت الغد"
-    static let remainingUntilAdhan = "متبقي حتى الأذان"
     static let remaining = "متبقي"
     static let prayer = "الصلاة"
     static let noTime = "--:--"
     static let prayerPath = "مسار الصلوات"
     static let prayerPathTomorrow = "مسار صلوات الغد"
     static let prayerPathDescription = "تابع ترتيب الصلوات المفروضة وموضع الصلاة القادمة"
-    static let obligatoryPrayers = "الصلوات المفروضة"
-    static let allPrayerTimes = "جميع المواقيت"
     static let nextIqama = "الإقامة القادمة"
     static let remainingUntilIqama = "متبقي للإقامة"
     static let nextAndFollowing = "القادمة وبعدها"
@@ -239,7 +236,7 @@ private struct SalatiPrayerCell: View {
         HStack(spacing: 5) {
             SalatiTimeText(
                 value: prayer.time,
-                size: compact ? (expanded ? 12 : 11) : (expanded ? 15 : 13),
+                size: compact ? 12 : (expanded ? 15 : 13),
                 weight: isActive ? .black : .bold,
                 color: isActive ? theme.accent : theme.primaryText
             )
@@ -248,7 +245,7 @@ private struct SalatiPrayerCell: View {
 
             Text(prayer.title)
                 .font(.system(
-                    size: compact ? (expanded ? 10.5 : 10) : (expanded ? 13 : 11),
+                    size: compact ? (expanded ? 10.5 : 11) : (expanded ? 13 : 11),
                     weight: isActive ? .black : .bold,
                     design: .rounded
                 ))
@@ -259,7 +256,7 @@ private struct SalatiPrayerCell: View {
         .environment(\.layoutDirection, .leftToRight)
         .foregroundStyle(isActive ? theme.accent : theme.primaryText)
         .padding(.horizontal, compact ? 6 : (expanded ? 9 : 7))
-        .frame(height: compact ? (expanded ? 29 : 18) : (expanded ? 34 : 26))
+        .frame(height: compact ? (expanded ? 29 : 22) : (expanded ? 34 : 26))
         .background(isActive ? theme.activePanel : theme.panel, in: RoundedRectangle(cornerRadius: SalatiWidgetMetrics.compactCornerRadius, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: SalatiWidgetMetrics.compactCornerRadius, style: .continuous)

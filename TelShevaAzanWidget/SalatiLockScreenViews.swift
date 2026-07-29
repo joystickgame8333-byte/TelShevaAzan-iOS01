@@ -167,7 +167,10 @@ struct SalatiLockCountdownView: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.72)
             }
-            .padding(5)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+            .multilineTextAlignment(.center)
+            .environment(\.layoutDirection, .leftToRight)
+            .padding(4)
         }
         .widgetAccentable()
         .accessibilityElement(children: .combine)

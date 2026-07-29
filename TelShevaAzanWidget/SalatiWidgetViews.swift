@@ -24,15 +24,7 @@ struct SalatiNextPrayerView: View {
     }
 
     private func smallBody(theme: SalatiWidgetTheme) -> some View {
-        VStack(spacing: 7) {
-            SalatiWidgetHeader(
-                title: SalatiText.nextPrayerShort,
-                symbol: SalatiPrayerSymbol.value(for: entry.nextPrayer?.key),
-                theme: theme,
-                showsSymbol: false,
-                showsLocation: false
-            )
-
+        VStack(spacing: 9) {
             HStack(spacing: 8) {
                 prayerSymbol(theme: theme, size: 39)
 
@@ -100,11 +92,6 @@ struct SalatiNextPrayerView: View {
                         .foregroundStyle(theme.primaryText)
                         .lineLimit(1)
 
-                    Text(SalatiText.remainingUntilAdhan)
-                        .font(.system(size: 11, weight: .bold, design: .rounded))
-                        .foregroundStyle(theme.mutedText)
-                        .lineLimit(1)
-
                     Text(SalatiWidgetDateText.compact(for: entry.scheduleDate))
                         .font(.system(size: 10, weight: .bold, design: .rounded))
                         .foregroundStyle(theme.mutedText)
@@ -162,14 +149,7 @@ struct SalatiPrayerScheduleView: View {
     }
 
     private func smallBody(theme: SalatiWidgetTheme) -> some View {
-        VStack(alignment: .trailing, spacing: 6) {
-            SalatiWidgetHeader(
-                title: SalatiText.obligatoryPrayers,
-                symbol: "calendar",
-                theme: theme,
-                showsLocation: false
-            )
-
+        VStack(alignment: .trailing, spacing: 3) {
             SalatiPrayerList(
                 times: entry.obligatoryTimes,
                 highlightedPrayer: entry.highlightedPrayer,
@@ -206,18 +186,11 @@ struct SalatiPrayerScheduleView: View {
 
             nextPrayerSummaryCard(theme: theme)
 
-            HStack(spacing: 6) {
-                Text(SalatiWidgetDateText.compact(for: entry.scheduleDate))
-                    .font(.system(size: 11, weight: .bold, design: .rounded))
-                    .foregroundStyle(theme.mutedText)
-                    .lineLimit(1)
-
-                Spacer(minLength: 4)
-
-                Text(SalatiText.allPrayerTimes)
-                    .font(.system(size: 12, weight: .black, design: .rounded))
-                    .foregroundStyle(theme.secondaryText)
-            }
+            Text(SalatiWidgetDateText.compact(for: entry.scheduleDate))
+                .font(.system(size: 11, weight: .bold, design: .rounded))
+                .foregroundStyle(theme.mutedText)
+                .lineLimit(1)
+                .frame(maxWidth: .infinity, alignment: .leading)
             .environment(\.layoutDirection, .leftToRight)
 
             SalatiPrayerList(

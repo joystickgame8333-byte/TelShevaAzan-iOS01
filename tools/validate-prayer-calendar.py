@@ -307,10 +307,16 @@ assert "Spacer(minLength: 0)" in widget_components_text
 assert ".environment(\\.layoutDirection, .leftToRight)" in widget_components_text
 assert widget_views_text.count("SalatiCountdownRow(") == 3
 assert "SalatiText.nextPrayerShort" in widget_views_text, "Compact families must use short Arabic labels"
+assert "SalatiText.remainingUntilAdhan" not in widget_views_text
+small_next_prayer_view = widget_views_text.split("private func smallBody(theme: SalatiWidgetTheme)", 1)[1].split("private func mediumBody", 1)[0]
+assert "SalatiWidgetHeader(" not in small_next_prayer_view
+schedule_small_view = widget_views_text.split("struct SalatiPrayerScheduleView", 1)[1].split("private func mediumBody", 1)[0]
+assert "SalatiText.obligatoryPrayers" not in schedule_small_view
+large_schedule_view = widget_views_text.split("private func largeBody", 1)[1].split("private func nextPrayerSummaryCard", 1)[0]
+assert "SalatiText.allPrayerTimes" not in large_schedule_view
 assert "struct SalatiPrayerPathView: View" in widget_prayer_path_text
 assert "entry.obligatoryTimes" in widget_prayer_path_text
 assert '"checkmark"' not in widget_prayer_path_text
-assert "SalatiText.obligatoryPrayers" in widget_views_text
 assert "nextPrayerSummaryCard(theme: theme)" in widget_views_text
 for lock_view in (
     "SalatiLockInlineView",
@@ -327,6 +333,8 @@ assert "Array(entry.times.dropFirst(3).prefix(3))" in widget_lock_screen_text
 lock_schedule_view = widget_lock_screen_text.split("struct SalatiLockScheduleView", 1)[1]
 assert "SalatiText.todayTimes" not in lock_schedule_view
 assert "size: 13" in lock_schedule_view
+lock_countdown_view = widget_lock_screen_text.split("struct SalatiLockCountdownView", 1)[1].split("struct SalatiLockNextPrayerView", 1)[0]
+assert ".frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)" in lock_countdown_view
 assert ".accessoryInline" in widget_bundle_text
 assert widget_bundle_text.count(".accessoryCircular") == 2
 assert widget_bundle_text.count(".accessoryRectangular") == 3
