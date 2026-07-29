@@ -51,56 +51,56 @@ enum PrayerNotificationSound: String, CaseIterable, Identifiable {
 }
 
 enum AdhkarNotificationSound: String, CaseIterable, Identifiable {
-    case spiritual
-    case lightBell
-    case softChime
-    case pearlTap
-    case system
+    case sakinah
+    case noor
+    case nada
+    case tumanina
+    case nasim
 
     var id: String { rawValue }
 
     var title: String {
         switch self {
-        case .spiritual:
-            return "رسالة إشعار 1"
-        case .lightBell:
-            return "رسالة إشعار 2"
-        case .softChime:
-            return "رسالة إشعار 3"
-        case .pearlTap:
-            return "رسالة إشعار 4"
-        case .system:
-            return "صوت الآيفون"
+        case .sakinah:
+            return "سكينة"
+        case .noor:
+            return "نور"
+        case .nada:
+            return "ندى"
+        case .tumanina:
+            return "طمأنينة"
+        case .nasim:
+            return "نسيم"
         }
     }
 
     var subtitle: String {
         switch self {
-        case .spiritual:
-            return "نغمة خفيفة وناعمة للأذكار"
-        case .lightBell:
-            return "جرس قصير بدون إزعاج"
-        case .softChime:
-            return "لمعة صوتية هادئة"
-        case .pearlTap:
-            return "تنبيه لطيف ومختصر"
-        case .system:
-            return "تنبيه قصير وخفيف من النظام"
+        case .sakinah:
+            return "نغمة دافئة وهادئة من درجتين"
+        case .noor:
+            return "رنين صافي ومشرق قصير"
+        case .nada:
+            return "جرس رقيق وخفيف"
+        case .tumanina:
+            return "نغمة دافئة متدرجة بهدوء"
+        case .nasim:
+            return "تنبيه ناعم وسريع"
         }
     }
 
     var systemImage: String {
         switch self {
-        case .spiritual:
-            return "sparkles"
-        case .lightBell:
-            return "bell.badge.fill"
-        case .softChime:
-            return "music.note"
-        case .pearlTap:
-            return "bell.circle.fill"
-        case .system:
-            return "iphone.gen3.radiowaves.left.and.right"
+        case .sakinah:
+            return "moon.stars.fill"
+        case .noor:
+            return "sun.max.fill"
+        case .nada:
+            return "drop.fill"
+        case .tumanina:
+            return "heart.fill"
+        case .nasim:
+            return "wind"
         }
     }
 }
@@ -664,7 +664,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
     }
 
     private var selectedAdhkarSound: AdhkarNotificationSound {
-        AdhkarNotificationSound(rawValue: selectedAdhkarSoundID) ?? .spiritual
+        AdhkarNotificationSound(rawValue: selectedAdhkarSoundID) ?? .sakinah
     }
 
     private var selectedNafahatInterval: NafahatReminderInterval {
@@ -708,7 +708,8 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
         let savedAdhkarStyleID = UserDefaults.standard.string(forKey: Self.selectedAdhkarStyleIDKey)
         selectedAdhkarStyleID = savedAdhkarStyleID ?? AdhkarReminderStyle.tasbih.rawValue
         let savedAdhkarSoundID = UserDefaults.standard.string(forKey: Self.selectedAdhkarSoundIDKey)
-        selectedAdhkarSoundID = savedAdhkarSoundID ?? AdhkarNotificationSound.spiritual.rawValue
+        selectedAdhkarSoundID = AdhkarNotificationSound(rawValue: savedAdhkarSoundID ?? "")?.rawValue
+            ?? AdhkarNotificationSound.sakinah.rawValue
         isNafahatEnabled = UserDefaults.standard.bool(forKey: Self.nafahatEnabledKey)
         let savedNafahatInterval = UserDefaults.standard.integer(forKey: Self.nafahatIntervalMinutesKey)
         nafahatIntervalMinutes = savedNafahatInterval == 0 ? NafahatReminderInterval.twoHours.rawValue : savedNafahatInterval
@@ -1580,16 +1581,16 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
 
     private var adhkarNotificationSound: UNNotificationSound {
         switch selectedAdhkarSound {
-        case .system:
-            return .default
-        case .spiritual:
-            return bundledNotificationSound(["notification-soft-01.wav", "nafahat.wav"])
-        case .lightBell:
-            return bundledNotificationSound(["notification-soft-02.wav", "nafahat.wav"])
-        case .softChime:
-            return bundledNotificationSound(["notification-soft-03.wav", "nafahat.wav"])
-        case .pearlTap:
-            return bundledNotificationSound(["notification-soft-04.wav", "nafahat.wav"])
+        case .sakinah:
+            return bundledNotificationSound(["adhkar-sakinah.wav", "nafahat.wav"])
+        case .noor:
+            return bundledNotificationSound(["adhkar-noor.wav", "nafahat.wav"])
+        case .nada:
+            return bundledNotificationSound(["adhkar-nada.wav", "nafahat.wav"])
+        case .tumanina:
+            return bundledNotificationSound(["adhkar-tumanina.wav", "nafahat.wav"])
+        case .nasim:
+            return bundledNotificationSound(["adhkar-nasim.wav", "nafahat.wav"])
         }
     }
 
