@@ -109,20 +109,31 @@ struct NotificationSettingsView: View {
         VStack(alignment: .trailing, spacing: compact ? 12 : 14) {
             pageSelector
 
-            ScrollView(showsIndicators: false) {
-                LazyVStack(alignment: .trailing, spacing: compact ? 14 : 18) {
-                    if selectedPage == .adhan {
-                        adhanSettings
-                    } else if selectedPage == .adhkar {
-                        nafahatSettings
-                    } else {
-                        appearanceSettings
+            ScrollViewReader { proxy in
+                ScrollView(showsIndicators: false) {
+                    LazyVStack(alignment: .trailing, spacing: compact ? 14 : 18) {
+                        Color.clear
+                            .frame(height: 1)
+                            .id("notification-settings-top")
+
+                        if selectedPage == .adhan {
+                            adhanSettings
+                        } else if selectedPage == .adhkar {
+                            nafahatSettings
+                        } else {
+                            appearanceSettings
+                        }
+                    }
+                    .padding(.bottom, max(bottomInset, CGFloat(24)) + 24)
+                    .frame(maxWidth: .infinity, alignment: .topTrailing)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .onChange(of: selectedPage) { _ in
+                    withAnimation(.easeOut(duration: 0.18)) {
+                        proxy.scrollTo("notification-settings-top", anchor: .top)
                     }
                 }
-                .padding(.bottom, max(bottomInset, CGFloat(24)) + 24)
-                .frame(maxWidth: .infinity, alignment: .topTrailing)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
     }
@@ -932,10 +943,10 @@ struct NotificationSettingsView: View {
         .padding(.vertical, 12)
         .padding(.horizontal, 12)
         .frame(maxWidth: .infinity, alignment: .trailing)
-        .background(glassSurface(theme.countdownBackground, radius: 8, prominence: .strong))
+        .background(glassSurface(theme.activeRowBackground, radius: 8, prominence: .regular))
         .overlay(
             RoundedRectangle(cornerRadius: 8)
-                .stroke(theme.activeRowBorder)
+                .stroke(theme.activeRowBorder.opacity(0.72))
         )
         .clipShape(RoundedRectangle(cornerRadius: 8))
     }

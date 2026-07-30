@@ -19,6 +19,7 @@ CONTENT_PATH = ROOT / "TelShevaAzan" / "ContentView.swift"
 ADHKAR_VIEW_PATH = ROOT / "TelShevaAzan" / "AdhkarView.swift"
 ADHKAR_LIBRARY_PATH = ROOT / "TelShevaAzan" / "AdhkarLibrary.swift"
 ADHKAR_PROGRESS_PATH = ROOT / "TelShevaAzan" / "AdhkarProgressStore.swift"
+QURAN_RADIO_PLAYER_PATH = ROOT / "TelShevaAzan" / "QuranRadioPlayer.swift"
 WIDGET_DATA_PATH = ROOT / "TelShevaAzanWidget" / "SalatiWidgetData.swift"
 WIDGET_BUNDLE_PATH = ROOT / "TelShevaAzanWidget" / "TelShevaAzanWidget.swift"
 WIDGET_VIEWS_PATH = ROOT / "TelShevaAzanWidget" / "SalatiWidgetViews.swift"
@@ -243,6 +244,7 @@ active_scene_block = content_text.split(".onChange(of: scenePhase)", 1)[1].split
 assert "notifications.refreshIfEnabled()" in active_scene_block
 assert ".rounded(.up)" in engine_text, "Remaining time must round up to match the displayed wall clock second"
 assert "AdhkarView(" in content_text, "The Adhkar tab must open the dedicated reader"
+assert "CGFloat(66) + dockBottomPadding" in content_text, "Tabs must reserve only the dock's real height"
 
 adhkar_view_text = ADHKAR_VIEW_PATH.read_text(encoding="utf-8")
 adhkar_library_text = ADHKAR_LIBRARY_PATH.read_text(encoding="utf-8")
@@ -250,7 +252,9 @@ adhkar_progress_text = ADHKAR_PROGRESS_PATH.read_text(encoding="utf-8")
 assert ".environment(\\.layoutDirection, .rightToLeft)" in adhkar_view_text
 assert "NotificationSettingsView(" not in adhkar_view_text
 assert "bottomReservedHeight + 12" in adhkar_view_text
-assert ".frame(height: 58)" in adhkar_view_text
+assert adhkar_view_text.count("LazyVGrid(columns: columns") == 2
+assert "advanceAfterCompleting" in adhkar_view_text
+assert "selectItem(at: nextIncompleteIndex)" in adhkar_view_text
 assert 'smallActionButton(symbol: fontSizeSymbol, label: "الخط")' in adhkar_view_text
 assert "UIActivityViewController" in adhkar_view_text
 assert "AdhkarProgressStore()" in adhkar_view_text
@@ -275,6 +279,16 @@ assert "WidgetRefreshCenter.refreshAll(force: true)" in notification_settings_te
 assert "case adhkar" in notification_settings_text
 assert "notificationPageButton(.adhkar)" in notification_settings_text
 assert "nafahatSettings" in notification_settings_text
+assert 'proxy.scrollTo("notification-settings-top", anchor: .top)' in notification_settings_text
+assert "glassSurface(theme.activeRowBackground, radius: 8, prominence: .regular)" in notification_settings_text
+
+quran_radio_player_text = QURAN_RADIO_PLAYER_PATH.read_text(encoding="utf-8")
+assert "MPNowPlayingInfoPropertyIsLiveStream: true" in quran_radio_player_text
+assert "MPMediaItemPropertyArtwork" in quran_radio_player_text
+assert "MPNowPlayingInfoMediaType.audio.rawValue" in quran_radio_player_text
+assert "commandCenter.nextTrackCommand.isEnabled = false" in quran_radio_player_text
+assert "commandCenter.changePlaybackPositionCommand.isEnabled = false" in quran_radio_player_text
+assert "MPNowPlayingInfoCenter.default().nowPlayingInfo = nil" in quran_radio_player_text
 
 tel_sheva_iqama_delays = {
     ".fajr": 24,
@@ -409,3 +423,4 @@ print("  iqama transitions: Maghrib and Isha post-adhan windows passed")
 print("  automatic schedule: today before Isha and tomorrow from exact Isha passed")
 print("  widget structure: home widgets and six focused Lock Screen widgets passed")
 print("  adhkar experience: offline library, daily progress, RTL reader, and persistent tasbih passed")
+print("  app layout and radio metadata: dock inset, preview styling, and live Now Playing controls passed")

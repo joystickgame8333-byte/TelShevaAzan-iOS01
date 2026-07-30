@@ -241,59 +241,63 @@ struct AdhkarView: View {
     }
 
     private var categorySelector: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            LazyHStack(spacing: 8) {
-                ForEach(AdhkarCategory.allCases) { category in
-                    let isSelected = selectedCategory == category
-                    let completed = progressStore.completedItems(in: category)
-                    let total = AdhkarLibrary.items(for: category).count
+        let columns = Array(
+            repeating: GridItem(.flexible(), spacing: 8),
+            count: 3
+        )
 
-                    Button {
-                        guard !isSelected else { return }
-                        withAnimation(.easeInOut(duration: 0.22)) {
-                            selectedCategoryRaw = category.rawValue
-                        }
-                        UISelectionFeedbackGenerator().selectionChanged()
-                    } label: {
-                        HStack(spacing: 7) {
+        return LazyVGrid(columns: columns, alignment: .trailing, spacing: 8) {
+            ForEach(AdhkarCategory.allCases) { category in
+                let isSelected = selectedCategory == category
+                let completed = progressStore.completedItems(in: category)
+                let total = AdhkarLibrary.items(for: category).count
+
+                Button {
+                    guard !isSelected else { return }
+                    withAnimation(.easeInOut(duration: 0.22)) {
+                        selectedCategoryRaw = category.rawValue
+                    }
+                    UISelectionFeedbackGenerator().selectionChanged()
+                } label: {
+                    VStack(alignment: .trailing, spacing: 3) {
+                        HStack(spacing: 5) {
+                            Text(category.title)
+                                .font(.caption.weight(.black))
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.72)
+
                             Image(systemName: category.symbol)
                                 .font(.caption.weight(.black))
-
-                            VStack(alignment: .trailing, spacing: 1) {
-                                Text(category.title)
-                                    .font(.caption.weight(.black))
-
-                                Text("\(completed)/\(total)")
-                                    .font(.caption2.monospacedDigit().weight(.bold))
-                                    .opacity(0.72)
-                                    .environment(\.layoutDirection, .leftToRight)
-                            }
                         }
-                        .foregroundStyle(isSelected ? theme.primaryText : theme.secondaryText)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                        .background(
-                            glassSurface(
-                                isSelected ? categoryAccent(for: category).opacity(0.18) : theme.controlBackground,
-                                radius: 13,
-                                prominence: isSelected ? .strong : .quiet
-                            )
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 13, style: .continuous)
-                                .stroke(
-                                    isSelected
-                                        ? categoryAccent(for: category).opacity(0.58)
-                                        : theme.controlBorder
-                                )
-                        )
+                        .frame(maxWidth: .infinity, alignment: .trailing)
+
+                        Text("\(completed)/\(total)")
+                            .font(.caption2.monospacedDigit().weight(.bold))
+                            .opacity(0.72)
+                            .environment(\.layoutDirection, .leftToRight)
                     }
-                    .buttonStyle(.plain)
+                    .foregroundStyle(isSelected ? theme.primaryText : theme.secondaryText)
+                    .padding(.horizontal, 10)
+                    .frame(maxWidth: .infinity, minHeight: 48, alignment: .trailing)
+                    .background(
+                        glassSurface(
+                            isSelected ? categoryAccent(for: category).opacity(0.18) : theme.controlBackground,
+                            radius: 13,
+                            prominence: isSelected ? .strong : .quiet
+                        )
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 13, style: .continuous)
+                            .stroke(
+                                isSelected
+                                    ? categoryAccent(for: category).opacity(0.58)
+                                    : theme.controlBorder
+                            )
+                    )
                 }
+                .buttonStyle(.plain)
             }
-            .padding(.vertical, 1)
         }
-        .frame(height: 58)
     }
 
     private var categoryProgressCard: some View {
@@ -678,36 +682,39 @@ struct AdhkarView: View {
     }
 
     private func tasbihPhraseSelector(phrases: [TasbihPhrase]) -> some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            LazyHStack(spacing: 8) {
-                ForEach(phrases) { phrase in
-                    let selected = phrase.id == selectedTasbihID
-                    Button {
-                        selectedTasbihID = phrase.id
-                        UISelectionFeedbackGenerator().selectionChanged()
-                    } label: {
-                        Text(phrase.shortTitle)
-                            .font(.caption.weight(.black))
-                            .foregroundStyle(selected ? theme.primaryText : theme.secondaryText)
-                            .padding(.horizontal, 13)
-                            .padding(.vertical, 9)
-                            .background(
-                                glassSurface(
-                                    selected ? theme.activeRowBackground : theme.controlBackground,
-                                    radius: 13,
-                                    prominence: selected ? .regular : .quiet
-                                )
+        let columns = Array(
+            repeating: GridItem(.flexible(), spacing: 8),
+            count: 3
+        )
+
+        return LazyVGrid(columns: columns, spacing: 8) {
+            ForEach(phrases) { phrase in
+                let selected = phrase.id == selectedTasbihID
+                Button {
+                    selectedTasbihID = phrase.id
+                    UISelectionFeedbackGenerator().selectionChanged()
+                } label: {
+                    Text(phrase.shortTitle)
+                        .font(.caption.weight(.black))
+                        .foregroundStyle(selected ? theme.primaryText : theme.secondaryText)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.72)
+                        .frame(maxWidth: .infinity, minHeight: 42)
+                        .background(
+                            glassSurface(
+                                selected ? theme.activeRowBackground : theme.controlBackground,
+                                radius: 13,
+                                prominence: selected ? .regular : .quiet
                             )
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 13, style: .continuous)
-                                    .stroke(selected ? theme.activeRowBorder : theme.controlBorder)
-                            )
-                    }
-                    .buttonStyle(.plain)
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 13, style: .continuous)
+                                .stroke(selected ? theme.activeRowBorder : theme.controlBorder)
+                        )
                 }
+                .buttonStyle(.plain)
             }
         }
-        .frame(height: 46)
     }
 
     private func tasbihRing(
@@ -753,9 +760,35 @@ struct AdhkarView: View {
         let completed = progressStore.increment(item)
         if completed {
             UINotificationFeedbackGenerator().notificationOccurred(.success)
-            showToast("تم الذكر")
+            advanceAfterCompleting(item)
         } else {
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        }
+    }
+
+    private func advanceAfterCompleting(_ item: AdhkarItem) {
+        guard let currentIndex = items.firstIndex(of: item) else {
+            showToast("تم الذكر")
+            return
+        }
+
+        let laterIndices = items.indices.dropFirst(currentIndex + 1)
+        let earlierIndices = items.indices.prefix(currentIndex)
+        let nextIncompleteIndex = laterIndices.first {
+            !progressStore.isComplete(items[$0])
+        } ?? earlierIndices.first {
+            !progressStore.isComplete(items[$0])
+        }
+
+        guard let nextIncompleteIndex else {
+            showToast("أتممت ورد \(selectedCategory.title)")
+            return
+        }
+
+        showToast("تم الذكر، ننتقل إلى التالي")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+            guard selectedItemID == item.id else { return }
+            selectItem(at: nextIncompleteIndex)
         }
     }
 

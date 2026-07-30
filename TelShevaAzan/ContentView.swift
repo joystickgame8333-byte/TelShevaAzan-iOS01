@@ -33,7 +33,7 @@ struct ContentView: View {
             let sectionSpacing: CGFloat = compactHeight ? 6 : 7
             let rowSpacing: CGFloat = compactHeight ? 5 : 6
             let dockBottomPadding = max(proxy.safeAreaInsets.bottom * 0.22, CGFloat(6))
-            let dockReservedHeight = proxy.safeAreaInsets.bottom + (compactHeight ? 96 : 108)
+            let dockReservedHeight = CGFloat(66) + dockBottomPadding + (compactHeight ? 6 : 8)
             let rowHeight = min(CGFloat(54), max(CGFloat(43), (proxy.size.height - dockReservedHeight - (compactHeight ? 268 : 316)) / 6))
 
             ZStack {

@@ -18,6 +18,16 @@ final class QuranRadioPlayer: ObservableObject {
     private var item: AVPlayerItem?
     private var itemStatusObservation: NSKeyValueObservation?
     private var timeControlObservation: NSKeyValueObservation?
+    private lazy var nowPlayingArtwork: MPMediaItemArtwork? = {
+        guard let image = UIImage(named: "Icon-60@3x")
+            ?? UIImage(named: "Icon-60@2x")
+            ?? UIImage(named: "AppIcon")
+        else {
+            return nil
+        }
+
+        return MPMediaItemArtwork(boundsSize: image.size) { _ in image }
+    }()
 
     private init() {
         configureRemoteCommands()
@@ -41,15 +51,16 @@ final class QuranRadioPlayer: ObservableObject {
         statusText = "جار الاتصال بالبث"
         isLoading = true
         player?.play()
-        updateNowPlaying(rate: 1)
+        updateNowPlaying()
     }
 
     func pause() {
         player?.pause()
         isPlaying = false
         isLoading = false
-        statusText = "متوقف مؤقتًا"
-        updateNowPlaying(rate: 0)
+        statusText = "متوقف"
+        clearNowPlaying()
+        deactivateAudioSession()
     }
 
     private func configureAudioSession() throws {
@@ -78,7 +89,8 @@ final class QuranRadioPlayer: ObservableObject {
                     self.statusText = "تعذر تشغيل البث"
                     self.isLoading = false
                     self.isPlaying = false
-                    self.updateNowPlaying(rate: 0)
+                    self.clearNowPlaying()
+                    self.deactivateAudioSession()
                 default:
                     self.statusText = "جار الاتصال بالبث"
                 }
@@ -94,7 +106,7 @@ final class QuranRadioPlayer: ObservableObject {
                     self.isPlaying = true
                     self.isLoading = false
                     self.statusText = "يعمل الآن"
-                    self.updateNowPlaying(rate: 1)
+                    self.updateNowPlaying()
                 case .waitingToPlayAtSpecifiedRate:
                     self.isLoading = true
                     self.statusText = "جار الاتصال بالبث"
@@ -102,9 +114,9 @@ final class QuranRadioPlayer: ObservableObject {
                     self.isPlaying = false
                     self.isLoading = false
                     if self.statusText != "تعذر تشغيل البث" {
-                        self.statusText = "متوقف مؤقتًا"
+                        self.statusText = "متوقف"
                     }
-                    self.updateNowPlaying(rate: 0)
+                    self.clearNowPlaying()
                 @unknown default:
                     self.statusText = "جار تحديث حالة البث"
                 }
@@ -138,14 +150,46 @@ final class QuranRadioPlayer: ObservableObject {
             }
             return .success
         }
+
+        commandCenter.nextTrackCommand.isEnabled = false
+        commandCenter.previousTrackCommand.isEnabled = false
+        commandCenter.skipForwardCommand.isEnabled = false
+        commandCenter.skipBackwardCommand.isEnabled = false
+        commandCenter.seekForwardCommand.isEnabled = false
+        commandCenter.seekBackwardCommand.isEnabled = false
+        commandCenter.changePlaybackPositionCommand.isEnabled = false
+        commandCenter.changePlaybackRateCommand.isEnabled = false
     }
 
-    private func updateNowPlaying(rate: Double) {
-        MPNowPlayingInfoCenter.default().nowPlayingInfo = [
+    private func updateNowPlaying() {
+        var info: [String: Any] = [
             MPMediaItemPropertyTitle: "راديو القرآن",
             MPMediaItemPropertyArtist: sourceName,
+            MPMediaItemPropertyAlbumTitle: "تطبيق صلاتي",
             MPNowPlayingInfoPropertyIsLiveStream: true,
-            MPNowPlayingInfoPropertyPlaybackRate: rate
+            MPNowPlayingInfoPropertyMediaType: MPNowPlayingInfoMediaType.audio.rawValue,
+            MPNowPlayingInfoPropertyPlaybackRate: 1,
+            MPNowPlayingInfoPropertyDefaultPlaybackRate: 1,
+            MPNowPlayingInfoPropertyExternalContentIdentifier: "salati-quran-radio-live",
+            MPNowPlayingInfoPropertyServiceIdentifier: "salati"
         ]
+
+        if let nowPlayingArtwork {
+            info[MPMediaItemPropertyArtwork] = nowPlayingArtwork
+        }
+
+        MPNowPlayingInfoCenter.default().nowPlayingInfo = info
+    }
+
+    private func clearNowPlaying() {
+        MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
+        UIApplication.shared.endReceivingRemoteControlEvents()
+    }
+
+    private func deactivateAudioSession() {
+        try? AVAudioSession.sharedInstance().setActive(
+            false,
+            options: .notifyOthersOnDeactivation
+        )
     }
 }
