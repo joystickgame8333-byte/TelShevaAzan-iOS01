@@ -17,6 +17,9 @@ NOTIFICATIONS_PATH = ROOT / "TelShevaAzan" / "PrayerNotificationManager.swift"
 NOTIFICATION_SETTINGS_PATH = ROOT / "TelShevaAzan" / "NotificationSettingsView.swift"
 CONTENT_PATH = ROOT / "TelShevaAzan" / "ContentView.swift"
 ADHKAR_VIEW_PATH = ROOT / "TelShevaAzan" / "AdhkarView.swift"
+ADHKAR_OVERVIEW_PATH = ROOT / "TelShevaAzan" / "AdhkarOverview.swift"
+ADHKAR_READER_PATH = ROOT / "TelShevaAzan" / "AdhkarReaderView.swift"
+TASBIH_VIEW_PATH = ROOT / "TelShevaAzan" / "TasbihView.swift"
 ADHKAR_LIBRARY_PATH = ROOT / "TelShevaAzan" / "AdhkarLibrary.swift"
 ADHKAR_PROGRESS_PATH = ROOT / "TelShevaAzan" / "AdhkarProgressStore.swift"
 QURAN_RADIO_PLAYER_PATH = ROOT / "TelShevaAzan" / "QuranRadioPlayer.swift"
@@ -244,18 +247,28 @@ active_scene_block = content_text.split(".onChange(of: scenePhase)", 1)[1].split
 assert "notifications.refreshIfEnabled()" in active_scene_block
 assert ".rounded(.up)" in engine_text, "Remaining time must round up to match the displayed wall clock second"
 assert "AdhkarView(" in content_text, "The Adhkar tab must open the dedicated reader"
-assert "CGFloat(66) + dockBottomPadding" in content_text, "Tabs must reserve only the dock's real height"
+assert "CGFloat(62) + dockBottomPadding" in content_text, "Tabs must reserve only the dock's real height"
 
 adhkar_view_text = ADHKAR_VIEW_PATH.read_text(encoding="utf-8")
+adhkar_overview_text = ADHKAR_OVERVIEW_PATH.read_text(encoding="utf-8")
+adhkar_reader_text = ADHKAR_READER_PATH.read_text(encoding="utf-8")
+tasbih_view_text = TASBIH_VIEW_PATH.read_text(encoding="utf-8")
+adhkar_feature_text = "\n".join(
+    (adhkar_view_text, adhkar_overview_text, adhkar_reader_text, tasbih_view_text)
+)
 adhkar_library_text = ADHKAR_LIBRARY_PATH.read_text(encoding="utf-8")
 adhkar_progress_text = ADHKAR_PROGRESS_PATH.read_text(encoding="utf-8")
 assert ".environment(\\.layoutDirection, .rightToLeft)" in adhkar_view_text
-assert "NotificationSettingsView(" not in adhkar_view_text
-assert "bottomReservedHeight + 12" in adhkar_view_text
-assert adhkar_view_text.count("LazyVGrid(columns: columns") == 2
-assert "advanceAfterCompleting" in adhkar_view_text
-assert "selectItem(at: nextIncompleteIndex)" in adhkar_view_text
-assert 'smallActionButton(symbol: fontSizeSymbol, label: "الخط")' in adhkar_view_text
+assert "NotificationSettingsView(" not in adhkar_feature_text
+assert "bottomReservedHeight + 8" in adhkar_view_text
+assert "struct AdhkarOverview" in adhkar_overview_text
+assert "struct AdhkarReaderView" in adhkar_reader_text
+assert "struct TasbihView" in tasbih_view_text
+assert "activeCategory: AdhkarCategory?" in adhkar_view_text
+assert "categoryItemsList" not in adhkar_feature_text
+assert "advanceAfterCompleting" in adhkar_reader_text
+assert "select(index: nextIndex)" in adhkar_reader_text
+assert 'actionButton(symbol: "textformat.size", label: "الخط"' in adhkar_reader_text
 assert "UIActivityViewController" in adhkar_view_text
 assert "AdhkarProgressStore()" in adhkar_view_text
 assert "refreshDayIfNeeded()" in adhkar_progress_text
@@ -269,7 +282,8 @@ assert len(adhkar_item_ids) == len(set(adhkar_item_ids)), "Adhkar item identifie
 
 notification_settings_text = NOTIFICATION_SETTINGS_PATH.read_text(encoding="utf-8")
 assert "notificationDiagnosticsPanel" in notification_settings_text
-assert 'panel(title: "فحص وصول الأذان")' in notification_settings_text
+assert 'panel(title: "حالة التنبيهات")' in notification_settings_text
+assert "showsAdvancedDiagnostics" in notification_settings_text
 assert 'diagnosticActionLabel(title: "تحديث الفحص"' in notification_settings_text
 assert '"تنبيهات الإقامة"' in notification_settings_text
 assert '"معاينة عدّاد الإقامة"' in notification_settings_text
@@ -279,8 +293,10 @@ assert "WidgetRefreshCenter.refreshAll(force: true)" in notification_settings_te
 assert "case adhkar" in notification_settings_text
 assert "notificationPageButton(.adhkar)" in notification_settings_text
 assert "nafahatSettings" in notification_settings_text
+nafahat_settings_block = notification_settings_text.split("private var nafahatSettings", 1)[1].split("private var appearanceSettings", 1)[0]
+assert "miniKhatmahPanel" not in nafahat_settings_block
 assert 'proxy.scrollTo("notification-settings-top", anchor: .top)' in notification_settings_text
-assert "glassSurface(theme.activeRowBackground, radius: 8, prominence: .regular)" in notification_settings_text
+assert "glassSurface(theme.activeRowBackground, radius: 12, prominence: .regular)" in notification_settings_text
 
 quran_radio_player_text = QURAN_RADIO_PLAYER_PATH.read_text(encoding="utf-8")
 assert "MPNowPlayingInfoPropertyIsLiveStream: true" in quran_radio_player_text

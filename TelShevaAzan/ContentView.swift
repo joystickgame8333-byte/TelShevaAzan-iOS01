@@ -33,7 +33,7 @@ struct ContentView: View {
             let sectionSpacing: CGFloat = compactHeight ? 6 : 7
             let rowSpacing: CGFloat = compactHeight ? 5 : 6
             let dockBottomPadding = max(proxy.safeAreaInsets.bottom * 0.22, CGFloat(6))
-            let dockReservedHeight = CGFloat(66) + dockBottomPadding + (compactHeight ? 6 : 8)
+            let dockReservedHeight = CGFloat(62) + dockBottomPadding + (compactHeight ? 6 : 8)
             let rowHeight = min(CGFloat(54), max(CGFloat(43), (proxy.size.height - dockReservedHeight - (compactHeight ? 268 : 316)) / 6))
 
             ZStack {
@@ -573,22 +573,22 @@ struct ContentView: View {
     }
 
     private var bottomDock: some View {
-        let dockWidth: CGFloat = 302
+        let dockWidth: CGFloat = 292
         let slotWidth = dockWidth / CGFloat(dockItems.count)
 
         return ZStack(alignment: .bottom) {
             dockLiquidGlassBase
-                .frame(width: dockWidth, height: 44)
+                .frame(width: dockWidth, height: 42)
 
             HStack(alignment: .bottom, spacing: 0) {
                 ForEach(dockItems) { item in
                     dockSlotButton(item, slotWidth: slotWidth)
                 }
             }
-            .frame(width: dockWidth, height: 66, alignment: .bottom)
+            .frame(width: dockWidth, height: 62, alignment: .bottom)
         }
         .frame(width: dockWidth)
-        .frame(height: 66, alignment: .bottom)
+        .frame(height: 62, alignment: .bottom)
         .shadow(color: .black.opacity(activeTheme.isNightTheme ? 0.16 : 0.06), radius: 8, y: 2)
         .environment(\.layoutDirection, .leftToRight)
         .animation(.spring(response: 0.38, dampingFraction: 0.72), value: selectedTab)
@@ -606,14 +606,14 @@ struct ContentView: View {
         } label: {
             ZStack(alignment: .bottom) {
                 if selected {
-                    selectedDockBubble(width: 78, height: 52)
+                    selectedDockBubble(width: 74, height: 49)
                         .matchedGeometryEffect(id: "dockSelection", in: dockSelectionNamespace)
 
                     VStack(spacing: 3) {
                         Image(systemName: dockSymbol(for: item))
                             .font(.system(size: 17, weight: .black, design: .rounded))
                             .foregroundStyle(activeTheme.accent)
-                            .frame(width: 36, height: 36)
+                            .frame(width: 34, height: 34)
                             .background(selectedDockIconFill)
                             .clipShape(Circle())
                             .overlay(
@@ -628,36 +628,36 @@ struct ContentView: View {
                             .offset(y: -5)
 
                         Text(item.title)
-                            .font(.system(size: 10.4, weight: .black, design: .rounded))
+                            .font(.system(size: 10, weight: .black, design: .rounded))
                             .foregroundStyle(Color.white)
                             .lineLimit(1)
                             .minimumScaleFactor(0.66)
                             .offset(y: -3)
                     }
-                    .frame(width: 78, height: 52)
+                    .frame(width: 74, height: 49)
                 } else {
                     VStack(spacing: 2) {
                         Image(systemName: dockSymbol(for: item))
-                            .font(.system(size: 18, weight: .black, design: .rounded))
+                            .font(.system(size: 17, weight: .black, design: .rounded))
                             .foregroundStyle(activeTheme.secondaryText.opacity(0.86))
                             .symbolRenderingMode(.hierarchical)
-                            .frame(width: 30, height: 22)
+                            .frame(width: 29, height: 21)
                             .overlay(alignment: .topTrailing) {
                                 dockStatusBadge(for: item)
                                     .offset(x: 8, y: -6)
                             }
 
                         Text(item.title)
-                            .font(.system(size: 8.2, weight: .bold, design: .rounded))
+                            .font(.system(size: 8, weight: .bold, design: .rounded))
                             .foregroundStyle(activeTheme.secondaryText.opacity(0.88))
                             .lineLimit(1)
                             .minimumScaleFactor(0.58)
                     }
-                    .frame(width: slotWidth, height: 38)
+                    .frame(width: slotWidth, height: 36)
                 }
             }
-            .frame(width: slotWidth, height: selected ? 58 : 42, alignment: .bottom)
-            .offset(y: selected ? -7 : 0)
+            .frame(width: slotWidth, height: selected ? 55 : 40, alignment: .bottom)
+            .offset(y: selected ? -6 : 0)
             .contentShape(Rectangle())
         }
         .buttonStyle(DockButtonPressStyle())

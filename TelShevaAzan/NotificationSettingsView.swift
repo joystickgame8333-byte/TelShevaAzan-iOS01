@@ -5,6 +5,8 @@ struct NotificationSettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject private var notifications = PrayerNotificationManager.shared
     @State private var selectedPage: NotificationSettingsPage = .adhan
+    @State private var showsAdvancedDiagnostics = false
+    @State private var showsSoundChoices = false
     @AppStorage(AppThemeStorage.nightThemeKey, store: AppThemeStorage.defaults) private var selectedNightThemeID = PrayerVisualTheme.defaultNight.rawValue
     @AppStorage(AppThemeStorage.dayThemeKey, store: AppThemeStorage.defaults) private var selectedDayThemeID = PrayerVisualTheme.defaultDay.rawValue
     @AppStorage("adhkar.miniKhatmah.enabled") private var isMiniKhatmahEnabled = false
@@ -37,13 +39,13 @@ struct NotificationSettingsView: View {
                     ThemeBackdrop(theme: theme)
                 }
 
-                VStack(alignment: .trailing, spacing: compactHeight ? 14 : 18) {
+                VStack(alignment: .trailing, spacing: compactHeight ? 10 : 13) {
                     header
                     settingsContent(compact: compactHeight, bottomInset: proxy.safeAreaInsets.bottom)
                 }
-                .padding(.horizontal, 18)
-                .padding(.top, 14)
-                .padding(.bottom, 18 + bottomReservedHeight)
+                .padding(.horizontal, compactHeight ? 16 : 18)
+                .padding(.top, compactHeight ? 9 : 11)
+                .padding(.bottom, 10 + bottomReservedHeight)
                 .frame(width: proxy.size.width, height: proxy.size.height, alignment: .topTrailing)
             }
         }
@@ -89,12 +91,12 @@ struct NotificationSettingsView: View {
 
             VStack(alignment: .trailing, spacing: 4) {
                 Text("التنبيه")
-                    .font(.system(size: 31, weight: .black, design: .rounded))
+                    .font(.system(size: 28, weight: .black, design: .rounded))
                     .lineLimit(1)
                     .minimumScaleFactor(0.72)
                     .frame(maxWidth: .infinity, alignment: .trailing)
 
-                Text("الأذان والأذكار والأنماط")
+                Text("الأذان والإقامة والتذكيرات")
                     .font(.caption.weight(.bold))
                     .foregroundStyle(theme.accent)
                     .lineLimit(1)
@@ -106,12 +108,12 @@ struct NotificationSettingsView: View {
     }
 
     private func settingsContent(compact: Bool, bottomInset: CGFloat) -> some View {
-        VStack(alignment: .trailing, spacing: compact ? 12 : 14) {
+        VStack(alignment: .trailing, spacing: compact ? 9 : 11) {
             pageSelector
 
             ScrollViewReader { proxy in
                 ScrollView(showsIndicators: false) {
-                    LazyVStack(alignment: .trailing, spacing: compact ? 14 : 18) {
+                    LazyVStack(alignment: .trailing, spacing: compact ? 11 : 14) {
                         Color.clear
                             .frame(height: 1)
                             .id("notification-settings-top")
@@ -140,7 +142,6 @@ struct NotificationSettingsView: View {
 
     private var pageSelector: some View {
         HStack(spacing: 8) {
-            Spacer(minLength: 0)
             notificationPageButton(.appearance)
             notificationPageButton(.adhkar)
             notificationPageButton(.adhan)
@@ -166,33 +167,34 @@ struct NotificationSettingsView: View {
             .environment(\.layoutDirection, .rightToLeft)
             .font(.caption.weight(.black))
             .foregroundStyle(selectedPage == page ? theme.primaryText : theme.secondaryText.opacity(0.82))
-            .padding(.horizontal, 14)
-            .padding(.vertical, 9)
+            .frame(maxWidth: .infinity)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 8)
             .background(
                 Group {
                     if selectedPage == page {
-                        glassSurface(theme.countdownBackground, radius: 8, prominence: .strong)
+                        glassSurface(theme.activeRowBackground, radius: 12, prominence: .regular)
                     } else {
-                        lightRowSurface(theme.controlBackground, radius: 8)
+                        lightRowSurface(theme.controlBackground, radius: 12)
                     }
                 }
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 8)
+                RoundedRectangle(cornerRadius: 12)
                     .stroke(selectedPage == page ? theme.activeRowBorder : theme.controlBorder)
             )
-            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .clipShape(RoundedRectangle(cornerRadius: 12))
         }
         .buttonStyle(.plain)
     }
 
     private var adhanSettings: some View {
-        VStack(alignment: .trailing, spacing: 16) {
+        VStack(alignment: .trailing, spacing: 13) {
             masterPanel
-            notificationDiagnosticsPanel
-            soundPanel
             prayerPanel
             iqamaNotificationPanel
+            soundPanel
+            notificationDiagnosticsPanel
         }
         .transition(.opacity)
     }
@@ -210,13 +212,12 @@ struct NotificationSettingsView: View {
     }
 
     private var nafahatSettings: some View {
-        VStack(alignment: .trailing, spacing: 16) {
+        VStack(alignment: .trailing, spacing: 13) {
             nafahatMasterPanel
-            miniKhatmahPanel
-            nafahatPreviewPanel
             nafahatIntervalPanel
-            nafahatTextPanel
             nafahatQuietPanel
+            nafahatTextPanel
+            nafahatPreviewPanel
         }
         .transition(.opacity)
     }
@@ -247,73 +248,103 @@ struct NotificationSettingsView: View {
 
     private var notificationDiagnosticsPanel: some View {
         let diagnostics = notifications.diagnostics
+        let essentialsHealthy = diagnostics.isAuthorized
+            && diagnostics.alertsEnabled
+            && diagnostics.lockScreenEnabled
+            && diagnostics.scheduledPrayerCount > 0
 
-        return panel(title: "فحص وصول الأذان") {
+        return panel(title: "حالة التنبيهات") {
             VStack(spacing: 0) {
-                diagnosticStatusRow(
-                    title: "إذن التنبيهات",
-                    value: diagnostics.permissionText,
-                    symbol: "bell.badge.fill",
-                    isHealthy: diagnostics.isAuthorized
-                )
-                diagnosticDivider
-                diagnosticStatusRow(
-                    title: "ظهور التنبيه",
-                    value: diagnostics.alertsEnabled ? "مسموح" : "مغلق",
-                    symbol: "bell.fill",
-                    isHealthy: diagnostics.alertsEnabled
-                )
-                diagnosticDivider
-                diagnosticStatusRow(
-                    title: "الصوت",
-                    value: diagnostics.soundsEnabled ? "مسموح" : "مغلق",
-                    symbol: "speaker.wave.2.fill",
-                    isHealthy: diagnostics.soundsEnabled
-                )
-                diagnosticDivider
-                diagnosticStatusRow(
-                    title: "شاشة القفل",
-                    value: diagnostics.lockScreenEnabled ? "مسموح" : "مغلق",
-                    symbol: "lock.fill",
-                    isHealthy: diagnostics.lockScreenEnabled
-                )
-                diagnosticDivider
-                diagnosticStatusRow(
-                    title: "حساس للوقت",
-                    value: diagnostics.timeSensitiveEnabled ? "مسموح" : "مغلق",
-                    symbol: "clock.fill",
-                    isHealthy: diagnostics.timeSensitiveEnabled
-                )
-                diagnosticDivider
-                diagnosticStatusRow(
-                    title: "ملف الصوت المختار",
-                    value: diagnostics.selectedSoundAvailable ? "سليم" : "غير موجود",
-                    symbol: "waveform",
-                    isHealthy: diagnostics.selectedSoundAvailable
-                )
-                diagnosticDivider
-                diagnosticStatusRow(
-                    title: "جدول الأذان",
-                    value: notificationCoverageText,
-                    symbol: "calendar",
-                    isHealthy: diagnostics.scheduledPrayerCount > 0
-                )
-
-                HStack(spacing: 10) {
-                    Button {
-                        openNotificationSettings()
-                    } label: {
-                        diagnosticActionLabel(title: "إعدادات الآيفون", symbol: "gearshape.fill")
+                Button {
+                    withAnimation(.easeInOut(duration: 0.18)) {
+                        showsAdvancedDiagnostics.toggle()
                     }
+                } label: {
+                    HStack(spacing: 10) {
+                        Image(systemName: showsAdvancedDiagnostics ? "chevron.up" : "chevron.down")
+                            .font(.caption.weight(.black))
+                            .foregroundStyle(theme.accent)
 
-                    Button {
-                        notifications.refreshDiagnostics()
-                    } label: {
-                        diagnosticActionLabel(title: "تحديث الفحص", symbol: "arrow.clockwise")
+                        Spacer(minLength: 10)
+
+                        VStack(alignment: .trailing, spacing: 3) {
+                            Text(essentialsHealthy ? "التنبيهات جاهزة" : "تحتاج مراجعة الإعدادات")
+                                .font(.subheadline.weight(.black))
+                                .foregroundStyle(essentialsHealthy ? theme.primaryText : Color.orange)
+
+                            Text(notificationCoverageText)
+                                .font(.caption2.weight(.semibold))
+                                .foregroundStyle(theme.secondaryText)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.72)
+                        }
+
+                        Image(systemName: essentialsHealthy ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
+                            .font(.system(size: 20, weight: .bold))
+                            .foregroundStyle(essentialsHealthy ? theme.accent : Color.orange)
                     }
+                    .padding(.horizontal, 10)
+                    .frame(maxWidth: .infinity, minHeight: 52)
+                    .background(lightRowSurface(settingsRowFill, radius: 12))
                 }
                 .buttonStyle(.plain)
-                .padding(.top, 12)
+
+                if showsAdvancedDiagnostics {
+                    Group {
+                        diagnosticDivider
+                        diagnosticStatusRow(
+                            title: "إذن التنبيهات",
+                            value: diagnostics.permissionText,
+                            symbol: "bell.badge.fill",
+                            isHealthy: diagnostics.isAuthorized
+                        )
+                        diagnosticDivider
+                        diagnosticStatusRow(
+                            title: "ظهور التنبيه",
+                            value: diagnostics.alertsEnabled ? "مسموح" : "مغلق",
+                            symbol: "bell.fill",
+                            isHealthy: diagnostics.alertsEnabled
+                        )
+                        diagnosticDivider
+                        diagnosticStatusRow(
+                            title: "شاشة القفل",
+                            value: diagnostics.lockScreenEnabled ? "مسموح" : "مغلق",
+                            symbol: "lock.fill",
+                            isHealthy: diagnostics.lockScreenEnabled
+                        )
+                        diagnosticDivider
+                        diagnosticStatusRow(
+                            title: "حساس للوقت",
+                            value: diagnostics.timeSensitiveEnabled ? "مسموح" : "مغلق",
+                            symbol: "clock.fill",
+                            isHealthy: diagnostics.timeSensitiveEnabled
+                        )
+                        diagnosticDivider
+                        diagnosticStatusRow(
+                            title: "جدول الأذان",
+                            value: notificationCoverageText,
+                            symbol: "calendar",
+                            isHealthy: diagnostics.scheduledPrayerCount > 0
+                        )
+
+                        HStack(spacing: 10) {
+                            Button {
+                                openNotificationSettings()
+                            } label: {
+                                diagnosticActionLabel(title: "إعدادات الآيفون", symbol: "gearshape.fill")
+                            }
+
+                            Button {
+                                notifications.refreshDiagnostics()
+                            } label: {
+                                diagnosticActionLabel(title: "تحديث الفحص", symbol: "arrow.clockwise")
+                            }
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.top, 10)
+                    }
+                    .transition(.opacity)
+                }
             }
         }
     }
@@ -417,8 +448,8 @@ struct NotificationSettingsView: View {
 
     private var nafahatMasterPanel: some View {
         toggleSummaryPanel(
-            title: "تشغيل الأذكار",
-            subtitle: notifications.isNafahatEnabled ? "تذكير روحي خفيف \(selectedNafahatIntervalTitle)" : "تذكير الأذكار متوقف",
+            title: "تذكيرات الأذكار",
+            subtitle: notifications.isNafahatEnabled ? "ذكر خفيف \(selectedNafahatIntervalTitle)" : "تذكيرات الأذكار متوقفة",
             isOn: Binding(
                 get: { notifications.isNafahatEnabled },
                 set: { notifications.setNafahatEnabled($0) }
@@ -589,12 +620,12 @@ struct NotificationSettingsView: View {
                 .padding(.vertical, 14)
                 .padding(.horizontal, 12)
                 .frame(minHeight: 78, alignment: .center)
-                .background(glassSurface(theme.countdownBackground, radius: 8, prominence: .strong))
+                .background(glassSurface(theme.activeRowBackground, radius: 12, prominence: .regular))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 8)
-                        .stroke(theme.activeRowBorder)
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(theme.activeRowBorder.opacity(0.72))
                 )
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .clipShape(RoundedRectangle(cornerRadius: 12))
             }
             .buttonStyle(.plain)
         }
@@ -763,68 +794,77 @@ struct NotificationSettingsView: View {
     private var soundPanel: some View {
         panel(title: "صوت الأذان") {
             VStack(spacing: 0) {
-                ForEach(Array(PrayerNotificationSound.allCases.enumerated()), id: \.element.id) { index, sound in
-                    Button {
-                        notifications.selectSound(sound)
-                    } label: {
-                        optionRow(
-                            title: sound.title,
-                            subtitle: sound.subtitle,
-                            symbol: sound.systemImage,
-                            selected: notifications.selectedSoundID == sound.rawValue,
-                            showsSubtitle: false
-                        )
-                    }
-                    .buttonStyle(.plain)
-
-                    if index < PrayerNotificationSound.allCases.count - 1 {
-                        Divider()
-                            .background(theme.controlBorder)
-                    }
-                }
-
-                Divider()
-                    .background(theme.controlBorder)
-                    .padding(.vertical, 8)
-
                 Button {
-                    notifications.sendPreviewNotification()
+                    withAnimation(.easeInOut(duration: 0.18)) {
+                        showsSoundChoices.toggle()
+                    }
                 } label: {
                     HStack(spacing: 10) {
-                        Image(systemName: "speaker.wave.2.fill")
-                            .font(.system(size: 19, weight: .black))
+                        Image(systemName: showsSoundChoices ? "chevron.up" : "chevron.down")
+                            .font(.caption.weight(.black))
                             .foregroundStyle(theme.accent)
-                            .frame(width: 34, alignment: .leading)
 
                         Spacer(minLength: 10)
 
-                        VStack(alignment: .trailing, spacing: 4) {
-                            Text("اختبار الأذان بعد 5 ثواني")
+                        VStack(alignment: .trailing, spacing: 3) {
+                            Text(selectedPrayerSound.title)
                                 .font(.subheadline.weight(.black))
                                 .lineLimit(1)
-                                .minimumScaleFactor(0.78)
 
-                            Text("اقفل الشاشة بسرعة وتأكد من الصوت المختار")
+                            Text("اضغط لتغيير الصوت أو تجربته")
                                 .font(.caption2.weight(.semibold))
-                                .foregroundStyle(theme.secondaryText.opacity(0.82))
-                                .lineLimit(2)
-                                .minimumScaleFactor(0.76)
+                                .foregroundStyle(theme.secondaryText)
                         }
-                        .frame(maxWidth: .infinity, alignment: .trailing)
+
+                        Image(systemName: selectedPrayerSound.systemImage)
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundStyle(theme.accent)
                     }
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-                    .padding(.vertical, 12)
-                    .padding(.horizontal, 12)
-                    .background(glassSurface(theme.countdownBackground, radius: 8, prominence: .strong))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(theme.activeRowBorder)
-                    )
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .padding(.horizontal, 10)
+                    .frame(maxWidth: .infinity, minHeight: 52)
+                    .background(lightRowSurface(settingsRowFill, radius: 12))
                 }
                 .buttonStyle(.plain)
+
+                if showsSoundChoices {
+                    Divider()
+                        .background(theme.controlBorder)
+                        .padding(.vertical, 6)
+
+                    ForEach(Array(PrayerNotificationSound.allCases.enumerated()), id: \.element.id) { index, sound in
+                        Button {
+                            notifications.selectSound(sound)
+                        } label: {
+                            optionRow(
+                                title: sound.title,
+                                subtitle: sound.subtitle,
+                                symbol: sound.systemImage,
+                                selected: notifications.selectedSoundID == sound.rawValue,
+                                showsSubtitle: false
+                            )
+                        }
+                        .buttonStyle(.plain)
+
+                        if index < PrayerNotificationSound.allCases.count - 1 {
+                            Divider()
+                                .background(theme.controlBorder)
+                        }
+                    }
+
+                    Button {
+                        notifications.sendPreviewNotification()
+                    } label: {
+                        diagnosticActionLabel(title: "جرّب الصوت بعد 5 ثوانٍ", symbol: "play.fill")
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.top, 10)
+                }
             }
         }
+    }
+
+    private var selectedPrayerSound: PrayerNotificationSound {
+        PrayerNotificationSound(rawValue: notifications.selectedSoundID) ?? .originalAdhan
     }
 
     private var prayerPanel: some View {
@@ -1168,18 +1208,18 @@ struct NotificationSettingsView: View {
             }
             .frame(maxWidth: .infinity, alignment: .trailing)
         }
-        .padding(16)
+        .padding(13)
         .frame(maxWidth: .infinity, alignment: .trailing)
-        .background(glassSurface(settingsPanelFill, radius: 8, prominence: .strong))
+        .background(glassSurface(settingsPanelFill, radius: 16, prominence: .regular))
         .overlay(
-            RoundedRectangle(cornerRadius: 8)
+            RoundedRectangle(cornerRadius: 16)
                 .stroke(theme.controlBorder)
         )
-        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .clipShape(RoundedRectangle(cornerRadius: 16))
     }
 
     private func panel<Content: View>(title: String, @ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .trailing, spacing: 12) {
+        VStack(alignment: .trailing, spacing: 10) {
             Text(title)
                 .font(.caption.weight(.bold))
                 .foregroundStyle(theme.accent)
@@ -1187,14 +1227,14 @@ struct NotificationSettingsView: View {
 
             content()
         }
-        .padding(16)
+        .padding(13)
         .frame(maxWidth: .infinity, alignment: .trailing)
-        .background(glassSurface(settingsPanelFill, radius: 8, prominence: .regular))
+        .background(glassSurface(settingsPanelFill, radius: 16, prominence: .regular))
         .overlay(
-            RoundedRectangle(cornerRadius: 8)
+            RoundedRectangle(cornerRadius: 16)
                 .stroke(theme.controlBorder)
         )
-        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .clipShape(RoundedRectangle(cornerRadius: 16))
     }
 
     private func optionRow(title: String, subtitle: String, symbol: String, selected: Bool, showsSubtitle: Bool = true) -> some View {
@@ -1225,11 +1265,11 @@ struct NotificationSettingsView: View {
             }
             .frame(maxWidth: .infinity, alignment: .trailing)
         }
-        .padding(.vertical, showsSubtitle ? 11 : 10)
+        .padding(.vertical, showsSubtitle ? 9 : 8)
         .padding(.horizontal, 8)
-        .frame(minHeight: showsSubtitle ? 64 : 52, alignment: .center)
-        .background(lightRowSurface(selected ? theme.activeRowBackground : settingsRowFill, radius: 8, selected: selected))
-        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .frame(minHeight: showsSubtitle ? 58 : 48, alignment: .center)
+        .background(lightRowSurface(selected ? theme.activeRowBackground : settingsRowFill, radius: 12, selected: selected))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
         .contentShape(Rectangle())
     }
 
@@ -1254,11 +1294,11 @@ struct NotificationSettingsView: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .trailing)
             }
-            .padding(.vertical, 10)
+            .padding(.vertical, 8)
             .padding(.horizontal, 8)
-            .background(lightRowSurface(isOn.wrappedValue ? theme.activeRowBackground : settingsRowFill, radius: 8, selected: isOn.wrappedValue))
-            .clipShape(RoundedRectangle(cornerRadius: 8))
-            .contentShape(RoundedRectangle(cornerRadius: 8))
+            .background(lightRowSurface(isOn.wrappedValue ? theme.activeRowBackground : settingsRowFill, radius: 12, selected: isOn.wrappedValue))
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .contentShape(RoundedRectangle(cornerRadius: 12))
         }
         .buttonStyle(.plain)
     }
@@ -1594,7 +1634,7 @@ private enum NotificationSettingsPage: String, CaseIterable, Identifiable {
         case .adhkar:
             return "الأذكار"
         case .appearance:
-            return "الأنماط"
+            return "المظهر"
         }
     }
 
