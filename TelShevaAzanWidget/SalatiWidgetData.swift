@@ -41,8 +41,8 @@ struct SalatiWidgetEntry: TimelineEntry {
     }
 
     var moment: SalatiWidgetMoment {
-        if let activeIqama {
-            return activeIqama.phase(at: date) == .adhan ? .adhan : .iqama
+        if activeIqama != nil {
+            return .iqama
         }
 
         if isTomorrowSchedule {

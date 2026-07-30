@@ -119,7 +119,7 @@ def live_prayer_pair(now: datetime) -> tuple[tuple[str, datetime], tuple[str, da
 
 
 def next_iqama(now: datetime) -> tuple[str, datetime]:
-    delays = {"fajr": 25, "dhuhr": 15, "asr": 17, "maghrib": 8, "isha": 15}
+    delays = {"fajr": 24, "dhuhr": 14, "asr": 16, "maghrib": 7, "isha": 14}
     for day_offset in (0, 1):
         events = prayer_events(now.date() + timedelta(days=day_offset))
         upcoming_iqamas = [
@@ -133,7 +133,7 @@ def next_iqama(now: datetime) -> tuple[str, datetime]:
 
 
 def active_iqama(now: datetime) -> tuple[str, datetime] | None:
-    delays = {"fajr": 25, "dhuhr": 15, "asr": 17, "maghrib": 8, "isha": 15}
+    delays = {"fajr": 24, "dhuhr": 14, "asr": 16, "maghrib": 7, "isha": 14}
     for prayer, adhan in prayer_events(now.date()):
         iqama = adhan + timedelta(minutes=delays[prayer])
         if adhan <= now < iqama:
@@ -168,17 +168,17 @@ assert previous[0] == "fajr" and previous[1] == exact_fajr
 assert upcoming[0] == "dhuhr" and upcoming[1].date() == date(2026, 7, 21)
 
 prayer, iqama = next_iqama(datetime(2026, 7, 20, 19, 55))
-assert prayer == "maghrib" and iqama.strftime("%H:%M") == "20:00"
+assert prayer == "maghrib" and iqama.strftime("%H:%M") == "19:59"
 prayer, iqama = next_iqama(datetime(2026, 7, 20, 20, 1))
-assert prayer == "isha" and iqama.strftime("%H:%M") == "21:36"
+assert prayer == "isha" and iqama.strftime("%H:%M") == "21:35"
 prayer, iqama = next_iqama(datetime(2026, 7, 20, 21, 22))
-assert prayer == "isha" and iqama.strftime("%H:%M") == "21:36"
+assert prayer == "isha" and iqama.strftime("%H:%M") == "21:35"
 active = active_iqama(datetime(2026, 7, 20, 19, 55))
-assert active is not None and active[0] == "maghrib" and active[1].strftime("%H:%M") == "20:00"
-assert active_iqama(datetime(2026, 7, 20, 20, 0)) is None
+assert active is not None and active[0] == "maghrib" and active[1].strftime("%H:%M") == "19:59"
+assert active_iqama(datetime(2026, 7, 20, 19, 59)) is None
 active = active_iqama(datetime(2026, 7, 20, 21, 22))
-assert active is not None and active[0] == "isha" and active[1].strftime("%H:%M") == "21:36"
-assert active_iqama(datetime(2026, 7, 20, 21, 36)) is None
+assert active is not None and active[0] == "isha" and active[1].strftime("%H:%M") == "21:35"
+assert active_iqama(datetime(2026, 7, 20, 21, 35)) is None
 
 assert automatic_schedule_day(datetime(2026, 7, 20, 21, 20, 59)) == date(2026, 7, 20)
 assert automatic_schedule_day(datetime(2026, 7, 20, 21, 21)) == date(2026, 7, 21)
@@ -235,9 +235,9 @@ assert 'detailTile(title: "وقت الشروق", value: prayer.time, highlighted
 assert "IqamaSchedule.telSheva.iqamaDate(for: prayer)" in content_text
 assert "IqamaSchedule.telSheva.activeEvent(at: date)" in content_text
 assert '"الإقامة القادمة"' in content_text
-assert '"حان الآن الأذان"' in content_text
+assert '"حان الآن الأذان"' not in content_text
 assert "iqamaStatusBand(event:" in content_text
-assert "activeIqama.phase(at: now)" in content_text
+assert ".phase(at:" not in content_text
 assert '"متبقي للإقامة' in content_text
 active_scene_block = content_text.split(".onChange(of: scenePhase)", 1)[1].split(".onAppear", 1)[0]
 assert "notifications.refreshIfEnabled()" in active_scene_block
@@ -248,8 +248,10 @@ adhkar_view_text = ADHKAR_VIEW_PATH.read_text(encoding="utf-8")
 adhkar_library_text = ADHKAR_LIBRARY_PATH.read_text(encoding="utf-8")
 adhkar_progress_text = ADHKAR_PROGRESS_PATH.read_text(encoding="utf-8")
 assert ".environment(\\.layoutDirection, .rightToLeft)" in adhkar_view_text
-assert "NotificationSettingsView(" in adhkar_view_text
-assert "mode: .adhkarOnly" in adhkar_view_text
+assert "NotificationSettingsView(" not in adhkar_view_text
+assert "bottomReservedHeight + 12" in adhkar_view_text
+assert ".frame(height: 58)" in adhkar_view_text
+assert 'smallActionButton(symbol: fontSizeSymbol, label: "الخط")' in adhkar_view_text
 assert "UIActivityViewController" in adhkar_view_text
 assert "AdhkarProgressStore()" in adhkar_view_text
 assert "refreshDayIfNeeded()" in adhkar_progress_text
@@ -270,13 +272,16 @@ assert '"معاينة عدّاد الإقامة"' in notification_settings_text
 assert '"اختبار تنبيه الإقامة"' in notification_settings_text
 assert "IqamaPreviewStorage.start(prayer: .dhuhr)" in notification_settings_text
 assert "WidgetRefreshCenter.refreshAll(force: true)" in notification_settings_text
+assert "case adhkar" in notification_settings_text
+assert "notificationPageButton(.adhkar)" in notification_settings_text
+assert "nafahatSettings" in notification_settings_text
 
 tel_sheva_iqama_delays = {
-    ".fajr": 25,
-    ".dhuhr": 15,
-    ".asr": 17,
-    ".maghrib": 8,
-    ".isha": 15,
+    ".fajr": 24,
+    ".dhuhr": 14,
+    ".asr": 16,
+    ".maghrib": 7,
+    ".isha": 14,
 }
 for prayer_key, delay in tel_sheva_iqama_delays.items():
     assert f"{prayer_key}: {delay}" in engine_text
@@ -296,7 +301,8 @@ assert "PrayerEngine.automaticScheduleDateKey(for: date)" in widget_data_text
 assert "IqamaSchedule.telSheva.activeEvent(at: date)" in widget_data_text
 assert "IqamaSchedule.telSheva.iqamaDate(for: prayer)" in widget_data_text
 assert "IqamaPreviewStorage.activeEvent(at: date, dateKey: dateKey)" in widget_data_text
-assert "activeIqama.phase(at: date)" in widget_data_text
+assert ".phase(at:" not in widget_data_text
+assert "if activeIqama != nil" in widget_data_text
 assert "timelineDays" not in widget_data_text
 assert "for offset in 0..." not in widget_data_text
 assert "PrayerEngine.calendar.date(byAdding: .day, value: 1, to: start)" in widget_data_text

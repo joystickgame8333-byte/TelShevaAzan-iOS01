@@ -104,54 +104,59 @@ struct QiblaView: View {
     }
 
     private var header: some View {
-        HStack(alignment: .center, spacing: 12) {
-            VStack(alignment: .trailing, spacing: 4) {
-                Text("القبلة")
-                    .font(.system(size: 34, weight: .black, design: .rounded))
-                    .lineLimit(1)
-
-                HStack(spacing: 5) {
-                    Image(systemName: compass.currentLocation == nil ? "mappin" : "location.fill")
-                        .font(.caption2.weight(.black))
-
-                    Text(locationCaption)
-                        .font(.caption.weight(.bold))
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.74)
-                }
-                .foregroundStyle(theme.secondaryText)
-            }
-
-            Spacer(minLength: 8)
-
+        HStack(alignment: .top, spacing: 12) {
             if !isEmbedded {
                 Button {
                     dismiss()
                 } label: {
                     Image(systemName: "xmark")
                         .font(.system(size: 16, weight: .black))
-                        .frame(width: 40, height: 40)
-                        .background(glassSurface(theme.controlBackground, radius: 13))
+                        .frame(width: 38, height: 38)
+                        .background(glassSurface(theme.controlBackground, radius: 8))
                         .overlay(
-                            RoundedRectangle(cornerRadius: 13, style: .continuous)
+                            RoundedRectangle(cornerRadius: 8)
                                 .stroke(theme.controlBorder)
                         )
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("إغلاق")
             } else {
                 Image(systemName: "location.north.line.fill")
-                    .font(.system(size: 19, weight: .black))
-                    .foregroundStyle(directionColor)
-                    .frame(width: 42, height: 42)
-                    .background(glassSurface(theme.controlBackground, radius: 13))
+                    .font(.system(size: 17, weight: .black))
+                    .foregroundStyle(theme.accent)
+                    .frame(width: 38, height: 38)
+                    .background(glassSurface(theme.controlBackground, radius: 8))
                     .overlay(
-                        RoundedRectangle(cornerRadius: 13, style: .continuous)
-                            .stroke(directionColor.opacity(alignmentIsGood ? 0.62 : 0.22))
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(theme.controlBorder)
                     )
-                    .animation(.easeInOut(duration: 0.3), value: alignmentIsGood)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+            }
+
+            Spacer(minLength: 12)
+
+            VStack(alignment: .trailing, spacing: 4) {
+                Text("القبلة")
+                    .font(.system(size: 34, weight: .black, design: .rounded))
+                    .lineLimit(1)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+
+                HStack(spacing: 5) {
+                    Text(locationCaption)
+                        .font(.caption.weight(.bold))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.74)
+
+                    Image(systemName: compass.currentLocation == nil ? "mappin" : "location.fill")
+                        .font(.caption2.weight(.black))
+                }
+                .foregroundStyle(theme.accent)
+                .frame(maxWidth: .infinity, alignment: .trailing)
             }
         }
+        .frame(maxWidth: .infinity, alignment: .topLeading)
+        .environment(\.layoutDirection, .leftToRight)
     }
 
     private func compassFace(size: CGFloat, compact: Bool) -> some View {

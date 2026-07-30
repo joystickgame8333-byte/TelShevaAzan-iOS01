@@ -924,16 +924,6 @@ struct ContentView: View {
             )
         }
 
-        if activeIqama.phase(at: now) == .adhan {
-            return (
-                prayer: activeIqama.prayer,
-                time: activeIqama.prayer.time,
-                title: "حان الآن الأذان",
-                countdownTitle: "متبقي للإقامة",
-                countdownTarget: activeIqama.date
-            )
-        }
-
         return (
             prayer: activeIqama.prayer,
             time: timeText(for: activeIqama.date),
@@ -1015,7 +1005,7 @@ struct ContentView: View {
             Spacer(minLength: 8)
 
             VStack(alignment: .trailing, spacing: 2) {
-                Text(event.phase(at: now) == .adhan ? "الإقامة بعد قليل" : "متبقي للإقامة")
+                Text("متبقي للإقامة")
                     .font(.caption2.weight(.black))
                     .foregroundStyle(nabawiSecondaryText)
                     .lineLimit(1)
@@ -1488,9 +1478,6 @@ struct ContentView: View {
     }
 
     private func iqamaRowStatusText(for event: IqamaEvent) -> String {
-        if event.phase(at: now) == .adhan {
-            return "حان الأذان · الإقامة بعد \(countdownText(until: event.date))"
-        }
         return remainingIqamaText(for: event)
     }
 

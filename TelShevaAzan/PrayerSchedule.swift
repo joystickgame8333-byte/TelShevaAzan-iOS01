@@ -62,11 +62,11 @@ struct IqamaSchedule {
         locationID: "telSheva",
         locationName: "تل السبع",
         delaysMinutes: [
-            .fajr: 25,
-            .dhuhr: 15,
-            .asr: 17,
-            .maghrib: 8,
-            .isha: 15
+            .fajr: 24,
+            .dhuhr: 14,
+            .asr: 16,
+            .maghrib: 7,
+            .isha: 14
         ]
     )
 
@@ -96,20 +96,6 @@ struct IqamaEvent {
     let prayer: PrayerTime
     let date: Date
     var isPreview = false
-
-    func phase(at currentDate: Date) -> IqamaEventPhase {
-        if isPreview {
-            return .countdown
-        }
-
-        let elapsed = currentDate.timeIntervalSince(prayer.date)
-        return elapsed < 3 * 60 ? .adhan : .countdown
-    }
-}
-
-enum IqamaEventPhase: Equatable {
-    case adhan
-    case countdown
 }
 
 enum IqamaPreviewStorage {

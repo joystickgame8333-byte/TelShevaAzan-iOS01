@@ -75,6 +75,7 @@ struct AdhkarView: View {
                 }
                 .padding(.horizontal, 18)
                 .padding(.top, 12)
+                .padding(.bottom, bottomReservedHeight + 12)
                 .frame(width: proxy.size.width, height: proxy.size.height, alignment: .topTrailing)
                 .foregroundStyle(theme.primaryText)
                 .multilineTextAlignment(.trailing)
@@ -120,37 +121,42 @@ struct AdhkarView: View {
     }
 
     private var header: some View {
-        HStack(alignment: .center, spacing: 10) {
-            VStack(alignment: .trailing, spacing: 3) {
-                Text("الأذكار")
-                    .font(.system(size: 32, weight: .black, design: .rounded))
-                    .lineLimit(1)
-
-                Text("وردك اليومي محفوظ على جهازك")
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(theme.secondaryText)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.72)
-            }
-
-            Spacer(minLength: 8)
-
-            headerButton(symbol: "bell.badge.fill", label: "إعدادات التذكير") {
-                presentedSheet = .reminders
-            }
-
-            if selectedPage == .reader {
-                headerButton(symbol: fontSizeSymbol, label: "تغيير حجم الخط") {
-                    cycleReaderFontSize()
-                }
-            }
-
+        HStack(alignment: .top, spacing: 12) {
             if !isEmbedded {
                 headerButton(symbol: "xmark", label: "إغلاق") {
                     dismiss()
                 }
+            } else {
+                Image(systemName: "sparkles")
+                    .font(.system(size: 17, weight: .black))
+                    .foregroundStyle(theme.accent)
+                    .frame(width: 38, height: 38)
+                    .background(glassSurface(theme.controlBackground, radius: 8))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(theme.controlBorder)
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+            }
+
+            Spacer(minLength: 12)
+
+            VStack(alignment: .trailing, spacing: 4) {
+                Text("الأذكار")
+                    .font(.system(size: 34, weight: .black, design: .rounded))
+                    .lineLimit(1)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+
+                Text("وردك اليومي محفوظ على جهازك")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(theme.accent)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.72)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
             }
         }
+        .frame(maxWidth: .infinity, alignment: .topLeading)
+        .environment(\.layoutDirection, .leftToRight)
     }
 
     private func headerButton(
@@ -162,12 +168,13 @@ struct AdhkarView: View {
             Image(systemName: symbol)
                 .font(.system(size: 16, weight: .black))
                 .foregroundStyle(theme.accent)
-                .frame(width: 40, height: 40)
-                .background(glassSurface(theme.controlBackground, radius: 13))
+                .frame(width: 38, height: 38)
+                .background(glassSurface(theme.controlBackground, radius: 8))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 13, style: .continuous)
+                    RoundedRectangle(cornerRadius: 8)
                         .stroke(theme.controlBorder)
                 )
+                .clipShape(RoundedRectangle(cornerRadius: 8))
         }
         .buttonStyle(.plain)
         .accessibilityLabel(label)
@@ -221,7 +228,7 @@ struct AdhkarView: View {
 
                         categoryItemsList
                     }
-                    .padding(.bottom, bottomReservedHeight + max(safeBottom, 20) + 28)
+                    .padding(.bottom, max(safeBottom, 20) + 24)
                 }
                 .onChange(of: selectedItemID) { _ in
                     withAnimation(.easeOut(duration: 0.22)) {
@@ -286,6 +293,7 @@ struct AdhkarView: View {
             }
             .padding(.vertical, 1)
         }
+        .frame(height: 58)
     }
 
     private var categoryProgressCard: some View {
@@ -386,6 +394,10 @@ struct AdhkarView: View {
             }
 
             HStack(spacing: 8) {
+                smallActionButton(symbol: fontSizeSymbol, label: "الخط") {
+                    cycleReaderFontSize()
+                }
+
                 smallActionButton(symbol: "doc.on.doc", label: "نسخ") {
                     UIPasteboard.general.string = item.text
                     showToast("تم نسخ الذكر")
@@ -659,7 +671,7 @@ struct AdhkarView: View {
                     RoundedRectangle(cornerRadius: 22, style: .continuous)
                         .stroke(theme.controlBorder)
                 )
-                .padding(.bottom, bottomReservedHeight + max(safeBottom, 20) + 30)
+                .padding(.bottom, max(safeBottom, 20) + 24)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
@@ -695,6 +707,7 @@ struct AdhkarView: View {
                 }
             }
         }
+        .frame(height: 46)
     }
 
     private func tasbihRing(
@@ -836,12 +849,6 @@ struct AdhkarView: View {
     @ViewBuilder
     private func sheetContent(for destination: AdhkarSheetDestination) -> some View {
         switch destination {
-        case .reminders:
-            NotificationSettingsView(
-                theme: theme,
-                mode: .adhkarOnly,
-                isEmbedded: false
-            )
         case let .share(text):
             ActivityShareSheet(activityItems: [text])
         }
@@ -959,13 +966,10 @@ private struct TasbihPhrase: Identifiable {
 }
 
 private enum AdhkarSheetDestination: Identifiable {
-    case reminders
     case share(String)
 
     var id: String {
         switch self {
-        case .reminders:
-            return "reminders"
         case .share:
             return "share"
         }

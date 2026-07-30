@@ -1,11 +1,6 @@
 import SwiftUI
 import UIKit
 
-enum NotificationSettingsMode {
-    case full
-    case adhkarOnly
-}
-
 struct NotificationSettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject private var notifications = PrayerNotificationManager.shared
@@ -30,7 +25,6 @@ struct NotificationSettingsView: View {
     }()
 
     let theme: PrayerVisualTheme
-    var mode: NotificationSettingsMode = .full
     var isEmbedded = false
     var bottomReservedHeight: CGFloat = 0
 
@@ -49,7 +43,7 @@ struct NotificationSettingsView: View {
                 }
                 .padding(.horizontal, 18)
                 .padding(.top, 14)
-                .padding(.bottom, 18)
+                .padding(.bottom, 18 + bottomReservedHeight)
                 .frame(width: proxy.size.width, height: proxy.size.height, alignment: .topTrailing)
             }
         }
@@ -79,7 +73,7 @@ struct NotificationSettingsView: View {
                 }
                 .buttonStyle(.plain)
             } else {
-                Image(systemName: mode == .adhkarOnly ? "sparkles" : "bell.badge.fill")
+                Image(systemName: "bell.badge.fill")
                     .font(.system(size: 17, weight: .black))
                     .foregroundStyle(theme.accent)
                     .frame(width: 38, height: 38)
@@ -94,13 +88,13 @@ struct NotificationSettingsView: View {
             Spacer(minLength: 16)
 
             VStack(alignment: .trailing, spacing: 4) {
-                Text(mode == .adhkarOnly ? "أذكار" : "التنبيه")
+                Text("التنبيه")
                     .font(.system(size: 31, weight: .black, design: .rounded))
                     .lineLimit(1)
                     .minimumScaleFactor(0.72)
                     .frame(maxWidth: .infinity, alignment: .trailing)
 
-                Text(mode == .adhkarOnly ? "تذكير روحي خفيف خلال اليوم" : "الأذان والأنماط")
+                Text("الأذان والأذكار والأنماط")
                     .font(.caption.weight(.bold))
                     .foregroundStyle(theme.accent)
                     .lineLimit(1)
@@ -113,21 +107,19 @@ struct NotificationSettingsView: View {
 
     private func settingsContent(compact: Bool, bottomInset: CGFloat) -> some View {
         VStack(alignment: .trailing, spacing: compact ? 12 : 14) {
-            if mode == .full {
-                pageSelector
-            }
+            pageSelector
 
             ScrollView(showsIndicators: false) {
                 LazyVStack(alignment: .trailing, spacing: compact ? 14 : 18) {
-                    if mode == .adhkarOnly {
-                        nafahatSettings
-                    } else if selectedPage == .adhan {
+                    if selectedPage == .adhan {
                         adhanSettings
+                    } else if selectedPage == .adhkar {
+                        nafahatSettings
                     } else {
                         appearanceSettings
                     }
                 }
-                .padding(.bottom, bottomReservedHeight + max(bottomInset, CGFloat(34)) + 72)
+                .padding(.bottom, max(bottomInset, CGFloat(24)) + 24)
                 .frame(maxWidth: .infinity, alignment: .topTrailing)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -139,6 +131,7 @@ struct NotificationSettingsView: View {
         HStack(spacing: 8) {
             Spacer(minLength: 0)
             notificationPageButton(.appearance)
+            notificationPageButton(.adhkar)
             notificationPageButton(.adhan)
         }
         .frame(maxWidth: .infinity, alignment: .topTrailing)
@@ -1578,6 +1571,7 @@ private enum MiniKhatmahPortion: String, CaseIterable, Identifiable {
 
 private enum NotificationSettingsPage: String, CaseIterable, Identifiable {
     case adhan
+    case adhkar
     case appearance
 
     var id: String { rawValue }
@@ -1586,6 +1580,8 @@ private enum NotificationSettingsPage: String, CaseIterable, Identifiable {
         switch self {
         case .adhan:
             return "الأذان"
+        case .adhkar:
+            return "الأذكار"
         case .appearance:
             return "الأنماط"
         }
@@ -1595,6 +1591,8 @@ private enum NotificationSettingsPage: String, CaseIterable, Identifiable {
         switch self {
         case .adhan:
             return "bell.badge.fill"
+        case .adhkar:
+            return "sparkles"
         case .appearance:
             return "paintpalette.fill"
         }
