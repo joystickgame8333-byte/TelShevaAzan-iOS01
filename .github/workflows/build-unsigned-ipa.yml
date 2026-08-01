@@ -185,9 +185,12 @@ jobs:
 
           echo "Force-copy bundled Quran font into the app bundle:"
           cp -f "TelShevaAzan/Fonts/AmiriQuran-Regular.ttf" "$APP_PATH/AmiriQuran-Regular.ttf"
+          cp -f "TelShevaAzan/Fonts/UthmanicHafs1Ver18.ttf" "$APP_PATH/UthmanicHafs1Ver18.ttf"
 
           echo "Force-copy offline Quran pages into the app bundle:"
           cp -f "TelShevaAzan/Resources/Quran/quran-pages-v1.json" "$APP_PATH/quran-pages-v1.json"
+          cp -f "TelShevaAzan/Resources/Quran/QCF/qcf-page-293-v2.json" "$APP_PATH/qcf-page-293-v2.json"
+          cp -f "TelShevaAzan/Resources/Quran/QCF/p293.woff2" "$APP_PATH/p293.woff2"
 
           echo "Force-copy bundled sounds into the app bundle:"
           for sound in TelShevaAzan/Sounds/*; do
@@ -214,6 +217,7 @@ jobs:
           /usr/libexec/PlistBuddy -c "Delete :UIAppFonts" "$APP_PATH/Info.plist" || true
           /usr/libexec/PlistBuddy -c "Add :UIAppFonts array" "$APP_PATH/Info.plist"
           /usr/libexec/PlistBuddy -c "Add :UIAppFonts:0 string AmiriQuran-Regular.ttf" "$APP_PATH/Info.plist"
+          /usr/libexec/PlistBuddy -c "Add :UIAppFonts:1 string UthmanicHafs1Ver18.ttf" "$APP_PATH/Info.plist"
 
           echo "Widget extension registration:"
           for PLUGIN_PATH in "${PLUGIN_PATHS[@]}"; do
@@ -249,6 +253,11 @@ jobs:
           if [ ! -f "$APP_PATH/quran-pages-v1.json" ]; then
             echo "Missing packaged offline Quran data: $APP_PATH/quran-pages-v1.json"
             find "$APP_PATH" -maxdepth 3 -type f -name 'quran-pages-v1.json' -print
+            exit 1
+          fi
+          if [ ! -f "$APP_PATH/qcf-page-293-v2.json" ] || [ ! -f "$APP_PATH/p293.woff2" ]; then
+            echo "Missing packaged QCF V2 page 293 prototype resources"
+            find "$APP_PATH" -maxdepth 3 -type f \( -name 'qcf-page-293-v2.json' -o -name 'p293.woff2' \) -print
             exit 1
           fi
           if [ ! -f "$APP_PATH/adhan.caf" ]; then
@@ -360,7 +369,10 @@ jobs:
           awk '/Payload\/TelShevaAzan.app\/Icon-|Payload\/TelShevaAzan.app\/PlugIns\/.*\.appex\// { print; shown++; if (shown >= 80) exit }' ipa-contents.txt
           grep -q 'Payload/TelShevaAzan.app/Icon-60@3x.png' ipa-contents.txt
           grep -q 'Payload/TelShevaAzan.app/AmiriQuran-Regular.ttf' ipa-contents.txt
+          grep -q 'Payload/TelShevaAzan.app/UthmanicHafs1Ver18.ttf' ipa-contents.txt
           grep -q 'Payload/TelShevaAzan.app/quran-pages-v1.json' ipa-contents.txt
+          grep -q 'Payload/TelShevaAzan.app/qcf-page-293-v2.json' ipa-contents.txt
+          grep -q 'Payload/TelShevaAzan.app/p293.woff2' ipa-contents.txt
           grep -q 'Payload/TelShevaAzan.app/adhan.caf' ipa-contents.txt
           grep -q 'Payload/TelShevaAzan.app/nafahat.wav' ipa-contents.txt
           grep -q 'Payload/TelShevaAzan.app/fajr-alarm-02-morning-clock.wav' ipa-contents.txt

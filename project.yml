@@ -25,8 +25,8 @@ targets:
       properties:
         CFBundleDisplayName: صلاتي
         CFBundlePackageType: APPL
-        CFBundleShortVersionString: "0.6.88"
-        CFBundleVersion: "182"
+        CFBundleShortVersionString: "0.6.89"
+        CFBundleVersion: "183"
         CFBundleURLTypes:
           - CFBundleURLName: com.omaralasam.telshevaazan
             CFBundleURLSchemes:
@@ -83,6 +83,8 @@ targets:
       - path: TelShevaAzan/Resources/Nabawi/nabawi-night.jpg
       - path: TelShevaAzan/Resources/PrayerCalendar/prayer-calendar-v1.json
       - path: TelShevaAzan/Resources/Quran/quran-pages-v1.json
+      - path: TelShevaAzan/Resources/Quran/QCF/qcf-page-293-v2.json
+      - path: TelShevaAzan/Resources/Quran/QCF/p293.woff2
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.omaralasam.telshevaazan
@@ -120,8 +122,8 @@ targets:
       properties:
         CFBundleDisplayName: صلاتي
         CFBundlePackageType: XPC!
-        CFBundleShortVersionString: "0.6.88"
-        CFBundleVersion: "182"
+        CFBundleShortVersionString: "0.6.89"
+        CFBundleVersion: "183"
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
     settings:
@@ -154,8 +156,8 @@ targets:
       properties:
         CFBundleDisplayName: صلاتي
         CFBundlePackageType: APPL
-        CFBundleShortVersionString: "0.6.88"
-        CFBundleVersion: "182"
+        CFBundleShortVersionString: "0.6.89"
+        CFBundleVersion: "183"
         WKApplication: true
         WKCompanionAppBundleIdentifier: com.omaralasam.telshevaazan.76XJH357A8
         WKRunsIndependentlyOfCompanionApp: true
@@ -190,8 +192,8 @@ targets:
       properties:
         CFBundleDisplayName: صلاتي
         CFBundlePackageType: XPC!
-        CFBundleShortVersionString: "0.6.88"
-        CFBundleVersion: "182"
+        CFBundleShortVersionString: "0.6.89"
+        CFBundleVersion: "183"
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
         NSPrincipalClass: ""

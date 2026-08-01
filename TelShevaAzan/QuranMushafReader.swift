@@ -25,7 +25,7 @@ struct QuranMushafReader: View {
     }
 
     private var pageSurahTitle: String {
-        pageSurahNames.joined(separator: " • ")
+        pageSurahNames.first ?? ""
     }
 
     private var palette: MushafPalette {
@@ -41,10 +41,16 @@ struct QuranMushafReader: View {
                 topBar
                     .frame(height: 44)
 
-                QuranMushafPage(
-                    page: page,
-                    palette: palette
-                )
+                Group {
+                    if page.number == 293 {
+                        QuranQCFPrototypePageView(theme: theme)
+                    } else {
+                        QuranMushafPage(
+                            page: page,
+                            palette: palette
+                        )
+                    }
+                }
                 .id(page.number)
                 .transition(.opacity)
 
