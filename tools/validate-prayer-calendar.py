@@ -240,7 +240,7 @@ assert "IqamaSchedule.telSheva.iqamaDate(for: prayer)" in content_text
 assert "IqamaSchedule.telSheva.activeEvent(at: date)" in content_text
 assert '"الإقامة القادمة"' in content_text
 assert '"حان الآن الأذان"' not in content_text
-assert "iqamaStatusBand(event:" in content_text
+assert "smartPrayerStatusStrip(next: next, activeIqama: activeIqama" in content_text
 assert ".phase(at:" not in content_text
 assert '"متبقي للإقامة' in content_text
 active_scene_block = content_text.split(".onChange(of: scenePhase)", 1)[1].split(".onAppear", 1)[0]
@@ -428,6 +428,10 @@ assert not re.search(r"telshevaazan\.(?:nextPrayer|dailySchedule|date\.today|iqa
 assert "static func automaticScheduleDateKey(for date: Date = Date())" in engine_text
 assert "PrayerEngine.automaticScheduleDateKey(for: value)" in content_text
 assert 'dateSummary = isShowingTomorrowSchedule ? "مواقيت الغد' in content_text
+assert "smartPrayerStatusStrip(next: next, activeIqama: activeIqama" in content_text
+assert '"متبقي لأذان \\(prayerTitle)"' in content_text
+assert '"متبقي لإقامة \\(prayerTitle)"' in content_text
+assert "iqamaStatusBand" not in content_text
 
 print("Prayer calendar validation passed")
 print(f"  days: {len(days)}")

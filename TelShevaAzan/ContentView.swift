@@ -393,6 +393,8 @@ struct ContentView: View {
 
             nextPrayerPanel(next: next, previous: previous, activeIqama: activeIqama, compact: compactHeight)
 
+            smartPrayerStatusStrip(next: next, activeIqama: activeIqama, compact: compactHeight)
+
             prayerRows(
                 schedule: schedule,
                 next: next,
@@ -933,6 +935,70 @@ struct ContentView: View {
         )
     }
 
+    private func smartPrayerStatusStrip(
+        next: PrayerTime?,
+        activeIqama: IqamaEvent?,
+        compact: Bool
+    ) -> some View {
+        let presentation = prayerPanelPresentation(next: next, activeIqama: activeIqama)
+        let prayerTitle = presentation.prayer?.title ?? "الصلاة"
+        let statusTitle = activeIqama == nil
+            ? "متبقي لأذان \(prayerTitle)"
+            : "متبقي لإقامة \(prayerTitle)"
+        let statusDetail = activeIqama == nil
+            ? "\(IqamaSchedule.telSheva.locationName) · الأذان \(presentation.time)"
+            : "مسجد \(IqamaSchedule.telSheva.locationName) · الإقامة \(presentation.time)"
+
+        return HStack(spacing: compact ? 8 : 10) {
+            Text(countdownText(until: presentation.countdownTarget))
+                .font(.system(size: compact ? 13 : 15, weight: .black, design: .rounded))
+                .monospacedDigit()
+                .foregroundStyle(activeTheme.accent)
+                .lineLimit(1)
+                .minimumScaleFactor(0.72)
+
+            Spacer(minLength: 8)
+
+            VStack(alignment: .trailing, spacing: 1) {
+                Text(statusTitle)
+                    .font(.system(size: compact ? 11 : 12, weight: .black, design: .rounded))
+                    .foregroundStyle(activeTheme.primaryText)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.76)
+
+                Text(statusDetail)
+                    .font(.system(size: compact ? 8.5 : 9.5, weight: .bold, design: .rounded))
+                    .foregroundStyle(activeTheme.secondaryText.opacity(0.78))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.72)
+            }
+
+            Image(systemName: activeIqama == nil ? "clock.fill" : "person.2.fill")
+                .font(.system(size: compact ? 13 : 14, weight: .black))
+                .foregroundStyle(activeTheme.accent)
+                .symbolRenderingMode(.hierarchical)
+                .frame(width: compact ? 22 : 24, height: compact ? 22 : 24)
+        }
+        .environment(\.layoutDirection, .leftToRight)
+        .padding(.horizontal, compact ? 11 : 13)
+        .frame(maxWidth: .infinity)
+        .frame(height: compact ? 38 : 42)
+        .background(
+            glassSurface(
+                activeTheme.panelBackground.opacity(activeTheme.isNightTheme ? 0.72 : 0.78),
+                radius: 12,
+                prominence: .quiet
+            )
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(activeTheme.accent.opacity(activeTheme.isNightTheme ? 0.28 : 0.22), lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(statusTitle)، \(countdownText(until: presentation.countdownTarget))")
+    }
+
     private func nabawiNextPrayerPanel(
         next: PrayerTime?,
         previous: PrayerTime?,
@@ -974,10 +1040,6 @@ struct ContentView: View {
                 }
 
                 Spacer(minLength: compact ? 1 : 2)
-
-                if let activeIqama {
-                    iqamaStatusBand(event: activeIqama, compact: compact, isNight: isNightCard)
-                }
             }
             .padding(.horizontal, compact ? 13 : 14)
             .padding(.top, compact ? 9 : 10)
@@ -991,47 +1053,6 @@ struct ContentView: View {
                 .stroke(nabawiCardBorder, lineWidth: 1)
         )
         .shadow(color: .black.opacity(isNightCard ? 0.16 : 0.06), radius: 8, y: 4)
-    }
-
-    private func iqamaStatusBand(event: IqamaEvent, compact: Bool, isNight: Bool) -> some View {
-        HStack(spacing: 10) {
-            Text(countdownText(until: event.date))
-                .font(.system(size: compact ? 15 : 17, weight: .black, design: .rounded))
-                .monospacedDigit()
-                .foregroundStyle(nabawiPrimaryText)
-                .lineLimit(1)
-                .minimumScaleFactor(0.68)
-
-            Spacer(minLength: 8)
-
-            VStack(alignment: .trailing, spacing: 2) {
-                Text("متبقي للإقامة")
-                    .font(.caption2.weight(.black))
-                    .foregroundStyle(nabawiSecondaryText)
-                    .lineLimit(1)
-
-                Text("مسجد \(IqamaSchedule.telSheva.locationName) · \(timeText(for: event.date))")
-                    .font(.system(size: 9, weight: .bold, design: .rounded))
-                    .foregroundStyle(nabawiSecondaryText.opacity(0.82))
-                    .lineLimit(1)
-            }
-
-            Image(systemName: "person.2.fill")
-                .font(.system(size: 14, weight: .black))
-                .foregroundStyle(activeTheme.accent)
-        }
-        .environment(\.layoutDirection, .leftToRight)
-        .padding(.horizontal, 11)
-        .frame(maxWidth: .infinity)
-        .frame(height: compact ? 43 : 48)
-        .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(isNight ? Color.black.opacity(0.46) : Color.white.opacity(0.74))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .stroke(Color.white.opacity(isNight ? 0.16 : 0.55), lineWidth: 1)
-        )
     }
 
     private func rtlPrayerProgressBar(progress: Double) -> some View {
@@ -1156,19 +1177,7 @@ struct ContentView: View {
                         .lineLimit(1)
                         .minimumScaleFactor(0.74)
 
-                    if isIqamaActive, let activeIqama {
-                        Text(iqamaRowStatusText(for: activeIqama))
-                            .font(.system(size: 10, weight: .bold, design: .rounded))
-                            .foregroundStyle(activeTheme.secondaryText.opacity(0.88))
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.70)
-                    } else if isActive {
-                        Text(remainingPrayerText(for: next))
-                            .font(.system(size: 10, weight: .bold, design: .rounded))
-                            .foregroundStyle(activeTheme.secondaryText.opacity(0.82))
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.70)
-                    } else if isPrevious {
+                    if isPrevious {
                         Text(elapsedPrayerText(for: previous))
                             .font(.system(size: 10, weight: .bold, design: .rounded))
                             .foregroundStyle(activeTheme.secondaryText.opacity(0.82))
@@ -1466,19 +1475,6 @@ struct ContentView: View {
         let minutes = (seconds % 3600) / 60
         let remainingSeconds = seconds % 60
         return String(format: "%02d:%02d:%02d", hours, minutes, remainingSeconds)
-    }
-
-    private func remainingPrayerText(for next: PrayerTime?) -> String {
-        guard let next else { return "متبقي للصلاة --:--:--" }
-        return "متبقي \(remainingPrayerTarget(for: next.key)) \(countdownText(for: next))"
-    }
-
-    private func remainingIqamaText(for event: IqamaEvent) -> String {
-        "متبقي للإقامة \(countdownText(until: event.date))"
-    }
-
-    private func iqamaRowStatusText(for event: IqamaEvent) -> String {
-        return remainingIqamaText(for: event)
     }
 
     private func elapsedPrayerText(for previous: PrayerTime?) -> String {
