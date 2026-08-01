@@ -940,7 +940,7 @@ struct ContentView: View {
         compact: Bool
     ) -> some View {
         let cornerRadius: CGFloat = compact ? 18 : 20
-        let cardHeight: CGFloat = compact ? 172 : 190
+        let cardHeight: CGFloat = compact ? 180 : 202
         let isNightCard = activeTheme.isNightTheme
         let presentation = prayerPanelPresentation(next: next, activeIqama: activeIqama)
 
