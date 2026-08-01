@@ -1524,6 +1524,10 @@ struct NotificationSettingsView: View {
         switch visualTheme {
         case .daySalatiGlass, .nightSalatiGlass:
             return "النمط الأساسي الحالي"
+        case .dayCrystalGlass:
+            return "بلّور مضيء وضبابية حقيقية"
+        case .nightCrystalGlass:
+            return "بلّور داكن وعمق هادئ"
         case .dayAppleGlass:
             return "زجاج أبيض مع صورة أوضح"
         case .dayOasisGlass:

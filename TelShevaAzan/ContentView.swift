@@ -711,7 +711,41 @@ struct ContentView: View {
 
     private var dockLiquidGlassBase: some View {
         Group {
-            if activeTheme.isGlassTheme {
+            if activeTheme.usesNativeMaterialGlass {
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    .fill(activeTheme.isNightTheme ? Material.thin : Material.ultraThin)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 22, style: .continuous)
+                            .fill(dockGlassTint.opacity(activeTheme.isNightTheme ? 0.72 : 0.46))
+                    )
+                    .overlay(
+                        LinearGradient(
+                            colors: [
+                                Color.white.opacity(activeTheme.isNightTheme ? 0.20 : 0.72),
+                                Color.white.opacity(activeTheme.isNightTheme ? 0.05 : 0.20),
+                                activeTheme.accent.opacity(activeTheme.isNightTheme ? 0.08 : 0.06)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 22, style: .continuous)
+                            .stroke(
+                                LinearGradient(
+                                    colors: [
+                                        Color.white.opacity(activeTheme.isNightTheme ? 0.42 : 0.96),
+                                        activeTheme.accent.opacity(activeTheme.isNightTheme ? 0.20 : 0.12),
+                                        Color.white.opacity(activeTheme.isNightTheme ? 0.12 : 0.52)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 0.9
+                            )
+                    )
+            } else if activeTheme.isGlassTheme {
                 RoundedRectangle(cornerRadius: 22, style: .continuous)
                     .fill(dockGlassTint)
                     .overlay(
@@ -1274,7 +1308,7 @@ struct ContentView: View {
     }
 
     private var usesNabawiPrayerCard: Bool {
-        activeTheme == .dayAppleGlass || activeTheme == .dayOasisGlass || activeTheme == .nightAppleGlass || activeTheme == .nightSakinaGlass || activeTheme == .daySalatiGlass || activeTheme == .nightSalatiGlass
+        activeTheme == .dayAppleGlass || activeTheme == .dayOasisGlass || activeTheme == .nightAppleGlass || activeTheme == .nightSakinaGlass || activeTheme == .daySalatiGlass || activeTheme == .nightSalatiGlass || activeTheme == .dayCrystalGlass || activeTheme == .nightCrystalGlass
     }
 
     private var nabawiPrimaryText: Color {

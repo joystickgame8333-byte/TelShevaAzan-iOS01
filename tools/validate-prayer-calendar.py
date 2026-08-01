@@ -32,6 +32,7 @@ WIDGET_LOCK_SCREEN_PATH = ROOT / "TelShevaAzanWidget" / "SalatiLockScreenViews.s
 WIDGET_THEME_PATH = ROOT / "TelShevaAzanWidget" / "SalatiWidgetTheme.swift"
 WIDGET_REFRESH_PATH = ROOT / "TelShevaAzan" / "WidgetRefreshCenter.swift"
 THEME_PATH = ROOT / "TelShevaAzan" / "AppTheme.swift"
+GLASS_DESIGN_PATH = ROOT / "TelShevaAzan" / "GlassDesign.swift"
 PRAYERS = ("fajr", "sunrise", "dhuhr", "asr", "maghrib", "isha")
 EXPECTED_DAYS_SHA256 = "85406025fe86fcc9be99e3797d6b2f9215575887eaa9826542442d8077c1a7d9"
 
@@ -326,6 +327,7 @@ widget_lock_screen_text = WIDGET_LOCK_SCREEN_PATH.read_text(encoding="utf-8")
 widget_theme_text = WIDGET_THEME_PATH.read_text(encoding="utf-8")
 widget_refresh_text = WIDGET_REFRESH_PATH.read_text(encoding="utf-8")
 theme_text = THEME_PATH.read_text(encoding="utf-8")
+glass_design_text = GLASS_DESIGN_PATH.read_text(encoding="utf-8")
 assert "prayer.key != .sunrise" in widget_data_text
 assert "PrayerEngine.automaticScheduleDateKey(for: date)" in widget_data_text
 assert "IqamaSchedule.telSheva.activeEvent(at: date)" in widget_data_text
@@ -432,6 +434,15 @@ assert "smartPrayerStatusStrip(next: next, activeIqama: activeIqama" in content_
 assert '"متبقي لأذان \\(prayerTitle)"' in content_text
 assert '"متبقي لإقامة \\(prayerTitle)"' in content_text
 assert "iqamaStatusBand" not in content_text
+assert "case nightCrystalGlass" in theme_text
+assert "case dayCrystalGlass" in theme_text
+assert "var usesNativeMaterialGlass: Bool" in theme_text
+assert ".nightCrystalGlass" in theme_text.split("static let nightChoices", 1)[1].split("\n", 1)[0]
+assert ".dayCrystalGlass" in theme_text.split("static let dayChoices", 1)[1].split("\n", 1)[0]
+assert "theme.usesNativeMaterialGlass" in glass_design_text
+assert "Material.thin" in glass_design_text
+assert "Material.ultraThin" in glass_design_text
+assert "activeTheme.usesNativeMaterialGlass" in content_text
 
 print("Prayer calendar validation passed")
 print(f"  days: {len(days)}")
