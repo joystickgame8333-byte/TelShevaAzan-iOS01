@@ -15,9 +15,7 @@ struct QuranView: View {
             let compact = proxy.size.height < 720
 
             ZStack {
-                if !isEmbedded {
-                    ThemeBackdrop(theme: theme)
-                }
+                QuranReadingBackdrop(theme: theme)
 
                 VStack(spacing: compact ? 8 : 10) {
                     header(compact: compact)
@@ -49,6 +47,7 @@ struct QuranView: View {
             if case .loaded(let payload) = store.state {
                 QuranSurahPicker(
                     surahs: payload.surahs,
+                    currentPage: currentPageNumber,
                     theme: theme
                 ) { page in
                     currentPageNumber = page
@@ -59,10 +58,10 @@ struct QuranView: View {
     }
 
     private func header(compact: Bool) -> some View {
-        HStack(alignment: .top, spacing: 12) {
+        ZStack(alignment: .topLeading) {
             VStack(alignment: .trailing, spacing: 2) {
                 Text("القرآن الكريم")
-                    .font(.system(size: compact ? 28 : 32, weight: .black, design: .rounded))
+                    .font(.system(size: compact ? 27 : 30, weight: .black, design: .rounded))
                     .lineLimit(1)
                     .frame(maxWidth: .infinity, alignment: .trailing)
 
@@ -73,8 +72,9 @@ struct QuranView: View {
                     .minimumScaleFactor(0.75)
                     .frame(maxWidth: .infinity, alignment: .trailing)
             }
-
-            Spacer(minLength: 8)
+            .padding(.leading, 54)
+            .frame(maxWidth: .infinity, alignment: .trailing)
+            .environment(\.layoutDirection, .rightToLeft)
 
             Button {
                 if isEmbedded {
@@ -96,7 +96,8 @@ struct QuranView: View {
             .buttonStyle(.plain)
             .accessibilityLabel(isEmbedded ? "فهرس السور" : "إغلاق")
         }
-        .frame(maxWidth: .infinity, alignment: .topTrailing)
+        .frame(maxWidth: .infinity, minHeight: compact ? 46 : 50, alignment: .topTrailing)
+        .environment(\.layoutDirection, .leftToRight)
     }
 
     private var loadingView: some View {
@@ -129,12 +130,22 @@ struct QuranView: View {
     private func reader(payload: QuranPayload, compact: Bool) -> some View {
         let safePageNumber = min(max(currentPageNumber, 1), payload.pages.count)
         let page = payload.pages[safePageNumber - 1]
-        let primarySurah = payload.surahs.first { page.surahIDs.contains($0.id) }
+        let pageSurahNames = payload.surahs
+            .filter { page.surahIDs.contains($0.id) }
+            .map(\.name)
+        let pageTitle: String
+        if pageSurahNames.count == 1, let onlyName = pageSurahNames.first {
+            pageTitle = "سورة \(onlyName)"
+        } else if pageSurahNames.isEmpty {
+            pageTitle = "القرآن الكريم"
+        } else {
+            pageTitle = pageSurahNames.joined(separator: " • ")
+        }
 
         return VStack(spacing: compact ? 7 : 9) {
             readerToolbar(
                 page: page,
-                surahName: primarySurah?.name ?? "القرآن الكريم",
+                pageTitle: pageTitle,
                 compact: compact
             )
 
@@ -154,12 +165,12 @@ struct QuranView: View {
 
     private func readerToolbar(
         page: QuranPage,
-        surahName: String,
+        pageTitle: String,
         compact: Bool
     ) -> some View {
         HStack(spacing: 10) {
             VStack(alignment: .trailing, spacing: 1) {
-                Text("سورة \(surahName)")
+                Text(pageTitle)
                     .font(.system(size: compact ? 15 : 17, weight: .black, design: .rounded))
                     .lineLimit(1)
                 Text("الجزء \(page.juz)")
@@ -200,14 +211,19 @@ struct QuranView: View {
     }
 
     private func pageControls(totalPages: Int, compact: Bool) -> some View {
+        let canMoveForward = currentPageNumber < totalPages
+        let canMoveBackward = currentPageNumber > 1
+
         HStack(spacing: 12) {
             Button {
                 movePage(by: 1, totalPages: totalPages)
             } label: {
-                Image(systemName: "chevron.right")
+                Image(systemName: "chevron.left")
                     .frame(width: 38, height: compact ? 34 : 38)
             }
-            .disabled(currentPageNumber >= totalPages)
+            .disabled(!canMoveForward)
+            .opacity(canMoveForward ? 1 : 0.24)
+            .accessibilityLabel("الصفحة التالية")
 
             Spacer(minLength: 0)
 
@@ -221,10 +237,12 @@ struct QuranView: View {
             Button {
                 movePage(by: -1, totalPages: totalPages)
             } label: {
-                Image(systemName: "chevron.left")
+                Image(systemName: "chevron.right")
                     .frame(width: 38, height: compact ? 34 : 38)
             }
-            .disabled(currentPageNumber <= 1)
+            .disabled(!canMoveBackward)
+            .opacity(canMoveBackward ? 1 : 0.24)
+            .accessibilityLabel("الصفحة السابقة")
         }
         .font(.system(size: 14, weight: .black))
         .foregroundStyle(theme.accent)
@@ -232,6 +250,7 @@ struct QuranView: View {
         .frame(height: compact ? 36 : 40)
         .background(surface(theme.controlBackground, radius: 12, prominence: .quiet))
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .environment(\.layoutDirection, .leftToRight)
     }
 
     private func pageSwipe(totalPages: Int) -> some Gesture {
@@ -289,12 +308,7 @@ private struct QuranPageCard: View {
             .frame(width: proxy.size.width, height: proxy.size.height)
         }
         .background(
-            ThemeGlassSurface(
-                theme: theme,
-                base: theme.panelBackground,
-                cornerRadius: 16,
-                prominence: .strong
-            )
+            QuranPageBackground(theme: theme)
         )
         .overlay(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
@@ -309,35 +323,106 @@ private struct QuranPageCard: View {
     private func lineView(_ line: QuranPageLine, availableWidth: CGFloat) -> some View {
         switch line.kind {
         case .surah:
-            Text(line.text)
-                .font(.system(size: compact ? 13 : 15, weight: .black, design: .rounded))
-                .foregroundStyle(theme.primaryText)
-                .frame(maxWidth: min(availableWidth, 300))
-                .padding(.vertical, 3)
-                .background(
-                    Capsule(style: .continuous)
-                        .fill(theme.accent.opacity(theme.isNightTheme ? 0.18 : 0.11))
-                )
-                .overlay(
-                    Capsule(style: .continuous)
-                        .stroke(theme.accent.opacity(0.30), lineWidth: 0.7)
-                )
+            HStack(spacing: 9) {
+                Rectangle()
+                    .fill(theme.accent.opacity(0.42))
+                    .frame(height: 0.8)
+
+                Image(systemName: "diamond.fill")
+                    .font(.system(size: 5, weight: .black))
+                    .foregroundStyle(theme.accent)
+
+                Text(line.text)
+                    .font(.system(size: compact ? 15 : 17, weight: .black, design: .rounded))
+                    .foregroundStyle(theme.primaryText)
+                    .lineLimit(1)
+
+                Image(systemName: "diamond.fill")
+                    .font(.system(size: 5, weight: .black))
+                    .foregroundStyle(theme.accent)
+
+                Rectangle()
+                    .fill(theme.accent.opacity(0.42))
+                    .frame(height: 0.8)
+            }
+            .frame(maxWidth: min(availableWidth, 320))
+            .padding(.horizontal, 10)
+            .padding(.vertical, 4)
+            .background(
+                RoundedRectangle(cornerRadius: 9, style: .continuous)
+                    .fill(theme.accent.opacity(theme.isNightTheme ? 0.09 : 0.07))
+            )
         case .bismillah:
             Text(line.text)
-                .font(.custom("Amiri Quran", size: compact ? 15 : 17))
-                .foregroundStyle(theme.primaryText)
+                .font(.custom("Amiri Quran", size: compact ? 18 : 20))
+                .foregroundStyle(theme.primaryText.opacity(0.98))
                 .lineLimit(1)
-                .minimumScaleFactor(0.78)
+                .minimumScaleFactor(0.76)
                 .frame(maxWidth: .infinity, alignment: .center)
         case .text:
             Text(line.text)
-                .font(.custom("Amiri Quran", size: compact ? 15.5 : 17.5))
-                .foregroundStyle(theme.primaryText)
+                .font(.custom("Amiri Quran", size: compact ? 18.5 : 20.5))
+                .foregroundStyle(theme.primaryText.opacity(0.98))
                 .lineLimit(1)
-                .minimumScaleFactor(0.60)
+                .minimumScaleFactor(0.68)
                 .allowsTightening(true)
                 .frame(maxWidth: .infinity, alignment: .center)
         }
+    }
+}
+
+private struct QuranReadingBackdrop: View {
+    let theme: PrayerVisualTheme
+
+    var body: some View {
+        ThemeBackdrop(theme: theme)
+            .overlay {
+                RadialGradient(
+                    colors: [
+                        theme.accent.opacity(theme.isNightTheme ? 0.10 : 0.08),
+                        Color.clear
+                    ],
+                    center: .topTrailing,
+                    startRadius: 0,
+                    endRadius: 360
+                )
+            }
+            .ignoresSafeArea()
+    }
+}
+
+private struct QuranPageBackground: View {
+    let theme: PrayerVisualTheme
+
+    var body: some View {
+        let shape = RoundedRectangle(cornerRadius: 16, style: .continuous)
+
+        shape
+            .fill(theme.panelBackground)
+            .overlay {
+                shape.fill(
+                    LinearGradient(
+                        colors: theme.isNightTheme
+                            ? [
+                                Color.white.opacity(0.035),
+                                theme.accent.opacity(0.045),
+                                Color.black.opacity(0.08)
+                            ]
+                            : [
+                                Color.white.opacity(0.72),
+                                theme.accent.opacity(0.035),
+                                Color.white.opacity(0.32)
+                            ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+            }
+            .shadow(
+                color: Color.black.opacity(theme.isNightTheme ? 0.20 : 0.07),
+                radius: 12,
+                y: 5
+            )
     }
 }
 
@@ -346,6 +431,7 @@ private struct QuranSurahPicker: View {
     @State private var query = ""
 
     let surahs: [QuranSurah]
+    let currentPage: Int
     let theme: PrayerVisualTheme
     let onSelect: (Int) -> Void
 
@@ -358,56 +444,153 @@ private struct QuranSurahPicker: View {
     }
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                ThemeBackdrop(theme: theme)
+        ZStack {
+            QuranReadingBackdrop(theme: theme)
+
+            VStack(spacing: 12) {
+                pickerHeader
+                    .padding(.horizontal, 18)
+                    .padding(.top, 12)
+
+                searchField
+                    .padding(.horizontal, 18)
 
                 List(filteredSurahs) { surah in
-                    Button {
-                        onSelect(surah.startPage)
-                    } label: {
-                        HStack(spacing: 12) {
-                            Text("\(surah.id)")
-                                .font(.caption.weight(.black))
-                                .foregroundStyle(theme.accent)
-                                .frame(width: 30, height: 30)
-                                .background(Circle().fill(theme.accent.opacity(0.12)))
-
-                            VStack(alignment: .trailing, spacing: 3) {
-                                Text("سورة \(surah.name)")
-                                    .font(.headline.weight(.black))
-                                    .foregroundStyle(theme.primaryText)
-                                Text("\(surah.revelationTitle) • \(surah.verses) آية")
-                                    .font(.caption.weight(.semibold))
-                                    .foregroundStyle(theme.secondaryText)
-                            }
-
-                            Spacer(minLength: 8)
-
-                            Text("ص \(surah.startPage)")
-                                .font(.caption.weight(.bold))
-                                .foregroundStyle(theme.secondaryText)
-                        }
-                        .padding(.vertical, 5)
-                    }
-                    .listRowBackground(theme.controlBackground)
+                    surahRow(surah)
+                        .listRowInsets(
+                            EdgeInsets(top: 4, leading: 14, bottom: 4, trailing: 14)
+                        )
+                        .listRowSeparator(.hidden)
+                        .listRowBackground(Color.clear)
                 }
-                .scrollContentBackground(.hidden)
                 .listStyle(.plain)
-            }
-            .navigationTitle("فهرس السور")
-            .navigationBarTitleDisplayMode(.inline)
-            .searchable(text: $query, prompt: "ابحث عن سورة")
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("إغلاق") {
-                        dismiss()
-                    }
-                    .fontWeight(.bold)
+                .scrollContentBackground(.hidden)
+                .environment(\.defaultMinListRowHeight, 1)
+                .safeAreaInset(edge: .bottom) {
+                    Color.clear.frame(height: 22)
                 }
             }
         }
         .environment(\.layoutDirection, .rightToLeft)
         .tint(theme.accent)
+        .presentationDragIndicator(.visible)
+    }
+
+    private var pickerHeader: some View {
+        ZStack(alignment: .topLeading) {
+            VStack(alignment: .trailing, spacing: 2) {
+                Text("فهرس السور")
+                    .font(.system(size: 27, weight: .black, design: .rounded))
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+
+                Text("اختر السورة للانتقال إلى بدايتها")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(theme.secondaryText)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+            }
+            .padding(.leading, 76)
+            .environment(\.layoutDirection, .rightToLeft)
+
+            Button("إغلاق") {
+                dismiss()
+            }
+            .font(.callout.weight(.black))
+            .foregroundStyle(theme.accent)
+            .frame(height: 40)
+        }
+        .frame(maxWidth: .infinity, minHeight: 46, alignment: .topTrailing)
+        .environment(\.layoutDirection, .leftToRight)
+    }
+
+    private var searchField: some View {
+        HStack(spacing: 9) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 17, weight: .bold))
+                .foregroundStyle(theme.secondaryText.opacity(0.74))
+
+            TextField("ابحث عن سورة", text: $query)
+                .font(.body.weight(.semibold))
+                .multilineTextAlignment(.trailing)
+                .textInputAutocapitalization(.never)
+                .disableAutocorrection(true)
+        }
+        .padding(.horizontal, 13)
+        .frame(height: 44)
+        .background(
+            ThemeGlassSurface(
+                theme: theme,
+                base: theme.controlBackground,
+                cornerRadius: 12,
+                prominence: .quiet
+            )
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(theme.controlBorder, lineWidth: 0.8)
+        )
+    }
+
+    private func surahRow(_ surah: QuranSurah) -> some View {
+        let isCurrent = currentPage >= surah.startPage && currentPage <= surah.endPage
+
+        return Button {
+            onSelect(surah.startPage)
+        } label: {
+            HStack(spacing: 11) {
+                Text("\(surah.id)")
+                    .font(.caption.weight(.black))
+                    .foregroundStyle(isCurrent ? Color.white : theme.accent)
+                    .frame(width: 30, height: 30)
+                    .background(
+                        Circle().fill(isCurrent ? theme.accent : theme.accent.opacity(0.12))
+                    )
+
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text("سورة \(surah.name)")
+                        .font(.system(size: 17, weight: .black, design: .rounded))
+                        .foregroundStyle(theme.primaryText)
+                        .lineLimit(1)
+
+                    HStack(spacing: 5) {
+                        Text("\(surah.revelationTitle) • \(surah.verses) آية")
+                        if isCurrent {
+                            Text("• تقرأ الآن")
+                                .foregroundStyle(theme.accent)
+                        }
+                    }
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(theme.secondaryText)
+                    .lineLimit(1)
+                }
+
+                Spacer(minLength: 6)
+
+                Text("ص \(surah.startPage)")
+                    .font(.caption.weight(.black))
+                    .foregroundStyle(isCurrent ? theme.accent : theme.secondaryText)
+                    .monospacedDigit()
+            }
+            .padding(.horizontal, 12)
+            .frame(height: 58)
+            .frame(maxWidth: .infinity)
+            .background(
+                RoundedRectangle(cornerRadius: 13, style: .continuous)
+                    .fill(
+                        isCurrent
+                            ? theme.accent.opacity(theme.isNightTheme ? 0.16 : 0.10)
+                            : theme.controlBackground
+                    )
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 13, style: .continuous)
+                    .stroke(
+                        isCurrent ? theme.accent.opacity(0.55) : theme.controlBorder,
+                        lineWidth: isCurrent ? 1.1 : 0.7
+                    )
+            )
+            .contentShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("سورة \(surah.name)، صفحة \(surah.startPage)")
     }
 }

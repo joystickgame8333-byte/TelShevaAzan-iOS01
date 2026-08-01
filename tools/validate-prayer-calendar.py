@@ -256,8 +256,18 @@ assert ".environment(\\.layoutDirection, .rightToLeft)" in quran_view_text
 assert "bottomReservedHeight + 8" in quran_view_text
 assert "QuranPageCard" in quran_view_text
 assert "QuranSurahPicker" in quran_view_text
+assert "QuranReadingBackdrop" in quran_view_text
+assert "QuranPageBackground" in quran_view_text
 assert '@AppStorage("quran.lastPage")' in quran_view_text
 assert 'font(.custom("Amiri Quran"' in quran_view_text
+assert 'Image(systemName: "chevron.left")' in quran_view_text
+assert 'movePage(by: 1, totalPages: totalPages)' in quran_view_text
+assert '.accessibilityLabel("الصفحة التالية")' in quran_view_text
+assert 'Image(systemName: "chevron.right")' in quran_view_text
+assert 'movePage(by: -1, totalPages: totalPages)' in quran_view_text
+assert '.accessibilityLabel("الصفحة السابقة")' in quran_view_text
+assert 'Text("• تقرأ الآن")' in quran_view_text
+assert '.safeAreaInset(edge: .bottom)' in quran_view_text
 assert "AVFoundation" not in quran_view_text
 assert "AVPlayer" not in quran_view_text
 assert "Data(contentsOf: url, options: .mappedIfSafe)" in quran_model_text
