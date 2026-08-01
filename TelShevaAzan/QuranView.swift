@@ -65,8 +65,8 @@ struct QuranView: View {
         }
         .fullScreenCover(item: $readerPresentation) { presentation in
             QuranMushafReader(
-                payload: presentation.payload,
                 currentPageNumber: $currentPageNumber,
+                payload: presentation.payload,
                 theme: theme
             )
         }
