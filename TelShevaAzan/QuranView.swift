@@ -58,24 +58,7 @@ struct QuranView: View {
     }
 
     private func header(compact: Bool) -> some View {
-        ZStack(alignment: .topLeading) {
-            VStack(alignment: .trailing, spacing: 2) {
-                Text("القرآن الكريم")
-                    .font(.system(size: compact ? 27 : 30, weight: .black, design: .rounded))
-                    .lineLimit(1)
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-
-                Text("المصحف الشريف • رواية حفص")
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(theme.accent)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.75)
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-            }
-            .padding(.leading, 54)
-            .frame(maxWidth: .infinity, alignment: .trailing)
-            .environment(\.layoutDirection, .rightToLeft)
-
+        HStack(alignment: .top, spacing: 12) {
             Button {
                 if isEmbedded {
                     showsSurahPicker = true
@@ -95,6 +78,26 @@ struct QuranView: View {
             }
             .buttonStyle(.plain)
             .accessibilityLabel(isEmbedded ? "فهرس السور" : "إغلاق")
+
+            Spacer(minLength: 8)
+
+            VStack(alignment: .trailing, spacing: 2) {
+                Text("القرآن الكريم")
+                    .font(.system(size: compact ? 27 : 30, weight: .black, design: .rounded))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.82)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+
+                Text("المصحف الشريف • رواية حفص")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(theme.accent)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+            }
+            .layoutPriority(1)
+            .frame(maxWidth: .infinity, alignment: .trailing)
+            .environment(\.layoutDirection, .rightToLeft)
         }
         .frame(maxWidth: .infinity, minHeight: compact ? 46 : 50, alignment: .topTrailing)
         .environment(\.layoutDirection, .leftToRight)
@@ -297,14 +300,26 @@ private struct QuranPageCard: View {
 
     var body: some View {
         GeometryReader { proxy in
+            let horizontalPadding: CGFloat = compact ? 10 : 12
+            let verticalPadding: CGFloat = compact ? 7 : 9
+            let availableHeight = max(proxy.size.height - (verticalPadding * 2), 1)
+            let lineHeight = availableHeight / CGFloat(max(page.lines.count, 1))
+            let maximumTextSize: CGFloat = page.lines.count <= 10 ? 22 : 18.5
+            let textSize = min(maximumTextSize, max(13.5, lineHeight * 0.53))
+
             VStack(spacing: 0) {
                 ForEach(page.lines) { line in
-                    lineView(line, availableWidth: proxy.size.width - 28)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    lineView(
+                        line,
+                        availableWidth: proxy.size.width - (horizontalPadding * 2),
+                        textSize: textSize
+                    )
+                    .frame(maxWidth: .infinity)
+                    .frame(height: lineHeight)
                 }
             }
-            .padding(.horizontal, compact ? 10 : 12)
-            .padding(.vertical, compact ? 9 : 11)
+            .padding(.horizontal, horizontalPadding)
+            .padding(.vertical, verticalPadding)
             .frame(width: proxy.size.width, height: proxy.size.height)
         }
         .background(
@@ -320,51 +335,61 @@ private struct QuranPageCard: View {
     }
 
     @ViewBuilder
-    private func lineView(_ line: QuranPageLine, availableWidth: CGFloat) -> some View {
+    private func lineView(
+        _ line: QuranPageLine,
+        availableWidth: CGFloat,
+        textSize: CGFloat
+    ) -> some View {
         switch line.kind {
         case .surah:
-            HStack(spacing: 9) {
-                Rectangle()
-                    .fill(theme.accent.opacity(0.42))
-                    .frame(height: 0.8)
+            ZStack {
+                HStack(spacing: 8) {
+                    Rectangle()
+                        .fill(theme.accent.opacity(0.34))
+                        .frame(height: 0.8)
 
-                Image(systemName: "diamond.fill")
-                    .font(.system(size: 5, weight: .black))
-                    .foregroundStyle(theme.accent)
+                    Image(systemName: "diamond.fill")
+                        .font(.system(size: 4, weight: .black))
+                        .foregroundStyle(theme.accent)
+
+                    Spacer(minLength: 72)
+
+                    Image(systemName: "diamond.fill")
+                        .font(.system(size: 4, weight: .black))
+                        .foregroundStyle(theme.accent)
+
+                    Rectangle()
+                        .fill(theme.accent.opacity(0.34))
+                        .frame(height: 0.8)
+                }
 
                 Text(line.text)
-                    .font(.system(size: compact ? 15 : 17, weight: .black, design: .rounded))
+                    .font(.system(size: min(textSize, compact ? 15.5 : 17), weight: .black, design: .rounded))
                     .foregroundStyle(theme.primaryText)
                     .lineLimit(1)
-
-                Image(systemName: "diamond.fill")
-                    .font(.system(size: 5, weight: .black))
-                    .foregroundStyle(theme.accent)
-
-                Rectangle()
-                    .fill(theme.accent.opacity(0.42))
-                    .frame(height: 0.8)
+                    .minimumScaleFactor(0.72)
+                    .padding(.horizontal, 12)
+                    .background(theme.panelBackground)
             }
-            .frame(maxWidth: min(availableWidth, 320))
-            .padding(.horizontal, 10)
-            .padding(.vertical, 4)
+            .frame(maxWidth: min(availableWidth, 340))
+            .padding(.horizontal, 8)
             .background(
                 RoundedRectangle(cornerRadius: 9, style: .continuous)
                     .fill(theme.accent.opacity(theme.isNightTheme ? 0.09 : 0.07))
             )
         case .bismillah:
             Text(line.text)
-                .font(.custom("Amiri Quran", size: compact ? 18 : 20))
+                .font(.custom("Amiri Quran", size: min(textSize + 0.5, 19)))
                 .foregroundStyle(theme.primaryText.opacity(0.98))
                 .lineLimit(1)
-                .minimumScaleFactor(0.76)
+                .minimumScaleFactor(0.72)
                 .frame(maxWidth: .infinity, alignment: .center)
         case .text:
             Text(line.text)
-                .font(.custom("Amiri Quran", size: compact ? 18.5 : 20.5))
+                .font(.custom("Amiri Quran", size: textSize))
                 .foregroundStyle(theme.primaryText.opacity(0.98))
                 .lineLimit(1)
-                .minimumScaleFactor(0.68)
+                .minimumScaleFactor(0.62)
                 .allowsTightening(true)
                 .frame(maxWidth: .infinity, alignment: .center)
         }
@@ -477,26 +502,32 @@ private struct QuranSurahPicker: View {
     }
 
     private var pickerHeader: some View {
-        ZStack(alignment: .topLeading) {
-            VStack(alignment: .trailing, spacing: 2) {
-                Text("فهرس السور")
-                    .font(.system(size: 27, weight: .black, design: .rounded))
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-
-                Text("اختر السورة للانتقال إلى بدايتها")
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(theme.secondaryText)
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-            }
-            .padding(.leading, 76)
-            .environment(\.layoutDirection, .rightToLeft)
-
+        HStack(alignment: .top, spacing: 12) {
             Button("إغلاق") {
                 dismiss()
             }
             .font(.callout.weight(.black))
             .foregroundStyle(theme.accent)
             .frame(height: 40)
+
+            Spacer(minLength: 8)
+
+            VStack(alignment: .trailing, spacing: 2) {
+                Text("فهرس السور")
+                    .font(.system(size: 27, weight: .black, design: .rounded))
+                    .lineLimit(1)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+
+                Text("اختر السورة للانتقال إلى بدايتها")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(theme.secondaryText)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.78)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+            }
+            .layoutPriority(1)
+            .frame(maxWidth: .infinity, alignment: .trailing)
+            .environment(\.layoutDirection, .rightToLeft)
         }
         .frame(maxWidth: .infinity, minHeight: 46, alignment: .topTrailing)
         .environment(\.layoutDirection, .leftToRight)
