@@ -25,8 +25,8 @@ targets:
       properties:
         CFBundleDisplayName: صلاتي
         CFBundlePackageType: APPL
-        CFBundleShortVersionString: "0.6.86"
-        CFBundleVersion: "179"
+        CFBundleShortVersionString: "0.6.87"
+        CFBundleVersion: "180"
         CFBundleURLTypes:
           - CFBundleURLName: com.omaralasam.telshevaazan
             CFBundleURLSchemes:
@@ -118,8 +118,8 @@ targets:
       properties:
         CFBundleDisplayName: صلاتي
         CFBundlePackageType: XPC!
-        CFBundleShortVersionString: "0.6.86"
-        CFBundleVersion: "179"
+        CFBundleShortVersionString: "0.6.87"
+        CFBundleVersion: "180"
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
     settings:
@@ -152,8 +152,8 @@ targets:
       properties:
         CFBundleDisplayName: صلاتي
         CFBundlePackageType: APPL
-        CFBundleShortVersionString: "0.6.86"
-        CFBundleVersion: "179"
+        CFBundleShortVersionString: "0.6.87"
+        CFBundleVersion: "180"
         WKApplication: true
         WKCompanionAppBundleIdentifier: com.omaralasam.telshevaazan.76XJH357A8
         WKRunsIndependentlyOfCompanionApp: true
@@ -188,8 +188,8 @@ targets:
       properties:
         CFBundleDisplayName: صلاتي
         CFBundlePackageType: XPC!
-        CFBundleShortVersionString: "0.6.86"
-        CFBundleVersion: "179"
+        CFBundleShortVersionString: "0.6.87"
+        CFBundleVersion: "180"
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
         NSPrincipalClass: ""

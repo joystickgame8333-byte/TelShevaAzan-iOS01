@@ -1,10 +1,18 @@
 import SwiftUI
 
+private struct QuranReaderPresentation: Identifiable {
+    let payload: QuranPayload
+    let page: Int
+
+    var id: Int { page }
+}
+
 struct QuranView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var store = QuranStore()
     @AppStorage("quran.lastPage") private var currentPageNumber = 1
     @State private var showsSurahPicker = false
+    @State private var readerPresentation: QuranReaderPresentation?
 
     let theme: PrayerVisualTheme
     var isEmbedded = false
@@ -54,6 +62,13 @@ struct QuranView: View {
                     showsSurahPicker = false
                 }
             }
+        }
+        .fullScreenCover(item: $readerPresentation) { presentation in
+            QuranMushafReader(
+                payload: presentation.payload,
+                currentPageNumber: $currentPageNumber,
+                theme: theme
+            )
         }
     }
 
@@ -149,6 +164,7 @@ struct QuranView: View {
             readerToolbar(
                 page: page,
                 pageTitle: pageTitle,
+                payload: payload,
                 compact: compact
             )
 
@@ -156,6 +172,10 @@ struct QuranView: View {
                 .id(page.number)
                 .transition(.opacity)
                 .gesture(pageSwipe(totalPages: payload.pages.count))
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    readerPresentation = QuranReaderPresentation(payload: payload, page: page.number)
+                }
 
             pageControls(totalPages: payload.pages.count, compact: compact)
         }
@@ -169,6 +189,7 @@ struct QuranView: View {
     private func readerToolbar(
         page: QuranPage,
         pageTitle: String,
+        payload: QuranPayload,
         compact: Bool
     ) -> some View {
         HStack(spacing: 10) {
@@ -183,25 +204,43 @@ struct QuranView: View {
 
             Spacer(minLength: 8)
 
-            Button {
-                showsSurahPicker = true
-            } label: {
-                HStack(spacing: 5) {
-                    Image(systemName: "books.vertical.fill")
-                    Text("الفهرس")
+            HStack(spacing: 6) {
+                Button {
+                    readerPresentation = QuranReaderPresentation(payload: payload, page: page.number)
+                } label: {
+                    Image(systemName: "arrow.up.left.and.arrow.down.right")
+                        .font(.system(size: 13, weight: .black))
+                        .frame(width: 34, height: 34)
+                        .background(surface(theme.controlBackground, radius: 10, prominence: .quiet))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                .stroke(theme.controlBorder, lineWidth: 0.8)
+                        )
                 }
-                .font(.caption.weight(.black))
-                .foregroundStyle(theme.accent)
-                .padding(.horizontal, 10)
-                .frame(height: 34)
-                .background(surface(theme.controlBackground, radius: 10, prominence: .quiet))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .stroke(theme.controlBorder, lineWidth: 0.8)
-                )
+                .buttonStyle(.plain)
+                .accessibilityLabel("فتح وضع المصحف الكامل")
+
+                Button {
+                    showsSurahPicker = true
+                } label: {
+                    HStack(spacing: 5) {
+                        Image(systemName: "books.vertical.fill")
+                        Text("الفهرس")
+                    }
+                    .font(.caption.weight(.black))
+                    .padding(.horizontal, 9)
+                    .frame(height: 34)
+                    .background(surface(theme.controlBackground, radius: 10, prominence: .quiet))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .stroke(theme.controlBorder, lineWidth: 0.8)
+                    )
+                }
+                .buttonStyle(.plain)
+                .accessibilityHint("الانتقال إلى سورة أو صفحة")
             }
-            .buttonStyle(.plain)
-            .accessibilityHint("الانتقال إلى سورة أو صفحة")
+            .foregroundStyle(theme.accent)
+            .environment(\.layoutDirection, .leftToRight)
         }
         .padding(.horizontal, 12)
         .frame(maxWidth: .infinity)
@@ -451,7 +490,7 @@ private struct QuranPageBackground: View {
     }
 }
 
-private struct QuranSurahPicker: View {
+struct QuranSurahPicker: View {
     @Environment(\.dismiss) private var dismiss
     @State private var query = ""
 

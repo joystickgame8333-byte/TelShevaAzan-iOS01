@@ -17,6 +17,7 @@ NOTIFICATIONS_PATH = ROOT / "TelShevaAzan" / "PrayerNotificationManager.swift"
 NOTIFICATION_SETTINGS_PATH = ROOT / "TelShevaAzan" / "NotificationSettingsView.swift"
 CONTENT_PATH = ROOT / "TelShevaAzan" / "ContentView.swift"
 QURAN_VIEW_PATH = ROOT / "TelShevaAzan" / "QuranView.swift"
+QURAN_MUSHAF_READER_PATH = ROOT / "TelShevaAzan" / "QuranMushafReader.swift"
 QURAN_DATA_MODEL_PATH = ROOT / "TelShevaAzan" / "QuranData.swift"
 QURAN_DATA_PATH = ROOT / "TelShevaAzan" / "Resources" / "Quran" / "quran-pages-v1.json"
 QURAN_RADIO_PLAYER_PATH = ROOT / "TelShevaAzan" / "QuranRadioPlayer.swift"
@@ -250,6 +251,7 @@ assert 'return "القرآن"' in content_text
 assert "CGFloat(60) + dockBottomPadding" in content_text, "Tabs must reserve only the dock's real height"
 
 quran_view_text = QURAN_VIEW_PATH.read_text(encoding="utf-8")
+quran_mushaf_reader_text = QURAN_MUSHAF_READER_PATH.read_text(encoding="utf-8")
 quran_model_text = QURAN_DATA_MODEL_PATH.read_text(encoding="utf-8")
 quran_payload = json.loads(QURAN_DATA_PATH.read_text(encoding="utf-8"))
 assert ".environment(\\.layoutDirection, .rightToLeft)" in quran_view_text
@@ -258,6 +260,8 @@ assert "QuranPageCard" in quran_view_text
 assert "QuranSurahPicker" in quran_view_text
 assert "QuranReadingBackdrop" in quran_view_text
 assert "QuranPageBackground" in quran_view_text
+assert ".fullScreenCover(item: $readerPresentation)" in quran_view_text
+assert "QuranMushafReader(" in quran_view_text
 assert '@AppStorage("quran.lastPage")' in quran_view_text
 assert 'font(.custom("Amiri Quran"' in quran_view_text
 assert 'Image(systemName: "chevron.left")' in quran_view_text
@@ -270,6 +274,12 @@ assert 'Text("• تقرأ الآن")' in quran_view_text
 assert '.safeAreaInset(edge: .bottom)' in quran_view_text
 assert "AVFoundation" not in quran_view_text
 assert "AVPlayer" not in quran_view_text
+assert "QuranMushafPage" in quran_mushaf_reader_text
+assert 'font(.custom("Amiri Quran"' in quran_mushaf_reader_text
+assert "controlsAreVisible" in quran_mushaf_reader_text
+assert "page.lines.count" in quran_mushaf_reader_text
+assert '.accessibilityLabel("الصفحة التالية")' in quran_mushaf_reader_text
+assert '.accessibilityLabel("الصفحة السابقة")' in quran_mushaf_reader_text
 assert "Data(contentsOf: url, options: .mappedIfSafe)" in quran_model_text
 assert quran_payload["schemaVersion"] == 1
 assert len(quran_payload["pages"]) == 604
