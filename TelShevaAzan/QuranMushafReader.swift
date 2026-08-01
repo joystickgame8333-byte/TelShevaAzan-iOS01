@@ -280,8 +280,8 @@ private struct QuranMushafPage: View {
     var body: some View {
         GeometryReader { proxy in
             let lineHeight = proxy.size.height / CGFloat(max(page.lines.count, 1))
-            let maximumTextSize: CGFloat = page.lines.count <= 10 ? 32 : 28
-            let textSize = min(maximumTextSize, max(17.5, lineHeight * 0.61))
+            let maximumTextSize: CGFloat = page.lines.count <= 10 ? 34 : 30
+            let textSize = min(maximumTextSize, max(18.5, lineHeight * 0.66))
 
             VStack(spacing: 0) {
                 ForEach(page.lines) { line in
@@ -309,19 +309,19 @@ private struct QuranMushafPage: View {
         switch line.kind {
         case .text:
             Text(line.text)
-                .font(.custom("Amiri Quran", size: textSize))
+                .font(.custom("KFGQPC HAFS Uthmanic Script", size: textSize))
                 .foregroundStyle(palette.text)
                 .lineLimit(1)
-                .minimumScaleFactor(0.64)
+                .minimumScaleFactor(0.67)
                 .allowsTightening(true)
                 .frame(maxWidth: .infinity, alignment: .center)
 
         case .bismillah:
             Text(line.text)
-                .font(.custom("Amiri Quran", size: min(textSize + 1, 28)))
+                .font(.custom("KFGQPC HAFS Uthmanic Script", size: min(textSize + 1.5, 31)))
                 .foregroundStyle(palette.text)
                 .lineLimit(1)
-                .minimumScaleFactor(0.76)
+                .minimumScaleFactor(0.78)
                 .frame(maxWidth: .infinity, alignment: .center)
 
         case .surah:
@@ -352,39 +352,65 @@ private struct MushafSurahHeader: View {
                 .fill(palette.surahHeaderBackground)
                 .overlay(
                     RoundedRectangle(cornerRadius: 7, style: .continuous)
-                        .stroke(palette.ornament.opacity(0.68), lineWidth: 0.9)
+                        .stroke(palette.ornament.opacity(0.78), lineWidth: 0.9)
+                        .padding(1)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 5, style: .continuous)
+                        .stroke(palette.ornament.opacity(0.35), lineWidth: 0.6)
+                        .padding(4)
                 )
 
-            HStack(spacing: 9) {
-                ornament
-                line
+            HStack(spacing: 7) {
+                MushafRosette(color: palette.ornament)
+                ornamentLine
 
                 Text(title)
-                    .font(.custom("Amiri Quran", size: fontSize))
+                    .font(.custom("KFGQPC HAFS Uthmanic Script", size: fontSize + 1))
                     .foregroundStyle(palette.text)
                     .lineLimit(1)
                     .minimumScaleFactor(0.78)
-                    .padding(.horizontal, 4)
+                    .padding(.horizontal, 8)
+                    .background(palette.surahHeaderBackground)
 
-                line
-                ornament
+                ornamentLine
+                MushafRosette(color: palette.ornament)
             }
-            .padding(.horizontal, 10)
+            .padding(.horizontal, 12)
         }
-        .padding(.vertical, 2)
+        .padding(.vertical, 1)
     }
 
-    private var ornament: some View {
-        Image(systemName: "diamond.fill")
-            .font(.system(size: 5, weight: .black))
-            .foregroundStyle(palette.ornament)
-    }
-
-    private var line: some View {
+    private var ornamentLine: some View {
         Rectangle()
-            .fill(palette.ornament.opacity(0.55))
+            .fill(palette.ornament.opacity(0.62))
             .frame(maxWidth: .infinity)
             .frame(height: 0.8)
+    }
+}
+
+private struct MushafRosette: View {
+    let color: Color
+
+    var body: some View {
+        ZStack {
+            ForEach(0..<8, id: \.self) { index in
+                Capsule(style: .continuous)
+                    .fill(color.opacity(0.72))
+                    .frame(width: 2.4, height: 10)
+                    .offset(y: -4.8)
+                    .rotationEffect(.degrees(Double(index) * 45))
+            }
+
+            Circle()
+                .stroke(color.opacity(0.72), lineWidth: 0.8)
+                .frame(width: 9, height: 9)
+
+            Circle()
+                .fill(color.opacity(0.9))
+                .frame(width: 3.2, height: 3.2)
+        }
+        .frame(width: 24, height: 24)
     }
 }
 

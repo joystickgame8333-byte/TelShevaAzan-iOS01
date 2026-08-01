@@ -25,8 +25,8 @@ targets:
       properties:
         CFBundleDisplayName: صلاتي
         CFBundlePackageType: APPL
-        CFBundleShortVersionString: "0.6.87"
-        CFBundleVersion: "181"
+        CFBundleShortVersionString: "0.6.88"
+        CFBundleVersion: "182"
         CFBundleURLTypes:
           - CFBundleURLName: com.omaralasam.telshevaazan
             CFBundleURLSchemes:
@@ -44,6 +44,7 @@ targets:
           - audio
         UIAppFonts:
           - AmiriQuran-Regular.ttf
+          - UthmanicHafs1Ver18.ttf
         NSLocationWhenInUseUsageDescription: يستخدم التطبيق الموقع محليًا فقط لتحسين دقة القبلة والشمال الحقيقي.
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
@@ -58,6 +59,7 @@ targets:
       - path: TelShevaAzan/Icon-60@2x.png
       - path: TelShevaAzan/Icon-60@3x.png
       - path: TelShevaAzan/Fonts/AmiriQuran-Regular.ttf
+      - path: TelShevaAzan/Fonts/UthmanicHafs1Ver18.ttf
       - path: TelShevaAzan/Sounds/adhan.caf
       - path: TelShevaAzan/Sounds/adhan-mohamed-jazi.caf
       - path: TelShevaAzan/Sounds/nafahat.wav
@@ -118,8 +120,8 @@ targets:
       properties:
         CFBundleDisplayName: صلاتي
         CFBundlePackageType: XPC!
-        CFBundleShortVersionString: "0.6.87"
-        CFBundleVersion: "181"
+        CFBundleShortVersionString: "0.6.88"
+        CFBundleVersion: "182"
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
     settings:
@@ -152,8 +154,8 @@ targets:
       properties:
         CFBundleDisplayName: صلاتي
         CFBundlePackageType: APPL
-        CFBundleShortVersionString: "0.6.87"
-        CFBundleVersion: "181"
+        CFBundleShortVersionString: "0.6.88"
+        CFBundleVersion: "182"
         WKApplication: true
         WKCompanionAppBundleIdentifier: com.omaralasam.telshevaazan.76XJH357A8
         WKRunsIndependentlyOfCompanionApp: true
@@ -188,8 +190,8 @@ targets:
       properties:
         CFBundleDisplayName: صلاتي
         CFBundlePackageType: XPC!
-        CFBundleShortVersionString: "0.6.87"
-        CFBundleVersion: "181"
+        CFBundleShortVersionString: "0.6.88"
+        CFBundleVersion: "182"
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
         NSPrincipalClass: ""

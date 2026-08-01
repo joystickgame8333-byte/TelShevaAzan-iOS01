@@ -418,14 +418,14 @@ private struct QuranPageCard: View {
             )
         case .bismillah:
             Text(line.text)
-                .font(.custom("Amiri Quran", size: min(textSize + 0.5, 19)))
+                .font(.custom("KFGQPC HAFS Uthmanic Script", size: min(textSize + 0.5, 19)))
                 .foregroundStyle(theme.primaryText.opacity(0.98))
                 .lineLimit(1)
                 .minimumScaleFactor(0.72)
                 .frame(maxWidth: .infinity, alignment: .center)
         case .text:
             Text(line.text)
-                .font(.custom("Amiri Quran", size: textSize))
+                .font(.custom("KFGQPC HAFS Uthmanic Script", size: textSize))
                 .foregroundStyle(theme.primaryText.opacity(0.98))
                 .lineLimit(1)
                 .minimumScaleFactor(0.62)

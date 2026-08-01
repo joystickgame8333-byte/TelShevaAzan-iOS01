@@ -33,7 +33,7 @@ function Add-PageToken([int]$Page, [int]$Line, [string]$Token) {
 
 foreach ($juz in 1..30) {
     Write-Host "Downloading juz $juz of 30..."
-    $uri = "$apiRoot/verses/by_juz/$juz`?language=ar&words=true&word_fields=text_uthmani,line_number,page_number&per_page=1000"
+    $uri = "$apiRoot/verses/by_juz/$juz`?language=ar&words=true&word_fields=text_qpc_hafs,line_number,page_number&per_page=1000"
     $response = Get-ApiJson $uri
 
     foreach ($verse in @($response.verses)) {
@@ -45,9 +45,10 @@ foreach ($juz in 1..30) {
             }
 
             if ($word.char_type_name -eq "word") {
-                Add-PageToken $page $line ([string]$word.text_uthmani)
+                Add-PageToken $page $line ([string]$word.text_qpc_hafs)
             } elseif ($word.char_type_name -eq "end") {
-                Add-PageToken $page $line ("﴿" + [string]$word.text_uthmani + "﴾")
+                # The QPC Hafs font draws the verse number itself inside its ornamental seal.
+                Add-PageToken $page $line ([string]$word.text_qpc_hafs)
                 $verseEndingCount++
             }
         }
@@ -57,7 +58,7 @@ foreach ($juz in 1..30) {
 $surahStarts = @{}
 foreach ($chapter in $chapters) {
     $surahID = [int]$chapter.id
-    $firstVerse = Get-ApiJson "$apiRoot/verses/by_key/$surahID`:1?language=ar&words=true&word_fields=text_uthmani,line_number,page_number"
+    $firstVerse = Get-ApiJson "$apiRoot/verses/by_key/$surahID`:1?language=ar&words=true&word_fields=text_qpc_hafs,line_number,page_number"
     $firstWord = @($firstVerse.verse.words | Where-Object { $_.char_type_name -eq "word" })[0]
     $firstLine = [int]$firstWord.line_number
     $page = [int]$firstWord.page_number
@@ -132,7 +133,7 @@ $surahs = @($chapters | ForEach-Object {
 
 $payload = [ordered]@{
     schemaVersion = 1
-    sourceName = "Quran Foundation - Uthmani Hafs text"
+    sourceName = "Quran Foundation - QPC Hafs text"
     sourceURL = $sourceURL
     generatedAt = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
     pages = $pages

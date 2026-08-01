@@ -263,7 +263,7 @@ assert "QuranPageBackground" in quran_view_text
 assert ".fullScreenCover(item: $readerPresentation)" in quran_view_text
 assert "QuranMushafReader(" in quran_view_text
 assert '@AppStorage("quran.lastPage")' in quran_view_text
-assert 'font(.custom("Amiri Quran"' in quran_view_text
+assert 'font(.custom("KFGQPC HAFS Uthmanic Script"' in quran_view_text
 assert 'Image(systemName: "chevron.left")' in quran_view_text
 assert 'movePage(by: 1, totalPages: totalPages)' in quran_view_text
 assert '.accessibilityLabel("الصفحة التالية")' in quran_view_text
@@ -275,7 +275,7 @@ assert '.safeAreaInset(edge: .bottom)' in quran_view_text
 assert "AVFoundation" not in quran_view_text
 assert "AVPlayer" not in quran_view_text
 assert "QuranMushafPage" in quran_mushaf_reader_text
-assert 'font(.custom("Amiri Quran"' in quran_mushaf_reader_text
+assert 'font(.custom("KFGQPC HAFS Uthmanic Script"' in quran_mushaf_reader_text
 assert "controlsAreVisible" in quran_mushaf_reader_text
 assert "page.lines.count" in quran_mushaf_reader_text
 assert '.accessibilityLabel("الصفحة التالية")' in quran_mushaf_reader_text
@@ -287,7 +287,7 @@ assert len(quran_payload["surahs"]) == 114
 assert [page["number"] for page in quran_payload["pages"]] == list(range(1, 605))
 assert all(page["lines"] for page in quran_payload["pages"])
 verse_markers = sum(
-    line["text"].count("﴿")
+    len(re.findall(r"[٠-٩]+", line["text"]))
     for page in quran_payload["pages"]
     for line in page["lines"]
 )
