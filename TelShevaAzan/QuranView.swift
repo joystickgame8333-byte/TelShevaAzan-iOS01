@@ -214,7 +214,7 @@ struct QuranView: View {
         let canMoveForward = currentPageNumber < totalPages
         let canMoveBackward = currentPageNumber > 1
 
-        HStack(spacing: 12) {
+        return HStack(spacing: 12) {
             Button {
                 movePage(by: 1, totalPages: totalPages)
             } label: {
