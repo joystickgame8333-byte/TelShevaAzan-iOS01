@@ -247,7 +247,7 @@ active_scene_block = content_text.split(".onChange(of: scenePhase)", 1)[1].split
 assert "notifications.refreshIfEnabled()" in active_scene_block
 assert ".rounded(.up)" in engine_text, "Remaining time must round up to match the displayed wall clock second"
 assert "AdhkarView(" in content_text, "The Adhkar tab must open the dedicated reader"
-assert "CGFloat(62) + dockBottomPadding" in content_text, "Tabs must reserve only the dock's real height"
+assert "CGFloat(60) + dockBottomPadding" in content_text, "Tabs must reserve only the dock's real height"
 
 adhkar_view_text = ADHKAR_VIEW_PATH.read_text(encoding="utf-8")
 adhkar_overview_text = ADHKAR_OVERVIEW_PATH.read_text(encoding="utf-8")

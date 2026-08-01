@@ -30,11 +30,11 @@ struct ContentView: View {
     var body: some View {
         GeometryReader { proxy in
             let compactHeight = proxy.size.height < 720
-            let sectionSpacing: CGFloat = compactHeight ? 6 : 7
-            let rowSpacing: CGFloat = compactHeight ? 5 : 6
+            let sectionSpacing: CGFloat = compactHeight ? 5 : 6
+            let rowSpacing: CGFloat = compactHeight ? 4 : 5
             let dockBottomPadding = max(proxy.safeAreaInsets.bottom * 0.22, CGFloat(6))
-            let dockReservedHeight = CGFloat(62) + dockBottomPadding + (compactHeight ? 6 : 8)
-            let rowHeight = min(CGFloat(54), max(CGFloat(43), (proxy.size.height - dockReservedHeight - (compactHeight ? 268 : 316)) / 6))
+            let dockReservedHeight = CGFloat(60) + dockBottomPadding + (compactHeight ? 6 : 8)
+            let rowHeight = min(CGFloat(50), max(CGFloat(43), (proxy.size.height - dockReservedHeight - (compactHeight ? 252 : 292)) / 6))
 
             ZStack {
                 background
@@ -402,8 +402,8 @@ struct ContentView: View {
                 rowHeight: rowHeight
             )
         }
-        .padding(.horizontal, 16)
-        .padding(.top, compactHeight ? 10 : 14)
+        .padding(.horizontal, 18)
+        .padding(.top, compactHeight ? 8 : 10)
         .padding(.bottom, dockReservedHeight)
         .frame(width: size.width, height: size.height, alignment: .topTrailing)
         .foregroundStyle(activeTheme.primaryText)
@@ -450,7 +450,7 @@ struct ContentView: View {
 
         return VStack(alignment: .center, spacing: 5) {
             Text(timeSummary)
-                .font(.system(size: 18, weight: .black, design: .rounded))
+                .font(.system(size: 17, weight: .black, design: .rounded))
                 .monospacedDigit()
                 .foregroundStyle(activeTheme.accent.opacity(activeTheme.isNightTheme ? 0.98 : 0.94))
                 .lineLimit(1)
@@ -458,7 +458,7 @@ struct ContentView: View {
                 .frame(maxWidth: .infinity, alignment: .center)
 
             Text(dateSummary)
-                .font(.system(size: 14, weight: .black, design: .rounded))
+                .font(.system(size: 13, weight: .black, design: .rounded))
                 .foregroundStyle(activeTheme.accent.opacity(activeTheme.isNightTheme ? 0.96 : 0.92))
                 .lineLimit(1)
                 .minimumScaleFactor(0.72)
@@ -487,8 +487,8 @@ struct ContentView: View {
         }
         .multilineTextAlignment(.center)
         .frame(maxWidth: .infinity, alignment: .center)
-        .padding(.horizontal, 16)
-        .padding(.vertical, 8)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 6)
         .background(
             ZStack {
                 glassSurface(activeTheme.panelBackground.opacity(activeTheme.isNightTheme ? 0.36 : 0.58), radius: 20, prominence: .quiet)
@@ -521,7 +521,7 @@ struct ContentView: View {
         )
         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
         .shadow(color: activeTheme.accent.opacity(activeTheme.isNightTheme ? 0.08 : 0.06), radius: 12, y: 5)
-        .padding(.horizontal, 28)
+        .padding(.horizontal, 32)
     }
 
     private static let timeWithSecondsFormatter: DateFormatter = {
@@ -551,7 +551,7 @@ struct ContentView: View {
                 )
             }
         }
-        .padding(7)
+        .padding(6)
         .background(glassSurface(activeTheme.panelBackground.opacity(activeTheme.isNightTheme ? 0.54 : 0.66), radius: 14, prominence: .quiet))
         .overlay(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
@@ -573,22 +573,22 @@ struct ContentView: View {
     }
 
     private var bottomDock: some View {
-        let dockWidth: CGFloat = 292
+        let dockWidth: CGFloat = 286
         let slotWidth = dockWidth / CGFloat(dockItems.count)
 
         return ZStack(alignment: .bottom) {
             dockLiquidGlassBase
-                .frame(width: dockWidth, height: 42)
+                .frame(width: dockWidth, height: 40)
 
             HStack(alignment: .bottom, spacing: 0) {
                 ForEach(dockItems) { item in
                     dockSlotButton(item, slotWidth: slotWidth)
                 }
             }
-            .frame(width: dockWidth, height: 62, alignment: .bottom)
+            .frame(width: dockWidth, height: 60, alignment: .bottom)
         }
         .frame(width: dockWidth)
-        .frame(height: 62, alignment: .bottom)
+        .frame(height: 60, alignment: .bottom)
         .shadow(color: .black.opacity(activeTheme.isNightTheme ? 0.16 : 0.06), radius: 8, y: 2)
         .environment(\.layoutDirection, .leftToRight)
         .animation(.spring(response: 0.38, dampingFraction: 0.72), value: selectedTab)
@@ -606,14 +606,14 @@ struct ContentView: View {
         } label: {
             ZStack(alignment: .bottom) {
                 if selected {
-                    selectedDockBubble(width: 74, height: 49)
+                    selectedDockBubble(width: 72, height: 47)
                         .matchedGeometryEffect(id: "dockSelection", in: dockSelectionNamespace)
 
                     VStack(spacing: 3) {
                         Image(systemName: dockSymbol(for: item))
-                            .font(.system(size: 17, weight: .black, design: .rounded))
+                            .font(.system(size: 16, weight: .black, design: .rounded))
                             .foregroundStyle(activeTheme.accent)
-                            .frame(width: 34, height: 34)
+                            .frame(width: 32, height: 32)
                             .background(selectedDockIconFill)
                             .clipShape(Circle())
                             .overlay(
@@ -628,20 +628,20 @@ struct ContentView: View {
                             .offset(y: -5)
 
                         Text(item.title)
-                            .font(.system(size: 10, weight: .black, design: .rounded))
+                            .font(.system(size: 9.5, weight: .black, design: .rounded))
                             .foregroundStyle(Color.white)
                             .lineLimit(1)
                             .minimumScaleFactor(0.66)
                             .offset(y: -3)
                     }
-                    .frame(width: 74, height: 49)
+                    .frame(width: 72, height: 47)
                 } else {
                     VStack(spacing: 2) {
                         Image(systemName: dockSymbol(for: item))
-                            .font(.system(size: 17, weight: .black, design: .rounded))
+                            .font(.system(size: 16, weight: .black, design: .rounded))
                             .foregroundStyle(activeTheme.secondaryText.opacity(0.86))
                             .symbolRenderingMode(.hierarchical)
-                            .frame(width: 29, height: 21)
+                            .frame(width: 28, height: 20)
                             .overlay(alignment: .topTrailing) {
                                 dockStatusBadge(for: item)
                                     .offset(x: 8, y: -6)
@@ -656,8 +656,8 @@ struct ContentView: View {
                     .frame(width: slotWidth, height: 36)
                 }
             }
-            .frame(width: slotWidth, height: selected ? 55 : 40, alignment: .bottom)
-            .offset(y: selected ? -6 : 0)
+            .frame(width: slotWidth, height: selected ? 53 : 39, alignment: .bottom)
+            .offset(y: selected ? -5 : 0)
             .contentShape(Rectangle())
         }
         .buttonStyle(DockButtonPressStyle())
@@ -939,49 +939,49 @@ struct ContentView: View {
         activeIqama: IqamaEvent?,
         compact: Bool
     ) -> some View {
-        let cornerRadius: CGFloat = compact ? 20 : 22
-        let cardHeight: CGFloat = compact ? 184 : 214
+        let cornerRadius: CGFloat = compact ? 18 : 20
+        let cardHeight: CGFloat = compact ? 172 : 190
         let isNightCard = activeTheme.isNightTheme
         let presentation = prayerPanelPresentation(next: next, activeIqama: activeIqama)
 
         return ZStack {
             nabawiCardBackground(height: cardHeight, isNight: isNightCard)
 
-            VStack(alignment: .trailing, spacing: compact ? 6 : 7) {
+            VStack(alignment: .trailing, spacing: compact ? 5 : 6) {
                 HStack(alignment: .top, spacing: 0) {
-                    Spacer(minLength: compact ? 14 : 20)
+                    Spacer(minLength: compact ? 12 : 16)
 
                     VStack(alignment: .trailing, spacing: 3) {
                         Text(presentation.title)
-                            .font(.system(size: compact ? 10.5 : 11.5, weight: .black, design: .rounded))
+                            .font(.system(size: compact ? 10 : 10.5, weight: .black, design: .rounded))
                             .foregroundStyle(activeTheme.accent)
                             .lineLimit(1)
 
                         Text(presentation.prayer?.title ?? "--")
-                            .font(.system(size: compact ? 24 : 29, weight: .black, design: .rounded))
+                            .font(.system(size: compact ? 22 : 26, weight: .black, design: .rounded))
                             .foregroundStyle(nabawiPrimaryText)
                             .lineLimit(1)
                             .minimumScaleFactor(0.72)
 
                         Text(presentation.time)
-                            .font(.system(size: compact ? 36 : 46, weight: .black, design: .rounded))
+                            .font(.system(size: compact ? 34 : 40, weight: .black, design: .rounded))
                             .foregroundStyle(activeTheme.accent)
                             .monospacedDigit()
                             .lineLimit(1)
                             .minimumScaleFactor(0.72)
                     }
-                    .frame(maxWidth: compact ? 190 : 230, alignment: .trailing)
+                    .frame(maxWidth: compact ? 180 : 210, alignment: .trailing)
                 }
 
-                Spacer(minLength: compact ? 2 : 4)
+                Spacer(minLength: compact ? 1 : 2)
 
                 if let activeIqama {
                     iqamaStatusBand(event: activeIqama, compact: compact, isNight: isNightCard)
                 }
             }
-            .padding(.horizontal, compact ? 14 : 16)
-            .padding(.top, compact ? 10 : 12)
-            .padding(.bottom, compact ? 9 : 11)
+            .padding(.horizontal, compact ? 13 : 14)
+            .padding(.top, compact ? 9 : 10)
+            .padding(.bottom, compact ? 8 : 9)
         }
         .frame(maxWidth: .infinity)
         .frame(height: cardHeight)
@@ -1125,7 +1125,7 @@ struct ContentView: View {
         let isIqamaActive = isActiveIqamaRow(item, activeIqama: activeIqama)
         let isActive = isIqamaActive || (activeIqama == nil && item.key == next?.key)
         let isPrevious = !isIqamaActive && isPreviousPrayerRow(item, previous: previous, next: next)
-        let effectiveRowHeight = max(rowHeight, (isActive || isPrevious) ? 52 : 47)
+        let effectiveRowHeight = max(rowHeight, (isActive || isPrevious) ? 49 : 45)
 
         return Button {
             selectedPrayerDetails = item
@@ -1133,14 +1133,14 @@ struct ContentView: View {
             HStack(spacing: 10) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(item.time)
-                        .font(.headline.monospacedDigit().weight(.bold))
+                        .font(.system(size: 16, weight: .bold, design: .rounded).monospacedDigit())
                         .foregroundStyle(isActive ? activeTheme.accent : activeTheme.primaryText)
                         .lineLimit(1)
                         .minimumScaleFactor(0.78)
 
                     if let iqamaTime = iqamaTime(for: item) {
                         Text("الإقامة \(iqamaTime)")
-                            .font(.system(size: 9.5, weight: .bold, design: .rounded))
+                            .font(.system(size: 9, weight: .bold, design: .rounded))
                             .foregroundStyle(activeTheme.secondaryText.opacity(isActive ? 0.92 : 0.68))
                             .lineLimit(1)
                             .minimumScaleFactor(0.70)
@@ -1151,26 +1151,26 @@ struct ContentView: View {
 
                 VStack(alignment: .trailing, spacing: 1) {
                     Text(item.title)
-                        .font(.headline.weight(.bold))
+                        .font(.system(size: 16, weight: .bold, design: .rounded))
                         .foregroundStyle(isActive ? activeTheme.accent : activeTheme.secondaryText.opacity(0.78))
                         .lineLimit(1)
                         .minimumScaleFactor(0.74)
 
                     if isIqamaActive, let activeIqama {
                         Text(iqamaRowStatusText(for: activeIqama))
-                            .font(.system(size: 10.5, weight: .bold, design: .rounded))
+                            .font(.system(size: 10, weight: .bold, design: .rounded))
                             .foregroundStyle(activeTheme.secondaryText.opacity(0.88))
                             .lineLimit(1)
                             .minimumScaleFactor(0.70)
                     } else if isActive {
                         Text(remainingPrayerText(for: next))
-                            .font(.system(size: 10.5, weight: .bold, design: .rounded))
+                            .font(.system(size: 10, weight: .bold, design: .rounded))
                             .foregroundStyle(activeTheme.secondaryText.opacity(0.82))
                             .lineLimit(1)
                             .minimumScaleFactor(0.70)
                     } else if isPrevious {
                         Text(elapsedPrayerText(for: previous))
-                            .font(.system(size: 10.5, weight: .bold, design: .rounded))
+                            .font(.system(size: 10, weight: .bold, design: .rounded))
                             .foregroundStyle(activeTheme.secondaryText.opacity(0.82))
                             .lineLimit(1)
                             .minimumScaleFactor(0.70)
@@ -1178,17 +1178,17 @@ struct ContentView: View {
                 }
 
                 Image(systemName: prayerSymbol(for: item.key))
-                    .font(.system(size: isActive ? 20 : 18, weight: .bold, design: .rounded))
+                    .font(.system(size: isActive ? 18 : 17, weight: .bold, design: .rounded))
                     .foregroundStyle(isActive ? activeTheme.accent : activeTheme.secondaryText.opacity(0.62))
                     .symbolRenderingMode(.hierarchical)
-                    .frame(width: 26, height: 26)
+                    .frame(width: 24, height: 24)
 
                 Image(systemName: "chevron.left")
                     .font(.system(size: 10, weight: .black))
                     .foregroundStyle(activeTheme.secondaryText.opacity(0.38))
                     .frame(width: 10)
             }
-            .padding(.horizontal, 10)
+            .padding(.horizontal, 9)
             .frame(height: effectiveRowHeight)
             .background(glassSurface(rowBackground(isActive: isActive), radius: 8, prominence: isActive ? .regular : .quiet))
             .overlay(alignment: .trailing) {
