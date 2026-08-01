@@ -62,8 +62,8 @@ struct ContentView: View {
                             isEmbedded: true,
                             bottomReservedHeight: dockReservedHeight
                         )
-                    case .adhkar:
-                        AdhkarView(
+                    case .quran:
+                        QuranView(
                             theme: activeTheme,
                             isEmbedded: true,
                             bottomReservedHeight: dockReservedHeight
@@ -597,7 +597,7 @@ struct ContentView: View {
     }
 
     private var dockItems: [HomeDockItem] {
-        [.radio, .qibla, .schedule, .adhkar, .notifications]
+        [.radio, .qibla, .schedule, .quran, .notifications]
     }
 
     private func dockSlotButton(_ item: HomeDockItem, slotWidth: CGFloat) -> some View {
@@ -622,10 +622,6 @@ struct ContentView: View {
                                 Circle()
                                     .stroke(Color.white.opacity(activeTheme.isNightTheme ? 0.38 : 0.82), lineWidth: 1)
                             )
-                            .overlay(alignment: .topTrailing) {
-                                dockStatusBadge(for: item)
-                                    .offset(x: 5, y: -4)
-                            }
                             .shadow(color: .black.opacity(activeTheme.isNightTheme ? 0.16 : 0.07), radius: 4, y: 1)
                             .offset(y: -5)
 
@@ -644,10 +640,6 @@ struct ContentView: View {
                             .foregroundStyle(activeTheme.secondaryText.opacity(0.86))
                             .symbolRenderingMode(.hierarchical)
                             .frame(width: 28, height: 20)
-                            .overlay(alignment: .topTrailing) {
-                                dockStatusBadge(for: item)
-                                    .offset(x: 8, y: -6)
-                            }
 
                         Text(item.title)
                             .font(.system(size: 8, weight: .bold, design: .rounded))
@@ -664,24 +656,6 @@ struct ContentView: View {
         }
         .buttonStyle(DockButtonPressStyle())
         .accessibilityLabel(item.title)
-    }
-
-    @ViewBuilder
-    private func dockStatusBadge(for item: HomeDockItem) -> some View {
-        if item == .adhkar && notifications.isNafahatEnabled {
-            Image(systemName: "sparkle")
-                .font(.system(size: 7, weight: .black, design: .rounded))
-                .foregroundStyle(Color.white)
-                .frame(width: 14, height: 14)
-                .background(Circle().fill(activeTheme.accent))
-                .overlay(
-                    Circle()
-                        .stroke(Color.white.opacity(activeTheme.isNightTheme ? 0.42 : 0.90), lineWidth: 1)
-                )
-                .shadow(color: activeTheme.accent.opacity(0.34), radius: 4, y: 1)
-                .transition(.scale.combined(with: .opacity))
-                .accessibilityHidden(true)
-        }
     }
 
     private func selectedDockBubble(width: CGFloat, height: CGFloat) -> some View {
@@ -851,8 +825,8 @@ struct ContentView: View {
             return "radio.fill"
         case .qibla:
             return "location.north.fill"
-        case .adhkar:
-            return "sparkles"
+        case .quran:
+            return "book.closed.fill"
         case .notifications:
             return notifications.isEnabled ? "bell.badge.fill" : "bell.fill"
         }
@@ -1757,7 +1731,7 @@ private struct PrayerDetailsSheet: View {
 
 private enum HomeDockItem: String, CaseIterable, Identifiable {
     case schedule
-    case adhkar
+    case quran
     case notifications
     case qibla
     case radio
@@ -1772,7 +1746,7 @@ private enum HomeDockItem: String, CaseIterable, Identifiable {
             return 1
         case .schedule:
             return 2
-        case .adhkar:
+        case .quran:
             return 3
         case .notifications:
             return 4
@@ -1783,8 +1757,8 @@ private enum HomeDockItem: String, CaseIterable, Identifiable {
         switch self {
         case .schedule:
             return "مواقيت"
-        case .adhkar:
-            return "أذكار"
+        case .quran:
+            return "القرآن"
         case .radio:
             return "الراديو"
         case .qibla:

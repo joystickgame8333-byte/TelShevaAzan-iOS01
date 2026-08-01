@@ -16,12 +16,9 @@ CALENDAR_ENGINE_PATH = ROOT / "TelShevaAzan" / "PalestinePrayerCalendar.swift"
 NOTIFICATIONS_PATH = ROOT / "TelShevaAzan" / "PrayerNotificationManager.swift"
 NOTIFICATION_SETTINGS_PATH = ROOT / "TelShevaAzan" / "NotificationSettingsView.swift"
 CONTENT_PATH = ROOT / "TelShevaAzan" / "ContentView.swift"
-ADHKAR_VIEW_PATH = ROOT / "TelShevaAzan" / "AdhkarView.swift"
-ADHKAR_OVERVIEW_PATH = ROOT / "TelShevaAzan" / "AdhkarOverview.swift"
-ADHKAR_READER_PATH = ROOT / "TelShevaAzan" / "AdhkarReaderView.swift"
-TASBIH_VIEW_PATH = ROOT / "TelShevaAzan" / "TasbihView.swift"
-ADHKAR_LIBRARY_PATH = ROOT / "TelShevaAzan" / "AdhkarLibrary.swift"
-ADHKAR_PROGRESS_PATH = ROOT / "TelShevaAzan" / "AdhkarProgressStore.swift"
+QURAN_VIEW_PATH = ROOT / "TelShevaAzan" / "QuranView.swift"
+QURAN_DATA_MODEL_PATH = ROOT / "TelShevaAzan" / "QuranData.swift"
+QURAN_DATA_PATH = ROOT / "TelShevaAzan" / "Resources" / "Quran" / "quran-pages-v1.json"
 QURAN_RADIO_PLAYER_PATH = ROOT / "TelShevaAzan" / "QuranRadioPlayer.swift"
 WIDGET_DATA_PATH = ROOT / "TelShevaAzanWidget" / "SalatiWidgetData.swift"
 WIDGET_BUNDLE_PATH = ROOT / "TelShevaAzanWidget" / "TelShevaAzanWidget.swift"
@@ -247,39 +244,34 @@ assert '"متبقي للإقامة' in content_text
 active_scene_block = content_text.split(".onChange(of: scenePhase)", 1)[1].split(".onAppear", 1)[0]
 assert "notifications.refreshIfEnabled()" in active_scene_block
 assert ".rounded(.up)" in engine_text, "Remaining time must round up to match the displayed wall clock second"
-assert "AdhkarView(" in content_text, "The Adhkar tab must open the dedicated reader"
+assert "QuranView(" in content_text, "The Quran tab must open the offline Mushaf reader"
+assert "case .quran:" in content_text
+assert 'return "القرآن"' in content_text
 assert "CGFloat(60) + dockBottomPadding" in content_text, "Tabs must reserve only the dock's real height"
 
-adhkar_view_text = ADHKAR_VIEW_PATH.read_text(encoding="utf-8")
-adhkar_overview_text = ADHKAR_OVERVIEW_PATH.read_text(encoding="utf-8")
-adhkar_reader_text = ADHKAR_READER_PATH.read_text(encoding="utf-8")
-tasbih_view_text = TASBIH_VIEW_PATH.read_text(encoding="utf-8")
-adhkar_feature_text = "\n".join(
-    (adhkar_view_text, adhkar_overview_text, adhkar_reader_text, tasbih_view_text)
+quran_view_text = QURAN_VIEW_PATH.read_text(encoding="utf-8")
+quran_model_text = QURAN_DATA_MODEL_PATH.read_text(encoding="utf-8")
+quran_payload = json.loads(QURAN_DATA_PATH.read_text(encoding="utf-8"))
+assert ".environment(\\.layoutDirection, .rightToLeft)" in quran_view_text
+assert "bottomReservedHeight + 8" in quran_view_text
+assert "QuranPageCard" in quran_view_text
+assert "QuranSurahPicker" in quran_view_text
+assert '@AppStorage("quran.lastPage")' in quran_view_text
+assert 'font(.custom("Amiri Quran"' in quran_view_text
+assert "AVFoundation" not in quran_view_text
+assert "AVPlayer" not in quran_view_text
+assert "Data(contentsOf: url, options: .mappedIfSafe)" in quran_model_text
+assert quran_payload["schemaVersion"] == 1
+assert len(quran_payload["pages"]) == 604
+assert len(quran_payload["surahs"]) == 114
+assert [page["number"] for page in quran_payload["pages"]] == list(range(1, 605))
+assert all(page["lines"] for page in quran_payload["pages"])
+verse_markers = sum(
+    line["text"].count("﴿")
+    for page in quran_payload["pages"]
+    for line in page["lines"]
 )
-adhkar_library_text = ADHKAR_LIBRARY_PATH.read_text(encoding="utf-8")
-adhkar_progress_text = ADHKAR_PROGRESS_PATH.read_text(encoding="utf-8")
-assert ".environment(\\.layoutDirection, .rightToLeft)" in adhkar_view_text
-assert "NotificationSettingsView(" not in adhkar_feature_text
-assert "bottomReservedHeight + 8" in adhkar_view_text
-assert "struct AdhkarOverview" in adhkar_overview_text
-assert "struct AdhkarReaderView" in adhkar_reader_text
-assert "struct TasbihView" in tasbih_view_text
-assert "activeCategory: AdhkarCategory?" in adhkar_view_text
-assert "categoryItemsList" not in adhkar_feature_text
-assert "advanceAfterCompleting" in adhkar_reader_text
-assert "select(index: nextIndex)" in adhkar_reader_text
-assert 'actionButton(symbol: "textformat.size", label: "الخط"' in adhkar_reader_text
-assert "UIActivityViewController" in adhkar_view_text
-assert "AdhkarProgressStore()" in adhkar_view_text
-assert "refreshDayIfNeeded()" in adhkar_progress_text
-assert "PrayerEngine.calendar.dateComponents" in adhkar_progress_text
-assert "tasbihCounts" in adhkar_progress_text
-for category in ("morning", "evening", "afterPrayer", "sleep", "waking"):
-    assert f"static let {category}" in adhkar_library_text
-adhkar_item_ids = re.findall(r'AdhkarItem\(\s*id: "([^"]+)"', adhkar_library_text)
-assert len(adhkar_item_ids) >= 25, "The offline Adhkar library is unexpectedly incomplete"
-assert len(adhkar_item_ids) == len(set(adhkar_item_ids)), "Adhkar item identifiers must be unique"
+assert verse_markers == 6236, f"Expected 6236 Quran verses, found {verse_markers}"
 
 notification_settings_text = NOTIFICATION_SETTINGS_PATH.read_text(encoding="utf-8")
 assert "notificationDiagnosticsPanel" in notification_settings_text
@@ -453,5 +445,5 @@ print("  prayer transitions: before Isha, exact Isha, midnight, and exact Fajr p
 print("  iqama transitions: Maghrib and Isha post-adhan windows passed")
 print("  automatic schedule: today before Isha and tomorrow from exact Isha passed")
 print("  widget structure: home widgets and six focused Lock Screen widgets passed")
-print("  adhkar experience: offline library, daily progress, RTL reader, and persistent tasbih passed")
+print("  Quran experience: 604 offline pages, 114 surahs, RTL reader, and saved page passed")
 print("  app layout and radio metadata: dock inset, preview styling, and live Now Playing controls passed")
