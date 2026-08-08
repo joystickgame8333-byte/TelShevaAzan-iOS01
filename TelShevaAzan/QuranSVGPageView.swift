@@ -11,6 +11,17 @@ import WebKit
 struct QuranSVGPageView: UIViewRepresentable {
     let pageNumber: Int
     let theme: PrayerVisualTheme
+    let surahLineNumbers: [Int]
+
+    init(
+        pageNumber: Int,
+        theme: PrayerVisualTheme,
+        surahLineNumbers: [Int] = []
+    ) {
+        self.pageNumber = pageNumber
+        self.theme = theme
+        self.surahLineNumbers = surahLineNumbers
+    }
 
     func makeCoordinator() -> Coordinator {
         Coordinator()
@@ -52,6 +63,7 @@ struct QuranSVGPageView: UIViewRepresentable {
         context.coordinator.show(
             pageNumber: min(max(pageNumber, 1), 604),
             appearance: Appearance(theme: theme),
+            surahLineNumbers: surahLineNumbers,
             in: webView
         )
     }
@@ -70,6 +82,7 @@ extension QuranSVGPageView {
             let pageNumber: Int
             let svg: String
             let appearance: Appearance
+            let surahLineNumbers: [Int]
         }
 
         private struct ErrorRequest {
@@ -79,10 +92,10 @@ extension QuranSVGPageView {
 
         private typealias PageCompletion = (Result<String, Error>) -> Void
 
-        private let pageCache: NSCache<NSNumber, NSString> = {
+        private static let pageCache: NSCache<NSNumber, NSString> = {
             let cache = NSCache<NSNumber, NSString>()
-            cache.countLimit = 9
-            cache.totalCostLimit = 16 * 1_024 * 1_024
+            cache.countLimit = 7
+            cache.totalCostLimit = 20 * 1_024 * 1_024
             return cache
         }()
 
@@ -100,6 +113,7 @@ extension QuranSVGPageView {
         private var serial: UInt64 = 0
         private var requestedPageNumber: Int?
         private var requestedAppearance: Appearance?
+        private var requestedSurahLineNumbers: [Int] = []
         private var pendingRender: RenderRequest?
         private var pendingError: ErrorRequest?
         private var latestRenderRequest: RenderRequest?
@@ -113,11 +127,22 @@ extension QuranSVGPageView {
             self.webView = webView
         }
 
-        fileprivate func show(pageNumber: Int, appearance: Appearance, in webView: WKWebView) {
+        fileprivate func show(
+            pageNumber: Int,
+            appearance: Appearance,
+            surahLineNumbers: [Int],
+            in webView: WKWebView
+        ) {
             guard !stopped else { return }
             self.webView = webView
 
-            guard requestedPageNumber != pageNumber || requestedAppearance != appearance else {
+            let validSurahLineNumbers = surahLineNumbers
+                .filter { (1...15).contains($0) }
+                .sorted()
+
+            guard requestedPageNumber != pageNumber
+                    || requestedAppearance != appearance
+                    || requestedSurahLineNumbers != validSurahLineNumbers else {
                 return
             }
 
@@ -125,6 +150,7 @@ extension QuranSVGPageView {
             let requestSerial = serial
             requestedPageNumber = pageNumber
             requestedAppearance = appearance
+            requestedSurahLineNumbers = validSurahLineNumbers
             pendingRender = nil
             pendingError = nil
             latestRenderRequest = nil
@@ -144,7 +170,8 @@ extension QuranSVGPageView {
                         serial: requestSerial,
                         pageNumber: pageNumber,
                         svg: svg,
-                        appearance: appearance
+                        appearance: appearance,
+                        surahLineNumbers: validSurahLineNumbers
                     )
                     self.latestRenderRequest = request
                     self.renderOrDefer(request, in: webView)
@@ -154,8 +181,6 @@ extension QuranSVGPageView {
                 }
             }
 
-            prefetch(pageNumber - 1)
-            prefetch(pageNumber + 1)
         }
 
         func stop() {
@@ -167,7 +192,6 @@ extension QuranSVGPageView {
             pageCompletions.removeAll()
             pageOperations.removeAll()
             pageLoadQueue.cancelAllOperations()
-            pageCache.removeAllObjects()
             webView = nil
         }
 
@@ -227,7 +251,9 @@ extension QuranSVGPageView {
                 "svg": request.svg,
                 "background": request.appearance.background,
                 "content": request.appearance.content,
-                "markers": request.appearance.ayahMarkers
+                "markers": request.appearance.ayahMarkers,
+                "ornament": request.appearance.ornament,
+                "surahLines": request.surahLineNumbers
             ]
 
             guard JSONSerialization.isValidJSONObject(payload),
@@ -308,18 +334,13 @@ extension QuranSVGPageView {
             webView.loadHTMLString(QuranSVGPageView.shellHTML, baseURL: nil)
         }
 
-        private func prefetch(_ pageNumber: Int) {
-            guard (1...604).contains(pageNumber) else { return }
-            loadPage(pageNumber, priority: .low) { _ in }
-        }
-
         private func loadPage(
             _ pageNumber: Int,
             priority: Operation.QueuePriority,
             completion: @escaping PageCompletion
         ) {
             let cacheKey = NSNumber(value: pageNumber)
-            if let cached = pageCache.object(forKey: cacheKey) {
+            if let cached = Self.pageCache.object(forKey: cacheKey) {
                 completion(.success(cached as String))
                 return
             }
@@ -339,7 +360,7 @@ extension QuranSVGPageView {
                     guard let self, !self.stopped else { return }
 
                     if case .success(let svg) = result {
-                        self.pageCache.setObject(
+                        Self.pageCache.setObject(
                             svg as NSString,
                             forKey: cacheKey,
                             cost: svg.utf8.count
@@ -442,16 +463,19 @@ fileprivate extension QuranSVGPageView {
         let background: String
         let content: String
         let ayahMarkers: String
+        let ornament: String
 
         init(theme: PrayerVisualTheme) {
             if theme.isNightTheme {
-                background = "#02080D"
+                background = "transparent"
                 content = "#FAFAF7"
                 ayahMarkers = "#B7BDC2"
+                ornament = "#777D84"
             } else {
-                background = "#FEFBF7"
+                background = "transparent"
                 content = "#0D0C0A"
                 ayahMarkers = "#A47746"
+                ornament = "#A47746"
             }
         }
     }
@@ -505,6 +529,7 @@ fileprivate extension QuranSVGPageView {
           --page-background: transparent;
           --content-color: #0D0C0A;
           --ayah-marker-color: #A47746;
+          --ornament-color: #A47746;
         }
         * { box-sizing: border-box; }
         html, body {
@@ -549,6 +574,10 @@ fileprivate extension QuranSVGPageView {
         #stage #ayah_markers * {
           fill: var(--ayah-marker-color) !important;
         }
+        #stage #surah_ornaments,
+        #stage #surah_ornaments * {
+          vector-effect: non-scaling-stroke;
+        }
         #error {
           display: none;
           width: min(88%, 360px);
@@ -577,6 +606,209 @@ fileprivate extension QuranSVGPageView {
             root.setProperty('--page-background', payload.background);
             root.setProperty('--content-color', payload.content);
             root.setProperty('--ayah-marker-color', payload.markers);
+            root.setProperty('--ornament-color', payload.ornament);
+          }
+
+          function artworkViewBox(svg, originalViewBox) {
+            if (!originalViewBox || Number(originalViewBox.width) < 300) return null;
+
+            const rootGroups = Array.from(svg.children)
+              .filter(node => node.localName === 'g' && typeof node.getBBox === 'function');
+            if (rootGroups.length === 0) return null;
+
+            try {
+              const corners = rootGroups.flatMap(group => {
+                const bounds = group.getBBox();
+                const transform = group.transform.baseVal.consolidate();
+                const matrix = transform ? transform.matrix : svg.createSVGMatrix();
+                return [
+                  [bounds.x, bounds.y],
+                  [bounds.x + bounds.width, bounds.y],
+                  [bounds.x, bounds.y + bounds.height],
+                  [bounds.x + bounds.width, bounds.y + bounds.height]
+                ].map(([x, y]) => ({
+                  x: matrix.a * x + matrix.c * y + matrix.e,
+                  y: matrix.b * x + matrix.d * y + matrix.f
+                }));
+              });
+
+              const minimumX = Math.min(...corners.map(point => point.x));
+              const maximumX = Math.max(...corners.map(point => point.x));
+              const minimumY = Math.min(...corners.map(point => point.y));
+              const maximumY = Math.max(...corners.map(point => point.y));
+              // The QCF paths include delicate tashkeel close to the page edge.
+              // A generous safety margin makes the crop remove only genuinely
+              // empty source space and never clips Qur'anic artwork.
+              const paddingX = 12;
+              const paddingY = 14;
+              const x = Math.max(originalViewBox.x, minimumX - paddingX);
+              const y = Math.max(originalViewBox.y, minimumY - paddingY);
+              const right = Math.min(
+                originalViewBox.x + originalViewBox.width,
+                maximumX + paddingX
+              );
+              const bottom = Math.min(
+                originalViewBox.y + originalViewBox.height,
+                maximumY + paddingY
+              );
+              const width = right - x;
+              const height = bottom - y;
+
+              return width >= 300 && height >= 490
+                ? { x, y, width, height }
+                : null;
+            } catch (_) {
+              return null;
+            }
+          }
+
+          function appendSurahOrnaments(svg, lineNumbers, viewBox) {
+            if (!Array.isArray(lineNumbers) || lineNumbers.length === 0) return;
+            if (!viewBox || Number(viewBox.width) < 300) return;
+
+            const namespace = 'http://www.w3.org/2000/svg';
+            const group = document.createElementNS(namespace, 'g');
+            group.setAttribute('id', 'surah_ornaments');
+            group.setAttribute('fill', 'none');
+            group.setAttribute('stroke', 'var(--ornament-color)');
+            group.setAttribute('stroke-linecap', 'round');
+            group.setAttribute('stroke-linejoin', 'round');
+
+            const left = viewBox.x + 1.5;
+            const right = viewBox.x + viewBox.width - 1.5;
+            const width = Math.max(0, right - left);
+            const centerX = viewBox.x + viewBox.width / 2;
+              const centerPlateWidth = Math.min(138, viewBox.width * 0.42);
+            const centerLeft = centerX - centerPlateWidth / 2;
+            const centerRight = centerX + centerPlateWidth / 2;
+
+            function element(name, attributes) {
+              const node = document.createElementNS(namespace, name);
+              Object.entries(attributes).forEach(([key, value]) => {
+                node.setAttribute(key, String(value));
+              });
+              return node;
+            }
+
+            lineNumbers.forEach(lineNumber => {
+              const numericLine = Number(lineNumber);
+              if (!Number.isFinite(numericLine) || numericLine < 1 || numericLine > 15) return;
+
+              // Madani 15-line pages use stable baselines: line one is at
+              // roughly 29.5 and the following baselines are 35.85 units apart.
+              const centerY = 29.5 + (numericLine - 1) * 35.85;
+              const top = centerY - 19.5;
+              const bottom = centerY + 19.5;
+              const ornament = element('g', { 'aria-hidden': 'true' });
+
+              ornament.append(
+                element('rect', {
+                  x: left,
+                  y: top,
+                  width,
+                  height: 39,
+                  rx: 2.6,
+                  'stroke-width': 0.85,
+                  opacity: 0.92
+                }),
+                element('rect', {
+                  x: left + 2.1,
+                  y: top + 2.1,
+                  width: Math.max(0, width - 4.2),
+                  height: 34.8,
+                  rx: 1.7,
+                  'stroke-width': 0.42,
+                  opacity: 0.58
+                }),
+                element('path', {
+                  d: `M ${left + 4} ${centerY} H ${centerLeft - 7}`,
+                  'stroke-width': 0.65,
+                  opacity: 0.82
+                }),
+                element('path', {
+                  d: `M ${centerRight + 7} ${centerY} H ${right - 4}`,
+                  'stroke-width': 0.65,
+                  opacity: 0.82
+                }),
+                element('path', {
+                  d: `M ${centerLeft} ${top + 2} Q ${centerLeft - 8} ${centerY} ${centerLeft} ${bottom - 2}`,
+                  'stroke-width': 0.7,
+                  opacity: 0.82
+                }),
+                element('path', {
+                  d: `M ${centerRight} ${top + 2} Q ${centerRight + 8} ${centerY} ${centerRight} ${bottom - 2}`,
+                  'stroke-width': 0.7,
+                  opacity: 0.82
+                })
+              );
+
+              const motifWidth = Math.max(18, Math.min(42, (width - centerPlateWidth) * 0.13));
+              [left + 14, right - 14].forEach((motifCenter, index) => {
+                const direction = index === 0 ? 1 : -1;
+                const flower = element('g', {
+                  transform: `translate(${motifCenter} ${centerY}) scale(${direction} 1)`,
+                  opacity: 0.74
+                });
+                flower.append(
+                  element('circle', { cx: 0, cy: 0, r: 2.2, 'stroke-width': 0.55 }),
+                  element('path', {
+                    d: `M 0 -2.5 C ${motifWidth * 0.20} -12 ${motifWidth * 0.58} -10 ${motifWidth} -4 C ${motifWidth * 0.57} -4 ${motifWidth * 0.32} -1 0 0`,
+                    'stroke-width': 0.55
+                  }),
+                  element('path', {
+                    d: `M 0 2.5 C ${motifWidth * 0.20} 12 ${motifWidth * 0.58} 10 ${motifWidth} 4 C ${motifWidth * 0.57} 4 ${motifWidth * 0.32} 1 0 0`,
+                    'stroke-width': 0.55
+                  }),
+                  element('path', {
+                    d: `M 4 0 Q ${motifWidth * 0.45} -7 ${motifWidth * 0.78} 0 Q ${motifWidth * 0.45} 7 4 0 Z`,
+                    'stroke-width': 0.45
+                  })
+                );
+                ornament.append(flower);
+              });
+
+              [left + 47, right - 47].forEach((rosetteCenter, index) => {
+                const rosette = element('g', {
+                  transform: `translate(${rosetteCenter} ${centerY})`,
+                  opacity: 0.68
+                });
+
+                for (let petal = 0; petal < 8; petal += 1) {
+                  rosette.append(
+                    element('ellipse', {
+                      cx: 0,
+                      cy: -7.2,
+                      rx: 2.7,
+                      ry: 7.5,
+                      transform: `rotate(${petal * 45})`,
+                      'stroke-width': 0.44
+                    })
+                  );
+                }
+
+                rosette.append(
+                  element('circle', { cx: 0, cy: 0, r: 5.4, 'stroke-width': 0.48 }),
+                  element('circle', { cx: 0, cy: 0, r: 1.8, 'stroke-width': 0.5 }),
+                  element('path', {
+                    d: index === 0
+                      ? 'M 10 0 C 18 -10 27 -10 34 -3 C 28 -3 23 0 18 6 C 25 4 30 6 34 10'
+                      : 'M -10 0 C -18 -10 -27 -10 -34 -3 C -28 -3 -23 0 -18 6 C -25 4 -30 6 -34 10',
+                    'stroke-width': 0.46
+                  })
+                );
+                ornament.append(rosette);
+              });
+
+              group.append(ornament);
+            });
+
+            const firstArtworkGroup = Array.from(svg.children)
+              .find(node => node.localName === 'g');
+            if (firstArtworkGroup) {
+              svg.insertBefore(group, firstArtworkGroup);
+            } else {
+              svg.prepend(group);
+            }
           }
 
           window.renderQuranPage = payload => {
@@ -600,7 +832,25 @@ fileprivate extension QuranSVGPageView {
             svg.setAttribute('focusable', 'false');
             svg.setAttribute('aria-hidden', 'true');
 
-            stage.replaceChildren(document.importNode(svg, true));
+            const originalViewBox = svg.viewBox && svg.viewBox.baseVal
+              ? {
+                  x: svg.viewBox.baseVal.x,
+                  y: svg.viewBox.baseVal.y,
+                  width: svg.viewBox.baseVal.width,
+                  height: svg.viewBox.baseVal.height
+                }
+              : null;
+
+            stage.replaceChildren(svg);
+            appendSurahOrnaments(svg, payload.surahLines, originalViewBox);
+            const fittedViewBox = artworkViewBox(svg, originalViewBox) || originalViewBox;
+            if (fittedViewBox) {
+              svg.setAttribute(
+                'viewBox',
+                `${fittedViewBox.x} ${fittedViewBox.y} ${fittedViewBox.width} ${fittedViewBox.height}`
+              );
+            }
+
             document.body.classList.remove('failed');
             document.getElementById('error').textContent = '';
             document.body.dataset.page = String(payload.page);

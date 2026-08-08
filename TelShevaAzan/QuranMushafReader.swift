@@ -32,6 +32,10 @@ struct QuranMushafReader: View {
         MushafPalette(theme: theme)
     }
 
+    private var hizbNumber: Int {
+        MushafHizbIndex.hizbNumber(for: safePageNumber)
+    }
+
     var body: some View {
         ZStack {
             palette.background
@@ -39,27 +43,21 @@ struct QuranMushafReader: View {
 
             VStack(spacing: 0) {
                 topBar
-                    .frame(height: 44)
+                    .frame(height: 38)
+                    .padding(.horizontal, 12)
 
-                QuranSVGPageView(
-                    pageNumber: safePageNumber,
-                    theme: theme
+                InteractiveMushafPager(
+                    currentPageNumber: $currentPageNumber,
+                    payload: payload,
+                    theme: theme,
+                    onPageTap: toggleControls
                 )
-                .allowsHitTesting(false)
-                .accessibilityLabel("صفحة \(safePageNumber)، الجزء \(page.juz)")
 
                 bottomBar
-                    .frame(height: 46)
+                    .frame(height: 34)
             }
-            .padding(.horizontal, 3)
-            .padding(.vertical, 4)
         }
         .foregroundStyle(palette.text)
-        .contentShape(Rectangle())
-        .onTapGesture {
-            toggleControls()
-        }
-        .simultaneousGesture(pageSwipe)
         .environment(\.layoutDirection, .rightToLeft)
         .preferredColorScheme(theme.isNightTheme ? .dark : .light)
         .statusBarHidden(true)
@@ -141,7 +139,7 @@ struct QuranMushafReader: View {
                     movePage(by: 1)
                 } label: {
                     Image(systemName: "chevron.left")
-                        .frame(width: 42, height: 38)
+                        .frame(width: 42, height: 34)
                 }
                 .disabled(safePageNumber >= payload.pages.count)
                 .opacity(safePageNumber < payload.pages.count ? 1 : 0.24)
@@ -160,7 +158,7 @@ struct QuranMushafReader: View {
                     movePage(by: -1)
                 } label: {
                     Image(systemName: "chevron.right")
-                        .frame(width: 42, height: 38)
+                        .frame(width: 42, height: 34)
                 }
                 .disabled(safePageNumber <= 1)
                 .opacity(safePageNumber > 1 ? 1 : 0.24)
@@ -180,23 +178,39 @@ struct QuranMushafReader: View {
             .environment(\.layoutDirection, .leftToRight)
             .transition(.opacity)
         } else {
-            HStack {
-                Spacer(minLength: 0)
-
-                Text("\(safePageNumber)")
-                    .font(.caption2.weight(.black))
-                    .foregroundStyle(palette.mutedText)
-                    .monospacedDigit()
-                    .padding(.horizontal, 12)
-                    .frame(height: 28)
-                    .overlay(
-                        Capsule(style: .continuous)
-                            .stroke(palette.ornament.opacity(0.55), lineWidth: 0.8)
+            HStack(spacing: 12) {
+                if safePageNumber.isMultiple(of: 2) {
+                    MushafPageBadge(
+                        pageNumber: safePageNumber,
+                        palette: palette
                     )
+
+                    Spacer(minLength: 0)
+
+                    hizbLabel
+                } else {
+                    hizbLabel
+
+                    Spacer(minLength: 0)
+
+                    MushafPageBadge(
+                        pageNumber: safePageNumber,
+                        palette: palette
+                    )
+                }
             }
+            .padding(.horizontal, 10)
             .environment(\.layoutDirection, .leftToRight)
             .transition(.opacity)
         }
+    }
+
+    private var hizbLabel: some View {
+        Text("الحزب \(hizbNumber)")
+            .font(.caption2.weight(.bold))
+            .foregroundStyle(palette.mutedText)
+            .lineLimit(1)
+            .monospacedDigit()
     }
 
     private func mushafControlButton(
@@ -219,27 +233,11 @@ struct QuranMushafReader: View {
         .accessibilityLabel(accessibilityLabel)
     }
 
-    private var pageSwipe: some Gesture {
-        DragGesture(minimumDistance: 26)
-            .onEnded { value in
-                guard abs(value.translation.width) > abs(value.translation.height),
-                      abs(value.translation.width) > 54 else { return }
-
-                if value.translation.width > 0 {
-                    movePage(by: 1)
-                } else {
-                    movePage(by: -1)
-                }
-            }
-    }
-
     private func movePage(by offset: Int) {
         let target = min(max(safePageNumber + offset, 1), payload.pages.count)
         guard target != currentPageNumber else { return }
 
-        withAnimation(.easeInOut(duration: 0.16)) {
-            currentPageNumber = target
-        }
+        currentPageNumber = target
     }
 
     private func toggleControls() {
@@ -274,144 +272,234 @@ struct QuranMushafReader: View {
     }
 }
 
-private struct QuranMushafPage: View {
-    let page: QuranPage
-    let palette: MushafPalette
+/// Keeps the current page and its two neighbours alive so the page follows the
+/// finger instead of flashing to a new web view after the gesture finishes.
+private struct InteractiveMushafPager: View {
+    @Binding var currentPageNumber: Int
+    let payload: QuranPayload
+    let theme: PrayerVisualTheme
+    let onPageTap: () -> Void
+
+    @State private var dragOffset: CGFloat = 0
+    @State private var isSettlingPage = false
+
+    private var safePageNumber: Int {
+        min(max(currentPageNumber, 1), payload.pages.count)
+    }
+
+    private var palette: MushafPalette {
+        MushafPalette(theme: theme)
+    }
+
+    private var visiblePageNumbers: [Int] {
+        var result = [safePageNumber]
+
+        if safePageNumber > 1 {
+            result.append(safePageNumber - 1)
+        }
+
+        if safePageNumber < payload.pages.count {
+            result.append(safePageNumber + 1)
+        }
+
+        return result
+    }
 
     var body: some View {
         GeometryReader { proxy in
-            let lineHeight = proxy.size.height / CGFloat(max(page.lines.count, 1))
-            let maximumTextSize: CGFloat = page.lines.count <= 10 ? 34 : 30
-            let textSize = min(maximumTextSize, max(18.5, lineHeight * 0.66))
+            let pageWidth = max(proxy.size.width, 1)
 
-            VStack(spacing: 0) {
-                ForEach(page.lines) { line in
-                    mushafLine(
-                        line,
-                        textSize: textSize,
-                        availableWidth: proxy.size.width
+            ZStack {
+                ForEach(visiblePageNumbers, id: \.self) { pageNumber in
+                    ZStack {
+                        palette.background
+
+                        QuranSVGPageView(
+                            pageNumber: pageNumber,
+                            theme: theme,
+                            surahLineNumbers: surahLineNumbers(for: pageNumber)
+                        )
+                    }
+                    .frame(width: proxy.size.width, height: proxy.size.height)
+                    .offset(
+                        x: horizontalOffset(
+                            for: pageNumber,
+                            pageWidth: pageWidth
+                        )
                     )
-                    .frame(maxWidth: .infinity)
-                    .frame(height: lineHeight)
+                    .zIndex(pageNumber == safePageNumber ? 2 : 1)
+                    .allowsHitTesting(false)
+                    .accessibilityLabel(accessibilityLabel(for: pageNumber))
                 }
             }
             .frame(width: proxy.size.width, height: proxy.size.height)
+            .clipped()
+            .contentShape(Rectangle())
+            .gesture(pageDrag(pageWidth: pageWidth))
+            .onTapGesture {
+                guard !isSettlingPage, abs(dragOffset) < 0.5 else { return }
+                onPageTap()
+            }
         }
-        .accessibilityElement(children: .contain)
-        .accessibilityLabel("صفحة \(page.number)، الجزء \(page.juz)")
-    }
-
-    @ViewBuilder
-    private func mushafLine(
-        _ line: QuranPageLine,
-        textSize: CGFloat,
-        availableWidth: CGFloat
-    ) -> some View {
-        switch line.kind {
-        case .text:
-            Text(line.text)
-                .font(.custom("KFGQPC HAFS Uthmanic Script", size: textSize))
-                .foregroundStyle(palette.text)
-                .lineLimit(1)
-                .minimumScaleFactor(0.67)
-                .allowsTightening(true)
-                .frame(maxWidth: .infinity, alignment: .center)
-
-        case .bismillah:
-            Text(line.text)
-                .font(.custom("KFGQPC HAFS Uthmanic Script", size: min(textSize + 1.5, 31)))
-                .foregroundStyle(palette.text)
-                .lineLimit(1)
-                .minimumScaleFactor(0.78)
-                .frame(maxWidth: .infinity, alignment: .center)
-
-        case .surah:
-            MushafSurahHeader(
-                title: normalizedSurahTitle(line.text),
-                palette: palette,
-                fontSize: min(max(textSize * 0.82, 17), 23)
-            )
-            .frame(maxWidth: min(availableWidth, 380))
+        .onChange(of: currentPageNumber) { _ in
+            guard !isSettlingPage else { return }
+            dragOffset = 0
         }
     }
 
-    private func normalizedSurahTitle(_ title: String) -> String {
-        title
-            .replacingOccurrences(of: "سُورَةُ", with: "سورة")
-            .replacingOccurrences(of: "  ", with: " ")
+    private func horizontalOffset(for pageNumber: Int, pageWidth: CGFloat) -> CGFloat {
+        switch pageNumber - safePageNumber {
+        case 1:
+            // In an RTL Mushaf the following page waits on the physical left.
+            return -pageWidth + dragOffset
+        case -1:
+            // The preceding page waits on the physical right.
+            return pageWidth + dragOffset
+        default:
+            return dragOffset
+        }
+    }
+
+    private func pageDrag(pageWidth: CGFloat) -> some Gesture {
+        DragGesture(minimumDistance: 8, coordinateSpace: .local)
+            .onChanged { value in
+                guard !isSettlingPage,
+                      abs(value.translation.width) > abs(value.translation.height) else { return }
+
+                let proposedOffset = value.translation.width
+                let isPullingPastLastPage = proposedOffset > 0
+                    && safePageNumber >= payload.pages.count
+                let isPullingPastFirstPage = proposedOffset < 0
+                    && safePageNumber <= 1
+
+                if isPullingPastLastPage || isPullingPastFirstPage {
+                    dragOffset = proposedOffset * 0.18
+                } else {
+                    dragOffset = proposedOffset
+                }
+            }
+            .onEnded { value in
+                guard !isSettlingPage else { return }
+
+                let isHorizontal = abs(value.translation.width) > abs(value.translation.height)
+                let projectedWidth = value.predictedEndTranslation.width
+                let distanceThreshold = max(52, pageWidth * 0.18)
+                let projectionThreshold = max(88, pageWidth * 0.32)
+
+                guard isHorizontal else {
+                    restoreCurrentPage()
+                    return
+                }
+
+                let pageDelta = value.translation.width > 0 ? 1 : -1
+                let targetPage = safePageNumber + pageDelta
+                let targetIsAvailable = targetPage >= 1 && targetPage <= payload.pages.count
+                let passedThreshold = abs(value.translation.width) >= distanceThreshold
+                    || abs(projectedWidth) >= projectionThreshold
+
+                guard targetIsAvailable, passedThreshold else {
+                    restoreCurrentPage()
+                    return
+                }
+
+                settle(on: targetPage, pageDelta: pageDelta, pageWidth: pageWidth)
+            }
+    }
+
+    private func settle(on targetPage: Int, pageDelta: Int, pageWidth: CGFloat) {
+        let originPage = safePageNumber
+        isSettlingPage = true
+
+        withAnimation(.easeOut(duration: 0.20)) {
+            dragOffset = pageDelta > 0 ? pageWidth : -pageWidth
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.21) {
+            var transaction = Transaction(animation: nil)
+            transaction.disablesAnimations = true
+
+            withTransaction(transaction) {
+                if currentPageNumber == originPage {
+                    currentPageNumber = targetPage
+                }
+                dragOffset = 0
+                isSettlingPage = false
+            }
+        }
+    }
+
+    private func restoreCurrentPage() {
+        withAnimation(.interactiveSpring(response: 0.28, dampingFraction: 0.88)) {
+            dragOffset = 0
+        }
+    }
+
+    private func accessibilityLabel(for pageNumber: Int) -> String {
+        let page = payload.pages[pageNumber - 1]
+        return "صفحة \(pageNumber)، الجزء \(page.juz)"
+    }
+
+    private func surahLineNumbers(for pageNumber: Int) -> [Int] {
+        payload.pages[pageNumber - 1].lines
+            .filter { $0.kind == .surah }
+            .map(\.number)
     }
 }
 
-private struct MushafSurahHeader: View {
-    let title: String
+private struct MushafPageBadge: View {
+    let pageNumber: Int
     let palette: MushafPalette
-    let fontSize: CGFloat
 
     var body: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 7, style: .continuous)
-                .fill(palette.surahHeaderBackground)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 7, style: .continuous)
-                        .stroke(palette.ornament.opacity(0.78), lineWidth: 0.9)
-                        .padding(1)
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 5, style: .continuous)
-                        .stroke(palette.ornament.opacity(0.35), lineWidth: 0.6)
-                        .padding(4)
-                )
+        HStack(spacing: 7) {
+            ornamentDiamond
 
-            HStack(spacing: 7) {
-                MushafRosette(color: palette.ornament)
-                ornamentLine
+            Text("\(pageNumber)")
+                .font(.caption2.weight(.black))
+                .foregroundStyle(palette.mutedText)
+                .monospacedDigit()
 
-                Text(title)
-                    .font(.custom("KFGQPC HAFS Uthmanic Script", size: fontSize + 1))
-                    .foregroundStyle(palette.text)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.78)
-                    .padding(.horizontal, 8)
-                    .background(palette.surahHeaderBackground)
-
-                ornamentLine
-                MushafRosette(color: palette.ornament)
-            }
-            .padding(.horizontal, 12)
+            ornamentDiamond
         }
-        .padding(.vertical, 1)
+        .padding(.horizontal, 9)
+        .frame(height: 28)
+        .background(
+            Capsule(style: .continuous)
+                .fill(palette.controlBackground.opacity(0.34))
+        )
+        .overlay(
+            Capsule(style: .continuous)
+                .stroke(palette.ornament.opacity(0.62), lineWidth: 0.8)
+                .padding(1)
+        )
     }
 
-    private var ornamentLine: some View {
-        Rectangle()
-            .fill(palette.ornament.opacity(0.62))
-            .frame(maxWidth: .infinity)
-            .frame(height: 0.8)
+    private var ornamentDiamond: some View {
+        RoundedRectangle(cornerRadius: 0.7, style: .continuous)
+            .fill(palette.ornament.opacity(0.74))
+            .frame(width: 5, height: 5)
+            .rotationEffect(.degrees(45))
     }
 }
 
-private struct MushafRosette: View {
-    let color: Color
+private enum MushafHizbIndex {
+    /// Page boundaries are derived from the first verse on every Madani Mushaf
+    /// page using Quran Foundation API v4 `hizb_number` metadata.
+    private static let boundaries: [(startPage: Int, hizb: Int)] = [
+        (1, 1), (12, 2), (22, 3), (32, 4), (42, 5), (52, 6),
+        (63, 7), (73, 8), (82, 9), (93, 10), (102, 11), (113, 12),
+        (122, 13), (132, 14), (142, 15), (151, 16), (162, 17), (173, 18),
+        (182, 19), (193, 20), (202, 21), (212, 22), (222, 23), (232, 24),
+        (242, 25), (252, 26), (262, 27), (273, 28), (282, 29), (293, 30),
+        (302, 31), (313, 32), (322, 33), (332, 34), (342, 35), (352, 36),
+        (362, 37), (372, 38), (382, 39), (392, 40), (402, 41), (414, 42),
+        (422, 43), (432, 44), (442, 45), (452, 46), (462, 47), (472, 48),
+        (482, 49), (492, 50), (503, 51), (514, 52), (522, 53), (532, 54),
+        (542, 55), (553, 56), (562, 57), (572, 58), (582, 59), (592, 60)
+    ]
 
-    var body: some View {
-        ZStack {
-            ForEach(0..<8, id: \.self) { index in
-                Capsule(style: .continuous)
-                    .fill(color.opacity(0.72))
-                    .frame(width: 2.4, height: 10)
-                    .offset(y: -4.8)
-                    .rotationEffect(.degrees(Double(index) * 45))
-            }
-
-            Circle()
-                .stroke(color.opacity(0.72), lineWidth: 0.8)
-                .frame(width: 9, height: 9)
-
-            Circle()
-                .fill(color.opacity(0.9))
-                .frame(width: 3.2, height: 3.2)
-        }
-        .frame(width: 24, height: 24)
+    static func hizbNumber(for pageNumber: Int) -> Int {
+        boundaries.last(where: { $0.startPage <= pageNumber })?.hizb ?? 1
     }
 }
 
@@ -420,7 +508,6 @@ private struct MushafPalette {
     let text: Color
     let mutedText: Color
     let ornament: Color
-    let surahHeaderBackground: Color
     let controlBackground: Color
     let controlAccent: Color
 
@@ -430,7 +517,6 @@ private struct MushafPalette {
             text = Color.white.opacity(0.98)
             mutedText = Color.white.opacity(0.54)
             ornament = Color.white.opacity(0.46)
-            surahHeaderBackground = Color.white.opacity(0.055)
             controlBackground = Color.white.opacity(0.10)
             controlAccent = Color.white.opacity(0.94)
         } else {
@@ -438,7 +524,6 @@ private struct MushafPalette {
             text = Color(red: 0.051, green: 0.047, blue: 0.039)
             mutedText = Color(red: 0.52, green: 0.41, blue: 0.29).opacity(0.78)
             ornament = Color(red: 0.58, green: 0.40, blue: 0.23).opacity(0.72)
-            surahHeaderBackground = Color(red: 0.68, green: 0.49, blue: 0.29).opacity(0.08)
             controlBackground = Color.white.opacity(0.66)
             controlAccent = Color(red: 0.17, green: 0.12, blue: 0.075)
         }

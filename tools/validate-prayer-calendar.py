@@ -260,26 +260,25 @@ quran_payload = json.loads(QURAN_DATA_PATH.read_text(encoding="utf-8"))
 quran_svg_manifest = json.loads(QURAN_SVG_MANIFEST_PATH.read_text(encoding="utf-8"))
 assert ".environment(\\.layoutDirection, .rightToLeft)" in quran_view_text
 assert "bottomReservedHeight + 8" in quran_view_text
-assert "QuranPageCard" in quran_view_text
+assert "lastReadingCard(" in quran_view_text
+assert "continueReadingButton(" in quran_view_text
+assert "quickActions(" in quran_view_text
+assert "QuranPagePicker" in quran_view_text
 assert "QuranSurahPicker" in quran_view_text
 assert "QuranReadingBackdrop" in quran_view_text
-assert "QuranPageBackground" in quran_view_text
 assert ".fullScreenCover(item: $readerPresentation)" in quran_view_text
 assert "QuranMushafReader(" in quran_view_text
 assert '@AppStorage("quran.lastPage")' in quran_view_text
-assert 'Image(systemName: "chevron.left")' in quran_view_text
-assert 'movePage(by: 1, totalPages: totalPages)' in quran_view_text
-assert '.accessibilityLabel("الصفحة التالية")' in quran_view_text
-assert 'Image(systemName: "chevron.right")' in quran_view_text
-assert 'movePage(by: -1, totalPages: totalPages)' in quran_view_text
-assert '.accessibilityLabel("الصفحة السابقة")' in quran_view_text
-assert 'Text("• تقرأ الآن")' in quran_view_text
-assert '.safeAreaInset(edge: .bottom)' in quran_view_text
 assert "AVFoundation" not in quran_view_text
 assert "AVPlayer" not in quran_view_text
-assert "QuranSVGPageView(pageNumber: page.number, theme: theme)" in quran_view_text
 assert "QuranSVGPageView(" in quran_mushaf_reader_text
-assert "pageNumber: safePageNumber" in quran_mushaf_reader_text
+assert "InteractiveMushafPager(" in quran_mushaf_reader_text
+assert "visiblePageNumbers" in quran_mushaf_reader_text
+assert "DragGesture(minimumDistance: 8" in quran_mushaf_reader_text
+assert "pageNumber: pageNumber" in quran_mushaf_reader_text
+assert "surahLineNumbers:" in quran_mushaf_reader_text
+assert "MushafPageBadge" in quran_mushaf_reader_text
+assert "MushafHizbIndex" in quran_mushaf_reader_text
 assert "page.number == 293" not in quran_mushaf_reader_text
 assert "QuranQCFPrototypePageView" not in quran_mushaf_reader_text
 assert "controlsAreVisible" in quran_mushaf_reader_text
@@ -292,6 +291,10 @@ assert "COMPRESSION_ZLIB" in quran_svg_page_view_text
 assert "NSCache<NSNumber, NSString>" in quran_svg_page_view_text
 assert "webViewWebContentProcessDidTerminate" in quran_svg_page_view_text
 assert "preserveAspectRatio', 'xMidYMid meet'" in quran_svg_page_view_text
+assert 'background = "transparent"' in quran_svg_page_view_text
+assert "appendSurahOrnaments" in quran_svg_page_view_text
+assert "artworkViewBox" in quran_svg_page_view_text
+assert "prefetch(" not in quran_svg_page_view_text
 assert "MushafSVG" in quran_svg_page_view_text
 assert quran_svg_manifest["schemaVersion"] == 1
 assert quran_svg_manifest["format"] == "qsvg-zlib"

@@ -15,7 +15,6 @@ struct ContentView: View {
     @State private var selectedDateKey = PrayerEngine.automaticScheduleDateKey()
     @State private var followsToday = true
     @State private var selectedTab: HomeDockItem = .schedule
-    @State private var tabTransitionEdge: Edge = .leading
     @State private var showWelcomeActivationPrompt = false
     @State private var selectedPrayerDetails: PrayerTime?
     @Namespace private var dockSelectionNamespace
@@ -76,14 +75,6 @@ struct ContentView: View {
                         )
                     }
                 }
-                .id(selectedTab)
-                .transition(
-                    .asymmetric(
-                        insertion: .opacity.combined(with: .move(edge: tabTransitionEdge)),
-                        removal: .opacity.combined(with: .move(edge: oppositeTabTransitionEdge))
-                    )
-                )
-                .animation(.easeInOut(duration: 0.30), value: selectedTab)
 
                 bottomDock
                     .padding(.horizontal, 10)
@@ -124,16 +115,12 @@ struct ContentView: View {
             presentWelcomeActivationPromptIfNeeded()
         }
         .onReceive(NotificationCenter.default.publisher(for: PrayerNotificationManager.openSettingsNotification)) { _ in
-            withAnimation(.easeInOut(duration: 0.18)) {
-                selectedTab = .notifications
-            }
+            selectedTab = .notifications
         }
         .onReceive(NotificationCenter.default.publisher(for: PrayerNotificationManager.openScheduleNotification)) { _ in
             followsToday = true
             updateScheduleClock(Date())
-            withAnimation(.easeInOut(duration: 0.18)) {
-                selectedTab = .schedule
-            }
+            selectedTab = .schedule
         }
         .onOpenURL { url in
             handleDeepLink(url)
@@ -342,10 +329,7 @@ struct ContentView: View {
         }
 
         if selectedTab != targetTab {
-            tabTransitionEdge = transitionEdge(from: selectedTab, to: targetTab)
-            withAnimation(.easeInOut(duration: 0.24)) {
-                selectedTab = targetTab
-            }
+            selectedTab = targetTab
         }
     }
 
@@ -783,14 +767,11 @@ struct ContentView: View {
             return
         }
 
-        tabTransitionEdge = transitionEdge(from: selectedTab, to: item)
         if item == .schedule {
             updateScheduleClock(Date())
         }
 
-        withAnimation(.easeInOut(duration: 0.30)) {
-            selectedTab = item
-        }
+        selectedTab = item
     }
 
     private func updateScheduleClock(_ value: Date) {
@@ -798,23 +779,6 @@ struct ContentView: View {
         if followsToday {
             selectedDateKey = PrayerEngine.automaticScheduleDateKey(for: value)
         }
-    }
-
-    private var oppositeTabTransitionEdge: Edge {
-        switch tabTransitionEdge {
-        case .leading:
-            return .trailing
-        case .trailing:
-            return .leading
-        case .top:
-            return .bottom
-        case .bottom:
-            return .top
-        }
-    }
-
-    private func transitionEdge(from oldItem: HomeDockItem, to newItem: HomeDockItem) -> Edge {
-        newItem.order > oldItem.order ? .leading : .trailing
     }
 
     private func dockSymbol(for item: HomeDockItem) -> String {
