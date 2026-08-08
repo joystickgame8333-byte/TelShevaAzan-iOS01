@@ -18,11 +18,10 @@ NOTIFICATION_SETTINGS_PATH = ROOT / "TelShevaAzan" / "NotificationSettingsView.s
 CONTENT_PATH = ROOT / "TelShevaAzan" / "ContentView.swift"
 QURAN_VIEW_PATH = ROOT / "TelShevaAzan" / "QuranView.swift"
 QURAN_MUSHAF_READER_PATH = ROOT / "TelShevaAzan" / "QuranMushafReader.swift"
-QURAN_QCF_PROTOTYPE_VIEW_PATH = ROOT / "TelShevaAzan" / "QuranQCFPrototypePageView.swift"
+QURAN_SVG_PAGE_VIEW_PATH = ROOT / "TelShevaAzan" / "QuranSVGPageView.swift"
 QURAN_DATA_MODEL_PATH = ROOT / "TelShevaAzan" / "QuranData.swift"
 QURAN_DATA_PATH = ROOT / "TelShevaAzan" / "Resources" / "Quran" / "quran-pages-v1.json"
-QURAN_QCF_PROTOTYPE_DATA_PATH = ROOT / "TelShevaAzan" / "Resources" / "Quran" / "QCF" / "qcf-page-293-v2.json"
-QURAN_QCF_PROTOTYPE_FONT_PATH = ROOT / "TelShevaAzan" / "Resources" / "Quran" / "QCF" / "p293.woff2"
+QURAN_SVG_MANIFEST_PATH = ROOT / "TelShevaAzan" / "Resources" / "Quran" / "MushafSVG" / "manifest.json"
 QURAN_RADIO_PLAYER_PATH = ROOT / "TelShevaAzan" / "QuranRadioPlayer.swift"
 WIDGET_DATA_PATH = ROOT / "TelShevaAzanWidget" / "SalatiWidgetData.swift"
 WIDGET_BUNDLE_PATH = ROOT / "TelShevaAzanWidget" / "TelShevaAzanWidget.swift"
@@ -255,10 +254,10 @@ assert "CGFloat(60) + dockBottomPadding" in content_text, "Tabs must reserve onl
 
 quran_view_text = QURAN_VIEW_PATH.read_text(encoding="utf-8")
 quran_mushaf_reader_text = QURAN_MUSHAF_READER_PATH.read_text(encoding="utf-8")
-quran_qcf_prototype_view_text = QURAN_QCF_PROTOTYPE_VIEW_PATH.read_text(encoding="utf-8")
+quran_svg_page_view_text = QURAN_SVG_PAGE_VIEW_PATH.read_text(encoding="utf-8")
 quran_model_text = QURAN_DATA_MODEL_PATH.read_text(encoding="utf-8")
 quran_payload = json.loads(QURAN_DATA_PATH.read_text(encoding="utf-8"))
-quran_qcf_prototype_payload = json.loads(QURAN_QCF_PROTOTYPE_DATA_PATH.read_text(encoding="utf-8"))
+quran_svg_manifest = json.loads(QURAN_SVG_MANIFEST_PATH.read_text(encoding="utf-8"))
 assert ".environment(\\.layoutDirection, .rightToLeft)" in quran_view_text
 assert "bottomReservedHeight + 8" in quran_view_text
 assert "QuranPageCard" in quran_view_text
@@ -268,7 +267,6 @@ assert "QuranPageBackground" in quran_view_text
 assert ".fullScreenCover(item: $readerPresentation)" in quran_view_text
 assert "QuranMushafReader(" in quran_view_text
 assert '@AppStorage("quran.lastPage")' in quran_view_text
-assert 'font(.custom("KFGQPC HAFS Uthmanic Script"' in quran_view_text
 assert 'Image(systemName: "chevron.left")' in quran_view_text
 assert 'movePage(by: 1, totalPages: totalPages)' in quran_view_text
 assert '.accessibilityLabel("الصفحة التالية")' in quran_view_text
@@ -279,28 +277,30 @@ assert 'Text("• تقرأ الآن")' in quran_view_text
 assert '.safeAreaInset(edge: .bottom)' in quran_view_text
 assert "AVFoundation" not in quran_view_text
 assert "AVPlayer" not in quran_view_text
-assert "QuranMushafPage" in quran_mushaf_reader_text
-assert "page.number == 293" in quran_mushaf_reader_text
-assert "QuranQCFPrototypePageView(theme: theme)" in quran_mushaf_reader_text
-assert 'font(.custom("KFGQPC HAFS Uthmanic Script"' in quran_mushaf_reader_text
+assert "QuranSVGPageView(pageNumber: page.number, theme: theme)" in quran_view_text
+assert "QuranSVGPageView(" in quran_mushaf_reader_text
+assert "pageNumber: safePageNumber" in quran_mushaf_reader_text
+assert "page.number == 293" not in quran_mushaf_reader_text
+assert "QuranQCFPrototypePageView" not in quran_mushaf_reader_text
 assert "controlsAreVisible" in quran_mushaf_reader_text
-assert "page.lines.count" in quran_mushaf_reader_text
 assert '.accessibilityLabel("الصفحة التالية")' in quran_mushaf_reader_text
 assert '.accessibilityLabel("الصفحة السابقة")' in quran_mushaf_reader_text
 assert "Data(contentsOf: url, options: .mappedIfSafe)" in quran_model_text
-assert "UIViewRepresentable" in quran_qcf_prototype_view_text
-assert "WKWebView" in quran_qcf_prototype_view_text
-assert "grid-template-rows: repeat(15" in quran_qcf_prototype_view_text
-assert "document.fonts.ready.then(fitQCFPage)" in quran_qcf_prototype_view_text
-assert ".lineLimit(1)" not in quran_qcf_prototype_view_text
-assert quran_qcf_prototype_payload["rendering"] == "qcf-v2"
-assert quran_qcf_prototype_payload["page"] == 293
-assert [line["number"] for line in quran_qcf_prototype_payload["lines"]] == list(range(1, 16))
-assert [line["kind"] for line in quran_qcf_prototype_payload["lines"]][9:11] == ["surah", "bismillah"]
-assert all(line["tokens"] for line in quran_qcf_prototype_payload["lines"] if line["kind"] == "text")
-assert QURAN_QCF_PROTOTYPE_FONT_PATH.stat().st_size > 150_000
-assert "TelShevaAzan/Resources/Quran/QCF/qcf-page-293-v2.json" in project_text
-assert "TelShevaAzan/Resources/Quran/QCF/p293.woff2" in project_text
+assert "UIViewRepresentable" in quran_svg_page_view_text
+assert "WKWebView" in quran_svg_page_view_text
+assert "COMPRESSION_ZLIB" in quran_svg_page_view_text
+assert "NSCache<NSNumber, NSString>" in quran_svg_page_view_text
+assert "webViewWebContentProcessDidTerminate" in quran_svg_page_view_text
+assert "preserveAspectRatio', 'xMidYMid meet'" in quran_svg_page_view_text
+assert "MushafSVG" in quran_svg_page_view_text
+assert quran_svg_manifest["schemaVersion"] == 1
+assert quran_svg_manifest["format"] == "qsvg-zlib"
+assert quran_svg_manifest["totals"]["pageCount"] == 604
+assert len(quran_svg_manifest["pages"]) == 604
+assert [page["number"] for page in quran_svg_manifest["pages"]] == list(range(1, 605))
+assert [page["file"] for page in quran_svg_manifest["pages"]] == [f"p{page:03d}.qsvg" for page in range(1, 605)]
+assert "TelShevaAzan/Resources/Quran/MushafSVG" in project_text
+assert "type: folder" in project_text
 assert quran_payload["schemaVersion"] == 1
 assert len(quran_payload["pages"]) == 604
 assert len(quran_payload["surahs"]) == 114

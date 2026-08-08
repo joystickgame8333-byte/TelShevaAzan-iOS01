@@ -41,24 +41,18 @@ struct QuranMushafReader: View {
                 topBar
                     .frame(height: 44)
 
-                Group {
-                    if page.number == 293 {
-                        QuranQCFPrototypePageView(theme: theme)
-                    } else {
-                        QuranMushafPage(
-                            page: page,
-                            palette: palette
-                        )
-                    }
-                }
-                .id(page.number)
-                .transition(.opacity)
+                QuranSVGPageView(
+                    pageNumber: safePageNumber,
+                    theme: theme
+                )
+                .allowsHitTesting(false)
+                .accessibilityLabel("صفحة \(safePageNumber)، الجزء \(page.juz)")
 
                 bottomBar
                     .frame(height: 46)
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 5)
+            .padding(.horizontal, 3)
+            .padding(.vertical, 4)
         }
         .foregroundStyle(palette.text)
         .contentShape(Rectangle())
@@ -68,6 +62,7 @@ struct QuranMushafReader: View {
         .simultaneousGesture(pageSwipe)
         .environment(\.layoutDirection, .rightToLeft)
         .preferredColorScheme(theme.isNightTheme ? .dark : .light)
+        .statusBarHidden(true)
         .onAppear {
             if currentPageNumber != safePageNumber {
                 currentPageNumber = safePageNumber
@@ -431,7 +426,7 @@ private struct MushafPalette {
 
     init(theme: PrayerVisualTheme) {
         if theme.isNightTheme {
-            background = Color(red: 0.005, green: 0.018, blue: 0.027)
+            background = Color(red: 0.004, green: 0.012, blue: 0.018)
             text = Color.white.opacity(0.98)
             mutedText = Color.white.opacity(0.54)
             ornament = Color.white.opacity(0.46)
@@ -439,13 +434,13 @@ private struct MushafPalette {
             controlBackground = Color.white.opacity(0.10)
             controlAccent = Color.white.opacity(0.94)
         } else {
-            background = Color(red: 0.985, green: 0.973, blue: 0.925)
-            text = Color(red: 0.11, green: 0.10, blue: 0.085)
-            mutedText = Color(red: 0.11, green: 0.10, blue: 0.085).opacity(0.55)
-            ornament = Color(red: 0.26, green: 0.22, blue: 0.15).opacity(0.55)
-            surahHeaderBackground = Color(red: 0.38, green: 0.31, blue: 0.19).opacity(0.07)
-            controlBackground = Color.white.opacity(0.58)
-            controlAccent = Color(red: 0.12, green: 0.10, blue: 0.075)
+            background = Color(red: 0.996, green: 0.984, blue: 0.969)
+            text = Color(red: 0.051, green: 0.047, blue: 0.039)
+            mutedText = Color(red: 0.52, green: 0.41, blue: 0.29).opacity(0.78)
+            ornament = Color(red: 0.58, green: 0.40, blue: 0.23).opacity(0.72)
+            surahHeaderBackground = Color(red: 0.68, green: 0.49, blue: 0.29).opacity(0.08)
+            controlBackground = Color.white.opacity(0.66)
+            controlAccent = Color(red: 0.17, green: 0.12, blue: 0.075)
         }
     }
 }

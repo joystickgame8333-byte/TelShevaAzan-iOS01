@@ -169,8 +169,6 @@ struct QuranView: View {
             )
 
             QuranPageCard(page: page, theme: theme, compact: compact)
-                .id(page.number)
-                .transition(.opacity)
                 .gesture(pageSwipe(totalPages: payload.pages.count))
                 .contentShape(Rectangle())
                 .onTapGesture {
@@ -338,29 +336,9 @@ private struct QuranPageCard: View {
     let compact: Bool
 
     var body: some View {
-        GeometryReader { proxy in
-            let horizontalPadding: CGFloat = compact ? 10 : 12
-            let verticalPadding: CGFloat = compact ? 7 : 9
-            let availableHeight = max(proxy.size.height - (verticalPadding * 2), 1)
-            let lineHeight = availableHeight / CGFloat(max(page.lines.count, 1))
-            let maximumTextSize: CGFloat = page.lines.count <= 10 ? 22 : 18.5
-            let textSize = min(maximumTextSize, max(13.5, lineHeight * 0.53))
-
-            VStack(spacing: 0) {
-                ForEach(page.lines) { line in
-                    lineView(
-                        line,
-                        availableWidth: proxy.size.width - (horizontalPadding * 2),
-                        textSize: textSize
-                    )
-                    .frame(maxWidth: .infinity)
-                    .frame(height: lineHeight)
-                }
-            }
-            .padding(.horizontal, horizontalPadding)
-            .padding(.vertical, verticalPadding)
-            .frame(width: proxy.size.width, height: proxy.size.height)
-        }
+        QuranSVGPageView(pageNumber: page.number, theme: theme)
+            .allowsHitTesting(false)
+            .padding(compact ? 2 : 3)
         .background(
             QuranPageBackground(theme: theme)
         )
@@ -371,67 +349,6 @@ private struct QuranPageCard: View {
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         .accessibilityElement(children: .contain)
         .accessibilityLabel("صفحة \(page.number)، الجزء \(page.juz)")
-    }
-
-    @ViewBuilder
-    private func lineView(
-        _ line: QuranPageLine,
-        availableWidth: CGFloat,
-        textSize: CGFloat
-    ) -> some View {
-        switch line.kind {
-        case .surah:
-            ZStack {
-                HStack(spacing: 8) {
-                    Rectangle()
-                        .fill(theme.accent.opacity(0.34))
-                        .frame(height: 0.8)
-
-                    Image(systemName: "diamond.fill")
-                        .font(.system(size: 4, weight: .black))
-                        .foregroundStyle(theme.accent)
-
-                    Spacer(minLength: 72)
-
-                    Image(systemName: "diamond.fill")
-                        .font(.system(size: 4, weight: .black))
-                        .foregroundStyle(theme.accent)
-
-                    Rectangle()
-                        .fill(theme.accent.opacity(0.34))
-                        .frame(height: 0.8)
-                }
-
-                Text(line.text)
-                    .font(.system(size: min(textSize, compact ? 15.5 : 17), weight: .black, design: .rounded))
-                    .foregroundStyle(theme.primaryText)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.72)
-                    .padding(.horizontal, 12)
-                    .background(theme.panelBackground)
-            }
-            .frame(maxWidth: min(availableWidth, 340))
-            .padding(.horizontal, 8)
-            .background(
-                RoundedRectangle(cornerRadius: 9, style: .continuous)
-                    .fill(theme.accent.opacity(theme.isNightTheme ? 0.09 : 0.07))
-            )
-        case .bismillah:
-            Text(line.text)
-                .font(.custom("KFGQPC HAFS Uthmanic Script", size: min(textSize + 0.5, 19)))
-                .foregroundStyle(theme.primaryText.opacity(0.98))
-                .lineLimit(1)
-                .minimumScaleFactor(0.72)
-                .frame(maxWidth: .infinity, alignment: .center)
-        case .text:
-            Text(line.text)
-                .font(.custom("KFGQPC HAFS Uthmanic Script", size: textSize))
-                .foregroundStyle(theme.primaryText.opacity(0.98))
-                .lineLimit(1)
-                .minimumScaleFactor(0.62)
-                .allowsTightening(true)
-                .frame(maxWidth: .infinity, alignment: .center)
-        }
     }
 }
 
