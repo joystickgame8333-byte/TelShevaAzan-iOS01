@@ -51,6 +51,7 @@ jobs:
         run: |
           set -euxo pipefail
           xcodebuild -list -project TelShevaAzan.xcodeproj
+          set +e
           xcodebuild \
             -project TelShevaAzan.xcodeproj \
             -scheme TelShevaAzan \
@@ -59,12 +60,18 @@ jobs:
             -destination 'generic/platform=iOS' \
             -derivedDataPath build \
             -jobs 3 \
-            -quiet \
             build \
             COMPILER_INDEX_STORE_ENABLE=NO \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGN_IDENTITY=""
+            CODE_SIGN_IDENTITY="" 2>&1 | tee xcodebuild.log
+          BUILD_STATUS=${PIPESTATUS[0]}
+          set -e
+          if [ "$BUILD_STATUS" -ne 0 ]; then
+            BUILD_ERRORS="$(grep -E 'error:|BUILD FAILED|The following build commands failed' xcodebuild.log | tail -n 20 | tr '\n' ' ')"
+            echo "::error file=project.yml,line=1::$BUILD_ERRORS"
+            exit "$BUILD_STATUS"
+          fi
 
       - name: Package IPA
         run: |
