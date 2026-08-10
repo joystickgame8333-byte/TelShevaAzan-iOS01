@@ -133,7 +133,7 @@ struct TasbihView: View {
 
                 Spacer()
 
-                VStack(alignment: .trailing, spacing: 2) {
+                VStack(alignment: .leading, spacing: 2) {
                     Text("الذكر المختار")
                         .font(.caption2.weight(.bold))
                         .foregroundStyle(theme.secondaryText)
@@ -227,7 +227,7 @@ private struct TasbihPhrasePickerSheet: View {
         ZStack {
             ThemeBackdrop(theme: theme)
 
-            VStack(alignment: .trailing, spacing: 14) {
+            VStack(alignment: .leading, spacing: 14) {
                 HStack(spacing: 12) {
                     Button {
                         dismiss()
@@ -246,7 +246,7 @@ private struct TasbihPhrasePickerSheet: View {
 
                     Spacer(minLength: 8)
 
-                    VStack(alignment: .trailing, spacing: 3) {
+                    VStack(alignment: .leading, spacing: 3) {
                         Text("اختر الذكر")
                             .font(.title2.weight(.black))
                         Text("بدّل بين الأذكار دون فقدان العدّاد")
@@ -297,7 +297,7 @@ private struct TasbihPhrasePickerSheet: View {
                 .padding(.vertical, 6)
                 .background(Capsule().fill(theme.controlBackground.opacity(0.85)))
 
-                VStack(alignment: .trailing, spacing: 3) {
+                VStack(alignment: .leading, spacing: 3) {
                     Text(item.shortTitle)
                         .font(.headline.weight(.black))
                     Text(item.title)
@@ -306,7 +306,7 @@ private struct TasbihPhrasePickerSheet: View {
                         .lineLimit(2)
                         .minimumScaleFactor(0.8)
                 }
-                .frame(maxWidth: .infinity, alignment: .trailing)
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .environment(\.layoutDirection, .rightToLeft)
 
                 Image(systemName: selected ? "checkmark.circle.fill" : "circle")

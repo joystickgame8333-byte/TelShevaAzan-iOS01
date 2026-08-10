@@ -29,7 +29,7 @@ struct AdhkarHeader: View {
 
             Spacer(minLength: 12)
 
-            VStack(alignment: .trailing, spacing: 2) {
+            VStack(alignment: .leading, spacing: 2) {
                 Text("الأذكار")
                     .font(.system(size: 34, weight: .black, design: .rounded))
                     .lineLimit(1)
@@ -40,7 +40,7 @@ struct AdhkarHeader: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.78)
             }
-            .frame(maxWidth: .infinity, alignment: .trailing)
+            .frame(maxWidth: .infinity, alignment: .leading)
             .environment(\.layoutDirection, .rightToLeft)
         }
         .environment(\.layoutDirection, .leftToRight)
@@ -120,7 +120,7 @@ struct AdhkarOverview: View {
 
     var body: some View {
         ScrollView(showsIndicators: false) {
-            VStack(alignment: .trailing, spacing: compact ? 10 : 12) {
+            VStack(alignment: .leading, spacing: compact ? 10 : 12) {
                 DailyAdhkarSummary(
                     theme: theme,
                     completed: completedItemCount,
@@ -133,14 +133,14 @@ struct AdhkarOverview: View {
                 Text("اختر وردك")
                     .font(.subheadline.weight(.black))
                     .foregroundStyle(theme.secondaryText)
-                    .frame(maxWidth: .infinity, alignment: .trailing)
+                    .frame(maxWidth: .infinity, alignment: .leading)
 
                 LazyVGrid(
                     columns: [
                         GridItem(.flexible(), spacing: 9),
                         GridItem(.flexible(), spacing: 9)
                     ],
-                    alignment: .trailing,
+                    alignment: .leading,
                     spacing: 9
                 ) {
                     ForEach(primaryCategories) { category in
@@ -186,7 +186,7 @@ private struct DailyAdhkarSummary: View {
 
                 Spacer(minLength: 8)
 
-                VStack(alignment: .trailing, spacing: 3) {
+                VStack(alignment: .leading, spacing: 3) {
                     Text(completed == total ? "أتممت ورد اليوم" : "تابع \(suggestedCategory.title)")
                         .font(.headline.weight(.black))
 
@@ -248,7 +248,7 @@ private struct AdhkarCategoryCard: View {
     var body: some View {
         Button(action: onOpen) {
             HStack(spacing: 10) {
-                VStack(alignment: .trailing, spacing: 5) {
+                VStack(alignment: .leading, spacing: 5) {
                     Text(category.title)
                         .font(.subheadline.weight(.black))
                         .lineLimit(1)
@@ -258,7 +258,7 @@ private struct AdhkarCategoryCard: View {
                         .foregroundStyle(theme.secondaryText)
 
                     GeometryReader { proxy in
-                        ZStack(alignment: .trailing) {
+                        ZStack(alignment: .leading) {
                             Capsule()
                                 .fill(theme.secondaryText.opacity(0.12))
                             Capsule()
@@ -268,7 +268,7 @@ private struct AdhkarCategoryCard: View {
                     }
                     .frame(height: 4)
                 }
-                .frame(maxWidth: .infinity, alignment: .trailing)
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .environment(\.layoutDirection, .rightToLeft)
 
                 Image(systemName: category.symbol)

@@ -34,12 +34,12 @@ struct AdhkarReaderView: View {
     }
 
     var body: some View {
-        VStack(alignment: .trailing, spacing: compact ? 8 : 10) {
+        VStack(alignment: .leading, spacing: compact ? 8 : 10) {
             readerToolbar
 
             ScrollViewReader { proxy in
                 ScrollView(showsIndicators: false) {
-                    VStack(alignment: .trailing, spacing: compact ? 10 : 12) {
+                    VStack(alignment: .leading, spacing: compact ? 10 : 12) {
                         readerProgress
                             .id("adhkar-reader-start")
 
@@ -69,7 +69,7 @@ struct AdhkarReaderView: View {
                 }
             }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .onAppear(perform: repairSelection)
     }
 
@@ -96,7 +96,7 @@ struct AdhkarReaderView: View {
 
             Spacer(minLength: 8)
 
-            VStack(alignment: .trailing, spacing: 1) {
+            VStack(alignment: .leading, spacing: 1) {
                 Text(category.title)
                     .font(.headline.weight(.black))
                 Text("\(selectedIndex + 1) من \(items.count)")
@@ -301,7 +301,7 @@ private struct AdhkarReadingCard: View {
     }
 
     var body: some View {
-        VStack(alignment: .trailing, spacing: compact ? 11 : 14) {
+        VStack(alignment: .leading, spacing: compact ? 11 : 14) {
             HStack(spacing: 10) {
                 Text("\(count)/\(item.target)")
                     .font(.caption.monospacedDigit().weight(.black))
@@ -316,7 +316,7 @@ private struct AdhkarReadingCard: View {
 
                 Spacer(minLength: 8)
 
-                VStack(alignment: .trailing, spacing: 2) {
+                VStack(alignment: .leading, spacing: 2) {
                     Text(item.title)
                         .font(.headline.weight(.black))
                     Text(item.source)
@@ -336,8 +336,8 @@ private struct AdhkarReadingCard: View {
                 .font(.system(size: fontSize, weight: .semibold, design: .rounded))
                 .lineSpacing(fontSize >= 29 ? 9 : 7)
                 .fixedSize(horizontal: false, vertical: true)
-                .frame(maxWidth: .infinity, alignment: .trailing)
-                .multilineTextAlignment(.trailing)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .multilineTextAlignment(.leading)
                 .textSelection(.enabled)
 
             if let note = item.note {
@@ -345,7 +345,7 @@ private struct AdhkarReadingCard: View {
                     .font(.caption2.weight(.semibold))
                     .foregroundStyle(theme.secondaryText)
                     .padding(9)
-                    .frame(maxWidth: .infinity, alignment: .trailing)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .background(
                         RoundedRectangle(cornerRadius: 11, style: .continuous)
                             .fill(theme.controlBackground.opacity(0.65))

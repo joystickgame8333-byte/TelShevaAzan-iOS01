@@ -33,7 +33,7 @@ struct AdhkarView: View {
 
                 AdhkarAmbientBackground(theme: theme)
 
-                VStack(alignment: .trailing, spacing: compactHeight ? 9 : 12) {
+                VStack(alignment: .leading, spacing: compactHeight ? 9 : 12) {
                     AdhkarHeader(
                         theme: theme,
                         isEmbedded: isEmbedded,
@@ -64,7 +64,7 @@ struct AdhkarView: View {
                 .padding(.horizontal, compactHeight ? 16 : 18)
                 .padding(.top, compactHeight ? 8 : 10)
                 .padding(.bottom, bottomReservedHeight + 8)
-                .frame(width: proxy.size.width, height: proxy.size.height, alignment: .topTrailing)
+                .frame(width: proxy.size.width, height: proxy.size.height, alignment: .topLeading)
 
                 if let toastText {
                     AdhkarToast(text: toastText)
@@ -75,7 +75,7 @@ struct AdhkarView: View {
                 }
             }
             .foregroundStyle(theme.primaryText)
-            .multilineTextAlignment(.trailing)
+            .multilineTextAlignment(.leading)
             .environment(\.layoutDirection, .rightToLeft)
         }
         .onAppear {
