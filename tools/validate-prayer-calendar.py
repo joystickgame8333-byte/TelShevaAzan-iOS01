@@ -458,7 +458,11 @@ watch_receiver_text = WATCH_RECEIVER_PATH.read_text(encoding="utf-8")
 assert "WKCompanionAppBundleIdentifier: com.omaralasam.telshevaazan" in project_text
 assert "PRODUCT_BUNDLE_IDENTIFIER: com.omaralasam.telshevaazan.watchkitapp" in project_text
 assert "PRODUCT_BUNDLE_IDENTIFIER: com.omaralasam.telshevaazan.watchkitapp.watchwidget" in project_text
-assert project_text.count("CODE_SIGN_ENTITLEMENTS: TelShevaAzanWatch") == 2
+# The unsigned distribution artifact intentionally leaves the nested watchOS
+# bundles free of development/ad-hoc entitlements.  The user's installer can
+# then apply one coherent signing identity and matching provisioning profiles
+# recursively, instead of inheriting conflicting signatures from CI.
+assert "CODE_SIGN_ENTITLEMENTS: TelShevaAzanWatch" not in project_text
 assert "PrayerEngine.automaticScheduleDateKey(for: now)" in watch_app_text
 assert "IqamaSchedule.telSheva.activeEvent(at: now)" in watch_app_text
 assert ".environment(\\.layoutDirection, .leftToRight)" in watch_app_text
