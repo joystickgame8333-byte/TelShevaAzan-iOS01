@@ -273,7 +273,11 @@ assert ".sheet(item: $activeSheet)" in tasbih_view_text
 assert ".environment(\\.layoutDirection, .rightToLeft)" in tasbih_view_text
 assert "ZStack(alignment: .leading)" not in adhkar_overview_text
 assert "ZStack(alignment: .leading)" not in adhkar_reader_text
-assert ".environment(\\.layoutDirection, .leftToRight)" not in adhkar_overview_text.split("struct AdhkarModePicker", 1)[0]
+adhkar_header_block = adhkar_overview_text.split("struct AdhkarHeader", 1)[1].split("struct AdhkarModePicker", 1)[0]
+assert ".environment(\\.layoutDirection, .leftToRight)" in adhkar_header_block
+assert ".environment(\\.layoutDirection, .rightToLeft)" in adhkar_header_block
+assert "modeButton(.tasbih)" in adhkar_overview_text and "modeButton(.reader)" in adhkar_overview_text
+assert "symbolFirst: true" in adhkar_reader_text and "symbolFirst: false" in adhkar_reader_text
 assert "refreshDayIfNeeded()" in adhkar_view_text.split(".onChange(of: scenePhase)", 1)[1]
 assert "Resources/Quran" not in project_text
 

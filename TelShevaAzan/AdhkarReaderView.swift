@@ -75,20 +75,11 @@ struct AdhkarReaderView: View {
 
     private var readerToolbar: some View {
         HStack(spacing: 9) {
-            VStack(alignment: .trailing, spacing: 1) {
-                Text(category.title)
-                    .font(.headline.weight(.black))
-                Text("\(selectedIndex + 1) من \(items.count)")
-                    .font(.caption2.monospacedDigit().weight(.bold))
-                    .foregroundStyle(theme.secondaryText)
-            }
-
-            Spacer(minLength: 8)
-
             Button(action: onBack) {
                 HStack(spacing: 6) {
-                    Image(systemName: "chevron.right")
                     Text("الأقسام")
+                        .environment(\.layoutDirection, .rightToLeft)
+                    Image(systemName: "chevron.right")
                 }
                 .font(.caption.weight(.black))
                 .foregroundStyle(theme.accent)
@@ -102,8 +93,20 @@ struct AdhkarReaderView: View {
             }
             .buttonStyle(.plain)
             .accessibilityLabel("العودة إلى أقسام الأذكار")
+
+            Spacer(minLength: 8)
+
+            VStack(alignment: .trailing, spacing: 1) {
+                Text(category.title)
+                    .font(.headline.weight(.black))
+                Text("\(selectedIndex + 1) من \(items.count)")
+                    .font(.caption2.monospacedDigit().weight(.bold))
+                    .foregroundStyle(theme.secondaryText)
+                    .environment(\.layoutDirection, .rightToLeft)
+            }
+            .environment(\.layoutDirection, .rightToLeft)
         }
-        .environment(\.layoutDirection, .rightToLeft)
+        .environment(\.layoutDirection, .leftToRight)
     }
 
     private var readerProgress: some View {
@@ -119,6 +122,7 @@ struct AdhkarReaderView: View {
                 Text(completedItems == items.count ? "اكتمل الورد" : "تقدم الورد")
                     .font(.caption.weight(.bold))
                     .foregroundStyle(theme.secondaryText)
+                    .environment(\.layoutDirection, .rightToLeft)
             }
 
             GeometryReader { proxy in
@@ -132,17 +136,18 @@ struct AdhkarReaderView: View {
             }
             .frame(height: 6)
         }
-        .environment(\.layoutDirection, .rightToLeft)
+        .environment(\.layoutDirection, .leftToRight)
         .padding(.horizontal, 2)
     }
 
     private var readerNavigation: some View {
         HStack(spacing: 8) {
             navigationButton(
-                title: "السابق",
-                symbol: "chevron.right",
-                enabled: selectedIndex > 0,
-                action: { select(index: selectedIndex - 1) }
+                title: "التالي",
+                symbol: "chevron.left",
+                symbolFirst: true,
+                enabled: selectedIndex < items.count - 1,
+                action: { select(index: selectedIndex + 1) }
             )
 
             Text("\(selectedIndex + 1) / \(items.count)")
@@ -152,22 +157,34 @@ struct AdhkarReaderView: View {
                 .environment(\.layoutDirection, .leftToRight)
 
             navigationButton(
-                title: "التالي",
-                symbol: "chevron.left",
-                enabled: selectedIndex < items.count - 1,
-                action: { select(index: selectedIndex + 1) }
+                title: "السابق",
+                symbol: "chevron.right",
+                symbolFirst: false,
+                enabled: selectedIndex > 0,
+                action: { select(index: selectedIndex - 1) }
             )
         }
+        .environment(\.layoutDirection, .leftToRight)
     }
 
     private func navigationButton(
         title: String,
         symbol: String,
+        symbolFirst: Bool,
         enabled: Bool,
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
-            Label(title, systemImage: symbol)
+            HStack(spacing: 6) {
+                if symbolFirst {
+                    Image(systemName: symbol)
+                }
+                Text(title)
+                    .environment(\.layoutDirection, .rightToLeft)
+                if !symbolFirst {
+                    Image(systemName: symbol)
+                }
+            }
                 .font(.caption.weight(.black))
                 .foregroundStyle(enabled ? theme.primaryText : theme.secondaryText.opacity(0.4))
                 .padding(.horizontal, 12)
@@ -286,18 +303,6 @@ private struct AdhkarReadingCard: View {
     var body: some View {
         VStack(alignment: .trailing, spacing: compact ? 11 : 14) {
             HStack(spacing: 10) {
-                VStack(alignment: .trailing, spacing: 2) {
-                    Text(item.title)
-                        .font(.headline.weight(.black))
-                    Text(item.source)
-                        .font(.caption2.weight(.semibold))
-                        .foregroundStyle(theme.secondaryText)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.7)
-                }
-
-                Spacer(minLength: 8)
-
                 Text("\(count)/\(item.target)")
                     .font(.caption.monospacedDigit().weight(.black))
                     .foregroundStyle(complete ? Color.green : theme.accent)
@@ -308,7 +313,21 @@ private struct AdhkarReadingCard: View {
                             .fill((complete ? Color.green : theme.accent).opacity(0.12))
                     )
                     .environment(\.layoutDirection, .leftToRight)
+
+                Spacer(minLength: 8)
+
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text(item.title)
+                        .font(.headline.weight(.black))
+                    Text(item.source)
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(theme.secondaryText)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                }
+                .environment(\.layoutDirection, .rightToLeft)
             }
+            .environment(\.layoutDirection, .leftToRight)
 
             Divider()
                 .overlay(theme.controlBorder)
@@ -334,25 +353,27 @@ private struct AdhkarReadingCard: View {
             }
 
             HStack(spacing: 7) {
-                actionButton(symbol: "textformat.size", label: "الخط", action: onChangeFont)
-                actionButton(symbol: "doc.on.doc", label: "نسخ", action: onCopy)
-                actionButton(symbol: "square.and.arrow.up", label: "مشاركة", action: onShare)
-
-                Spacer(minLength: 6)
-
                 if count > 0 && !complete {
                     actionButton(symbol: "minus", label: "تراجع", action: onDecrease)
                 }
+
+                Spacer(minLength: 6)
+
+                actionButton(symbol: "square.and.arrow.up", label: "مشاركة", action: onShare)
+                actionButton(symbol: "doc.on.doc", label: "نسخ", action: onCopy)
+                actionButton(symbol: "textformat.size", label: "الخط", action: onChangeFont)
             }
+            .environment(\.layoutDirection, .leftToRight)
 
             Button(action: onCount) {
                 HStack(spacing: 8) {
-                    Image(systemName: complete ? "checkmark.circle.fill" : "hand.tap.fill")
-                    Text(buttonTitle)
-                    Spacer(minLength: 8)
                     Text("\(count)/\(item.target)")
                         .monospacedDigit()
                         .environment(\.layoutDirection, .leftToRight)
+                    Spacer(minLength: 8)
+                    Text(buttonTitle)
+                        .environment(\.layoutDirection, .rightToLeft)
+                    Image(systemName: complete ? "checkmark.circle.fill" : "hand.tap.fill")
                 }
                 .font(.subheadline.weight(.black))
                 .foregroundStyle(complete ? .white : theme.primaryText)
@@ -368,6 +389,7 @@ private struct AdhkarReadingCard: View {
                 )
             }
             .buttonStyle(.plain)
+            .environment(\.layoutDirection, .leftToRight)
             .disabled(complete)
             .accessibilityLabel(buttonTitle)
             .accessibilityValue("\(count) من \(item.target)")

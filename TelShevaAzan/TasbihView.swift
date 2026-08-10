@@ -63,26 +63,36 @@ struct TasbihView: View {
                 .buttonStyle(.plain)
 
                 HStack {
-                    Button {
-                        showsResetConfirmation = true
-                    } label: {
-                        Label("تصفير", systemImage: "arrow.counterclockwise")
-                    }
-                    .disabled(count == 0)
-
-                    Button(action: decrement) {
-                        Label("تراجع", systemImage: "minus")
-                    }
-                    .disabled(count == 0)
-
-                    Spacer()
-
                     Text("المجموع \(count)")
                         .font(.caption.monospacedDigit().weight(.black))
                         .foregroundStyle(theme.secondaryText)
+                        .environment(\.layoutDirection, .rightToLeft)
+
+                    Spacer()
+
+                    Button(action: decrement) {
+                        HStack(spacing: 5) {
+                            Image(systemName: "minus")
+                            Text("تراجع")
+                                .environment(\.layoutDirection, .rightToLeft)
+                        }
+                    }
+                    .disabled(count == 0)
+
+                    Button {
+                        showsResetConfirmation = true
+                    } label: {
+                        HStack(spacing: 5) {
+                            Image(systemName: "arrow.counterclockwise")
+                            Text("تصفير")
+                                .environment(\.layoutDirection, .rightToLeft)
+                        }
+                    }
+                    .disabled(count == 0)
                 }
                 .font(.caption.weight(.black))
                 .buttonStyle(.plain)
+                .environment(\.layoutDirection, .leftToRight)
             }
             .padding(compact ? 13 : 15)
             .background(adhkarGlass(theme, theme.panelBackground, radius: 19, prominence: .regular))
@@ -114,6 +124,12 @@ struct TasbihView: View {
             activeSheet = .phrasePicker
         } label: {
             HStack(spacing: 9) {
+                Image(systemName: "chevron.down")
+                    .font(.caption.weight(.black))
+                    .foregroundStyle(theme.accent)
+
+                Spacer()
+
                 VStack(alignment: .trailing, spacing: 2) {
                     Text("الذكر المختار")
                         .font(.caption2.weight(.bold))
@@ -121,12 +137,7 @@ struct TasbihView: View {
                     Text(phrase.shortTitle)
                         .font(.subheadline.weight(.black))
                 }
-
-                Spacer()
-
-                Image(systemName: "chevron.down")
-                    .font(.caption.weight(.black))
-                    .foregroundStyle(theme.accent)
+                .environment(\.layoutDirection, .rightToLeft)
             }
             .padding(.horizontal, 12)
             .frame(maxWidth: .infinity, minHeight: 48)
@@ -137,6 +148,7 @@ struct TasbihView: View {
             )
         }
         .buttonStyle(.plain)
+        .environment(\.layoutDirection, .leftToRight)
         .accessibilityLabel("اختيار الذكر")
         .accessibilityValue(phrase.shortTitle)
     }
@@ -214,16 +226,6 @@ private struct TasbihPhrasePickerSheet: View {
 
             VStack(alignment: .trailing, spacing: 14) {
                 HStack(spacing: 12) {
-                    VStack(alignment: .trailing, spacing: 3) {
-                        Text("اختر الذكر")
-                            .font(.title2.weight(.black))
-                        Text("بدّل بين الأذكار دون فقدان العدّاد")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(theme.secondaryText)
-                    }
-
-                    Spacer(minLength: 8)
-
                     Button {
                         dismiss()
                     } label: {
@@ -238,7 +240,19 @@ private struct TasbihPhrasePickerSheet: View {
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("إغلاق")
+
+                    Spacer(minLength: 8)
+
+                    VStack(alignment: .trailing, spacing: 3) {
+                        Text("اختر الذكر")
+                            .font(.title2.weight(.black))
+                        Text("بدّل بين الأذكار دون فقدان العدّاد")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(theme.secondaryText)
+                    }
+                    .environment(\.layoutDirection, .rightToLeft)
                 }
+                .environment(\.layoutDirection, .leftToRight)
 
                 ScrollView(showsIndicators: false) {
                     LazyVStack(spacing: 9) {
@@ -268,9 +282,17 @@ private struct TasbihPhrasePickerSheet: View {
             dismiss()
         } label: {
             HStack(spacing: 12) {
-                Image(systemName: selected ? "checkmark.circle.fill" : "circle")
-                    .font(.title3.weight(.bold))
-                    .foregroundStyle(selected ? theme.accent : theme.secondaryText.opacity(0.7))
+                HStack(spacing: 4) {
+                    Text("\(item.target)")
+                        .environment(\.layoutDirection, .leftToRight)
+                    Text("الهدف")
+                        .environment(\.layoutDirection, .rightToLeft)
+                }
+                .font(.caption.monospacedDigit().weight(.black))
+                .foregroundStyle(selected ? theme.accent : theme.secondaryText)
+                .padding(.horizontal, 9)
+                .padding(.vertical, 6)
+                .background(Capsule().fill(theme.controlBackground.opacity(0.85)))
 
                 VStack(alignment: .trailing, spacing: 3) {
                     Text(item.shortTitle)
@@ -282,14 +304,13 @@ private struct TasbihPhrasePickerSheet: View {
                         .minimumScaleFactor(0.8)
                 }
                 .frame(maxWidth: .infinity, alignment: .trailing)
+                .environment(\.layoutDirection, .rightToLeft)
 
-                Text("الهدف \(item.target)")
-                    .font(.caption.monospacedDigit().weight(.black))
-                    .foregroundStyle(selected ? theme.accent : theme.secondaryText)
-                    .padding(.horizontal, 9)
-                    .padding(.vertical, 6)
-                    .background(Capsule().fill(theme.controlBackground.opacity(0.85)))
+                Image(systemName: selected ? "checkmark.circle.fill" : "circle")
+                    .font(.title3.weight(.bold))
+                    .foregroundStyle(selected ? theme.accent : theme.secondaryText.opacity(0.7))
             }
+            .environment(\.layoutDirection, .leftToRight)
             .padding(.horizontal, 13)
             .padding(.vertical, 11)
             .frame(maxWidth: .infinity, minHeight: 66)
