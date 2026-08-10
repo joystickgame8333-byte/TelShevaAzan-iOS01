@@ -227,10 +227,19 @@ jobs:
           /usr/libexec/PlistBuddy -c "Print :CFBundleIcons:CFBundlePrimaryIcon:CFBundleIconName" "$APP_PATH/Info.plist" || true
           /usr/libexec/PlistBuddy -c "Print :CFBundleIcons:CFBundlePrimaryIcon:CFBundleIconFiles" "$APP_PATH/Info.plist"
           echo "Watch app registration:"
-          /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$WATCH_APP_IN_APP/Info.plist" || true
-          /usr/libexec/PlistBuddy -c "Print :WKCompanionAppBundleIdentifier" "$WATCH_APP_IN_APP/Info.plist" || true
-          /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$WATCH_PLUGIN_PATH/Info.plist" || true
+          APP_BUNDLE_ID="$(/usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$APP_PATH/Info.plist")"
+          WATCH_BUNDLE_ID="$(/usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$WATCH_APP_IN_APP/Info.plist")"
+          WATCH_COMPANION_ID="$(/usr/libexec/PlistBuddy -c "Print :WKCompanionAppBundleIdentifier" "$WATCH_APP_IN_APP/Info.plist")"
+          WATCH_WIDGET_BUNDLE_ID="$(/usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$WATCH_PLUGIN_PATH/Info.plist")"
+          WATCH_WIDGET_PARENT_ID="$(/usr/libexec/PlistBuddy -c "Print :NSExtension:NSExtensionAttributes:WKAppBundleIdentifier" "$WATCH_PLUGIN_PATH/Info.plist")"
+          echo "$WATCH_BUNDLE_ID"
+          echo "$WATCH_COMPANION_ID"
+          echo "$WATCH_WIDGET_BUNDLE_ID"
           /usr/libexec/PlistBuddy -c "Print :NSExtension:NSExtensionPointIdentifier" "$WATCH_PLUGIN_PATH/Info.plist" || true
+          test "$WATCH_COMPANION_ID" = "$APP_BUNDLE_ID"
+          test "$WATCH_BUNDLE_ID" = "$APP_BUNDLE_ID.watchkitapp"
+          test "$WATCH_WIDGET_BUNDLE_ID" = "$WATCH_BUNDLE_ID.watchwidget"
+          test "$WATCH_WIDGET_PARENT_ID" = "$WATCH_BUNDLE_ID"
           for icon in Icon-20@2x.png Icon-20@3x.png Icon-29@2x.png Icon-29@3x.png Icon-40@2x.png Icon-40@3x.png Icon-60@2x.png Icon-60@3x.png; do
             if [ ! -f "$APP_PATH/$icon" ]; then
               echo "Missing packaged icon: $APP_PATH/$icon"

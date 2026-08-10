@@ -1,9 +1,10 @@
-﻿import SwiftUI
+import SwiftUI
 import WidgetKit
 
 struct WatchPrayerEntry: TimelineEntry {
     let date: Date
     let nextPrayer: PrayerTime?
+    let scheduleIsTomorrow: Bool
 }
 
 struct WatchPrayerProvider: TimelineProvider {
@@ -16,16 +17,32 @@ struct WatchPrayerProvider: TimelineProvider {
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<WatchPrayerEntry>) -> Void) {
-        let entry = makeEntry(for: Date())
-        let refreshDate = entry.nextPrayer?.date.addingTimeInterval(30) ?? Date().addingTimeInterval(900)
-        completion(Timeline(entries: [entry], policy: .after(refreshDate)))
+        let now = Date()
+        var dates = [now]
+
+        for dateKey in PrayerEngine.upcomingDateKeys(from: now, count: 3) {
+            if let midnight = PrayerEngine.date(from: dateKey, time: "00:00"), midnight > now {
+                dates.append(midnight)
+            }
+            let events = PrayerEngine.schedule(for: dateKey).displayTimes.filter {
+                PrayerEngine.prayerOrder.contains($0.key) && $0.date > now
+            }
+            dates.append(contentsOf: events.map(\.date))
+        }
+
+        let uniqueDates = Array(Set(dates)).sorted()
+        let entries = uniqueDates.map(makeEntry(for:))
+        let reloadDate = (uniqueDates.last ?? now).addingTimeInterval(60)
+        completion(Timeline(entries: entries, policy: .after(reloadDate)))
     }
 
     private func makeEntry(for date: Date) -> WatchPrayerEntry {
-        let dateKey = PrayerEngine.defaultDateKey(for: date)
+        let todayKey = PrayerEngine.defaultDateKey(for: date)
+        let scheduleKey = PrayerEngine.automaticScheduleDateKey(for: date)
         return WatchPrayerEntry(
             date: date,
-            nextPrayer: PrayerEngine.nextPrayer(for: dateKey, now: date)
+            nextPrayer: PrayerEngine.nextPrayer(for: scheduleKey, now: date),
+            scheduleIsTomorrow: scheduleKey != todayKey
         )
     }
 }
@@ -34,78 +51,110 @@ struct TelShevaWatchWidgetView: View {
     @Environment(\.widgetFamily) private var family
     let entry: WatchPrayerEntry
 
-    private let accent = Color(red: 0.96, green: 0.75, blue: 0.32)
+    private let accent = Color(red: 0.05, green: 0.52, blue: 1.00)
 
     var body: some View {
         Group {
             switch family {
             case .accessoryInline:
-                Label {
-                    Text("\(nextTitle) \(nextTime) · \(remainingText)")
-                } icon: {
-                    Image(systemName: "moon.stars.fill")
-                }
+                inline
             case .accessoryCircular:
                 circular
             case .accessoryRectangular:
                 rectangular
             case .accessoryCorner:
-                Text(nextTime)
-                    .font(.system(size: 14, weight: .black, design: .rounded).monospacedDigit())
-                    .widgetLabel {
-                        Text(nextTitle)
-                    }
+                corner
             default:
                 rectangular
             }
         }
-        .environment(\.layoutDirection, .rightToLeft)
+        .widgetAccentable()
+    }
+
+    private var inline: some View {
+        HStack(spacing: 3) {
+            Image(systemName: symbol)
+            Text(nextTitle)
+                .environment(\.layoutDirection, .rightToLeft)
+            Text("·")
+            if let target = entry.nextPrayer?.date {
+                Text(target, style: .timer)
+                    .monospacedDigit()
+            } else {
+                Text("--:--")
+            }
+        }
+        .environment(\.layoutDirection, .leftToRight)
     }
 
     private var circular: some View {
         ZStack {
             AccessoryWidgetBackground()
-            VStack(spacing: 1) {
-                Image(systemName: "moon.stars.fill")
-                    .font(.system(size: 9, weight: .black))
-                    .foregroundStyle(accent)
 
-                Text(nextTitle)
-                    .font(.system(size: 10, weight: .black, design: .rounded))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.62)
+            if let target = entry.nextPrayer?.date {
+                ProgressView(timerInterval: entry.date...target, countsDown: true)
+                    .progressViewStyle(.circular)
+                    .tint(accent)
 
-                Text(nextTime)
-                    .font(.system(size: 13, weight: .black, design: .rounded).monospacedDigit())
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.72)
+                VStack(spacing: 0) {
+                    Image(systemName: symbol)
+                        .font(.system(size: 8, weight: .black))
+                    Text(nextTitle)
+                        .font(.system(size: 9, weight: .black, design: .rounded))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.65)
+                        .environment(\.layoutDirection, .rightToLeft)
+                    Text(target, style: .timer)
+                        .font(.system(size: 8, weight: .bold, design: .rounded).monospacedDigit())
+                        .minimumScaleFactor(0.6)
+                }
+            } else {
+                Image(systemName: "clock")
             }
-            .padding(7)
         }
     }
 
     private var rectangular: some View {
-        VStack(alignment: .trailing, spacing: 1) {
-            Text("تل السبع")
-                .font(.system(size: 10, weight: .semibold, design: .rounded))
-                .foregroundStyle(.secondary)
-
-            HStack(alignment: .firstTextBaseline, spacing: 4) {
+        HStack(spacing: 5) {
+            VStack(alignment: .leading, spacing: 1) {
                 Text(nextTime)
-                    .font(.system(size: 17, weight: .black, design: .rounded).monospacedDigit())
-                Text(nextTitle)
-                    .font(.system(size: 18, weight: .black, design: .rounded))
+                    .font(.system(size: 18, weight: .black, design: .rounded).monospacedDigit())
+                if let target = entry.nextPrayer?.date {
+                    Text(target, style: .timer)
+                        .font(.system(size: 11, weight: .bold, design: .rounded).monospacedDigit())
+                        .foregroundStyle(.secondary)
+                }
             }
-            .lineLimit(1)
-            .minimumScaleFactor(0.72)
 
-            Text(remainingText)
-                .font(.system(size: 12, weight: .bold, design: .rounded).monospacedDigit())
-                .lineLimit(1)
-                .minimumScaleFactor(0.72)
+            Spacer(minLength: 3)
+
+            VStack(alignment: .trailing, spacing: 1) {
+                HStack(spacing: 3) {
+                    Text(entry.scheduleIsTomorrow ? "غدًا" : "القادمة")
+                        .font(.system(size: 9, weight: .bold, design: .rounded))
+                        .foregroundStyle(.secondary)
+                    Image(systemName: symbol)
+                        .font(.system(size: 10, weight: .black))
+                        .foregroundStyle(accent)
+                }
+                Text(nextTitle)
+                    .font(.system(size: 19, weight: .black, design: .rounded))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.68)
+            }
+            .environment(\.layoutDirection, .rightToLeft)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
-        .multilineTextAlignment(.trailing)
+        .environment(\.layoutDirection, .leftToRight)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private var corner: some View {
+        Text(nextTime)
+            .font(.system(size: 14, weight: .black, design: .rounded).monospacedDigit())
+            .widgetLabel {
+                Label(nextTitle, systemImage: symbol)
+                    .environment(\.layoutDirection, .rightToLeft)
+            }
     }
 
     private var nextTitle: String {
@@ -116,11 +165,16 @@ struct TelShevaWatchWidgetView: View {
         entry.nextPrayer?.time ?? "--:--"
     }
 
-    private var remainingText: String {
-        guard let nextDate = entry.nextPrayer?.date else { return "باقي --:--" }
-        let seconds = max(Int(nextDate.timeIntervalSince(entry.date)), 0)
-        let minutes = max((seconds + 59) / 60, 1)
-        return String(format: "باقي %02d:%02d", minutes / 60, minutes % 60)
+    private var symbol: String {
+        switch entry.nextPrayer?.key {
+        case .fajr: return "sunrise.fill"
+        case .dhuhr: return "sun.max.fill"
+        case .asr: return "cloud.sun.fill"
+        case .maghrib: return "sunset.fill"
+        case .isha: return "moon.stars.fill"
+        case .sunrise: return "sun.max.fill"
+        case nil: return "clock.fill"
+        }
     }
 }
 
@@ -133,7 +187,7 @@ struct TelShevaAzanWatchWidget: Widget {
             TelShevaWatchWidgetView(entry: entry)
         }
         .configurationDisplayName("صلاتي")
-        .description("يعرض الصلاة القادمة في تل السبع على ساعة Apple.")
+        .description("الصلاة القادمة والوقت المتبقي لها في تل السبع.")
         .supportedFamilies([.accessoryInline, .accessoryCircular, .accessoryRectangular, .accessoryCorner])
     }
 }

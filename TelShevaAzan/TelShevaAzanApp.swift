@@ -6,6 +6,7 @@ struct TelShevaAzanApp: App {
 
     init() {
         _ = PrayerNotificationManager.shared
+        _ = WatchPrayerSyncService.shared
     }
 
     var body: some Scene {
@@ -14,6 +15,7 @@ struct TelShevaAzanApp: App {
                 .environment(\.layoutDirection, .rightToLeft)
                 .onAppear {
                     WidgetRefreshCenter.refreshAll()
+                    WatchPrayerSyncService.shared.pushLatestContext()
                 }
         }
     }

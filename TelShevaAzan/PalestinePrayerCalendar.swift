@@ -46,13 +46,9 @@ enum PalestinePrayerCalendar {
     private static let stateLock = NSLock()
     private static var activePayload: PalestinePrayerCalendarPayload? = loadInitialPayload()
 
-    private static let sharedDefaults: UserDefaults = {
-        #if os(watchOS)
-        return .standard
-        #else
-        return UserDefaults(suiteName: "group.com.omaralasam.telshevaazan") ?? .standard
-        #endif
-    }()
+    private static let sharedDefaults = UserDefaults(
+        suiteName: "group.com.omaralasam.telshevaazan"
+    ) ?? .standard
 
     static var dataRevision: Int {
         stateLock.lock()

@@ -8,6 +8,7 @@ enum WidgetRefreshCenter {
     private static let widgetKinds = SalatiWidgetKind.all
 
     static func refreshAll(force: Bool = false) {
+        WatchPrayerSyncService.shared.pushLatestContext()
         let timestamp = Date().timeIntervalSince1970
         guard force || timestamp - lastRefreshTime >= minimumRefreshInterval else { return }
         lastRefreshTime = timestamp

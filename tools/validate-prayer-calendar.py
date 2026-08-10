@@ -32,6 +32,10 @@ WIDGET_THEME_PATH = ROOT / "TelShevaAzanWidget" / "SalatiWidgetTheme.swift"
 WIDGET_REFRESH_PATH = ROOT / "TelShevaAzan" / "WidgetRefreshCenter.swift"
 THEME_PATH = ROOT / "TelShevaAzan" / "AppTheme.swift"
 GLASS_DESIGN_PATH = ROOT / "TelShevaAzan" / "GlassDesign.swift"
+WATCH_APP_PATH = ROOT / "TelShevaAzanWatch" / "TelShevaAzanWatchApp.swift"
+WATCH_WIDGET_PATH = ROOT / "TelShevaAzanWatchWidget" / "TelShevaAzanWatchWidget.swift"
+WATCH_SYNC_PATH = ROOT / "TelShevaAzan" / "WatchPrayerSyncService.swift"
+WATCH_RECEIVER_PATH = ROOT / "TelShevaAzanWatch" / "WatchConnectivityService.swift"
 PRAYERS = ("fajr", "sunrise", "dhuhr", "asr", "maghrib", "isha")
 EXPECTED_DAYS_SHA256 = "85406025fe86fcc9be99e3797d6b2f9215575887eaa9826542442d8077c1a7d9"
 
@@ -446,6 +450,23 @@ assert "Material.thin" in glass_design_text
 assert "Material.ultraThin" in glass_design_text
 assert "activeTheme.usesNativeMaterialGlass" in content_text
 
+project_text = PROJECT_PATH.read_text(encoding="utf-8")
+watch_app_text = WATCH_APP_PATH.read_text(encoding="utf-8")
+watch_widget_text = WATCH_WIDGET_PATH.read_text(encoding="utf-8")
+watch_sync_text = WATCH_SYNC_PATH.read_text(encoding="utf-8")
+watch_receiver_text = WATCH_RECEIVER_PATH.read_text(encoding="utf-8")
+assert "WKCompanionAppBundleIdentifier: com.omaralasam.telshevaazan" in project_text
+assert "PRODUCT_BUNDLE_IDENTIFIER: com.omaralasam.telshevaazan.watchkitapp" in project_text
+assert "PRODUCT_BUNDLE_IDENTIFIER: com.omaralasam.telshevaazan.watchkitapp.watchwidget" in project_text
+assert project_text.count("CODE_SIGN_ENTITLEMENTS: TelShevaAzanWatch") == 2
+assert "PrayerEngine.automaticScheduleDateKey(for: now)" in watch_app_text
+assert "IqamaSchedule.telSheva.activeEvent(at: now)" in watch_app_text
+assert ".environment(\\.layoutDirection, .leftToRight)" in watch_app_text
+assert "ProgressView(timerInterval:" in watch_widget_text
+assert "PrayerEngine.upcomingDateKeys(from: now, count: 3)" in watch_widget_text
+assert "updateApplicationContext" in watch_sync_text
+assert "didReceiveApplicationContext" in watch_receiver_text
+
 print("Prayer calendar validation passed")
 print(f"  days: {len(days)}")
 print(f"  prayer values: {len(days) * len(PRAYERS)}")
@@ -457,3 +478,4 @@ print("  automatic schedule: today before Isha and tomorrow from exact Isha pass
 print("  widget structure: home widgets and six focused Lock Screen widgets passed")
 print("  Adhkar experience: daily categories, reader, progress, and tasbih passed")
 print("  app layout and radio metadata: dock inset, preview styling, and live Now Playing controls passed")
+print("  Apple Watch: companion identity, RTL layout, iqama state, sync, and live timelines passed")
