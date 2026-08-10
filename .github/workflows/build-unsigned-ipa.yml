@@ -253,9 +253,10 @@ jobs:
           for PLUGIN_PATH in "${PLUGIN_PATHS[@]}"; do
             rm -rf "$PLUGIN_PATH/_CodeSignature"
           done
-          echo "Ad-hoc signing watch bundles:"
-          /usr/bin/codesign --force --sign - --entitlements "TelShevaAzanWatchWidget/TelShevaAzanWatchWidget.entitlements" "$WATCH_PLUGIN_PATH"
-          /usr/bin/codesign --force --sign - --entitlements "TelShevaAzanWatch/TelShevaAzanWatch.entitlements" "$WATCH_APP_IN_APP"
+          echo "Keep watch bundles genuinely unsigned for recursive distribution signing:"
+          rm -rf "$WATCH_PLUGIN_PATH/_CodeSignature" "$WATCH_APP_IN_APP/_CodeSignature"
+          test ! -d "$WATCH_PLUGIN_PATH/_CodeSignature"
+          test ! -d "$WATCH_APP_IN_APP/_CodeSignature"
           echo "Ad-hoc signing the complete iOS widget bundle:"
           for PLUGIN_PATH in "${PLUGIN_PATHS[@]}"; do
             PLUGIN_EXECUTABLE="$(/usr/libexec/PlistBuddy -c "Print :CFBundleExecutable" "$PLUGIN_PATH/Info.plist")"
@@ -288,10 +289,7 @@ jobs:
           done
           echo "TrollStore ldid signing app:"
           ldid -S"TelShevaAzan/TelShevaAzan.entitlements" "$APP_PATH/$APP_EXECUTABLE"
-          echo "Watch widget entitlements after codesign:"
-          /usr/bin/codesign -d --entitlements :- "$WATCH_PLUGIN_PATH" || true
-          echo "Watch app entitlements after codesign:"
-          /usr/bin/codesign -d --entitlements :- "$WATCH_APP_IN_APP" || true
+          echo "Watch bundles intentionally have no temporary ad-hoc signature."
           echo "Widget bundle signatures:"
           for PLUGIN_PATH in "${PLUGIN_PATHS[@]}"; do
             echo "Widget bundle: $PLUGIN_PATH"

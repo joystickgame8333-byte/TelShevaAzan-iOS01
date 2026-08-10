@@ -14,7 +14,15 @@ enum WatchPrayerSharedState {
         static let calendarRevision = "watchPrayer.calendarRevision"
     }
 
+    #if os(watchOS)
+    // The watch app and complication can calculate Tel Sheva prayer times
+    // independently. Avoid requiring an App Group entitlement merely to read
+    // the built-in defaults; this keeps third-party distribution signatures
+    // valid on a paired Apple Watch.
+    static let defaults = UserDefaults.standard
+    #else
     static let defaults = UserDefaults(suiteName: appGroupIdentifier) ?? .standard
+    #endif
 
     static var locationName: String {
         defaults.string(forKey: Key.locationName) ?? "تل السبع"
