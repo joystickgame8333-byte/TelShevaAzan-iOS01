@@ -37,6 +37,7 @@ jobs:
           brew install xcodegen ldid
           rm -rf TelShevaAzan.xcodeproj
           xcodegen generate
+          grep -q 'Embed Watch Content' TelShevaAzan.xcodeproj/project.pbxproj
 
       - name: Restore Xcode build cache
         uses: actions/cache@v4
@@ -65,24 +66,6 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY=""
 
-      - name: Build watch app without App Store signing
-        run: |
-          set -euxo pipefail
-          xcodebuild \
-            -project TelShevaAzan.xcodeproj \
-            -scheme TelShevaAzanWatch \
-            -configuration Release \
-            -sdk watchos \
-            -destination 'generic/platform=watchOS' \
-            -derivedDataPath build \
-            -jobs 3 \
-            -quiet \
-            build \
-            COMPILER_INDEX_STORE_ENABLE=NO \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGN_IDENTITY=""
-
       - name: Package IPA
         run: |
           set -euxo pipefail
@@ -91,17 +74,13 @@ jobs:
           while IFS= read -r APPEX_PATH; do
             [ -n "$APPEX_PATH" ] && APPEX_PATHS+=("$APPEX_PATH")
           done < <(find build/Build/Products -path '*Release-iphoneos/*.appex' ! -path '*/PlugIns/*.appex' -print | sort)
-          WATCH_APP_PATH="$(find build/Build/Products -path '*Release-watchos/*.app' -name 'TelShevaAzanWatch.app' -print -quit)"
-          WATCH_APPEX_PATHS=()
-          while IFS= read -r WATCH_APPEX_PATH; do
-            [ -n "$WATCH_APPEX_PATH" ] && WATCH_APPEX_PATHS+=("$WATCH_APPEX_PATH")
-          done < <(find build/Build/Products -path '*Release-watchos/*.appex' ! -path '*/PlugIns/*.appex' -print | sort)
           if [ -z "$APP_PATH" ]; then
             echo "Built .app was not found"
             exit 1
           fi
-          if [ -z "$WATCH_APP_PATH" ]; then
-            echo "Built watch .app was not found"
+          WATCH_APP_IN_APP="$(find "$APP_PATH/Watch" -maxdepth 1 -name 'TelShevaAzanWatch.app' -print -quit 2>/dev/null || true)"
+          if [ -z "$WATCH_APP_IN_APP" ]; then
+            echo "The watch app was not embedded natively by the iOS target"
             find build/Build/Products -maxdepth 6 -print
             exit 1
           fi
@@ -121,18 +100,6 @@ jobs:
             exit 1
           fi
 
-          mkdir -p "$APP_PATH/Watch"
-          rm -rf "$APP_PATH/Watch/"*.app
-          cp -R "$WATCH_APP_PATH" "$APP_PATH/Watch/"
-          WATCH_APP_IN_APP="$APP_PATH/Watch/$(basename "$WATCH_APP_PATH")"
-          mkdir -p "$WATCH_APP_IN_APP/PlugIns"
-          EMBEDDED_WATCH_APPEX_COUNT="$(find "$WATCH_APP_IN_APP/PlugIns" -maxdepth 1 -name '*.appex' -print 2>/dev/null | wc -l | tr -d ' ')"
-          if [ "${#WATCH_APPEX_PATHS[@]}" -gt 0 ] && [ "$EMBEDDED_WATCH_APPEX_COUNT" -eq 0 ]; then
-            for WATCH_APPEX_PATH in "${WATCH_APPEX_PATHS[@]}"; do
-              echo "Embedding watch widget extension: $WATCH_APPEX_PATH"
-              cp -R "$WATCH_APPEX_PATH" "$WATCH_APP_IN_APP/PlugIns/"
-            done
-          fi
           WATCH_PLUGIN_PATHS=()
           while IFS= read -r WATCH_PLUGIN_PATH; do
             [ -n "$WATCH_PLUGIN_PATH" ] && WATCH_PLUGIN_PATHS+=("$WATCH_PLUGIN_PATH")
@@ -143,6 +110,11 @@ jobs:
             exit 1
           fi
           WATCH_PLUGIN_PATH="${WATCH_PLUGIN_PATHS[0]}"
+          if [ ! -f "$WATCH_APP_IN_APP/Assets.car" ]; then
+            echo "The embedded watch app has no compiled AppIcon asset catalog"
+            find "$WATCH_APP_IN_APP" -maxdepth 3 -print
+            exit 1
+          fi
 
           PLUGIN_PATHS=()
           while IFS= read -r PLUGIN_PATH; do
@@ -235,6 +207,9 @@ jobs:
           echo "$WATCH_BUNDLE_ID"
           echo "$WATCH_COMPANION_ID"
           echo "$WATCH_WIDGET_BUNDLE_ID"
+          echo "Watch icon registration:"
+          /usr/libexec/PlistBuddy -c "Print :CFBundleIcons" "$WATCH_APP_IN_APP/Info.plist" || true
+          /usr/libexec/PlistBuddy -c "Print :CFBundleIconName" "$WATCH_APP_IN_APP/Info.plist" || true
           /usr/libexec/PlistBuddy -c "Print :NSExtension:NSExtensionPointIdentifier" "$WATCH_PLUGIN_PATH/Info.plist" || true
           test "$WATCH_COMPANION_ID" = "$APP_BUNDLE_ID"
           test "$WATCH_BUNDLE_ID" = "$APP_BUNDLE_ID.watchkitapp"
@@ -347,9 +322,19 @@ jobs:
             ls -la "$WATCH_APP_IN_APP/$WATCH_EXECUTABLE"
             ls -la "$WATCH_PLUGIN_PATH/$WATCH_PLUGIN_EXECUTABLE"
           } > build-diagnostics.txt
+          rm -rf Payload WatchKitSupport2
           mkdir -p Payload
           cp -R "$APP_PATH" Payload/TelShevaAzan.app
-          /usr/bin/zip -qry TelShevaAzan-unsigned.ipa Payload
+          WATCHKIT_STUB="$(find "$(xcode-select -p)/Platforms" -type f -path '*/Library/Application Support/WatchKit/WK' -print -quit 2>/dev/null || true)"
+          if [ -n "$WATCHKIT_STUB" ]; then
+            echo "Adding Apple Watch installation support stub: $WATCHKIT_STUB"
+            mkdir -p WatchKitSupport2
+            cp -f "$WATCHKIT_STUB" WatchKitSupport2/WK
+            /usr/bin/zip -qry TelShevaAzan-unsigned.ipa Payload WatchKitSupport2
+          else
+            echo "Xcode does not expose a WatchKitSupport2 stub; packaging the native embedded watch app"
+            /usr/bin/zip -qry TelShevaAzan-unsigned.ipa Payload
+          fi
           cp TelShevaAzan-unsigned.ipa TelShevaAzan-unsigned.tipa
           echo "Final IPA widget and icon check:"
           /usr/bin/unzip -l TelShevaAzan-unsigned.ipa > ipa-contents.txt
@@ -369,6 +354,8 @@ jobs:
           grep -q 'Payload/TelShevaAzan.app/PlugIns/TelShevaAzanWidgetExtension.appex/nabawi-night.jpg' ipa-contents.txt
           grep -q 'Payload/TelShevaAzan.app/PlugIns/TelShevaAzanWidgetExtension.appex/_CodeSignature/CodeResources' ipa-contents.txt
           grep -q 'Payload/TelShevaAzan.app/Watch/TelShevaAzanWatch.app/' ipa-contents.txt
+          grep -q 'Payload/TelShevaAzan.app/Watch/TelShevaAzanWatch.app/Assets.car' ipa-contents.txt
+          grep -q 'Payload/TelShevaAzan.app/Watch/TelShevaAzanWatch.app/TelShevaAzanWatch' ipa-contents.txt
           grep -q 'Payload/TelShevaAzan.app/Watch/TelShevaAzanWatch.app/PlugIns/.*\.appex/' ipa-contents.txt
           grep -q 'Payload/TelShevaAzan.app/Watch/TelShevaAzanWatch.app/prayer-calendar-v1.json' ipa-contents.txt
           grep -q 'Payload/TelShevaAzan.app/Watch/TelShevaAzanWatch.app/PlugIns/TelShevaAzanWatchWidgetExtension.appex/prayer-calendar-v1.json' ipa-contents.txt
