@@ -63,10 +63,14 @@ struct TasbihView: View {
                 .buttonStyle(.plain)
 
                 HStack {
-                    Text("المجموع \(count)")
-                        .font(.caption.monospacedDigit().weight(.black))
-                        .foregroundStyle(theme.secondaryText)
-                        .environment(\.layoutDirection, .rightToLeft)
+                    HStack(spacing: 4) {
+                        Text("المجموع")
+                            .environment(\.layoutDirection, .rightToLeft)
+                        Text("\(count)")
+                            .monospacedDigit()
+                            .environment(\.layoutDirection, .leftToRight)
+                    }
+                    .foregroundStyle(theme.secondaryText)
 
                     Spacer()
 
@@ -74,7 +78,6 @@ struct TasbihView: View {
                         HStack(spacing: 5) {
                             Image(systemName: "minus")
                             Text("تراجع")
-                                .environment(\.layoutDirection, .rightToLeft)
                         }
                     }
                     .disabled(count == 0)
@@ -283,10 +286,10 @@ private struct TasbihPhrasePickerSheet: View {
         } label: {
             HStack(spacing: 12) {
                 HStack(spacing: 4) {
-                    Text("\(item.target)")
-                        .environment(\.layoutDirection, .leftToRight)
                     Text("الهدف")
                         .environment(\.layoutDirection, .rightToLeft)
+                    Text("\(item.target)")
+                        .environment(\.layoutDirection, .leftToRight)
                 }
                 .font(.caption.monospacedDigit().weight(.black))
                 .foregroundStyle(selected ? theme.accent : theme.secondaryText)

@@ -248,15 +248,6 @@ private struct AdhkarCategoryCard: View {
     var body: some View {
         Button(action: onOpen) {
             HStack(spacing: 10) {
-                Image(systemName: category.symbol)
-                    .font(.system(size: 17, weight: .bold))
-                    .foregroundStyle(accent)
-                    .frame(width: 38, height: 38)
-                    .background(
-                        Circle()
-                            .fill(accent.opacity(theme.isNightTheme ? 0.20 : 0.12))
-                    )
-
                 VStack(alignment: .trailing, spacing: 5) {
                     Text(category.title)
                         .font(.subheadline.weight(.black))
@@ -279,6 +270,15 @@ private struct AdhkarCategoryCard: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .trailing)
                 .environment(\.layoutDirection, .rightToLeft)
+
+                Image(systemName: category.symbol)
+                    .font(.system(size: 17, weight: .bold))
+                    .foregroundStyle(accent)
+                    .frame(width: 38, height: 38)
+                    .background(
+                        Circle()
+                            .fill(accent.opacity(theme.isNightTheme ? 0.20 : 0.12))
+                    )
             }
             .padding(.horizontal, 12)
             .frame(maxWidth: .infinity, minHeight: wide ? 70 : 78)
