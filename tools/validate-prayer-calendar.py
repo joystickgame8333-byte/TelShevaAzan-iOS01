@@ -18,6 +18,9 @@ NOTIFICATION_SETTINGS_PATH = ROOT / "TelShevaAzan" / "NotificationSettingsView.s
 CONTENT_PATH = ROOT / "TelShevaAzan" / "ContentView.swift"
 ADHKAR_VIEW_PATH = ROOT / "TelShevaAzan" / "AdhkarView.swift"
 ADHKAR_LIBRARY_PATH = ROOT / "TelShevaAzan" / "AdhkarLibrary.swift"
+ADHKAR_OVERVIEW_PATH = ROOT / "TelShevaAzan" / "AdhkarOverview.swift"
+ADHKAR_READER_PATH = ROOT / "TelShevaAzan" / "AdhkarReaderView.swift"
+TASBIH_VIEW_PATH = ROOT / "TelShevaAzan" / "TasbihView.swift"
 QURAN_RADIO_PLAYER_PATH = ROOT / "TelShevaAzan" / "QuranRadioPlayer.swift"
 WIDGET_DATA_PATH = ROOT / "TelShevaAzanWidget" / "SalatiWidgetData.swift"
 WIDGET_BUNDLE_PATH = ROOT / "TelShevaAzanWidget" / "TelShevaAzanWidget.swift"
@@ -256,11 +259,22 @@ assert "CGFloat(60) + dockBottomPadding" in content_text, "Tabs must reserve onl
 
 adhkar_view_text = ADHKAR_VIEW_PATH.read_text(encoding="utf-8")
 adhkar_library_text = ADHKAR_LIBRARY_PATH.read_text(encoding="utf-8")
+adhkar_overview_text = ADHKAR_OVERVIEW_PATH.read_text(encoding="utf-8")
+adhkar_reader_text = ADHKAR_READER_PATH.read_text(encoding="utf-8")
+tasbih_view_text = TASBIH_VIEW_PATH.read_text(encoding="utf-8")
 assert "AdhkarOverview(" in adhkar_view_text
 assert "AdhkarReaderView(" in adhkar_view_text
 assert "TasbihView(" in adhkar_view_text
 assert ".environment(\\.layoutDirection, .rightToLeft)" in adhkar_view_text
 assert "AdhkarCategory" in adhkar_library_text
+assert "Menu {" not in tasbih_view_text, "Arabic tasbih selection must not use the locale-sensitive system Menu"
+assert "TasbihPhrasePickerSheet" in tasbih_view_text
+assert ".sheet(item: $activeSheet)" in tasbih_view_text
+assert ".environment(\\.layoutDirection, .rightToLeft)" in tasbih_view_text
+assert "ZStack(alignment: .leading)" not in adhkar_overview_text
+assert "ZStack(alignment: .leading)" not in adhkar_reader_text
+assert ".environment(\\.layoutDirection, .leftToRight)" not in adhkar_overview_text.split("struct AdhkarModePicker", 1)[0]
+assert "refreshDayIfNeeded()" in adhkar_view_text.split(".onChange(of: scenePhase)", 1)[1]
 assert "Resources/Quran" not in project_text
 
 notification_settings_text = NOTIFICATION_SETTINGS_PATH.read_text(encoding="utf-8")

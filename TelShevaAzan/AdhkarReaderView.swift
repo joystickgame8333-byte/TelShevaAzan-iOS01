@@ -75,22 +75,6 @@ struct AdhkarReaderView: View {
 
     private var readerToolbar: some View {
         HStack(spacing: 9) {
-            Button(action: onBack) {
-                Label("الأقسام", systemImage: "chevron.right")
-                    .font(.caption.weight(.black))
-                    .foregroundStyle(theme.accent)
-                    .padding(.horizontal, 11)
-                    .frame(height: 36)
-                    .background(adhkarGlass(theme, theme.controlBackground, radius: 11, prominence: .quiet))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 11, style: .continuous)
-                            .stroke(theme.controlBorder)
-                    )
-            }
-            .buttonStyle(.plain)
-
-            Spacer(minLength: 8)
-
             VStack(alignment: .trailing, spacing: 1) {
                 Text(category.title)
                     .font(.headline.weight(.black))
@@ -98,7 +82,28 @@ struct AdhkarReaderView: View {
                     .font(.caption2.monospacedDigit().weight(.bold))
                     .foregroundStyle(theme.secondaryText)
             }
+
+            Spacer(minLength: 8)
+
+            Button(action: onBack) {
+                HStack(spacing: 6) {
+                    Image(systemName: "chevron.right")
+                    Text("الأقسام")
+                }
+                .font(.caption.weight(.black))
+                .foregroundStyle(theme.accent)
+                .padding(.horizontal, 11)
+                .frame(height: 36)
+                .background(adhkarGlass(theme, theme.controlBackground, radius: 11, prominence: .quiet))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 11, style: .continuous)
+                        .stroke(theme.controlBorder)
+                )
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("العودة إلى أقسام الأذكار")
         }
+        .environment(\.layoutDirection, .rightToLeft)
     }
 
     private var readerProgress: some View {
@@ -117,7 +122,7 @@ struct AdhkarReaderView: View {
             }
 
             GeometryReader { proxy in
-                ZStack(alignment: .leading) {
+                ZStack(alignment: .trailing) {
                     Capsule()
                         .fill(theme.secondaryText.opacity(0.13))
                     Capsule()
@@ -127,6 +132,7 @@ struct AdhkarReaderView: View {
             }
             .frame(height: 6)
         }
+        .environment(\.layoutDirection, .rightToLeft)
         .padding(.horizontal, 2)
     }
 
@@ -174,6 +180,7 @@ struct AdhkarReaderView: View {
         }
         .buttonStyle(.plain)
         .disabled(!enabled)
+        .accessibilityLabel(title)
     }
 
     private var normalizedFontSize: Int {
@@ -311,6 +318,7 @@ private struct AdhkarReadingCard: View {
                 .lineSpacing(fontSize >= 29 ? 9 : 7)
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, alignment: .trailing)
+                .multilineTextAlignment(.trailing)
                 .textSelection(.enabled)
 
             if let note = item.note {
@@ -361,6 +369,8 @@ private struct AdhkarReadingCard: View {
             }
             .buttonStyle(.plain)
             .disabled(complete)
+            .accessibilityLabel(buttonTitle)
+            .accessibilityValue("\(count) من \(item.target)")
         }
         .padding(compact ? 13 : 15)
         .background(adhkarGlass(theme, theme.panelBackground, radius: 19, prominence: .regular))

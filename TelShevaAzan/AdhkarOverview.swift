@@ -7,6 +7,21 @@ struct AdhkarHeader: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
+            VStack(alignment: .trailing, spacing: 2) {
+                Text("الأذكار")
+                    .font(.system(size: 34, weight: .black, design: .rounded))
+                    .lineLimit(1)
+
+                Text("ورد يومي بسيط ومحفوظ على جهازك")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(theme.accent)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.78)
+            }
+            .frame(maxWidth: .infinity, alignment: .trailing)
+
+            Spacer(minLength: 12)
+
             Group {
                 if isEmbedded {
                     Image(systemName: "sparkles")
@@ -27,22 +42,8 @@ struct AdhkarHeader: View {
                     .stroke(theme.controlBorder)
             )
 
-            Spacer(minLength: 12)
-
-            VStack(alignment: .trailing, spacing: 2) {
-                Text("الأذكار")
-                    .font(.system(size: 34, weight: .black, design: .rounded))
-                    .lineLimit(1)
-
-                Text("ورد يومي بسيط ومحفوظ على جهازك")
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(theme.accent)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.78)
-            }
-            .frame(maxWidth: .infinity, alignment: .trailing)
         }
-        .environment(\.layoutDirection, .leftToRight)
+        .environment(\.layoutDirection, .rightToLeft)
     }
 }
 
@@ -59,7 +60,10 @@ struct AdhkarModePicker: View {
                 Button {
                     onSelect(mode)
                 } label: {
-                    Label(mode.title, systemImage: mode.symbol)
+                    HStack(spacing: 8) {
+                        Image(systemName: mode.symbol)
+                        Text(mode.title)
+                    }
                         .font(.caption.weight(.black))
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 8)
@@ -78,8 +82,10 @@ struct AdhkarModePicker: View {
                         )
                 }
                 .buttonStyle(.plain)
+                .accessibilityAddTraits(selected ? .isSelected : [])
             }
         }
+        .environment(\.layoutDirection, .rightToLeft)
     }
 }
 
@@ -211,6 +217,8 @@ private struct DailyAdhkarSummary: View {
             )
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(completed == total ? "أتممت ورد اليوم" : "تابع \(suggestedCategory.title)")
+        .accessibilityValue("أكملت \(completed) من \(total)")
     }
 }
 
@@ -244,7 +252,7 @@ private struct AdhkarCategoryCard: View {
                         .foregroundStyle(theme.secondaryText)
 
                     GeometryReader { proxy in
-                        ZStack(alignment: .leading) {
+                        ZStack(alignment: .trailing) {
                             Capsule()
                                 .fill(theme.secondaryText.opacity(0.12))
                             Capsule()
@@ -274,6 +282,9 @@ private struct AdhkarCategoryCard: View {
             )
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(category.title)
+        .accessibilityValue("أكملت \(completed) من \(total)")
+        .accessibilityHint("يفتح ورد \(category.title)")
     }
 }
 

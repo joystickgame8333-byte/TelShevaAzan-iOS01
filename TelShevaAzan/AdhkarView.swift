@@ -3,6 +3,7 @@ import UIKit
 
 struct AdhkarView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.scenePhase) private var scenePhase
     @StateObject private var progressStore = AdhkarProgressStore()
     @AppStorage("adhkar.reader.page.v2") private var selectedModeRaw = AdhkarMode.reader.rawValue
     @AppStorage("adhkar.reader.category.v2") private var selectedCategoryRaw = AdhkarCategory.suggestedNow.rawValue
@@ -80,6 +81,13 @@ struct AdhkarView: View {
         .onAppear {
             progressStore.refreshDayIfNeeded()
             repairSelection()
+            repairTasbihSelection()
+        }
+        .onChange(of: scenePhase) { phase in
+            guard phase == .active else { return }
+            progressStore.refreshDayIfNeeded()
+            repairSelection()
+            repairTasbihSelection()
         }
         .sheet(item: $sharePayload) { payload in
             AdhkarActivityShareSheet(activityItems: [payload.text])
@@ -145,6 +153,11 @@ struct AdhkarView: View {
         selectedItemID = progressStore.firstIncompleteItem(in: category)?.id
             ?? categoryItems.first?.id
             ?? ""
+    }
+
+    private func repairTasbihSelection() {
+        guard !TasbihPhrase.samples.contains(where: { $0.id == selectedTasbihID }) else { return }
+        selectedTasbihID = TasbihPhrase.samples[0].id
     }
 
     private func share(_ item: AdhkarItem) {
