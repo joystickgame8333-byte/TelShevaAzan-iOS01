@@ -91,7 +91,7 @@ struct NotificationSettingsView: View {
 
             VStack(alignment: .trailing, spacing: 4) {
                 Text("التنبيه")
-                    .font(.system(size: 28, weight: .black, design: .rounded))
+                    .font(.system(size: 34, weight: .black, design: .rounded))
                     .lineLimit(1)
                     .minimumScaleFactor(0.72)
                     .frame(maxWidth: .infinity, alignment: .trailing)
@@ -120,8 +120,6 @@ struct NotificationSettingsView: View {
 
                         if selectedPage == .adhan {
                             adhanSettings
-                        } else if selectedPage == .adhkar {
-                            nafahatSettings
                         } else {
                             appearanceSettings
                         }
@@ -143,7 +141,6 @@ struct NotificationSettingsView: View {
     private var pageSelector: some View {
         HStack(spacing: 8) {
             notificationPageButton(.appearance)
-            notificationPageButton(.adhkar)
             notificationPageButton(.adhan)
         }
         .frame(maxWidth: .infinity, alignment: .topTrailing)
@@ -192,9 +189,8 @@ struct NotificationSettingsView: View {
         VStack(alignment: .trailing, spacing: 13) {
             masterPanel
             prayerPanel
-            iqamaNotificationPanel
             soundPanel
-            notificationDiagnosticsPanel
+            iqamaNotificationPanel
         }
         .transition(.opacity)
     }
@@ -909,48 +905,75 @@ struct NotificationSettingsView: View {
     }
 
     private var iqamaNotificationPanel: some View {
-        VStack(alignment: .trailing, spacing: 10) {
-            toggleSummaryPanel(
-                title: "تنبيهات الإقامة",
-                subtitle: notifications.isIqamaNotificationEnabled
-                    ? "يظهر تنبيه عند إقامة الصلوات المفعّلة أعلاه"
-                    : "تنبيهات الإقامة متوقفة",
-                isOn: Binding(
-                    get: { notifications.isIqamaNotificationEnabled },
-                    set: { notifications.setIqamaNotificationEnabled($0) }
-                )
-            )
+        panel(title: "تنبيهات الإقامة") {
+            VStack(spacing: 0) {
+                HStack(alignment: .center, spacing: 12) {
+                    Toggle(
+                        "",
+                        isOn: Binding(
+                            get: { notifications.isIqamaNotificationEnabled },
+                            set: { notifications.setIqamaNotificationEnabled($0) }
+                        )
+                    )
+                    .labelsHidden()
+                    .tint(theme.accent)
 
-            Button {
-                let expiration = IqamaPreviewStorage.start(prayer: .dhuhr)
-                iqamaPreviewExpiration = expiration.timeIntervalSince1970
-                WidgetRefreshCenter.refreshAll(force: true)
-                NotificationCenter.default.post(
-                    name: PrayerNotificationManager.openScheduleNotification,
-                    object: nil
-                )
-            } label: {
-                iqamaTestButtonLabel(
-                    title: "معاينة عدّاد الإقامة",
-                    subtitle: iqamaPreviewExpiration > Date().timeIntervalSince1970
-                        ? "المعاينة تعمل الآن في التطبيق والويجت"
-                        : "تظهر في التطبيق والويجت لمدة دقيقتين",
-                    symbol: "timer"
-                )
-            }
-            .buttonStyle(.plain)
+                    Spacer(minLength: 12)
 
-            if notifications.isIqamaNotificationEnabled {
+                    VStack(alignment: .trailing, spacing: 3) {
+                        Text("التنبيه عند الإقامة")
+                            .font(.subheadline.weight(.black))
+
+                        Text(notifications.isIqamaNotificationEnabled
+                            ? "يعمل للصلوات المفعّلة في جدول الأذان"
+                            : "اختياري ومستقل عن تنبيهات الأذان")
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(theme.secondaryText.opacity(0.82))
+                    }
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                }
+                .padding(12)
+                .background(lightRowSurface(settingsRowFill, radius: 10))
+
+                Divider()
+                    .padding(.vertical, 8)
+                    .background(theme.controlBorder.opacity(0.65))
+
                 Button {
-                    notifications.sendIqamaPreviewNotification()
+                    let expiration = IqamaPreviewStorage.start(prayer: .dhuhr)
+                    iqamaPreviewExpiration = expiration.timeIntervalSince1970
+                    WidgetRefreshCenter.refreshAll(force: true)
+                    NotificationCenter.default.post(
+                        name: PrayerNotificationManager.openScheduleNotification,
+                        object: nil
+                    )
                 } label: {
                     iqamaTestButtonLabel(
-                        title: "اختبار تنبيه الإقامة",
-                        subtitle: "يصلك تنبيه تجريبي بعد 5 ثواني",
-                        symbol: "person.2.fill"
+                        title: "معاينة عدّاد الإقامة",
+                        subtitle: iqamaPreviewExpiration > Date().timeIntervalSince1970
+                            ? "المعاينة تعمل الآن في التطبيق والويجت"
+                            : "تظهر في التطبيق والويجت لمدة دقيقتين",
+                        symbol: "timer"
                     )
                 }
                 .buttonStyle(.plain)
+
+                if notifications.isIqamaNotificationEnabled {
+                    Divider()
+                        .padding(.vertical, 8)
+                        .background(theme.controlBorder.opacity(0.65))
+
+                    Button {
+                        notifications.sendIqamaPreviewNotification()
+                    } label: {
+                        iqamaTestButtonLabel(
+                            title: "اختبار تنبيه الإقامة",
+                            subtitle: "يصلك تنبيه تجريبي بعد 5 ثواني",
+                            symbol: "person.2.fill"
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
             }
         }
     }
@@ -983,12 +1006,12 @@ struct NotificationSettingsView: View {
         .padding(.vertical, 12)
         .padding(.horizontal, 12)
         .frame(maxWidth: .infinity, alignment: .trailing)
-        .background(glassSurface(theme.activeRowBackground, radius: 8, prominence: .regular))
+        .background(lightRowSurface(settingsRowFill, radius: 10))
         .overlay(
-            RoundedRectangle(cornerRadius: 8)
-                .stroke(theme.activeRowBorder.opacity(0.72))
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(theme.controlBorder)
         )
-        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .clipShape(RoundedRectangle(cornerRadius: 10))
     }
 
     private var enabledPrayerCount: Int {
@@ -1626,7 +1649,6 @@ private enum MiniKhatmahPortion: String, CaseIterable, Identifiable {
 
 private enum NotificationSettingsPage: String, CaseIterable, Identifiable {
     case adhan
-    case adhkar
     case appearance
 
     var id: String { rawValue }
@@ -1635,8 +1657,6 @@ private enum NotificationSettingsPage: String, CaseIterable, Identifiable {
         switch self {
         case .adhan:
             return "الأذان"
-        case .adhkar:
-            return "الأذكار"
         case .appearance:
             return "المظهر"
         }
@@ -1646,8 +1666,6 @@ private enum NotificationSettingsPage: String, CaseIterable, Identifiable {
         switch self {
         case .adhan:
             return "bell.badge.fill"
-        case .adhkar:
-            return "sparkles"
         case .appearance:
             return "paintpalette.fill"
         }

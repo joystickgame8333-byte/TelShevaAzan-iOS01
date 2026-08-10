@@ -16,12 +16,8 @@ CALENDAR_ENGINE_PATH = ROOT / "TelShevaAzan" / "PalestinePrayerCalendar.swift"
 NOTIFICATIONS_PATH = ROOT / "TelShevaAzan" / "PrayerNotificationManager.swift"
 NOTIFICATION_SETTINGS_PATH = ROOT / "TelShevaAzan" / "NotificationSettingsView.swift"
 CONTENT_PATH = ROOT / "TelShevaAzan" / "ContentView.swift"
-QURAN_VIEW_PATH = ROOT / "TelShevaAzan" / "QuranView.swift"
-QURAN_MUSHAF_READER_PATH = ROOT / "TelShevaAzan" / "QuranMushafReader.swift"
-QURAN_SVG_PAGE_VIEW_PATH = ROOT / "TelShevaAzan" / "QuranSVGPageView.swift"
-QURAN_DATA_MODEL_PATH = ROOT / "TelShevaAzan" / "QuranData.swift"
-QURAN_DATA_PATH = ROOT / "TelShevaAzan" / "Resources" / "Quran" / "quran-pages-v1.json"
-QURAN_SVG_MANIFEST_PATH = ROOT / "TelShevaAzan" / "Resources" / "Quran" / "MushafSVG" / "manifest.json"
+ADHKAR_VIEW_PATH = ROOT / "TelShevaAzan" / "AdhkarView.swift"
+ADHKAR_LIBRARY_PATH = ROOT / "TelShevaAzan" / "AdhkarLibrary.swift"
 QURAN_RADIO_PLAYER_PATH = ROOT / "TelShevaAzan" / "QuranRadioPlayer.swift"
 WIDGET_DATA_PATH = ROOT / "TelShevaAzanWidget" / "SalatiWidgetData.swift"
 WIDGET_BUNDLE_PATH = ROOT / "TelShevaAzanWidget" / "TelShevaAzanWidget.swift"
@@ -231,6 +227,11 @@ assert "refreshDiagnostics()" in notifications_text
 assert "settings.soundSetting != .enabled" in notifications_text
 assert "settings.lockScreenSetting != .enabled" in notifications_text
 assert "settings.timeSensitiveSetting != .enabled" in notifications_text
+assert "schedulingPassIsRunning" in notifications_text
+assert "schedulingPassWasRequested" in notifications_text
+assert "finishSchedulingPass()" in notifications_text
+refresh_if_enabled_block = notifications_text.split("func refreshIfEnabled()", 1)[1].split("func setPrayerEnabled", 1)[0]
+assert "rescheduleIfEnabled()" in refresh_if_enabled_block
 
 content_text = CONTENT_PATH.read_text(encoding="utf-8")
 assert "PrayerEngine.remainingSeconds(until: date, now: now)" in content_text
@@ -247,90 +248,32 @@ assert '"متبقي للإقامة' in content_text
 active_scene_block = content_text.split(".onChange(of: scenePhase)", 1)[1].split(".onAppear", 1)[0]
 assert "notifications.refreshIfEnabled()" in active_scene_block
 assert ".rounded(.up)" in engine_text, "Remaining time must round up to match the displayed wall clock second"
-assert "QuranView(" in content_text, "The Quran tab must open the offline Mushaf reader"
-assert "case .quran:" in content_text
-assert 'return "القرآن"' in content_text
+assert "AdhkarView(" in content_text, "The adhkar tab must open the restored daily adhkar experience"
+assert "case .adhkar:" in content_text
+assert 'return "أذكار"' in content_text
+assert "QuranView(" not in content_text
 assert "CGFloat(60) + dockBottomPadding" in content_text, "Tabs must reserve only the dock's real height"
 
-quran_view_text = QURAN_VIEW_PATH.read_text(encoding="utf-8")
-quran_mushaf_reader_text = QURAN_MUSHAF_READER_PATH.read_text(encoding="utf-8")
-quran_svg_page_view_text = QURAN_SVG_PAGE_VIEW_PATH.read_text(encoding="utf-8")
-quran_model_text = QURAN_DATA_MODEL_PATH.read_text(encoding="utf-8")
-quran_payload = json.loads(QURAN_DATA_PATH.read_text(encoding="utf-8"))
-quran_svg_manifest = json.loads(QURAN_SVG_MANIFEST_PATH.read_text(encoding="utf-8"))
-assert ".environment(\\.layoutDirection, .rightToLeft)" in quran_view_text
-assert "bottomReservedHeight + 8" in quran_view_text
-assert "lastReadingCard(" in quran_view_text
-assert "continueReadingButton(" in quran_view_text
-assert "quickActions(" in quran_view_text
-assert "QuranPagePicker" in quran_view_text
-assert "QuranSurahPicker" in quran_view_text
-assert "QuranReadingBackdrop" in quran_view_text
-assert ".fullScreenCover(item: $readerPresentation)" in quran_view_text
-assert "QuranMushafReader(" in quran_view_text
-assert '@AppStorage("quran.lastPage")' in quran_view_text
-assert "AVFoundation" not in quran_view_text
-assert "AVPlayer" not in quran_view_text
-assert "QuranSVGPageView(" in quran_mushaf_reader_text
-assert "InteractiveMushafPager(" in quran_mushaf_reader_text
-assert "visiblePageNumbers" in quran_mushaf_reader_text
-assert "DragGesture(minimumDistance: 8" in quran_mushaf_reader_text
-assert "pageNumber: pageNumber" in quran_mushaf_reader_text
-assert "surahLineNumbers:" in quran_mushaf_reader_text
-assert "MushafPageBadge" in quran_mushaf_reader_text
-assert "MushafHizbIndex" in quran_mushaf_reader_text
-assert "page.number == 293" not in quran_mushaf_reader_text
-assert "QuranQCFPrototypePageView" not in quran_mushaf_reader_text
-assert "controlsAreVisible" in quran_mushaf_reader_text
-assert '.accessibilityLabel("الصفحة التالية")' in quran_mushaf_reader_text
-assert '.accessibilityLabel("الصفحة السابقة")' in quran_mushaf_reader_text
-assert "Data(contentsOf: url, options: .mappedIfSafe)" in quran_model_text
-assert "UIViewRepresentable" in quran_svg_page_view_text
-assert "WKWebView" in quran_svg_page_view_text
-assert "COMPRESSION_ZLIB" in quran_svg_page_view_text
-assert "NSCache<NSNumber, NSString>" in quran_svg_page_view_text
-assert "webViewWebContentProcessDidTerminate" in quran_svg_page_view_text
-assert "preserveAspectRatio', 'xMidYMid meet'" in quran_svg_page_view_text
-assert 'background = "transparent"' in quran_svg_page_view_text
-assert "appendSurahOrnaments" in quran_svg_page_view_text
-assert "artworkViewBox" in quran_svg_page_view_text
-assert "prefetch(" not in quran_svg_page_view_text
-assert "MushafSVG" in quran_svg_page_view_text
-assert quran_svg_manifest["schemaVersion"] == 1
-assert quran_svg_manifest["format"] == "qsvg-zlib"
-assert quran_svg_manifest["totals"]["pageCount"] == 604
-assert len(quran_svg_manifest["pages"]) == 604
-assert [page["number"] for page in quran_svg_manifest["pages"]] == list(range(1, 605))
-assert [page["file"] for page in quran_svg_manifest["pages"]] == [f"p{page:03d}.qsvg" for page in range(1, 605)]
-assert "TelShevaAzan/Resources/Quran/MushafSVG" in project_text
-assert "type: folder" in project_text
-assert quran_payload["schemaVersion"] == 1
-assert len(quran_payload["pages"]) == 604
-assert len(quran_payload["surahs"]) == 114
-assert [page["number"] for page in quran_payload["pages"]] == list(range(1, 605))
-assert all(page["lines"] for page in quran_payload["pages"])
-verse_markers = sum(
-    len(re.findall(r"[٠-٩]+", line["text"]))
-    for page in quran_payload["pages"]
-    for line in page["lines"]
-)
-assert verse_markers == 6236, f"Expected 6236 Quran verses, found {verse_markers}"
+adhkar_view_text = ADHKAR_VIEW_PATH.read_text(encoding="utf-8")
+adhkar_library_text = ADHKAR_LIBRARY_PATH.read_text(encoding="utf-8")
+assert "AdhkarOverview(" in adhkar_view_text
+assert "AdhkarReaderView(" in adhkar_view_text
+assert "TasbihView(" in adhkar_view_text
+assert ".environment(\\.layoutDirection, .rightToLeft)" in adhkar_view_text
+assert "AdhkarCategory" in adhkar_library_text
+assert "Resources/Quran" not in project_text
 
 notification_settings_text = NOTIFICATION_SETTINGS_PATH.read_text(encoding="utf-8")
-assert "notificationDiagnosticsPanel" in notification_settings_text
-assert 'panel(title: "حالة التنبيهات")' in notification_settings_text
-assert "showsAdvancedDiagnostics" in notification_settings_text
-assert 'diagnosticActionLabel(title: "تحديث الفحص"' in notification_settings_text
 assert '"تنبيهات الإقامة"' in notification_settings_text
 assert '"معاينة عدّاد الإقامة"' in notification_settings_text
 assert '"اختبار تنبيه الإقامة"' in notification_settings_text
 assert "IqamaPreviewStorage.start(prayer: .dhuhr)" in notification_settings_text
 assert "WidgetRefreshCenter.refreshAll(force: true)" in notification_settings_text
-assert "case adhkar" in notification_settings_text
-assert "notificationPageButton(.adhkar)" in notification_settings_text
-assert "nafahatSettings" in notification_settings_text
-nafahat_settings_block = notification_settings_text.split("private var nafahatSettings", 1)[1].split("private var appearanceSettings", 1)[0]
-assert "miniKhatmahPanel" not in nafahat_settings_block
+assert "notificationPageButton(.adhkar)" not in notification_settings_text
+adhan_settings_block = notification_settings_text.split("private var adhanSettings", 1)[1].split("private var fajrAlarmSettings", 1)[0]
+assert "notificationDiagnosticsPanel" not in adhan_settings_block
+assert "soundPanel" in adhan_settings_block
+assert "iqamaNotificationPanel" in adhan_settings_block
 assert 'proxy.scrollTo("notification-settings-top", anchor: .top)' in notification_settings_text
 assert "glassSurface(theme.activeRowBackground, radius: 12, prominence: .regular)" in notification_settings_text
 
@@ -488,5 +431,5 @@ print("  prayer transitions: before Isha, exact Isha, midnight, and exact Fajr p
 print("  iqama transitions: Maghrib and Isha post-adhan windows passed")
 print("  automatic schedule: today before Isha and tomorrow from exact Isha passed")
 print("  widget structure: home widgets and six focused Lock Screen widgets passed")
-print("  Quran experience: 604 offline pages, 114 surahs, RTL reader, and saved page passed")
+print("  Adhkar experience: daily categories, reader, progress, and tasbih passed")
 print("  app layout and radio metadata: dock inset, preview styling, and live Now Playing controls passed")

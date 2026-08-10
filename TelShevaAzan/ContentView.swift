@@ -61,8 +61,8 @@ struct ContentView: View {
                             isEmbedded: true,
                             bottomReservedHeight: dockReservedHeight
                         )
-                    case .quran:
-                        QuranView(
+                    case .adhkar:
+                        AdhkarView(
                             theme: activeTheme,
                             isEmbedded: true,
                             bottomReservedHeight: dockReservedHeight
@@ -581,7 +581,7 @@ struct ContentView: View {
     }
 
     private var dockItems: [HomeDockItem] {
-        [.radio, .qibla, .schedule, .quran, .notifications]
+        [.radio, .qibla, .schedule, .adhkar, .notifications]
     }
 
     private func dockSlotButton(_ item: HomeDockItem, slotWidth: CGFloat) -> some View {
@@ -789,8 +789,8 @@ struct ContentView: View {
             return "radio.fill"
         case .qibla:
             return "location.north.fill"
-        case .quran:
-            return "book.closed.fill"
+        case .adhkar:
+            return "sparkles"
         case .notifications:
             return notifications.isEnabled ? "bell.badge.fill" : "bell.fill"
         }
@@ -1695,7 +1695,7 @@ private struct PrayerDetailsSheet: View {
 
 private enum HomeDockItem: String, CaseIterable, Identifiable {
     case schedule
-    case quran
+    case adhkar
     case notifications
     case qibla
     case radio
@@ -1710,7 +1710,7 @@ private enum HomeDockItem: String, CaseIterable, Identifiable {
             return 1
         case .schedule:
             return 2
-        case .quran:
+        case .adhkar:
             return 3
         case .notifications:
             return 4
@@ -1721,8 +1721,8 @@ private enum HomeDockItem: String, CaseIterable, Identifiable {
         switch self {
         case .schedule:
             return "مواقيت"
-        case .quran:
-            return "القرآن"
+        case .adhkar:
+            return "أذكار"
         case .radio:
             return "الراديو"
         case .qibla:

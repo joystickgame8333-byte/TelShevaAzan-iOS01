@@ -23,9 +23,6 @@ jobs:
       - name: Validate official prayer calendar
         run: python3 tools/validate-prayer-calendar.py
 
-      - name: Validate offline vector Mushaf
-        run: python3 tools/validate-quran-svg-pages.py
-
       - name: Show Xcode version
         run: |
           set -euxo pipefail
@@ -186,17 +183,8 @@ jobs:
             cp -f "TelShevaAzan/$icon" "$APP_PATH/$icon"
           done
 
-          echo "Force-copy bundled Quran font into the app bundle:"
-          cp -f "TelShevaAzan/Fonts/AmiriQuran-Regular.ttf" "$APP_PATH/AmiriQuran-Regular.ttf"
+          echo "Force-copy bundled Arabic font into the app bundle:"
           cp -f "TelShevaAzan/Fonts/UthmanicHafs1Ver18.ttf" "$APP_PATH/UthmanicHafs1Ver18.ttf"
-
-          echo "Force-copy offline Quran pages into the app bundle:"
-          cp -f "TelShevaAzan/Resources/Quran/quran-pages-v1.json" "$APP_PATH/quran-pages-v1.json"
-          rm -rf "$APP_PATH/MushafSVG"
-          mkdir -p "$APP_PATH/MushafSVG"
-          cp -f TelShevaAzan/Resources/Quran/MushafSVG/*.qsvg "$APP_PATH/MushafSVG/"
-          cp -f "TelShevaAzan/Resources/Quran/MushafSVG/manifest.json" "$APP_PATH/MushafSVG/manifest.json"
-          cp -f "TelShevaAzan/Resources/Quran/MushafSVG/NOTICE.md" "$APP_PATH/MushafSVG/NOTICE.md"
 
           echo "Force-copy bundled sounds into the app bundle:"
           for sound in TelShevaAzan/Sounds/*; do
@@ -222,8 +210,7 @@ jobs:
           echo "Force app font registration into the built Info.plist:"
           /usr/libexec/PlistBuddy -c "Delete :UIAppFonts" "$APP_PATH/Info.plist" || true
           /usr/libexec/PlistBuddy -c "Add :UIAppFonts array" "$APP_PATH/Info.plist"
-          /usr/libexec/PlistBuddy -c "Add :UIAppFonts:0 string AmiriQuran-Regular.ttf" "$APP_PATH/Info.plist"
-          /usr/libexec/PlistBuddy -c "Add :UIAppFonts:1 string UthmanicHafs1Ver18.ttf" "$APP_PATH/Info.plist"
+          /usr/libexec/PlistBuddy -c "Add :UIAppFonts:0 string UthmanicHafs1Ver18.ttf" "$APP_PATH/Info.plist"
 
           echo "Widget extension registration:"
           for PLUGIN_PATH in "${PLUGIN_PATHS[@]}"; do
@@ -251,22 +238,6 @@ jobs:
               exit 1
             fi
           done
-          if [ ! -f "$APP_PATH/AmiriQuran-Regular.ttf" ]; then
-            echo "Missing packaged Quran font: $APP_PATH/AmiriQuran-Regular.ttf"
-            find "$APP_PATH" -maxdepth 3 -type f -name '*.ttf' -print
-            exit 1
-          fi
-          if [ ! -f "$APP_PATH/quran-pages-v1.json" ]; then
-            echo "Missing packaged offline Quran data: $APP_PATH/quran-pages-v1.json"
-            find "$APP_PATH" -maxdepth 3 -type f -name 'quran-pages-v1.json' -print
-            exit 1
-          fi
-          MUSHAF_PAGE_COUNT="$(find "$APP_PATH/MushafSVG" -maxdepth 1 -type f -name 'p*.qsvg' | wc -l | tr -d ' ')"
-          if [ "$MUSHAF_PAGE_COUNT" -ne 604 ] || [ ! -f "$APP_PATH/MushafSVG/manifest.json" ]; then
-            echo "Incomplete packaged vector Mushaf: expected 604 pages, found $MUSHAF_PAGE_COUNT"
-            find "$APP_PATH/MushafSVG" -maxdepth 1 -type f -print | sort | head -80
-            exit 1
-          fi
           if [ ! -f "$APP_PATH/adhan.caf" ]; then
             echo "Missing packaged adhan sound: $APP_PATH/adhan.caf"
             find "$APP_PATH" -maxdepth 3 -type f -name '*.caf' -print
@@ -375,13 +346,7 @@ jobs:
           /usr/bin/unzip -l TelShevaAzan-unsigned.ipa > ipa-contents.txt
           awk '/Payload\/TelShevaAzan.app\/Icon-|Payload\/TelShevaAzan.app\/PlugIns\/.*\.appex\// { print; shown++; if (shown >= 80) exit }' ipa-contents.txt
           grep -q 'Payload/TelShevaAzan.app/Icon-60@3x.png' ipa-contents.txt
-          grep -q 'Payload/TelShevaAzan.app/AmiriQuran-Regular.ttf' ipa-contents.txt
           grep -q 'Payload/TelShevaAzan.app/UthmanicHafs1Ver18.ttf' ipa-contents.txt
-          grep -q 'Payload/TelShevaAzan.app/quran-pages-v1.json' ipa-contents.txt
-          grep -q 'Payload/TelShevaAzan.app/MushafSVG/p001.qsvg' ipa-contents.txt
-          grep -q 'Payload/TelShevaAzan.app/MushafSVG/p293.qsvg' ipa-contents.txt
-          grep -q 'Payload/TelShevaAzan.app/MushafSVG/p604.qsvg' ipa-contents.txt
-          grep -q 'Payload/TelShevaAzan.app/MushafSVG/manifest.json' ipa-contents.txt
           grep -q 'Payload/TelShevaAzan.app/adhan.caf' ipa-contents.txt
           grep -q 'Payload/TelShevaAzan.app/nafahat.wav' ipa-contents.txt
           grep -q 'Payload/TelShevaAzan.app/fajr-alarm-02-morning-clock.wav' ipa-contents.txt

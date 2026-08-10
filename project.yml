@@ -20,17 +20,13 @@ targets:
           - Info.plist
           - "*.entitlements"
           - "Icon-*.png"
-          - Resources/Quran/MushafSVG
-      - path: TelShevaAzan/Resources/Quran/MushafSVG
-        type: folder
-        buildPhase: resources
     info:
       path: TelShevaAzan/Info.plist
       properties:
         CFBundleDisplayName: صلاتي
         CFBundlePackageType: APPL
-        CFBundleShortVersionString: "0.6.91"
-        CFBundleVersion: "185"
+        CFBundleShortVersionString: "0.6.92"
+        CFBundleVersion: "186"
         CFBundleURLTypes:
           - CFBundleURLName: com.omaralasam.telshevaazan
             CFBundleURLSchemes:
@@ -47,7 +43,6 @@ targets:
         UIBackgroundModes:
           - audio
         UIAppFonts:
-          - AmiriQuran-Regular.ttf
           - UthmanicHafs1Ver18.ttf
         NSLocationWhenInUseUsageDescription: يستخدم التطبيق الموقع محليًا فقط لتحسين دقة القبلة والشمال الحقيقي.
         UISupportedInterfaceOrientations:
@@ -62,7 +57,6 @@ targets:
       - path: TelShevaAzan/Icon-40@3x.png
       - path: TelShevaAzan/Icon-60@2x.png
       - path: TelShevaAzan/Icon-60@3x.png
-      - path: TelShevaAzan/Fonts/AmiriQuran-Regular.ttf
       - path: TelShevaAzan/Fonts/UthmanicHafs1Ver18.ttf
       - path: TelShevaAzan/Sounds/adhan.caf
       - path: TelShevaAzan/Sounds/adhan-mohamed-jazi.caf
@@ -86,13 +80,12 @@ targets:
       - path: TelShevaAzan/Resources/Nabawi/nabawi-day.jpg
       - path: TelShevaAzan/Resources/Nabawi/nabawi-night.jpg
       - path: TelShevaAzan/Resources/PrayerCalendar/prayer-calendar-v1.json
-      - path: TelShevaAzan/Resources/Quran/quran-pages-v1.json
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.omaralasam.telshevaazan
         PRODUCT_NAME: TelShevaAzan
-        MARKETING_VERSION: 0.6.91
-        CURRENT_PROJECT_VERSION: 185
+        MARKETING_VERSION: 0.6.92
+        CURRENT_PROJECT_VERSION: 186
         TARGETED_DEVICE_FAMILY: 1
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
@@ -124,16 +117,16 @@ targets:
       properties:
         CFBundleDisplayName: صلاتي
         CFBundlePackageType: XPC!
-        CFBundleShortVersionString: "0.6.91"
-        CFBundleVersion: "185"
+        CFBundleShortVersionString: "0.6.92"
+        CFBundleVersion: "186"
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.omaralasam.telshevaazan.widget
         PRODUCT_NAME: TelShevaAzanWidgetExtension
-        MARKETING_VERSION: 0.6.91
-        CURRENT_PROJECT_VERSION: 185
+        MARKETING_VERSION: 0.6.92
+        CURRENT_PROJECT_VERSION: 186
         IPHONEOS_DEPLOYMENT_TARGET: 16.0
         TARGETED_DEVICE_FAMILY: "1,2"
         APPLICATION_EXTENSION_API_ONLY: YES
@@ -158,8 +151,8 @@ targets:
       properties:
         CFBundleDisplayName: صلاتي
         CFBundlePackageType: APPL
-        CFBundleShortVersionString: "0.6.91"
-        CFBundleVersion: "185"
+        CFBundleShortVersionString: "0.6.92"
+        CFBundleVersion: "186"
         WKApplication: true
         WKCompanionAppBundleIdentifier: com.omaralasam.telshevaazan.76XJH357A8
         WKRunsIndependentlyOfCompanionApp: true
@@ -167,8 +160,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.omaralasam.telshevaazan.76XJH357A8.watchkitapp
         PRODUCT_NAME: TelShevaAzanWatch
-        MARKETING_VERSION: 0.6.91
-        CURRENT_PROJECT_VERSION: 185
+        MARKETING_VERSION: 0.6.92
+        CURRENT_PROJECT_VERSION: 186
         TARGETED_DEVICE_FAMILY: 4
         WATCHOS_DEPLOYMENT_TARGET: 9.0
         CODE_SIGN_STYLE: Manual
@@ -194,8 +187,8 @@ targets:
       properties:
         CFBundleDisplayName: صلاتي
         CFBundlePackageType: XPC!
-        CFBundleShortVersionString: "0.6.91"
-        CFBundleVersion: "185"
+        CFBundleShortVersionString: "0.6.92"
+        CFBundleVersion: "186"
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
         NSPrincipalClass: ""
@@ -203,8 +196,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.omaralasam.telshevaazan.76XJH357A8.watchkitapp.watchwidget
         PRODUCT_NAME: TelShevaAzanWatchWidgetExtension
-        MARKETING_VERSION: 0.6.91
-        CURRENT_PROJECT_VERSION: 185
+        MARKETING_VERSION: 0.6.92
+        CURRENT_PROJECT_VERSION: 186
         WATCHOS_DEPLOYMENT_TARGET: 9.0
         TARGETED_DEVICE_FAMILY: 4
         APPLICATION_EXTENSION_API_ONLY: YES

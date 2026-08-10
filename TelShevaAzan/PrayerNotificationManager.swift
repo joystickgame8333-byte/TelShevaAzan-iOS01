@@ -597,6 +597,8 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
     private let defaults = UserDefaults.standard
     private var pendingRescheduleWork: DispatchWorkItem?
     private var schedulingGeneration = 0
+    private var schedulingPassIsRunning = false
+    private var schedulingPassWasRequested = false
 
     private var selectedSound: PrayerNotificationSound {
         PrayerNotificationSound(rawValue: selectedSoundID) ?? .originalAdhan
@@ -744,6 +746,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
     func disable() {
         pendingRescheduleWork?.cancel()
         pendingRescheduleWork = nil
+        schedulingPassWasRequested = false
         schedulingGeneration &+= 1
         isEnabled = false
         defaults.set(false, forKey: Self.enabledKey)
@@ -764,7 +767,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
             DispatchQueue.main.async {
                 guard let self else { return }
                 if settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional {
-                    self.scheduleUpcomingPrayerNotifications()
+                    self.rescheduleIfEnabled()
                 } else {
                     self.isEnabled = false
                     self.defaults.set(false, forKey: Self.enabledKey)
@@ -1103,15 +1106,35 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
     }
 
     private func scheduleUpcomingPrayerNotifications() {
+        guard !schedulingPassIsRunning else {
+            schedulingPassWasRequested = true
+            return
+        }
+
+        schedulingPassIsRunning = true
         schedulingGeneration &+= 1
         let generation = schedulingGeneration
         let events = upcomingNotificationEvents()
 
         removeScheduledPrayerNotifications {
             DispatchQueue.main.async {
-                guard self.isEnabled, self.schedulingGeneration == generation else { return }
+                guard self.isEnabled, self.schedulingGeneration == generation else {
+                    self.finishSchedulingPass()
+                    return
+                }
                 self.addScheduledEvents(events, generation: generation)
             }
+        }
+    }
+
+    private func finishSchedulingPass() {
+        schedulingPassIsRunning = false
+
+        guard schedulingPassWasRequested else { return }
+        schedulingPassWasRequested = false
+
+        if isEnabled {
+            scheduleUpcomingPrayerNotifications()
         }
     }
 
@@ -1121,6 +1144,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
                 ? "اختر صلاة واحدة على الأقل للتنبيه"
                 : "لا توجد صلوات قادمة في الجدول"
             refreshDiagnostics()
+            finishSchedulingPass()
             return
         }
 
@@ -1141,13 +1165,17 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
         }
 
         group.notify(queue: .main) {
-            guard self.isEnabled, self.schedulingGeneration == generation else { return }
+            guard self.isEnabled, self.schedulingGeneration == generation else {
+                self.finishSchedulingPass()
+                return
+            }
             if failureCount == 0 {
                 self.refreshStatus()
             } else {
                 self.statusText = "تعذر جدولة \(failureCount) من أصل \(events.count) تنبيهًا"
             }
             self.refreshDiagnostics()
+            self.finishSchedulingPass()
         }
     }
 
