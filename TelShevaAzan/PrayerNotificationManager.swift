@@ -1259,7 +1259,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
     private func iqamaRequest(for prayer: PrayerTime, date: Date) -> UNNotificationRequest {
         let content = UNMutableNotificationContent()
         content.title = "الآن تقام صلاة \(prayer.title)"
-        content.body = "إقامة مسجد \(IqamaSchedule.telSheva.locationName) • \(clockText(for: date))"
+        content.body = "إقامة مسجد \(PrayerLocationStore.currentCity.name) • \(clockText(for: date))"
         content.sound = .default
         content.interruptionLevel = .timeSensitive
         content.threadIdentifier = "tel-sheva-iqama"
@@ -1581,7 +1581,7 @@ final class PrayerNotificationManager: NSObject, ObservableObject, UNUserNotific
     private func scheduleIqamaPreviewNotification() {
         let content = UNMutableNotificationContent()
         content.title = "الآن تقام صلاة الظهر"
-        content.body = "اختبار تنبيه الإقامة • مسجد \(IqamaSchedule.telSheva.locationName)"
+        content.body = "اختبار تنبيه الإقامة • مسجد \(PrayerLocationStore.currentCity.name)"
         content.sound = .default
         content.interruptionLevel = .timeSensitive
         content.threadIdentifier = "tel-sheva-iqama"

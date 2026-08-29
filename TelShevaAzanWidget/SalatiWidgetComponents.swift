@@ -6,7 +6,7 @@ enum SalatiText {
     static let nextPrayerShort = "القادمة"
     static let nextPrayerDescription = "موعد الصلاة القادمة والوقت المتبقي لها"
     static let todayTimes = "مواقيت اليوم"
-    static let todayTimesDescription = "مواقيت الصلاة اليومية في تل السبع"
+    static let todayTimesDescription = "مواقيت الصلاة اليومية حسب منطقتك"
     static let tomorrowTimes = "مواقيت الغد"
     static let remaining = "متبقي"
     static let prayer = "الصلاة"
@@ -88,7 +88,7 @@ struct SalatiLocationLabel: View {
         HStack(spacing: 3) {
             Image(systemName: "location.fill")
                 .font(.system(size: 8, weight: .bold))
-            Text(IqamaSchedule.telSheva.locationName)
+            Text(PrayerLocationStore.currentCity.name)
                 .font(.system(size: 10, weight: .bold, design: .rounded))
                 .fixedSize(horizontal: true, vertical: false)
         }

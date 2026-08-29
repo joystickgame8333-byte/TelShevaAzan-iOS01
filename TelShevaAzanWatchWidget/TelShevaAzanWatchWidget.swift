@@ -187,7 +187,7 @@ struct TelShevaAzanWatchWidget: Widget {
             TelShevaWatchWidgetView(entry: entry)
         }
         .configurationDisplayName("صلاتي")
-        .description("الصلاة القادمة والوقت المتبقي لها في تل السبع.")
+        .description("يعرض الصلاة القادمة حسب المنطقة المعتمدة على ساعة Apple.")
         .supportedFamilies([.accessoryInline, .accessoryCircular, .accessoryRectangular, .accessoryCorner])
     }
 }

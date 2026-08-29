@@ -17,8 +17,10 @@ struct ContentView: View {
     @State private var selectedTab: HomeDockItem = .schedule
     @State private var showWelcomeActivationPrompt = false
     @State private var selectedPrayerDetails: PrayerTime?
+    @State private var showLocationPicker = false
     @Namespace private var dockSelectionNamespace
     @StateObject private var notifications = PrayerNotificationManager.shared
+    @StateObject private var prayerLocation = PrayerLocationManager()
 
     private static let nabawiDayImage = Self.loadNabawiImage(named: "nabawi-day")
     private static let nabawiNightImage = Self.loadNabawiImage(named: "nabawi-night")
@@ -100,8 +102,12 @@ struct ContentView: View {
         .onChange(of: selectedDayThemeID) { _ in
             WidgetRefreshCenter.refreshAll(force: true)
         }
+        .onChange(of: prayerLocation.revision) { _ in
+            refreshAfterLocationChange()
+        }
         .onChange(of: scenePhase) { phase in
             if phase == .active {
+                prayerLocation.startAutomaticIfNeeded()
                 refreshPrayerCalendarIfNeeded()
                 notifications.refreshIfEnabled()
                 WidgetRefreshCenter.refreshAll()
@@ -109,6 +115,7 @@ struct ContentView: View {
         }
         .onAppear {
             applyVisualRefreshThemeOnce()
+            prayerLocation.startAutomaticIfNeeded()
             refreshPrayerCalendarIfNeeded()
             notifications.refreshIfEnabled()
             WidgetRefreshCenter.refreshAll()
@@ -131,11 +138,16 @@ struct ContentView: View {
                 now: now,
                 theme: activeTheme,
                 iqamaTime: iqamaTime(for: prayer),
-                iqamaLocationName: IqamaSchedule.telSheva.locationName,
+                iqamaLocationName: prayerLocation.city.name,
                 statusText: prayerDetailStatus(for: prayer)
             )
             .presentationDetents([.height(360), .medium])
             .presentationDragIndicator(.visible)
+        }
+        .sheet(isPresented: $showLocationPicker) {
+            PrayerLocationPickerView(location: prayerLocation, theme: activeTheme)
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
         }
     }
 
@@ -834,6 +846,8 @@ struct ContentView: View {
 
         return HStack(alignment: .center, spacing: 12) {
             VStack(alignment: .leading, spacing: 5) {
+                prayerLocationChip(compact: compact, onImage: false)
+
                 VStack(alignment: .leading, spacing: 2) {
                     Text(presentation.countdownTitle)
                         .font(.caption2.weight(.black))
@@ -987,6 +1001,9 @@ struct ContentView: View {
 
             VStack(alignment: .trailing, spacing: compact ? 5 : 6) {
                 HStack(alignment: .top, spacing: 0) {
+                    prayerLocationChip(compact: compact, onImage: true)
+                    .padding(.top, compact ? 6 : 8)
+
                     Spacer(minLength: compact ? 12 : 16)
 
                     VStack(alignment: .trailing, spacing: 3) {
@@ -1027,6 +1044,54 @@ struct ContentView: View {
         .shadow(color: .black.opacity(isNightCard ? 0.16 : 0.06), radius: 8, y: 4)
     }
 
+    private func prayerLocationChip(compact: Bool, onImage: Bool) -> some View {
+        Button {
+            showLocationPicker = true
+        } label: {
+            HStack(spacing: compact ? 5 : 6) {
+                Circle()
+                    .fill(locationIndicatorColor)
+                    .frame(width: compact ? 7 : 8, height: compact ? 7 : 8)
+
+                Text(prayerLocation.city.name)
+                    .font(.system(size: compact ? 10.5 : 11.5, weight: .black, design: .rounded))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.78)
+
+                Image(systemName: "location.fill")
+                    .font(.system(size: compact ? 10 : 11, weight: .black))
+            }
+            .foregroundStyle(onImage ? nabawiPrimaryText : activeTheme.primaryText)
+            .padding(.horizontal, compact ? 9 : 10)
+            .frame(height: compact ? 30 : 34)
+            .background(
+                RoundedRectangle(cornerRadius: compact ? 10 : 12, style: .continuous)
+                    .fill(onImage
+                          ? (activeTheme.isNightTheme ? Color.black.opacity(0.52) : Color.white.opacity(0.80))
+                          : activeTheme.palette.controlBackground)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: compact ? 10 : 12, style: .continuous)
+                    .stroke(onImage ? Color.white.opacity(activeTheme.isNightTheme ? 0.18 : 0.65) : activeTheme.palette.controlBorder, lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("المنطقة الحالية \(prayerLocation.city.name)")
+        .accessibilityHint("اضغط لتغيير المنطقة أو استخدام موقع الهاتف")
+    }
+
+    private var locationIndicatorColor: Color {
+        switch prayerLocation.status {
+        case .connected:
+            return Color(red: 0.16, green: 0.80, blue: 0.48)
+        case .resolving:
+            return .orange
+        case .manual:
+            return activeTheme.accent
+        case .permissionRequired, .unavailable:
+            return activeTheme.mutedText.opacity(0.72)
+        }
+    }
     private func rtlPrayerProgressBar(progress: Double) -> some View {
         GeometryReader { geometry in
             ZStack(alignment: .trailing) {
@@ -1545,6 +1610,16 @@ struct ContentView: View {
         AppThemeStorage.defaults.set(selectedDayThemeID, forKey: AppThemeStorage.dayThemeKey)
         AppThemeStorage.defaults.set(true, forKey: visualRefreshKey)
         AppThemeStorage.defaults.synchronize()
+        WidgetRefreshCenter.refreshAll(force: true)
+    }
+
+    private func refreshAfterLocationChange() {
+        let refreshDate = Date()
+        now = refreshDate
+        if followsToday {
+            selectedDateKey = PrayerEngine.automaticScheduleDateKey(for: refreshDate)
+        }
+        notifications.refreshIfEnabled()
         WidgetRefreshCenter.refreshAll(force: true)
     }
 

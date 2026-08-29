@@ -42,11 +42,12 @@ enum WatchPrayerSharedState {
         calendarRevision: Int,
         sentAt: Date = Date()
     ) -> [String: Any] {
-        [
+        let city = PrayerLocationStore.currentCity
+        return [
             Key.schemaVersion: schemaVersion,
             Key.sentAt: sentAt.timeIntervalSince1970,
-            Key.locationID: "telSheva",
-            Key.locationName: "تل السبع",
+            Key.locationID: city.id,
+            Key.locationName: city.name,
             Key.dayThemeID: dayThemeID,
             Key.nightThemeID: nightThemeID,
             Key.calendarRevision: calendarRevision
@@ -70,6 +71,9 @@ enum WatchPrayerSharedState {
             if let value = applicationContext[key] {
                 defaults.set(value, forKey: key)
             }
+        }
+        if let cityID = applicationContext[Key.locationID] as? String {
+            PrayerLocationStore.applySyncedCity(id: cityID)
         }
         defaults.synchronize()
         return true

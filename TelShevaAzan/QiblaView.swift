@@ -18,11 +18,18 @@ struct QiblaView: View {
     private let warmGold = Color(red: 0.96, green: 0.68, blue: 0.20)
 
     private var qiblaBearing: Double {
-        guard let location = compass.currentLocation else {
-            return QiblaCalculator.telShevaBearing
+        if let location = compass.currentLocation {
+            return QiblaCalculator.bearing(from: location)
         }
 
-        return QiblaCalculator.bearing(from: location)
+        let city = PrayerLocationStore.currentCity
+        let coordinate = PrayerLocationStore.isAutomatic ? PrayerLocationStore.savedCoordinate : nil
+        return QiblaCalculator.bearing(
+            from: CLLocation(
+                latitude: coordinate?.latitude ?? city.latitude,
+                longitude: coordinate?.longitude ?? city.longitude
+            )
+        )
     }
 
     private var delta: Double? {
@@ -406,7 +413,7 @@ struct QiblaView: View {
     }
 
     private var locationCaption: String {
-        let source = compass.currentLocation == nil ? "تل السبع" : "موقعك الحالي"
+        let source = compass.currentLocation == nil ? PrayerLocationStore.currentCity.name : "موقعك الحالي"
         return "اتجاه مكة من \(source)"
     }
 

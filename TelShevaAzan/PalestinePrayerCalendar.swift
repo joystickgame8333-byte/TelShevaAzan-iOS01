@@ -35,7 +35,7 @@ private final class PalestinePrayerCalendarBundleToken {}
 
 enum PalestinePrayerCalendar {
     private static let resourceName = "prayer-calendar-v1"
-    private static let cityKey = "telSheva"
+    private static let bundledReferenceCityKey = "telSheva"
     private static let cacheKey = "prayerCalendar.remotePayload.v1"
     private static let lastRefreshKey = "prayerCalendar.lastRemoteRefresh.v1"
     private static let refreshInterval: TimeInterval = 24 * 60 * 60
@@ -66,13 +66,13 @@ enum PalestinePrayerCalendar {
         stateLock.unlock()
 
         guard let payload,
-              let sourceDay = payload.days[dateKey],
-              let cityOffset = payload.cityOffsetsMinutes[cityKey] else {
+              let sourceDay = payload.days[dateKey] else {
             return nil
         }
 
         let midday = calendar.date(bySettingHour: 12, minute: 0, second: 0, of: date) ?? date
         let daylightSavingOffset = calendar.timeZone.daylightSavingTimeOffset(for: midday) == 0 ? 0 : 60
+        let cityOffset = Int((Double(PrayerLocationStore.currentCity.offsetSeconds) / 60).rounded())
         let totalOffset = cityOffset + daylightSavingOffset
 
         return Dictionary(uniqueKeysWithValues: PrayerEngine.displayOrder.map { key in
@@ -159,7 +159,7 @@ enum PalestinePrayerCalendar {
               payload.revision > 0,
               payload.baseLocation == "jerusalem",
               payload.baseTimeStandard == "winter",
-              payload.cityOffsetsMinutes[cityKey] == 2,
+              payload.cityOffsetsMinutes[bundledReferenceCityKey] == 2,
               Set(payload.days.keys) == expectedDateKeys else {
             return false
         }
