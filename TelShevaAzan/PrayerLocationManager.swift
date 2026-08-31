@@ -30,6 +30,7 @@ final class PrayerLocationManager: NSObject, ObservableObject {
 
     private let manager = CLLocationManager()
     private var requestedAfterAuthorization = false
+    private var requestedBackgroundUpgrade = false
     private var requestInFlight = false
 
     override init() {
@@ -57,6 +58,7 @@ final class PrayerLocationManager: NSObject, ObservableObject {
     func activateAutomaticLocation() {
         PrayerLocationStore.setAutomaticEnabled(true)
         isAutomatic = true
+        requestedBackgroundUpgrade = true
         if manager.authorizationStatus == .authorizedWhenInUse {
             manager.requestAlwaysAuthorization()
         }
@@ -135,6 +137,13 @@ extension PrayerLocationManager: CLLocationManagerDelegate {
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         switch manager.authorizationStatus {
         case .authorizedAlways, .authorizedWhenInUse:
+            if manager.authorizationStatus == .authorizedWhenInUse,
+               requestedBackgroundUpgrade {
+                requestedBackgroundUpgrade = false
+                manager.requestAlwaysAuthorization()
+            } else if manager.authorizationStatus == .authorizedAlways {
+                requestedBackgroundUpgrade = false
+            }
             if manager.authorizationStatus == .authorizedAlways {
                 resumeBackgroundMonitoring()
             }
