@@ -3,6 +3,8 @@ import Foundation
 
 @MainActor
 final class PrayerLocationManager: NSObject, ObservableObject {
+    static let shared = PrayerLocationManager()
+
     enum Status: Equatable {
         case connected
         case manual
@@ -28,12 +30,14 @@ final class PrayerLocationManager: NSObject, ObservableObject {
 
     private let manager = CLLocationManager()
     private var requestedAfterAuthorization = false
+    private var requestInFlight = false
 
     override init() {
         super.init()
         manager.delegate = self
-        manager.desiredAccuracy = kCLLocationAccuracyHundredMeters
+        manager.desiredAccuracy = kCLLocationAccuracyKilometer
         manager.distanceFilter = 500
+        manager.activityType = .other
     }
 
     func startAutomaticIfNeeded(force: Bool = false) {
@@ -53,10 +57,15 @@ final class PrayerLocationManager: NSObject, ObservableObject {
     func activateAutomaticLocation() {
         PrayerLocationStore.setAutomaticEnabled(true)
         isAutomatic = true
+        if manager.authorizationStatus == .authorizedWhenInUse {
+            manager.requestAlwaysAuthorization()
+        }
         requestPhoneLocation()
     }
 
     func selectManualCity(_ selectedCity: PrayerCity) {
+        manager.stopMonitoringSignificantLocationChanges()
+        requestInFlight = false
         PrayerLocationStore.setManualCity(selectedCity)
         city = selectedCity
         isAutomatic = false
@@ -76,7 +85,15 @@ final class PrayerLocationManager: NSObject, ObservableObject {
             requestedAfterAuthorization = true
             manager.requestWhenInUseAuthorization()
         case .authorizedAlways, .authorizedWhenInUse:
+            if let cached = manager.location,
+               cached.horizontalAccuracy >= 0,
+               cached.horizontalAccuracy <= 10_000,
+               abs(cached.timestamp.timeIntervalSinceNow) <= 30 * 60 {
+                accept(cached)
+            }
+            guard !requestInFlight else { return }
             status = .resolving
+            requestInFlight = true
             manager.requestLocation()
         case .denied, .restricted:
             status = .permissionRequired
@@ -85,7 +102,18 @@ final class PrayerLocationManager: NSObject, ObservableObject {
         }
     }
 
+    func resumeBackgroundMonitoring() {
+        guard PrayerLocationStore.isAutomatic,
+              CLLocationManager.significantLocationChangeMonitoringAvailable(),
+              manager.authorizationStatus == .authorizedAlways else {
+            return
+        }
+        manager.startMonitoringSignificantLocationChanges()
+    }
+
     private func accept(_ location: CLLocation) {
+        requestInFlight = false
+        let previousCityID = PrayerLocationStore.currentCity.id
         let selected = PrayerLocationStore.saveAutomaticLocation(
             latitude: location.coordinate.latitude,
             longitude: location.coordinate.longitude,
@@ -94,7 +122,12 @@ final class PrayerLocationManager: NSObject, ObservableObject {
         city = selected
         isAutomatic = true
         status = .connected
-        revision &+= 1
+        if selected.id != previousCityID {
+            revision &+= 1
+            PrayerNotificationManager.shared.refreshIfEnabled()
+            WidgetRefreshCenter.refreshAll(force: true)
+        }
+        resumeBackgroundMonitoring()
     }
 }
 
@@ -102,8 +135,12 @@ extension PrayerLocationManager: CLLocationManagerDelegate {
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         switch manager.authorizationStatus {
         case .authorizedAlways, .authorizedWhenInUse:
+            if manager.authorizationStatus == .authorizedAlways {
+                resumeBackgroundMonitoring()
+            }
             if requestedAfterAuthorization || PrayerLocationStore.isAutomatic {
                 requestedAfterAuthorization = false
+                requestInFlight = true
                 status = .resolving
                 manager.requestLocation()
             }
@@ -117,6 +154,7 @@ extension PrayerLocationManager: CLLocationManagerDelegate {
     }
 
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        guard PrayerLocationStore.isAutomatic else { return }
         let usable = locations.filter { location in
             location.horizontalAccuracy >= 0
                 && location.horizontalAccuracy <= 10_000
@@ -130,6 +168,7 @@ extension PrayerLocationManager: CLLocationManagerDelegate {
     }
 
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        requestInFlight = false
         if let saved = PrayerLocationStore.savedCoordinate {
             let fallback = CLLocation(latitude: saved.latitude, longitude: saved.longitude)
             accept(fallback)

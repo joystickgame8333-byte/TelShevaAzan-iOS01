@@ -211,11 +211,13 @@ struct SalatiWidgetProvider: TimelineProvider {
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<SalatiWidgetEntry>) -> Void) {
-        let now = Date()
-        let transitionDates = Self.transitionDates(after: now)
-        let entries = transitionDates.map(Self.makeEntry(for:))
-        let refreshDate = transitionDates.last?.addingTimeInterval(60) ?? now.addingTimeInterval(3600)
-        completion(Timeline(entries: entries, policy: .after(refreshDate)))
+        WidgetPrayerLocationResolver.shared.refreshIfAvailable {
+            let now = Date()
+            let transitionDates = Self.transitionDates(after: now)
+            let entries = transitionDates.map(Self.makeEntry(for:))
+            let refreshDate = transitionDates.last?.addingTimeInterval(60) ?? now.addingTimeInterval(3600)
+            completion(Timeline(entries: entries, policy: .after(refreshDate)))
+        }
     }
 
     static func makeEntry(for date: Date) -> SalatiWidgetEntry {

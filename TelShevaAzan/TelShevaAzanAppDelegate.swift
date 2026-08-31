@@ -5,6 +5,9 @@ final class TelShevaAzanAppDelegate: NSObject, UIApplicationDelegate {
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
     ) -> Bool {
-        true
+        Task { @MainActor in
+            PrayerLocationManager.shared.resumeBackgroundMonitoring()
+        }
+        return true
     }
 }

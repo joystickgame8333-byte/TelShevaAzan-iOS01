@@ -87,20 +87,11 @@ struct PrayerLocationPickerView: View {
             }
             .frame(maxWidth: .infinity, alignment: .trailing)
         }
+        .environment(\.layoutDirection, .leftToRight)
     }
 
     private var searchField: some View {
         HStack(spacing: 10) {
-            Image(systemName: "magnifyingglass")
-                .font(.system(size: 16, weight: .bold))
-                .foregroundStyle(theme.accent)
-
-            TextField("ابحث عن مدينة", text: $query)
-                .font(.system(size: 16, weight: .bold, design: .rounded))
-                .foregroundStyle(theme.primaryText)
-                .multilineTextAlignment(.trailing)
-                .submitLabel(.search)
-
             if !query.isEmpty {
                 Button {
                     query = ""
@@ -109,7 +100,19 @@ struct PrayerLocationPickerView: View {
                         .foregroundStyle(theme.mutedText)
                 }
             }
+
+            TextField("ابحث عن مدينة", text: $query)
+                .font(.system(size: 16, weight: .bold, design: .rounded))
+                .foregroundStyle(theme.primaryText)
+                .multilineTextAlignment(.trailing)
+                .submitLabel(.search)
+                .environment(\.layoutDirection, .rightToLeft)
+
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 16, weight: .bold))
+                .foregroundStyle(theme.accent)
         }
+        .environment(\.layoutDirection, .leftToRight)
         .padding(.horizontal, 14)
         .frame(height: 50)
         .background(theme.palette.controlBackground, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
@@ -148,6 +151,7 @@ struct PrayerLocationPickerView: View {
                     .frame(width: 46, height: 46)
                     .background(theme.accent.opacity(theme.isNightTheme ? 0.18 : 0.12), in: Circle())
             }
+            .environment(\.layoutDirection, .leftToRight)
             .padding(14)
             .contentShape(Rectangle())
         }
@@ -212,6 +216,7 @@ struct PrayerLocationPickerView: View {
                         .font(.system(size: 17, weight: .black, design: .rounded))
                         .foregroundStyle(theme.primaryText)
                 }
+                .environment(\.layoutDirection, .leftToRight)
                 .padding(.horizontal, 15)
                 .frame(height: 54)
                 .contentShape(Rectangle())
@@ -256,6 +261,7 @@ struct PrayerLocationPickerView: View {
                     }
                 }
             }
+            .environment(\.layoutDirection, .leftToRight)
             .padding(.horizontal, 15)
             .frame(minHeight: 52)
             .contentShape(Rectangle())

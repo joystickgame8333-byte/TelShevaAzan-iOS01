@@ -20,7 +20,7 @@ struct ContentView: View {
     @State private var showLocationPicker = false
     @Namespace private var dockSelectionNamespace
     @StateObject private var notifications = PrayerNotificationManager.shared
-    @StateObject private var prayerLocation = PrayerLocationManager()
+    @StateObject private var prayerLocation = PrayerLocationManager.shared
 
     private static let nabawiDayImage = Self.loadNabawiImage(named: "nabawi-day")
     private static let nabawiNightImage = Self.loadNabawiImage(named: "nabawi-night")
@@ -107,7 +107,7 @@ struct ContentView: View {
         }
         .onChange(of: scenePhase) { phase in
             if phase == .active {
-                prayerLocation.startAutomaticIfNeeded()
+                prayerLocation.startAutomaticIfNeeded(force: true)
                 refreshPrayerCalendarIfNeeded()
                 notifications.refreshIfEnabled()
                 WidgetRefreshCenter.refreshAll()
@@ -1049,18 +1049,19 @@ struct ContentView: View {
             showLocationPicker = true
         } label: {
             HStack(spacing: compact ? 5 : 6) {
-                Circle()
-                    .fill(locationIndicatorColor)
-                    .frame(width: compact ? 7 : 8, height: compact ? 7 : 8)
+                Image(systemName: "location.fill")
+                    .font(.system(size: compact ? 10 : 11, weight: .black))
 
                 Text(prayerLocation.city.name)
                     .font(.system(size: compact ? 10.5 : 11.5, weight: .black, design: .rounded))
                     .lineLimit(1)
                     .minimumScaleFactor(0.78)
 
-                Image(systemName: "location.fill")
-                    .font(.system(size: compact ? 10 : 11, weight: .black))
+                Circle()
+                    .fill(locationIndicatorColor)
+                    .frame(width: compact ? 7 : 8, height: compact ? 7 : 8)
             }
+            .environment(\.layoutDirection, .leftToRight)
             .foregroundStyle(onImage ? nabawiPrimaryText : activeTheme.primaryText)
             .padding(.horizontal, compact ? 9 : 10)
             .frame(height: compact ? 30 : 34)

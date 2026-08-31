@@ -39,7 +39,7 @@ enum PrayerLocationStore {
     private static let latitudeKey = "prayerLocation.latitude.v1"
     private static let longitudeKey = "prayerLocation.longitude.v1"
     private static let updatedAtKey = "prayerLocation.updatedAt.v1"
-    private static let recentInterval: TimeInterval = 6 * 60 * 60
+    private static let recentInterval: TimeInterval = 10 * 60
     private static let defaultCityID = "tel-sheva"
 
     static let defaults: UserDefaults = {

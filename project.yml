@@ -25,8 +25,8 @@ targets:
       properties:
         CFBundleDisplayName: صلاتي
         CFBundlePackageType: APPL
-        CFBundleShortVersionString: "0.7.0"
-        CFBundleVersion: "194"
+        CFBundleShortVersionString: "0.7.1"
+        CFBundleVersion: "195"
         CFBundleURLTypes:
           - CFBundleURLName: com.omaralasam.telshevaazan
             CFBundleURLSchemes:
@@ -45,6 +45,8 @@ targets:
         UIAppFonts:
           - UthmanicHafs1Ver18.ttf
         NSLocationWhenInUseUsageDescription: يستخدم التطبيق الموقع محليًا لاختيار أقرب منطقة وضبط مواقيت الصلاة والقبلة بدقة، ولا يرسل موقعك خارج الجهاز.
+        NSLocationAlwaysAndWhenInUseUsageDescription: يسمح الموقع في الخلفية بتحديث منطقة مواقيت الصلاة والودجت تلقائيًا عند السفر، دون إرسال موقعك خارج الجهاز.
+        NSLocationAlwaysUsageDescription: يسمح الموقع في الخلفية بتحديث منطقة مواقيت الصلاة والودجت تلقائيًا عند السفر، دون إرسال موقعك خارج الجهاز.
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
     resources:
@@ -84,8 +86,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.omaralasam.telshevaazan
         PRODUCT_NAME: TelShevaAzan
-        MARKETING_VERSION: 0.7.0
-        CURRENT_PROJECT_VERSION: 194
+        MARKETING_VERSION: 0.7.1
+        CURRENT_PROJECT_VERSION: 195
         TARGETED_DEVICE_FAMILY: 1
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
@@ -120,16 +122,17 @@ targets:
       properties:
         CFBundleDisplayName: صلاتي
         CFBundlePackageType: XPC!
-        CFBundleShortVersionString: "0.7.0"
-        CFBundleVersion: "194"
+        CFBundleShortVersionString: "0.7.1"
+        CFBundleVersion: "195"
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
+        NSWidgetWantsLocation: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.omaralasam.telshevaazan.widget
         PRODUCT_NAME: TelShevaAzanWidgetExtension
-        MARKETING_VERSION: 0.7.0
-        CURRENT_PROJECT_VERSION: 194
+        MARKETING_VERSION: 0.7.1
+        CURRENT_PROJECT_VERSION: 195
         IPHONEOS_DEPLOYMENT_TARGET: 16.0
         TARGETED_DEVICE_FAMILY: "1,2"
         APPLICATION_EXTENSION_API_ONLY: YES
@@ -156,8 +159,8 @@ targets:
       properties:
         CFBundleDisplayName: صلاتي
         CFBundlePackageType: APPL
-        CFBundleShortVersionString: "0.7.0"
-        CFBundleVersion: "194"
+        CFBundleShortVersionString: "0.7.1"
+        CFBundleVersion: "195"
         WKApplication: true
         WKCompanionAppBundleIdentifier: com.omaralasam.telshevaazan
         WKRunsIndependentlyOfCompanionApp: true
@@ -165,8 +168,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.omaralasam.telshevaazan.watchkitapp
         PRODUCT_NAME: TelShevaAzanWatch
-        MARKETING_VERSION: 0.7.0
-        CURRENT_PROJECT_VERSION: 194
+        MARKETING_VERSION: 0.7.1
+        CURRENT_PROJECT_VERSION: 195
         TARGETED_DEVICE_FAMILY: 4
         WATCHOS_DEPLOYMENT_TARGET: 9.0
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
@@ -195,8 +198,8 @@ targets:
       properties:
         CFBundleDisplayName: صلاتي
         CFBundlePackageType: XPC!
-        CFBundleShortVersionString: "0.7.0"
-        CFBundleVersion: "194"
+        CFBundleShortVersionString: "0.7.1"
+        CFBundleVersion: "195"
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
           NSExtensionAttributes:
@@ -206,8 +209,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.omaralasam.telshevaazan.watchkitapp.watchwidget
         PRODUCT_NAME: TelShevaAzanWatchWidgetExtension
-        MARKETING_VERSION: 0.7.0
-        CURRENT_PROJECT_VERSION: 194
+        MARKETING_VERSION: 0.7.1
+        CURRENT_PROJECT_VERSION: 195
         WATCHOS_DEPLOYMENT_TARGET: 9.0
         TARGETED_DEVICE_FAMILY: 4
         APPLICATION_EXTENSION_API_ONLY: YES
