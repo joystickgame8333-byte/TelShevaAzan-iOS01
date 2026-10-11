@@ -631,6 +631,10 @@ struct ContentView: View {
                                     .stroke(Color.white.opacity(activeTheme.isNightTheme ? 0.38 : 0.82), lineWidth: 1)
                             )
                             .shadow(color: .black.opacity(activeTheme.isNightTheme ? 0.16 : 0.07), radius: 4, y: 1)
+                            .overlay(alignment: .topTrailing) {
+                                updateAvailabilityDot(for: item)
+                                    .offset(x: 1, y: -1)
+                            }
                             .offset(y: -5)
 
                         Text(item.title)
@@ -648,6 +652,10 @@ struct ContentView: View {
                             .foregroundStyle(activeTheme.secondaryText.opacity(0.86))
                             .symbolRenderingMode(.hierarchical)
                             .frame(width: 28, height: 20)
+                            .overlay(alignment: .topTrailing) {
+                                updateAvailabilityDot(for: item)
+                                    .offset(x: 1, y: -2)
+                            }
 
                         Text(item.title)
                             .font(.system(size: 8, weight: .bold, design: .rounded))
@@ -663,7 +671,20 @@ struct ContentView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(DockButtonPressStyle())
-        .accessibilityLabel(item.title)
+        .accessibilityLabel(item == .notifications && appUpdates.availableRelease != nil
+                            ? "تنبيه، تحديث جديد متوفر" : item.title)
+    }
+
+    @ViewBuilder
+    private func updateAvailabilityDot(for item: HomeDockItem) -> some View {
+        if item == .notifications && appUpdates.availableRelease != nil {
+            Circle()
+                .fill(Color.green)
+                .frame(width: 9, height: 9)
+                .overlay(Circle().stroke(activeTheme.isNightTheme ? Color.black : Color.white, lineWidth: 1.5))
+                .allowsHitTesting(false)
+                .accessibilityHidden(true)
+        }
     }
 
     private func selectedDockBubble(width: CGFloat, height: CGFloat) -> some View {
