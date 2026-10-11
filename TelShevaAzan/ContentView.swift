@@ -639,7 +639,7 @@ struct ContentView: View {
 
                         Text(item.title)
                             .font(.system(size: 9.5, weight: .black, design: .rounded))
-                            .foregroundStyle(Color.white)
+                            .foregroundStyle(activeTheme == .nightWahaGlass ? activeTheme.appBackground[0] : Color.white)
                             .lineLimit(1)
                             .minimumScaleFactor(0.66)
                             .offset(y: -3)
@@ -709,7 +709,7 @@ struct ContentView: View {
 
     private var selectedDockIconFill: some View {
         Circle()
-            .fill(activeTheme.isNightTheme ? Color.white.opacity(0.94) : Color.white.opacity(0.98))
+            .fill(activeTheme == .nightWahaGlass ? activeTheme.appBackground[0] : (activeTheme.isNightTheme ? Color.white.opacity(0.94) : Color.white.opacity(0.98)))
     }
 
     private var dockLiquidGlassBase: some View {
@@ -1345,7 +1345,7 @@ struct ContentView: View {
     }
 
     private var usesNabawiPrayerCard: Bool {
-        activeTheme == .dayAppleGlass || activeTheme == .dayOasisGlass || activeTheme == .nightAppleGlass || activeTheme == .nightSakinaGlass || activeTheme == .daySalatiGlass || activeTheme == .nightSalatiGlass || activeTheme == .dayCrystalGlass || activeTheme == .nightCrystalGlass
+        activeTheme == .dayAppleGlass || activeTheme == .dayOasisGlass || activeTheme == .nightAppleGlass || activeTheme == .nightSakinaGlass || activeTheme == .daySalatiGlass || activeTheme == .nightSalatiGlass || activeTheme == .dayCrystalGlass || activeTheme == .nightCrystalGlass || activeTheme == .dayWahaGlass || activeTheme == .nightWahaGlass
     }
 
     private var nabawiPrimaryText: Color {

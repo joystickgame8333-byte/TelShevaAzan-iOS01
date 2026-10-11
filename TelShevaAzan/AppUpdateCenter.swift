@@ -89,6 +89,7 @@ struct AppUpdateView: View {
                                 .font(.headline).frame(maxWidth: .infinity).padding(.vertical, 8)
                         }
                         .buttonStyle(.borderedProminent).tint(theme.accent)
+                        .foregroundStyle(theme == .nightWahaGlass ? theme.appBackground[0] : Color.white)
                         .disabled(isOpeningInstaller)
                         Text("يفتح TrollStore لينزّل التحديث ويثبّته. قد يطلب تأكيد التثبيت حسب إعداداتك.")
                             .font(.footnote).foregroundStyle(theme.secondaryText)

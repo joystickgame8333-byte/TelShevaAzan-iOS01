@@ -1582,6 +1582,10 @@ struct NotificationSettingsView: View {
 
     private func visualThemeSubtitle(for visualTheme: PrayerVisualTheme) -> String {
         switch visualTheme {
+        case .nightWahaGlass:
+            return "أخضر عميق ولمسة نحاسية"
+        case .dayWahaGlass:
+            return "عاجي دافئ وأخضر هادئ"
         case .daySalatiGlass, .nightSalatiGlass:
             return "النمط الأساسي الحالي"
         case .dayCrystalGlass:

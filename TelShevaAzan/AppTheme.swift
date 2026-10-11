@@ -69,6 +69,7 @@ enum PrayerVisualTheme: String, CaseIterable, Identifiable {
     case nightAppleGlass
     case nightSalatiGlass
     case nightCrystalGlass
+    case nightWahaGlass
     case dayMint
     case dayPearl
     case daySky
@@ -80,14 +81,15 @@ enum PrayerVisualTheme: String, CaseIterable, Identifiable {
     case dayAppleGlass
     case daySalatiGlass
     case dayCrystalGlass
+    case dayWahaGlass
     case dayRose
 
     var id: String { rawValue }
 
     static let defaultNight: PrayerVisualTheme = .nightSalatiGlass
     static let defaultDay: PrayerVisualTheme = .daySalatiGlass
-    static let nightChoices: [PrayerVisualTheme] = [.nightCrystalGlass, .nightSalatiGlass, .nightAppleGlass, .nightSakinaGlass]
-    static let dayChoices: [PrayerVisualTheme] = [.dayCrystalGlass, .daySalatiGlass, .dayAppleGlass, .dayOasisGlass]
+    static let nightChoices: [PrayerVisualTheme] = [.nightWahaGlass, .nightCrystalGlass, .nightSalatiGlass, .nightAppleGlass, .nightSakinaGlass]
+    static let dayChoices: [PrayerVisualTheme] = [.dayWahaGlass, .dayCrystalGlass, .daySalatiGlass, .dayAppleGlass, .dayOasisGlass]
 
     static func selected(isNight: Bool, nightID: String, dayID: String) -> PrayerVisualTheme {
         let choices = isNight ? Self.nightChoices : Self.dayChoices
@@ -97,6 +99,10 @@ enum PrayerVisualTheme: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
+        case .nightWahaGlass:
+            return "ليل الواحة"
+        case .dayWahaGlass:
+            return "نهار الواحة"
         case .nightOld:
             return "سكون الليل"
         case .nightEmerald:
@@ -154,6 +160,10 @@ enum PrayerVisualTheme: String, CaseIterable, Identifiable {
 
     var symbol: String {
         switch self {
+        case .nightWahaGlass:
+            return "moon.haze.fill"
+        case .dayWahaGlass:
+            return "sun.haze.fill"
         case .nightOld:
             return "moon.fill"
         case .nightEmerald:
@@ -207,9 +217,9 @@ enum PrayerVisualTheme: String, CaseIterable, Identifiable {
 
     var isNightTheme: Bool {
         switch self {
-        case .nightOld, .nightEmerald, .nightMidnight, .nightAmber, .nightViolet, .nightCalendar, .nightGlass, .nightDawnGlass, .nightSakinaGlass, .nightAppleGlass, .nightSalatiGlass, .nightCrystalGlass:
+        case .nightOld, .nightEmerald, .nightMidnight, .nightAmber, .nightViolet, .nightCalendar, .nightGlass, .nightDawnGlass, .nightSakinaGlass, .nightAppleGlass, .nightSalatiGlass, .nightCrystalGlass, .nightWahaGlass:
             return true
-        case .dayMint, .dayPearl, .daySky, .dayOlive, .dayAqua, .dayGlass, .dayDawnGlass, .dayOasisGlass, .dayAppleGlass, .daySalatiGlass, .dayCrystalGlass, .dayRose:
+        case .dayMint, .dayPearl, .daySky, .dayOlive, .dayAqua, .dayGlass, .dayDawnGlass, .dayOasisGlass, .dayAppleGlass, .daySalatiGlass, .dayCrystalGlass, .dayWahaGlass, .dayRose:
             return false
         }
     }
@@ -219,11 +229,49 @@ enum PrayerVisualTheme: String, CaseIterable, Identifiable {
     }
 
     var usesNativeMaterialGlass: Bool {
-        self == .nightCrystalGlass || self == .dayCrystalGlass
+        self == .nightCrystalGlass || self == .dayCrystalGlass || self == .nightWahaGlass || self == .dayWahaGlass
     }
 
     var palette: ThemePalette {
         switch self {
+        case .nightWahaGlass:
+            return ThemePalette(
+                appBackground: [Color(red: 0.025, green: 0.065, blue: 0.055), Color(red: 0.055, green: 0.145, blue: 0.120), Color(red: 0.020, green: 0.040, blue: 0.035)],
+                widgetBackground: [Color(red: 0.035, green: 0.105, blue: 0.085), Color(red: 0.025, green: 0.060, blue: 0.050)],
+                accent: Color(red: 0.90, green: 0.73, blue: 0.48),
+                primaryText: Color(red: 0.97, green: 0.96, blue: 0.91),
+                secondaryText: Color(red: 0.73, green: 0.82, blue: 0.75),
+                mutedText: Color(red: 0.60, green: 0.72, blue: 0.65),
+                panelBackground: Color(red: 0.055, green: 0.120, blue: 0.100).opacity(0.66),
+                countdownBackground: Color(red: 0.085, green: 0.200, blue: 0.160),
+                rowBackground: Color(red: 0.105, green: 0.185, blue: 0.150).opacity(0.60),
+                activeRowBackground: Color(red: 0.115, green: 0.285, blue: 0.210).opacity(0.82),
+                rowBorder: Color(red: 0.66, green: 0.77, blue: 0.65).opacity(0.20),
+                activeRowBorder: Color(red: 0.90, green: 0.73, blue: 0.48).opacity(0.65),
+                chipBackground: Color(red: 0.045, green: 0.105, blue: 0.080).opacity(0.86),
+                controlBackground: Color(red: 0.085, green: 0.175, blue: 0.135).opacity(0.76),
+                controlPressedBackground: Color(red: 0.155, green: 0.290, blue: 0.210).opacity(0.84),
+                controlBorder: Color(red: 0.90, green: 0.73, blue: 0.48).opacity(0.28)
+            )
+        case .dayWahaGlass:
+            return ThemePalette(
+                appBackground: [Color(red: 0.985, green: 0.965, blue: 0.905), Color(red: 0.900, green: 0.945, blue: 0.875), Color(red: 0.960, green: 0.935, blue: 0.865)],
+                widgetBackground: [Color(red: 0.975, green: 0.955, blue: 0.900), Color(red: 0.885, green: 0.930, blue: 0.865)],
+                accent: Color(red: 0.115, green: 0.355, blue: 0.265),
+                primaryText: Color(red: 0.060, green: 0.155, blue: 0.110),
+                secondaryText: Color(red: 0.260, green: 0.370, blue: 0.290),
+                mutedText: Color(red: 0.360, green: 0.430, blue: 0.355),
+                panelBackground: Color(red: 1.000, green: 0.990, blue: 0.950).opacity(0.70),
+                countdownBackground: Color(red: 0.115, green: 0.355, blue: 0.265),
+                rowBackground: Color(red: 1.000, green: 0.990, blue: 0.950).opacity(0.65),
+                activeRowBackground: Color(red: 0.665, green: 0.830, blue: 0.700).opacity(0.48),
+                rowBorder: Color(red: 0.390, green: 0.515, blue: 0.370).opacity(0.22),
+                activeRowBorder: Color(red: 0.115, green: 0.355, blue: 0.265).opacity(0.60),
+                chipBackground: Color(red: 1.000, green: 0.990, blue: 0.950).opacity(0.88),
+                controlBackground: Color(red: 1.000, green: 0.990, blue: 0.950).opacity(0.86),
+                controlPressedBackground: Color(red: 0.760, green: 0.865, blue: 0.740).opacity(0.72),
+                controlBorder: Color(red: 0.520, green: 0.600, blue: 0.440).opacity(0.34)
+            )
         case .nightOld:
             return ThemePalette(
                 appBackground: [Color(red: 0.00, green: 0.00, blue: 0.00), Color(red: 0.02, green: 0.02, blue: 0.02)],
