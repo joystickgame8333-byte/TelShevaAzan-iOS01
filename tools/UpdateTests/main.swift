@@ -27,4 +27,9 @@ expect(try release(size: 0).downloadURL == nil, "Empty files must not be offered
 expect(try release(host: "example.com").downloadURL == nil, "Only the configured repository download is trusted")
 expect(try release(tag: "v0.7.2").downloadURL == nil, "Incomplete tags must not be offered")
 expect(try release(tag: "v0.7.2-b0").downloadURL == nil, "Invalid build must not be offered")
-print("App update release tests passed (12 checks)")
+let installComponents = URLComponents(url: next.installationURL!, resolvingAgainstBaseURL: false)!
+expect(installComponents.scheme == "apple-magnifier" && installComponents.host == "install", "Use the documented TrollStore installation route")
+expect(installComponents.queryItems?.first(where: { $0.name == "url" })?.value == next.downloadURL?.absoluteString, "Installer must receive the exact validated IPA URL")
+expect(try release(draft: true).installationURL == nil, "Do not hand an unpublished IPA to the installer")
+expect(try release(host: "example.com").installationURL == nil, "Reject untrusted installation links")
+print("App update release tests passed (16 checks)")

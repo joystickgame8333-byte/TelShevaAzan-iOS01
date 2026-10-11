@@ -55,6 +55,8 @@ struct AppUpdateView: View {
     let theme: PrayerVisualTheme
     @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) private var openURL
+    @State private var isOpeningInstaller = false
+    @State private var showInstallerHelp = false
 
     var body: some View {
         NavigationStack {
@@ -76,15 +78,26 @@ struct AppUpdateView: View {
                             Text(notes).frame(maxWidth: .infinity, alignment: .leading)
                         }
                         Button {
-                            openURL(url)
+                            guard let installationURL = release.installationURL else { return }
+                            isOpeningInstaller = true
+                            openURL(installationURL) { accepted in
+                                isOpeningInstaller = false
+                                if !accepted { showInstallerHelp = true }
+                            }
                         } label: {
-                            Label("تحميل التحديث", systemImage: "arrow.down.to.line")
+                            Label(isOpeningInstaller ? "جارٍ فتح المثبّت…" : "تحديث الآن", systemImage: "arrow.down.circle.fill")
                                 .font(.headline).frame(maxWidth: .infinity).padding(.vertical, 8)
                         }
                         .buttonStyle(.borderedProminent).tint(theme.accent)
-                        Text("نزّل ملف IPA ثم ثبّته بالطريقة المعتادة. لن يتم التثبيت تلقائيًا.")
+                        .disabled(isOpeningInstaller)
+                        Text("يفتح TrollStore لينزّل التحديث ويثبّته. قد يطلب تأكيد التثبيت حسب إعداداتك.")
                             .font(.footnote).foregroundStyle(theme.secondaryText)
                             .multilineTextAlignment(.center)
+                        Text("فعّل URL Scheme Enabled من إعدادات TrollStore مرة واحدة. إذا فتح تطبيق المكبّر بدلًا منه، راجع هذا الإعداد.")
+                            .font(.footnote).foregroundStyle(theme.secondaryText)
+                            .multilineTextAlignment(.center)
+                        Button("تنزيل الملف يدويًا") { openURL(url) }
+                            .font(.footnote)
                     }
                     Button {
                         Task { await updates.check(force: true) }
@@ -106,5 +119,10 @@ struct AppUpdateView: View {
         }
         .environment(\.layoutDirection, .rightToLeft)
         .task { await updates.check() }
+        .alert("تعذر فتح مثبّت التحديث", isPresented: $showInstallerHelp) {
+            Button("حسنًا", role: .cancel) {}
+        } message: {
+            Text("تأكد من تثبيت TrollStore وتفعيل URL Scheme Enabled في إعداداته، ثم جرّب مجددًا. يمكنك أيضًا تنزيل الملف يدويًا.")
+        }
     }
 }

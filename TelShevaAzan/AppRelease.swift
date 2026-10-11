@@ -49,4 +49,13 @@ struct AppRelease: Decodable, Identifiable {
         let comparison = version.compare(installedVersion, options: .numeric)
         return comparison == .orderedDescending || (comparison == .orderedSame && build > currentBuild)
     }
+
+    var installationURL: URL? {
+        guard let downloadURL else { return nil }
+        var components = URLComponents()
+        components.scheme = "apple-magnifier"
+        components.host = "install"
+        components.queryItems = [URLQueryItem(name: "url", value: downloadURL.absoluteString)]
+        return components.url
+    }
 }

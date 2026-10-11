@@ -40,7 +40,7 @@ def main():
         notes.write_text(
             f"صلاتي {version} ({build})\n\n"
             "نزّل TelShevaAzan-unsigned.ipa وثبّته بالطريقة المعتادة.\n"
-            "يمكن فحص التحديثات وتحميل أحدث نسخة من زر التحديثات داخل التطبيق.\n",
+            "زر تحديث الآن داخل التطبيق يفتح TrollStore لتنزيل وتثبيت أحدث نسخة مباشرة. فعّل URL Scheme Enabled في إعدادات TrollStore.\n",
             encoding="utf-8",
         )
         gh("release", "create", tag, *assets, "--repo", repo, "--target", sha,
