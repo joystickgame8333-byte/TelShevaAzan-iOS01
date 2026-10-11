@@ -285,6 +285,8 @@ jobs:
             </array>
             <key>get-task-allow</key>
             <true/>
+            <key>com.apple.private.security.container-required</key>
+            <string>$PLUGIN_BUNDLE_ID</string>
             <key>keychain-access-groups</key>
             <array>
               <string>OMARASAM09.$PLUGIN_BUNDLE_ID</string>
@@ -294,6 +296,8 @@ jobs:
           EOF
             /usr/bin/codesign --force --sign - --entitlements "$PLUGIN_ENTITLEMENTS" "$PLUGIN_PATH"
             /usr/bin/codesign --verify --deep --strict "$PLUGIN_PATH"
+            /usr/bin/codesign -d --entitlements :- "$PLUGIN_PATH" > "$PLUGIN_ENTITLEMENTS"
+            test "$(/usr/libexec/PlistBuddy -c 'Print :com.apple.private.security.container-required' "$PLUGIN_ENTITLEMENTS")" = "$PLUGIN_BUNDLE_ID"
           done
           echo "TrollStore ldid signing app:"
           ldid -S"TelShevaAzan/TelShevaAzan.entitlements" "$APP_PATH/$APP_EXECUTABLE"

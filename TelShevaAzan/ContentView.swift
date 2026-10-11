@@ -111,16 +111,20 @@ struct ContentView: View {
         }
         .onChange(of: scenePhase) { phase in
             if phase == .active {
+                WidgetRefreshCenter.refreshAfterInstallationIfNeeded()
                 prayerLocation.startAutomaticIfNeeded(force: true)
                 refreshPrayerCalendarIfNeeded()
                 notifications.refreshIfEnabled()
                 WidgetRefreshCenter.refreshAll()
+            } else if phase == .background {
+                WidgetRefreshCenter.appDidEnterBackground()
             }
         }
         .task(id: scenePhase) {
             if scenePhase == .active { await appUpdates.check() }
         }
         .onAppear {
+            WidgetRefreshCenter.refreshAfterInstallationIfNeeded()
             applyVisualRefreshThemeOnce()
             prayerLocation.startAutomaticIfNeeded()
             refreshPrayerCalendarIfNeeded()

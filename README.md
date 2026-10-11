@@ -1,6 +1,12 @@
 # TelShevaAzan iOS Prototype
 
-Current app version: `0.7.6 (200)`
+Current app version: `0.7.7 (201)`
+
+Widget update recovery: first launch of a new build requests all WidgetKit timelines,
+then repeats once when the app enters the background. Notification settings includes
+a manual refresh action and TrollStore registration recovery guidance. The packaged
+iOS extension explicitly declares its own container identifier; CI verifies the signed
+entitlement. On-device update testing is still required for TrollStore registration issues.
 
 مشروع iPhone أولي لتطبيق أذان تل السبع.
 

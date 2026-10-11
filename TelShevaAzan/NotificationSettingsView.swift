@@ -7,6 +7,7 @@ struct NotificationSettingsView: View {
     @State private var selectedPage: NotificationSettingsPage = .adhan
     @State private var showsAdvancedDiagnostics = false
     @State private var showsSoundChoices = false
+    @State private var showsWidgetRefreshHelp = false
     @AppStorage(AppThemeStorage.nightThemeKey, store: AppThemeStorage.defaults) private var selectedNightThemeID = PrayerVisualTheme.defaultNight.rawValue
     @AppStorage(AppThemeStorage.dayThemeKey, store: AppThemeStorage.defaults) private var selectedDayThemeID = PrayerVisualTheme.defaultDay.rawValue
     @AppStorage("adhkar.miniKhatmah.enabled") private var isMiniKhatmahEnabled = false
@@ -56,6 +57,11 @@ struct NotificationSettingsView: View {
         .multilineTextAlignment(.trailing)
         .onAppear {
             notifications.refreshDiagnostics()
+        }
+        .alert("تحديث الويجت", isPresented: $showsWidgetRefreshHelp) {
+            Button("حسنًا", role: .cancel) { }
+        } message: {
+            Text("تم إرسال طلب تحديث الويجت. ارجع للشاشة الرئيسية وانتظر قليلًا. إذا بقي فارغًا، افتح TrollStore ← Settings ← Refresh App Registrations، ثم Respring. لا تحتاج لحذف صلاتي.")
         }
     }
 
@@ -127,6 +133,7 @@ struct NotificationSettingsView: View {
                         }
 
                         appUpdatesPanel
+                        widgetRefreshPanel
                     }
                     .padding(.bottom, max(bottomInset, CGFloat(24)) + 24)
                     .frame(maxWidth: .infinity, alignment: .topTrailing)
@@ -230,6 +237,34 @@ struct NotificationSettingsView: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel(appUpdates.availableRelease == nil ? "تحديثات التطبيق، \(AppInfo.displayVersion)" : "تحديث جديد لصلاتي، عرض وتحميل")
+    }
+
+    private var widgetRefreshPanel: some View {
+        Button {
+            WidgetRefreshCenter.requestRepair()
+            showsWidgetRefreshHelp = true
+        } label: {
+            HStack(spacing: 12) {
+                Spacer(minLength: 8)
+                VStack(alignment: .trailing, spacing: 5) {
+                    Text("تحديث الويجت")
+                        .font(.subheadline.weight(.black))
+                        .foregroundStyle(theme.primaryText)
+                    Text("إذا توقف أو ظهر فارغًا بعد تحديث التطبيق")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(theme.secondaryText)
+                }
+                Image(systemName: "rectangle.3.group.bubble")
+                    .font(.system(size: 21, weight: .bold))
+                    .foregroundStyle(theme.accent)
+                    .frame(width: 44, height: 44)
+            }
+            .padding(14)
+            .frame(maxWidth: .infinity, minHeight: 72)
+            .background(glassSurface(settingsPanelFill, radius: 16))
+            .overlay(RoundedRectangle(cornerRadius: 16).stroke(theme.controlBorder))
+        }
+        .buttonStyle(.plain)
     }
 
     private var fajrAlarmSettings: some View {
