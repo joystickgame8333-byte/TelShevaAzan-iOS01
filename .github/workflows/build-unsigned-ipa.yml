@@ -6,6 +6,9 @@ on:
     branches:
       - main
 
+permissions:
+  contents: write
+
 concurrency:
   group: unsigned-ipa-${{ github.ref }}
   cancel-in-progress: true
@@ -19,6 +22,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Test update release selection
+        run: |
+          swiftc TelShevaAzan/AppRelease.swift tools/UpdateTests/main.swift -o "$RUNNER_TEMP/salati-update-tests"
+          "$RUNNER_TEMP/salati-update-tests"
 
       - name: Validate official prayer calendar
         run: python3 tools/validate-prayer-calendar.py
@@ -372,3 +380,8 @@ jobs:
             TelShevaAzan-unsigned.ipa
             TelShevaAzan-unsigned.tipa
             build-diagnostics.txt
+
+      - name: Publish downloadable app update
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tools/publish-app-release.py

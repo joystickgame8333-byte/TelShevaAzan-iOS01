@@ -18,6 +18,8 @@ struct ContentView: View {
     @State private var showWelcomeActivationPrompt = false
     @State private var selectedPrayerDetails: PrayerTime?
     @State private var showLocationPicker = false
+    @State private var showAppUpdates = false
+    @StateObject private var appUpdates = AppUpdateCenter()
     @Namespace private var dockSelectionNamespace
     @StateObject private var notifications = PrayerNotificationManager.shared
     @StateObject private var prayerLocation = PrayerLocationManager.shared
@@ -113,6 +115,9 @@ struct ContentView: View {
                 WidgetRefreshCenter.refreshAll()
             }
         }
+        .task(id: scenePhase) {
+            if scenePhase == .active { await appUpdates.check() }
+        }
         .onAppear {
             applyVisualRefreshThemeOnce()
             prayerLocation.startAutomaticIfNeeded()
@@ -146,6 +151,11 @@ struct ContentView: View {
         }
         .sheet(isPresented: $showLocationPicker) {
             PrayerLocationPickerView(location: prayerLocation, theme: activeTheme)
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+        }
+        .sheet(isPresented: $showAppUpdates) {
+            AppUpdateView(updates: appUpdates, theme: activeTheme)
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
         }
@@ -447,13 +457,26 @@ struct ContentView: View {
         let timeSummary = Self.timeWithSecondsFormatter.string(from: now)
 
         return VStack(alignment: .center, spacing: 5) {
-            Text(timeSummary)
+            HStack(spacing: 12) {
+                Text(timeSummary)
                 .font(.system(size: 17, weight: .black, design: .rounded))
                 .monospacedDigit()
                 .foregroundStyle(activeTheme.accent.opacity(activeTheme.isNightTheme ? 0.98 : 0.94))
                 .lineLimit(1)
                 .minimumScaleFactor(0.82)
                 .frame(maxWidth: .infinity, alignment: .center)
+                Button {
+                    showAppUpdates = true
+                } label: {
+                    Label(appUpdates.availableRelease == nil ? "التحديثات" : "تحديث جديد",
+                          systemImage: appUpdates.availableRelease == nil ? "arrow.triangle.2.circlepath" : "arrow.down.circle.fill")
+                        .font(.system(size: 11, weight: .bold))
+                        .padding(.horizontal, 9).padding(.vertical, 7)
+                        .background(Capsule().fill(activeTheme.accent.opacity(appUpdates.availableRelease == nil ? 0.08 : 0.20)))
+                }
+                .buttonStyle(.plain).foregroundStyle(activeTheme.accent)
+                .accessibilityLabel(appUpdates.availableRelease == nil ? "فحص تحديثات صلاتي" : "تحديث جديد متوفر لصلاتي")
+            }
 
             Text(dateSummary)
                 .font(.system(size: 13, weight: .black, design: .rounded))
