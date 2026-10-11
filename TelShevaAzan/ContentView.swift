@@ -56,8 +56,10 @@ struct ContentView: View {
                     case .notifications:
                         NotificationSettingsView(
                             theme: activeTheme,
+                            appUpdates: appUpdates,
                             isEmbedded: true,
-                            bottomReservedHeight: dockReservedHeight
+                            bottomReservedHeight: dockReservedHeight,
+                            onOpenAppUpdates: { showAppUpdates = true }
                         )
                     case .qibla:
                         QiblaView(
@@ -457,26 +459,13 @@ struct ContentView: View {
         let timeSummary = Self.timeWithSecondsFormatter.string(from: now)
 
         return VStack(alignment: .center, spacing: 5) {
-            HStack(spacing: 12) {
-                Text(timeSummary)
+            Text(timeSummary)
                 .font(.system(size: 17, weight: .black, design: .rounded))
                 .monospacedDigit()
                 .foregroundStyle(activeTheme.accent.opacity(activeTheme.isNightTheme ? 0.98 : 0.94))
                 .lineLimit(1)
                 .minimumScaleFactor(0.82)
                 .frame(maxWidth: .infinity, alignment: .center)
-                Button {
-                    showAppUpdates = true
-                } label: {
-                    Label(appUpdates.availableRelease == nil ? "التحديثات" : "تحديث جديد",
-                          systemImage: appUpdates.availableRelease == nil ? "arrow.triangle.2.circlepath" : "arrow.down.circle.fill")
-                        .font(.system(size: 11, weight: .bold))
-                        .padding(.horizontal, 9).padding(.vertical, 7)
-                        .background(Capsule().fill(activeTheme.accent.opacity(appUpdates.availableRelease == nil ? 0.08 : 0.20)))
-                }
-                .buttonStyle(.plain).foregroundStyle(activeTheme.accent)
-                .accessibilityLabel(appUpdates.availableRelease == nil ? "فحص تحديثات صلاتي" : "تحديث جديد متوفر لصلاتي")
-            }
 
             Text(dateSummary)
                 .font(.system(size: 13, weight: .black, design: .rounded))

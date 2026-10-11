@@ -27,8 +27,10 @@ struct NotificationSettingsView: View {
     }()
 
     let theme: PrayerVisualTheme
+    @ObservedObject var appUpdates: AppUpdateCenter
     var isEmbedded = false
     var bottomReservedHeight: CGFloat = 0
+    var onOpenAppUpdates: () -> Void
 
     var body: some View {
         GeometryReader { proxy in
@@ -123,6 +125,8 @@ struct NotificationSettingsView: View {
                         } else {
                             appearanceSettings
                         }
+
+                        appUpdatesPanel
                     }
                     .padding(.bottom, max(bottomInset, CGFloat(24)) + 24)
                     .frame(maxWidth: .infinity, alignment: .topTrailing)
@@ -193,6 +197,39 @@ struct NotificationSettingsView: View {
             iqamaNotificationPanel
         }
         .transition(.opacity)
+    }
+
+    private var appUpdatesPanel: some View {
+        Button(action: onOpenAppUpdates) {
+            HStack(spacing: 12) {
+                Image(systemName: "chevron.left")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(theme.secondaryText)
+
+                Spacer(minLength: 8)
+
+                VStack(alignment: .trailing, spacing: 5) {
+                    Text(appUpdates.availableRelease == nil ? "تحديثات التطبيق" : "تحديث جديد متوفر")
+                        .font(.subheadline.weight(.black))
+                        .foregroundStyle(appUpdates.availableRelease == nil ? theme.primaryText : theme.accent)
+                    Text("صلاتي · \(AppInfo.displayVersion)")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(theme.secondaryText)
+                }
+
+                Image(systemName: appUpdates.availableRelease == nil ? "arrow.triangle.2.circlepath" : "arrow.down.circle.fill")
+                    .font(.system(size: 21, weight: .bold))
+                    .foregroundStyle(theme.accent)
+                    .frame(width: 44, height: 44)
+                    .background(Circle().fill(theme.accent.opacity(0.12)))
+            }
+            .padding(14)
+            .frame(maxWidth: .infinity, minHeight: 72)
+            .background(glassSurface(settingsPanelFill, radius: 16))
+            .overlay(RoundedRectangle(cornerRadius: 16).stroke(theme.controlBorder, lineWidth: 1))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(appUpdates.availableRelease == nil ? "تحديثات التطبيق، \(AppInfo.displayVersion)" : "تحديث جديد لصلاتي، عرض وتحميل")
     }
 
     private var fajrAlarmSettings: some View {
